@@ -1,9 +1,9 @@
 {
-	"name": "kennethtrecy/web_template",
-	"type": "library",
-	"description": "A simple web template for general reuse.",
-	"keywords": ["back-end", "web", "template-repository"],
-	"homepage": "https://github.com/KennethTrecy/web_template",
+	"name": "kennethtrecy/peratorakka_server",
+	"type": "project",
+	"description": "Server for any Peratorakka client.",
+	"keywords": ["peratorakka", "server"],
+	"homepage": "https://github.com/KennethTrecy/peratorakka_server",
 	"license": "MIT",
 	"authors": [
 		{
