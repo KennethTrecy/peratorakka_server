@@ -116,7 +116,12 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">foreign_key_nmae</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">currency_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
