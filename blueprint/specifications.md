@@ -15,8 +15,8 @@ timestamps and can be soft-deleted.
 3. A currency has the following information:
 	- Primary ID
 	- User ID
-	- Short Name
-	- Complete Name
+	- Code
+	- Name
 4. An account has the following information:
 	- Primary ID
 	- User ID
