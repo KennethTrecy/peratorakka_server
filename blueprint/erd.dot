@@ -273,7 +273,6 @@ digraph {
 			</table>
 			>
 		]
-
 		event_started_times [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -306,6 +305,120 @@ digraph {
 			</table>
 			>
 		]
+		modifiers [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Modifiers
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+						description<br align="left"/>
+						kind<br align="left"/>
+					</td>
+					<td align="left">
+						varchar(255)<br align="left"/>
+						nullable text<br align="left"/>
+						enum(reactive,dependent,manual)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		reactive_modifiers [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Reactive Modifiers
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">event_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						kind<br align="left"/>
+						value<br align="left"/>
+					</td>
+					<td align="left">
+						enum(adder,multiplier)<br align="left"/>
+						varchar(255)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		dependent_modifiers [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Dependent Modifiers
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">modifier_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">parent_modifier_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						kind<br align="left"/>
+						value<br align="left"/>
+					</td>
+					<td align="left">
+						enum(adder,multiplier)<br align="left"/>
+						varchar(255)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" ]
@@ -319,6 +432,8 @@ digraph {
 		users -> native_credentials
 		events -> timeout_events
 		events -> interval_events
+		modifiers -> reactive_modifiers
+		modifiers -> dependent_modifiers
 	}
 
 	{
@@ -334,5 +449,17 @@ digraph {
 		accounts -> monthly_account_values
 		users -> events
 		events -> event_started_times
+		accounts -> modifiers
+		events -> reactive_modifiers
+	}
+
+	{
+		// zero to many but optional in reverse too
+		edge [
+			arrowhead = nonecrowodot
+			arrowtail = noneteeodot
+		]
+
+		modifiers -> modifiers
 	}
 }
