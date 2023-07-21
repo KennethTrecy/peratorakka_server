@@ -419,6 +419,116 @@ digraph {
 			</table>
 			>
 		]
+		financial_entries [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Financial Entries
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						kind<br align="left"/>
+						remarks<br align="left"/>
+					</td>
+					<td align="left">
+						enum(transfer,modification)<br align="left"/>
+						nullable text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		financial_transfer_entries [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Financial Transfer Entries
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">financial_entry_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">source_account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">destination_account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						source_amount<br align="left"/>
+						destination_amount<br align="left"/>
+					</td>
+					<td align="left">
+						varchar(255)<br align="left"/>
+						varchar(255)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		financial_modification_entries [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Financial Modification Entries
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">financial_entry_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">modifier_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						modified_amount<br align="left"/>
+					</td>
+					<td align="left">
+						varchar(255)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" ]
@@ -434,6 +544,8 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
+		financial_entries -> financial_transfer_entries
+		financial_entries -> financial_modification_entries
 	}
 
 	{
@@ -448,9 +560,12 @@ digraph {
 		currencies -> accounts
 		accounts -> monthly_account_values
 		users -> events
-		events -> event_started_times
 		accounts -> modifiers
+		events -> event_started_times
 		events -> reactive_modifiers
+		accounts -> financial_transfer_entries
+		accounts -> financial_transfer_entries
+		modifiers -> financial_modification_entries
 	}
 
 	{
