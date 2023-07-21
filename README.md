@@ -1,37 +1,44 @@
-<!-- [![Web Front-end Tests](https://img.shields.io/github/actions/workflow/status/KennethTrecy/web_template/front-end.yml?style=for-the-badge)](https://github.com/KennethTrecy/web_template/actions/workflows/:workflow-filename.yml) -->
-![GitHub lines](https://img.shields.io/github/license/KennethTrecy/web_template?style=for-the-badge)
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/KennethTrecy/web_template?style=for-the-badge&display_name=tag&sort=semver)
-![GitHub closed issues count](https://img.shields.io/github/issues-closed/KennethTrecy/web_template?style=for-the-badge)
-![GitHub pull request count](https://img.shields.io/github/issues-pr-closed/KennethTrecy/web_template?style=for-the-badge)
-<!-- ![Commits since latest version](https://img.shields.io/github/commits-since/KennethTrecy/web_template/latest?style=for-the-badge) -->
-![GitHub code size in bytes](https://img.shields.io/github/repo-size/KennethTrecy/web_template?style=for-the-badge)
+[![Backend Tests](https://img.shields.io/github/actions/workflow/status/KennethTrecy/peratorakka_server/backend.yml?style=for-the-badge)](https://github.com/KennethTrecy/peratorakka_server/actions/workflows/backend.yml)
+![GitHub lines](https://img.shields.io/github/license/KennethTrecy/peratorakka_server?style=for-the-badge)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/KennethTrecy/peratorakka_server?style=for-the-badge&display_name=tag&sort=semver)
+![GitHub closed issues count](https://img.shields.io/github/issues-closed/KennethTrecy/peratorakka_server?style=for-the-badge)
+![GitHub pull request count](https://img.shields.io/github/issues-pr-closed/KennethTrecy/peratorakka_server?style=for-the-badge)
+![GitHub code size in bytes](https://img.shields.io/github/repo-size/KennethTrecy/peratorakka_server?style=for-the-badge)
 
-# Web Template
-This is a web template repository of Kenneth Trecy Tobias. Its purpose is to be used for other
-templates/projects either by forking this repository, copying its files, or merging its history to
-other existing templates/projects.
-
-This template has multiple branches that are named after the main package(s)/purpose they contain.
-For example, [`vue` branch] contains [`vue` package]. If branch has multiple packages/purpose, they
-are concatenated using `-` character. By default, most branches contain [`jest` package] as the
-default JavaScript testing framework and [`rollup` package] as default JavaScript module bundler.
-
-You can check the packages and/or purpose of the branch by reading the [notes] section.
-
-<!--
-The `origin` section may be used to indicate where the project (that is using this template) came
-from or based from.
+# Peratorakka Server
+A server for any Peratorakka client.
 
 ## Origin
 Some parts of the repository was based from [`filled_composer_json`] branch of [Web Template].
 
-The template is specialize for backend-end development.
+The template has been specialized for backend development.
 
--->
+Other parts were auto-generated using the command `composer create-project codeigniter4/appstarter`.
+Therefore, any changes in [composer-installable app starter development repository] should if
+necessary.
 
 ## Usage
 
-### Initialization
+### Installation
+The installation steps may be a bit technical and requires admins to be knowledgeable on setting environment variables.
+
+#### Server Requirements
+PHP version 7.4 or higher is required, with the following extensions installed:
+
+- [intl](http://php.net/manual/en/intl.requirements.php)
+- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+
+Additionally, make sure that the following extensions are enabled in your PHP:
+
+- json (enabled by default - don't turn it off)
+- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
+- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+
+#### Instructions
+1. Copy `env` to `.env` and tailor for your machine, specifically the baseURL and any database
+   settings.
+
+### Initialization (for developers)
 If you want to contribute, the repository should be initialized to adhere in [Conventional Commits
 specification] for organize commits and automated generation of change log.
 
@@ -62,23 +69,9 @@ To synchronize the files in this repository's history from the template:
 2. Run `./setup_codebase.ps1 -branch [branch you want to use from the template]`.
 
 ## Notes
-It is optional to attribute this repository in other template/projects.
 
 ### License
-The repository is licensed under [MIT]. Since this is a template repository, you can remove
-license file if you want to use other license, or you can use the template repository for a private
-template/project. You can run one of the following commands below:
-- Run `./revert_commits_to.ps1 strict` to revert the license back to MIT license.
-- Run `./revert_commits_to.ps1 remove` to remove the license completely.
-- Run `./revert_commits_to.ps1 retain` does nothing aside from informing you that license will be
-  retained.
-
-After that, *revert_commits_to.ps1* will be removed.
-
-### Branch
-This branch can be used to other branches, templates, or projects.
-
-[`phpunit/phpunit` package] was already installed.
+The repository is licensed under [MIT].
 
 ### Want to contribute?
 Read the [contributing guide] for different ways to contribute in the project.
@@ -89,19 +82,13 @@ Coded by Kenneth Trecy Tobias.
 ### Disclaimer
 This personal project may contain references to trademarks, which are included in good faith. However, it is important to note that such references do not indicate any endorsement, affiliation, or sponsorship by the respective trademark holders unless explicitly stated.
 
-<!--
-
 [`filled_composer_json`]: https://github.com/KennethTrecy/web_template/tree/filled_composer_json
 [Web Template]: http://github.com/KennethTrecy/web_template
-
--->
-
-[notes]: #notes
-[`vue` branch]: https://github.com/KennethTrecy/web_template/tree/vue
-[`vue` package]: https://www.npmjs.com/package/vue
-[`rollup` package]: https://www.npmjs.com/package/rollup
-[`jest` package]: https://www.npmjs.com/package/jest
-[`phpunit/phpunit` package]: https://packagist.org/packages/phpunit/phpunit
+[composer-installable app starter repository]: https://github.com/codeigniter4/CodeIgniter4
+[intl]: http://php.net/manual/en/intl.requirements.php
+[mbstring]: http://php.net/manual/en/mbstring.installation.php
+[mysqlnd]: http://php.net/manual/en/mysqlnd.install.php
+[libcurl]: http://php.net/manual/en/curl.requirements.php
 [MIT]: https://github.com/KennethTrecy/web_template/blob/master/LICENSE
 [Node.js environment]: https://nodejs.org/en/
 [pnpm]: https://pnpm.io/installation
