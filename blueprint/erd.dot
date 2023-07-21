@@ -32,7 +32,6 @@ digraph {
 			</table>
 			>
 		]
-
 		native_credentials [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -140,6 +139,40 @@ digraph {
 			</table>
 			>
 		]
+		monthly_account_values [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Monthly account values
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						started_date<br align="left"/>
+						value<br align="left"/>
+					</td>
+					<td align="left">
+						datetime<br align="left"/>
+						varchar(255)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" ]
@@ -163,5 +196,6 @@ digraph {
 		users -> currencies
 		users -> accounts
 		currencies -> accounts
+		accounts -> monthly_account_values
 	}
 }
