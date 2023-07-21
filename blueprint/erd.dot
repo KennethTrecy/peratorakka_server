@@ -1,7 +1,8 @@
 digraph {
 	graph [
-		splines = true
 		layout = dot
+		splines = true
+		nodesep = 0.9
 	]
 	{
 		node [ shape = none margin = 0 fontname="Candara" ]
@@ -576,5 +577,39 @@ digraph {
 		]
 
 		modifiers -> modifiers
+	}
+
+	{
+		rank = source;
+		timeout_events
+		interval_events
+		event_started_times
+		native_credentials
+	}
+
+	{
+		rank = same;
+		users
+		events
+		monthly_account_values
+	}
+
+	{
+		rank = same;
+		accounts
+		reactive_modifiers
+		currencies
+	}
+
+	{
+		rank = same;
+		modifiers
+		financial_transfer_entries
+	}
+	{
+		rank = sink;
+		dependent_modifiers
+		financial_modification_entries
+		financial_entries
 	}
 }
