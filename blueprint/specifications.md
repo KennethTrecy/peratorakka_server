@@ -5,6 +5,8 @@ These are set of sections containing the specific details derived from the gener
 This section contains details of every entity in the system. Each entity is assumed to have
 timestamps and can be soft-deleted.
 
+If there are numerical values denoting the financial amount, they should be string to retain the accuracy of the values.
+
 1. A user has the following information:
 	- Primary ID
 	- Email
