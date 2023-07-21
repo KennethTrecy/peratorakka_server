@@ -1,0 +1,14 @@
+.vscode
+!/.vscode
+
+.env
+composer.lock
+vendor
+*.cache
+
+*hidden*
+*dist*
+
+package-lock.json
+node_modules
+pnpm-lock.yaml
