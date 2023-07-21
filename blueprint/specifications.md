@@ -73,7 +73,7 @@ If there are numerical values denoting the financial amount, they should be stri
 	- Value
 13. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the following special information:
 	- Primary ID
-	- modifier ID
+	- Modifier ID
 	- Parent modifier ID
 	- Operation
 		- Adder
@@ -87,10 +87,13 @@ If there are numerical values denoting the financial amount, they should be stri
 	- Remarks
 15. Transfer entry has the following information:
 	- Primary ID
+	- Financial Entry ID
 	- Source Account ID
 	- Destination Account ID
 	- Source Amount
 	- Destination Amount
 16. Modification entry has the following information:
+	- Primary ID
+	- Financial Entry ID
 	- Modifier ID
 	- Modified Amount
