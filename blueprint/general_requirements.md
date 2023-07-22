@@ -18,7 +18,6 @@ The requirements below must be implemented as soon as possible.
 11. An automated modifier can be one of the following operation:
 	- Adder
 	- Multiplier
-12. An event can be deleted as long as it has no associated modifier.
-13. Therefore, a financial entry may be caused by one of the following:
-	- Transferred. Entries that transfer values from one account to another account.
-	- Modified. Entries caused by modifiers.
+12. The result of modifier has a side, either debit or credit. Therefore, it needs an opposite
+    account too.
+13. An event can be deleted as long as it has no associated modifier.
