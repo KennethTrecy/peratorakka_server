@@ -79,10 +79,9 @@ mechanism is dependent to the developer's preference.
 		- Adder
 		- Multiplier
 	- Value
-11. A financial entry is independent as it contains only common contents which are the following:
+11. A financial entry has the following information:
 	- Primary ID
-	- Debit Account ID
-	- Credit Account ID
+	- Modifier ID
 	- Debit Amount
 	- Credit Amount
 	- Remarks
