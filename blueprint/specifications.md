@@ -20,19 +20,16 @@ mechanism is dependent to the developer's preference.
 	- Name
 3. An account has the following information:
 	- Primary ID
-	- User ID
 	- Currency ID
 	- Name
 	- Description (optional)
-	- Ownership (enumeration)
+	- Kind (enumeration)
 		- Asset
 		- Liability
-4. A monthly account value has the following information:
-	- Primary ID
-	- Account ID
-	- Start month and year
-	- Value
-5. An event has the following information:
+		- Equity
+		- Expense
+		- Income
+4. An event has the following information:
 	- Primary ID
 	- User ID
 	- Name
@@ -41,28 +38,32 @@ mechanism is dependent to the developer's preference.
 		- Timeout
 		- Interval
 		- Manual
-6. A timeout event has the following information:
+5. A timeout event has the following information:
 	- Primary ID
 	- Event ID
 	- Expiration date and time
-7. An interval event has the following information:
+6. An interval event has the following information:
 	- Primary ID
 	- Event ID
 	- Schedule as CRON expression
-8. An event started time has the following information:
+7. An event started time has the following information:
 	- Primary ID
 	- Event ID
 	- Started time
-9. A modifier has the following information:
+8. A modifier has the following information:
 	- Primary ID
 	- Account ID
+	- Opposite account ID
 	- Name
 	- Description (optional)
+	- Result Side
+		- Debit
+		- Credit
 	- Kind
 		- Reactive
 		- Dependent
 		- Manual Input
-10. A reactive modifier has the following special information:
+9. A reactive modifier has the following special information:
 	- Primary ID
 	- Modifier ID
 	- Event ID
@@ -70,7 +71,7 @@ mechanism is dependent to the developer's preference.
 		- Adder
 		- Multiplier
 	- Value
-11. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the following special information:
+10. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the following special information:
 	- Primary ID
 	- Modifier ID
 	- Parent modifier ID
@@ -78,21 +79,10 @@ mechanism is dependent to the developer's preference.
 		- Adder
 		- Multiplier
 	- Value
-12. A financial entry is independent as it contains only common contents which are the following:
+11. A financial entry is independent as it contains only common contents which are the following:
 	- Primary ID
-	- Entry kind
-		- Transfer
-		- Modification
+	- Debit Account ID
+	- Credit Account ID
+	- Debit Amount
+	- Credit Amount
 	- Remarks
-13. Transfer entry has the following information:
-	- Primary ID
-	- Financial Entry ID
-	- Source Account ID
-	- Destination Account ID
-	- Source Amount
-	- Destination Amount
-14. Modification entry has the following information:
-	- Primary ID
-	- Financial Entry ID
-	- Modifier ID
-	- Modified Amount
