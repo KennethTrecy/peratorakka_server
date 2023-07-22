@@ -15,6 +15,6 @@ class DatabaseTestCase extends CIUnitTestCase
     protected $namespace   = null;
 
     protected $seedOnce = false;
-    protected $seed     = "TestSeeder";
+    protected $seed     = "";
     protected $basePath = "app/Database/Seeds";
 }
