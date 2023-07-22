@@ -28,13 +28,13 @@
 	</coverage>
 	<testsuites>
 		<testsuite name="Unit">
-			<directory suffix=".php">./t/Unit</directory>
+			<directory suffix="Tests.php">./t/Unit</directory>
 		</testsuite>
 		<testsuite name="Feature">
-			<directory suffix=".php">./t/Feature</directory>
+			<directory suffix="Test.php">./t/Feature</directory>
 		</testsuite>
 		<testsuite name="Integration">
-			<directory suffix=".php">./t/Integration</directory>
+			<directory suffix="Test.php">./t/Integration</directory>
 		</testsuite>
 	</testsuites>
 	<logging>
