@@ -33,38 +33,6 @@ digraph {
 			</table>
 			>
 		]
-		native_credentials [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Native Credentials
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">user_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td>
-						password<br align="left"/>
-					</td>
-					<td>
-						varchar(255)<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
 		currencies [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -540,7 +508,6 @@ digraph {
 			arrowtail = noneteetee
 		]
 
-		users -> native_credentials
 		events -> timeout_events
 		events -> interval_events
 		modifiers -> reactive_modifiers
@@ -581,15 +548,15 @@ digraph {
 
 	{
 		rank = source;
-		native_credentials
 		timeout_events
 		interval_events
+		users
 		monthly_account_values
 	}
 
 	{
 		rank = same;
-		users
+		currencies
 		events
 	}
 
@@ -602,7 +569,6 @@ digraph {
 
 	{
 		rank = same;
-		currencies
 		modifiers
 	}
 
