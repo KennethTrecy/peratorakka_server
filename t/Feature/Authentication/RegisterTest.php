@@ -19,16 +19,19 @@ class RegisterTest extends HTTPTestCase
             "password_confirm" => $password
         ];
 
-        $result = $this->withBodyFormat("json")->withHeaders([
+        $result = $this->withSession()->withHeaders([
             "Accept" => "application/json"
         ])->post("register", $user_data);
 
-        $result->assertOk();
+        $result->assertRedirect();
         $this->seeInDatabase("users", [
             "username" => $user_data["username"]
         ]);
         $this->seeInDatabase("auth_identities", [
             "secret" => $user_data["email"]
         ]);
+        $this->seeNumRecords(1, "users", []);
+        $this->seeNumRecords(1, "auth_identities", []);
+        $this->seeNumRecords(0, "auth_logins", []);
     }
 }
