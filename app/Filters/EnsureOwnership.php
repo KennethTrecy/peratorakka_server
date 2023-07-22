@@ -48,7 +48,7 @@ class EnsureOwnership implements FilterInterface
         $URI = $request->getUri();
         $id = $URI->getSegment($URI->getTotalSegments());
         $current_user = auth()->user();
-        if (!$model->isOwnedBy($current_user)) {
+        if (!$model->isOwnedBy($current_user, intval($id))) {
             return response()->failNotFound([
                 "errors" => [
                     [
