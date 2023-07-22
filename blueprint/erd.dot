@@ -379,11 +379,13 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
+						transacted_at<br align="left"/>
 						debit_amount<br align="left"/>
 						credit_amount<br align="left"/>
 						remarks<br align="left"/>
 					</td>
 					<td align="left">
+						datetime<br align="left"/>
 						varchar(255)<br align="left"/>
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
