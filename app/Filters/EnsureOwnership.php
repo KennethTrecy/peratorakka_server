@@ -6,6 +6,8 @@ use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
+use App\Contracts\OwnedResource;
+
 class EnsureOwnership implements FilterInterface
 {
     /**
@@ -25,13 +27,32 @@ class EnsureOwnership implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        if ($arguments === null || !is_array($arguments) || count($arguments) < 1) {
+        if (
+            $arguments === null
+            || !is_array($arguments)
+            || count($arguments) < 1
+            || model($arguments[0]) instanceof OwnedResource
+        ) {
             return response()->failServerError([
                 "errors" => [
                     [
-                        "message" => $_SERVER["CI_ENVIRONMENT"] === "development"
-                            ? "A model is needed to ensure ownership."
+                        "message" => $request->getServer("CI_ENVIRONMENT") === "development"
+                            ? "A owned resource model and segment index allows to check ownership."
                             : "Please contact the developer because there is an error."
+                    ]
+                ]
+            ]);
+        }
+
+        $model = model($arguments[0]);
+        $URI = $request->getUri();
+        $id = $URI->getSegment($URI->getTotalSegments());
+        $current_user = auth()->user();
+        if (!$model->isOwnedBy($current_user)) {
+            return response()->failNotFound([
+                "errors" => [
+                    [
+                        "message" => "The request resource is not found."
                     ]
                 ]
             ]);
