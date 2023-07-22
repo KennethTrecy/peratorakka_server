@@ -31,7 +31,10 @@
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"Tests\\": "t/"
+			"Tests\\Support\\": "t/_support",
+			"Tests\\Feature\\": "t/Feature",
+			"Tests\\Integration\\": "t/Integration",
+			"Tests\\Unit\\": "t/Unit"
 		}
 	},
 	"scripts": {

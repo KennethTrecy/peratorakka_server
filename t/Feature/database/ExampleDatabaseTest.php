@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature;
+
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Tests\Support\Database\Seeds\ExampleSeeder;
