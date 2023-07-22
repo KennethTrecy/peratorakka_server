@@ -9,6 +9,8 @@ use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\SecureHeaders;
 
+use App\Filters\EnsureOwnership;
+
 class Filters extends BaseConfig
 {
     /**
@@ -21,6 +23,7 @@ class Filters extends BaseConfig
         "honeypot"      => Honeypot::class,
         "invalidchars"  => InvalidChars::class,
         "secureheaders" => SecureHeaders::class,
+        "ensure_ownership" => EnsureOwnership::class,
     ];
 
     /**
@@ -39,7 +42,15 @@ class Filters extends BaseConfig
                     "register",
                     "auth/a/*"
                 ]
-            ]
+            ],
+            "ensure_ownership" => [
+                "except" => [
+                    "/",
+                    "login*",
+                    "register",
+                    "auth/a/*"
+                ]
+            ],
         ],
         "after" => [
             "toolbar",
