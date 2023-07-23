@@ -92,6 +92,32 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ));
     }
 
+    public function testDefaultDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v1/currencies/$currency_id");
+
+        $result->assertNoContent();
+        $this->seeInDatabase("currencies", array_merge(
+            [ "id" => $currency["id"] ],
+            $currency
+        ));
+        $this->dontSeeInDatabase("currencies", [
+            "id" => $currency["id"],
+            "deleted_at" => null
+        ]);
+    }
+
     public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
@@ -172,5 +198,44 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $result->assertJSONFragment([
             "errors" => []
         ]);
+    }
+
+    public function testUnownedDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $another_user->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v1/currencies/$currency_id");
+
+        $result->assertNotFound();
+    }
+
+    public function testDoubleDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $another_user->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+        model(CurrencyModel::class)->delete($currency_id);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v1/currencies/$currency_id");
+
+        $result->assertNotFound();
     }
 }
