@@ -27,6 +27,11 @@ $routes->set404Override();
  * --------------------------------------------------------------------
  */
 
+
+use App\Controllers\CurrencyController;
+
+$routes->get("/api/v1/currency", [ CurrencyController::class, "index" ]);
+
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
