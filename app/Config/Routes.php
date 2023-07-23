@@ -51,6 +51,18 @@ $routes->delete("/api/v1/currencies/(:num)", [ CurrencyController::class, "delet
         SEARCH_NORMALLY
     ])
 ]);
+$routes->patch("/api/v1/currencies/(:num)", [ CurrencyController::class, "restore" ], [
+    "filter" => "ensure_ownership:".implode(",", [
+        CurrencyModel::class,
+        SEARCH_ONLY_DELETED
+    ])
+]);
+$routes->delete("/api/v1/currencies/(:num)/force", [ CurrencyController::class, "forceDelete" ], [
+    "filter" => "ensure_ownership:".implode(",", [
+        CurrencyModel::class,
+        SEARCH_WITH_DELETED
+    ])
+]);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
