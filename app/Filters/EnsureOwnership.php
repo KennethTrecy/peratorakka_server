@@ -13,6 +13,12 @@ class EnsureOwnership implements FilterInterface
 {
     use ResponseTrait;
 
+    private $response;
+
+    public function __construct() {
+        $this->response = response();
+    }
+
     /**
      * Do whatever processing this filter needs to do.
      * By default it should not return anything during
@@ -34,7 +40,7 @@ class EnsureOwnership implements FilterInterface
             $arguments === null
             || !is_array($arguments)
             || count($arguments) < 1
-            || model($arguments[0]) instanceof OwnedResource
+            || !(model($arguments[0]) instanceof OwnedResource)
         ) {
             return $this->failServerError()->setJSON([
                 "errors" => [
