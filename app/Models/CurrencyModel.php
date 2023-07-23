@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use CodeIgniter\Test\Interfaces\FabricatorModel;
 
-class CurrencyModel extends Model
+class CurrencyModel extends Model implements FabricatorModel
 {
     protected $DBGroup          = "default";
     protected $table            = "currencies";
@@ -38,4 +39,12 @@ class CurrencyModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function fake(Generator &$faker)
+    {
+        return [
+            "code"  => $faker->currencyCode(),
+            "name"  => $faker->firstName,
+        ];
+    }
 }
