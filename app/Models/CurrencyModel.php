@@ -8,14 +8,17 @@ use Faker\Generator;
 
 class CurrencyModel extends Model implements FabricatorModel
 {
-    protected $DBGroup          = "default";
     protected $table            = "currencies";
     protected $primaryKey       = "id";
     protected $useAutoIncrement = true;
     protected $returnType       = "array";
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
-    protected $allowedFields    = [];
+    protected $allowedFields    = [
+        "user_id",
+        "code",
+        "name"
+    ];
 
     // Dates
     protected $useTimestamps = true;
