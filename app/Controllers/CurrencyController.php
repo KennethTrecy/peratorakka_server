@@ -79,6 +79,43 @@ class CurrencyController extends BaseController
         });
     }
 
+    public function update(int $id)
+    {
+        $controller = $this;
+        $currency_data = $currency_model->find($id);
+
+        $is_success = !is_null($currency_data);
+
+        if (!$is_success) {
+            return $this->failNotFound()->setJSON([
+                "errors" => [
+                    [
+                        "message" => "The requested resource was not found."
+                    ]
+                ]
+            ]);
+        }
+
+        return $this->processValidInputsOnly(function($request_data) use ($controller, $id) {
+            $current_user = auth()->user();
+
+            $currency_model = model(CurrencyModel::class);
+            $currency_info = array_merge(
+                [ "user_id" =>  $current_user->id ],
+                $request_data
+            );
+
+            $is_success = $currency_model->update($id, $currency_info);
+            if ($is_success) {
+                return $controller->respondNoContent();
+            }
+
+            return $controller->makeServerError(
+                "There is an error on updating to the database server."
+            );
+        });
+    }
+
     private function processValidInputsOnly(callable $operation)
     {
         $validation = single_service("validation");
