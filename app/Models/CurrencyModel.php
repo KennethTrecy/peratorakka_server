@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Test\Interfaces\FabricatorModel;
 use Faker\Generator;
 
-class CurrencyModel extends Model implements FabricatorModel
+use App\Contracts\OwnedResource;
+
+class CurrencyModel extends Model implements FabricatorModel, OwnedResource
 {
     protected $table            = "currencies";
     protected $primaryKey       = "id";
@@ -47,8 +50,13 @@ class CurrencyModel extends Model implements FabricatorModel
     public function fake(Generator &$faker)
     {
         return [
-            "code"  => $faker->currencyCode(),
-            "name"  => $faker->firstName,
+            "code"  => $faker->unique()->currencyCode(),
+            "name"  => $faker->unique()->firstName,
         ];
+    }
+
+    public function isOwnedBy(User $user, int $resource_id): bool {
+        $match = $this->withDeleted()->where("user_id", $user->id)->find($resource_id);
+        return !is_null($match);
     }
 }
