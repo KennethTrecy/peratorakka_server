@@ -29,9 +29,12 @@ $routes->set404Override();
 
 
 use App\Controllers\CurrencyController;
+use App\Models\CurrencyModel;
 
 $routes->get("/api/v1/currencies", [ CurrencyController::class, "index" ]);
-$routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ]);
+$routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [
+    "filter" => "ensure_ownership:".CurrencyModel::class
+]);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
