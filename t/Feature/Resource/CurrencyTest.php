@@ -45,4 +45,24 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "currency" => json_decode(json_encode($currency))
         ]);
     }
+
+    public function testDefaultCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency = $currency_fabricator->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v1/currencies", [
+                "currency" => $currency
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "currency" => $currency
+        ]);
+    }
 }
