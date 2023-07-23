@@ -10,8 +10,7 @@ class AuthenticatedHTTPTestCase extends HTTPTestCase
 {
     use AuthenticationTesting;
 
-    protected function actAsAuthenticatedUser($session_details = null) {
-
+    protected function makeAuthenticatedInfo($session_details = null): AuthenticatedInfo {
         $faker = Factory::create();
         $password = $faker->password();
         $user_data = [
@@ -27,6 +26,9 @@ class AuthenticatedHTTPTestCase extends HTTPTestCase
         $provider->save($user_entity);
         $user_entity = $provider->findById($provider->getInsertID());
 
-        return $this->actingAs($user_entity)->withSession($session_details);
+        return new AuthenticatedInfo(
+            $this->actingAs($user_entity)->withSession($session_details),
+            $user_entity
+        );
     }
 }
