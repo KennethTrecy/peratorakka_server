@@ -43,14 +43,6 @@ class Filters extends BaseConfig
                     "auth/a/*"
                 ]
             ],
-            "ensure_ownership" => [
-                "except" => [
-                    "/",
-                    "login*",
-                    "register",
-                    "auth/a/*"
-                ]
-            ],
         ],
         "after" => [
             "toolbar",
