@@ -34,10 +34,16 @@ use App\Models\CurrencyModel;
 $routes->get("/api/v1/currencies", [ CurrencyController::class, "index" ]);
 $routes->post("/api/v1/currencies", [ CurrencyController::class, "create" ]);
 $routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [
-    "filter" => "ensure_ownership:".CurrencyModel::class
+    "filter" => "ensure_ownership:".implode(",", [
+        CurrencyModel::class,
+        SEARCH_WITH_DELETED
+    ])
 ]);
 $routes->put("/api/v1/currencies/(:num)", [ CurrencyController::class, "update" ], [
-    "filter" => "ensure_ownership:".CurrencyModel::class
+    "filter" => "ensure_ownership:".implode(",", [
+        CurrencyModel::class,
+        SEARCH_NORMALLY
+    ])
 ]);
 
 // We get a performance increase by specifying the default

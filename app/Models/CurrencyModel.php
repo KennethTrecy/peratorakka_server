@@ -55,8 +55,18 @@ class CurrencyModel extends Model implements FabricatorModel, OwnedResource
         ];
     }
 
-    public function isOwnedBy(User $user, int $resource_id): bool {
-        $match = $this->withDeleted()->where("user_id", $user->id)->find($resource_id);
+    public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool {
+        $match = $this
+            ->getSearchQuery($search_mode)
+            ->where("user_id", $user->id)
+            ->find($resource_id);
         return !is_null($match);
+    }
+
+    private function getSearchQuery(string $search_mode) {
+        if ($search_mode === SEARCH_WITH_DELETED) return $this->withDeleted();
+        else if ($search_mode === SEARCH_ONLY_DELETED) return $this->onlyDeleted();
+
+        return $this;
     }
 }

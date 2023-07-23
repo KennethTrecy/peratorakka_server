@@ -6,5 +6,5 @@ use CodeIgniter\Shield\Entities\User;
 
 interface OwnedResource
 {
-    public function isOwnedBy(User $user, int $resource_id): bool;
+    public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool;
 }

@@ -39,14 +39,20 @@ class EnsureOwnership implements FilterInterface
         if (
             $arguments === null
             || !is_array($arguments)
-            || count($arguments) < 1
+            || count($arguments) < 2
             || !(model($arguments[0]) instanceof OwnedResource)
+            || !is_string($arguments[1])
+            || !in_array($arguments[1], [
+                SEARCH_NORMALLY,
+                SEARCH_WITH_DELETED,
+                SEARCH_ONLY_DELETED
+            ])
         ) {
             return $this->failServerError()->setJSON([
                 "errors" => [
                     [
                         "message" => $request->getServer("CI_ENVIRONMENT") === "development"
-                            ? "A owned resource model and segment index allows to check ownership."
+                            ? "A owned resource model and search mode allows to check ownership."
                             : "Please contact the developer because there is an error."
                     ]
                 ]
@@ -57,7 +63,8 @@ class EnsureOwnership implements FilterInterface
         $URI = $request->getUri();
         $id = $URI->getSegment($URI->getTotalSegments());
         $current_user = auth()->user();
-        if (!$model->isOwnedBy($current_user, intval($id))) {
+        $search_mode = $arguments[1];
+        if (!$model->isOwnedBy($current_user, $search_mode, intval($id))) {
             return $this->failNotFound()->setJSON([
                 "errors" => [
                     [
