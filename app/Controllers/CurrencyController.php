@@ -51,7 +51,42 @@ class CurrencyController extends BaseController
 
     public function create()
     {
-        $current_user = auth()->user();
+        $controller = $this;
+        return $this->processValidInputsOnly(function($request_data) use ($controller) {
+            $current_user = auth()->user();
+
+            $currency_model = model(CurrencyModel::class);
+            $currency_info = array_merge(
+                [ "user_id" => $current_user->id ],
+                $request_data
+            );
+
+            $is_success = $currency_model->insert($currency_info, false);
+            if ($is_success) {
+                $response_document = [
+                    "currency" => array_merge(
+                        [ "id" =>  $currency_model->getInsertID() ],
+                        $currency_info
+                    )
+                ];
+
+                return $controller->respondCreated()->setJSON($response_document);
+            }
+
+            return $controller->failServerError()->setJSON([
+                "errors" => [
+                    [
+                        "message" => $request->getServer("CI_ENVIRONMENT") === "development"
+                            ? "There is an error on inserting to the database server."
+                            : "Please contact the developer because there is an error."
+                    ]
+                ]
+            ]);
+        });
+    }
+
+    private function processValidInputsOnly(callable $operation)
+    {
         $validation = single_service("validation");
         $validation->setRule("currency", "currency info", [
             "required"
@@ -69,33 +104,7 @@ class CurrencyController extends BaseController
         $is_success = $validation->run($request_document);
 
         if ($is_success) {
-            $currency_model = model(CurrencyModel::class);
-            $currency_info = array_merge(
-                [ "user_id" => $current_user->id ],
-                $request_document["currency"]
-            );
-
-            $is_success = $currency_model->insert($currency_info, false);
-            if ($is_success) {
-                $response_document = [
-                    "currency" => array_merge(
-                        [ "id" =>  $currency_model->getInsertID() ],
-                        $currency_info
-                    )
-                ];
-
-                return $this->respondCreated()->setJSON($response_document);
-            }
-
-            return $this->failServerError()->setJSON([
-                "errors" => [
-                    [
-                        "message" => $request->getServer("CI_ENVIRONMENT") === "development"
-                            ? "There is an error on inserting to the database server."
-                            : "Please contact the developer because there is an error."
-                    ]
-                ]
-            ]);
+            return call_user_func($operation, $request_document["currency"]);
         }
 
         $raw_errors = $validation->getErrors();
