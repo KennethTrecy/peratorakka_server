@@ -5,8 +5,6 @@ namespace App\Models;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
-use App\Contracts\OwnedResource;
-
 class CurrencyModel extends BaseResourceModel
 {
     protected $table            = "currencies";
