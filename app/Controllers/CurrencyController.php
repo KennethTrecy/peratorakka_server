@@ -2,11 +2,15 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\API\ResponseTrait;
+
 use App\Controllers\BaseController;
 use App\Models\CurrencyModel;
 
 class CurrencyController extends BaseController
 {
+    use ResponseTrait;
+
     public function index()
     {
         $current_user = auth()->user();
@@ -23,6 +27,31 @@ class CurrencyController extends BaseController
     public function show(int $id)
     {
         $current_user = auth()->user();
+        $currency_model = model(CurrencyModel::class);
+        $currency_data = $currency_model->find($id);
+
+        $is_success = !is_null($currency_data);
+
+        if ($is_success) {
+            $response_document = [
+                "currency" => $currency_model->find($id)
+            ];
+
+            return response()->setJSON($response_document);
+        } else {
+            return $this->failNotFound()->setJSON([
+                "errors" => [
+                    [
+                        "message" => "The request resource was not found."
+                    ]
+                ]
+            ]);
+        }
+    }
+
+    public function create()
+    {
+        $current_user = auth()->user();
         $validation = single_service("validation");
         $validation->setRule("currency", "code", [
             "required",
@@ -37,8 +66,8 @@ class CurrencyController extends BaseController
             "alpha_numeric"
         ]);
 
-        $request_document = $request->getJson(true);
-        $is_success = $validation->run($request->getJson(true));
+        $request_document = $this->request->getJson(true);
+        $is_success = $validation->run($request_document);
 
         if ($is_success) {
             $currency_model = model(CurrencyModel::class);
@@ -51,10 +80,10 @@ class CurrencyController extends BaseController
                         ],
                         $request_document
                     )
-                )->findAll()
+                )
             ];
 
-            return response()->setJSON($response_document);
+            return $this->respondCreated()->setJSON($response_document);
         } else {
             $raw_errors = $validation->getErrors();
             $formalized_errors = [];
@@ -65,7 +94,7 @@ class CurrencyController extends BaseController
                 ]);
             }
 
-            return response()->failValidationError()->setJSON([
+            return $this->failValidationError()->setJSON([
                 "errors" => $formalized_errors
             ]);
         }
