@@ -73,15 +73,9 @@ class CurrencyController extends BaseController
                 return $controller->respondCreated()->setJSON($response_document);
             }
 
-            return $controller->failServerError()->setJSON([
-                "errors" => [
-                    [
-                        "message" => $request->getServer("CI_ENVIRONMENT") === "development"
-                            ? "There is an error on inserting to the database server."
-                            : "Please contact the developer because there is an error."
-                    ]
-                ]
-            ]);
+            return $controller->makeServerError(
+                "There is an error on inserting to the database server."
+            );
         });
     }
 
@@ -118,6 +112,18 @@ class CurrencyController extends BaseController
 
         return $this->failValidationError()->setJSON([
             "errors" => $formalized_errors
+        ]);
+    }
+
+    private function makeServerError(string $development_message) {
+        return $this->failServerError()->setJSON([
+            "errors" => [
+                [
+                    "message" => $request->getServer("CI_ENVIRONMENT") === "development"
+                        ? $development_message
+                        : "Please contact the developer because there is an error."
+                ]
+            ]
         ]);
     }
 }
