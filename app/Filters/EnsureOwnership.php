@@ -33,7 +33,7 @@ class EnsureOwnership implements FilterInterface
             || count($arguments) < 1
             || model($arguments[0]) instanceof OwnedResource
         ) {
-            return response()->failServerError([
+            return response()->failServerError()->setJSON([
                 "errors" => [
                     [
                         "message" => $request->getServer("CI_ENVIRONMENT") === "development"
@@ -49,7 +49,7 @@ class EnsureOwnership implements FilterInterface
         $id = $URI->getSegment($URI->getTotalSegments());
         $current_user = auth()->user();
         if (!$model->isOwnedBy($current_user, intval($id))) {
-            return response()->failNotFound([
+            return response()->failNotFound()->setJSON([
                 "errors" => [
                     [
                         "message" => "The request resource is not found."

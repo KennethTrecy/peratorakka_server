@@ -17,6 +17,6 @@ class CurrencyController extends BaseController
             "currencies" => $currency_model->where("user_id", $current_user->id)->findAll()
         ];
 
-        return respond()->json($data);
+        return response()->setJSON($data);
     }
 }
