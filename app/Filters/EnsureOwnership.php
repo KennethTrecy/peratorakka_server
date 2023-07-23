@@ -2,6 +2,7 @@
 
 namespace App\Filters;
 
+use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -10,6 +11,8 @@ use App\Contracts\OwnedResource;
 
 class EnsureOwnership implements FilterInterface
 {
+    use ResponseTrait;
+
     /**
      * Do whatever processing this filter needs to do.
      * By default it should not return anything during
@@ -33,7 +36,7 @@ class EnsureOwnership implements FilterInterface
             || count($arguments) < 1
             || model($arguments[0]) instanceof OwnedResource
         ) {
-            return response()->failServerError()->setJSON([
+            return $this->failServerError()->setJSON([
                 "errors" => [
                     [
                         "message" => $request->getServer("CI_ENVIRONMENT") === "development"
@@ -49,7 +52,7 @@ class EnsureOwnership implements FilterInterface
         $id = $URI->getSegment($URI->getTotalSegments());
         $current_user = auth()->user();
         if (!$model->isOwnedBy($current_user, intval($id))) {
-            return response()->failNotFound()->setJSON([
+            return $this->failNotFound()->setJSON([
                 "errors" => [
                     [
                         "message" => "The request resource is not found."
