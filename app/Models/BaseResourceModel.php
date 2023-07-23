@@ -40,7 +40,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     protected $beforeDelete = [];
     protected $afterDelete = [];
 
-    abstract protected function limitSearchToUser($builder, User $user);
+    abstract protected function limitSearchToUser(BaseResourceModel $query_builder, User $user);
 
     public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool {
         $match = $this

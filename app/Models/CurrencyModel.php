@@ -24,7 +24,7 @@ class CurrencyModel extends BaseResourceModel
         ];
     }
 
-    protected function limitSearchToUser($builder, User $user) {
-        return $this->where("user_id", $user->id);
+    protected function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+        return $query_builder->where("user_id", $user->id);
     }
 }
