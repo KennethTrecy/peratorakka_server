@@ -107,6 +107,7 @@ class CurrencyController extends BaseController
         $currency_model = model(CurrencyModel::class);
 
         $is_success = $currency_model->delete($id);
+        var_dump("normal del", json_encode(compact("id")));
         if ($is_success) {
             return $this->respondNoContent();
         }
@@ -184,7 +185,7 @@ class CurrencyController extends BaseController
         return $this->failServerError()->setJSON([
             "errors" => [
                 [
-                    "message" => $request->getServer("CI_ENVIRONMENT") === "development"
+                    "message" => $this->request->getServer("CI_ENVIRONMENT") === "development"
                         ? $development_message
                         : "Please contact the developer because there is an error."
                 ]
