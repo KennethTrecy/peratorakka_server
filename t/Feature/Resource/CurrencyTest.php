@@ -85,7 +85,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
                 "currency" => $new_details
             ]);
 
-        $result->assertNoContent();
+        $result->assertStatus(204);
         $this->seeInDatabase("currencies", array_merge(
             [ "id" => $currency["id"] ],
             $new_details
@@ -107,7 +107,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->delete("/api/v1/currencies/$currency_id");
 
-        $result->assertNoContent();
+        $result->assertStatus(204);
         $this->seeInDatabase("currencies", array_merge(
             [ "id" => $currency["id"] ]
         ));
@@ -127,13 +127,13 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
         $currency = $currency_fabricator->create();
         $currency_id = $currency["id"];
+        model(CurrencyModel::class)->delete($currency_id);
 
         $result = $authenticated_info
             ->getRequest()
             ->patch("/api/v1/currencies/$currency_id");
-        model(CurrencyModel::class)->delete($currency_id);
 
-        $result->assertNoContent();
+        $result->assertStatus(204);
         $this->seeInDatabase("currencies", [
             "id" => $currency["id"],
             "deleted_at" => null
@@ -150,16 +150,14 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
         $currency = $currency_fabricator->create();
         $currency_id = $currency["id"];
+        model(CurrencyModel::class)->delete($currency_id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id/force");
-        model(CurrencyModel::class)->delete($currency_id);
+            ->delete("/api/v1/currencies/force/$currency_id");
 
-        $result->assertNoContent();
-        $this->dontSeeInDatabase("currencies", [
-            "id" => $currency["id"]
-        ]);
+        $result->assertStatus(204);
+        $this->seeNumRecords(0, "currencies", []);
     }
 
     public function testEmptyIndex()
@@ -323,23 +321,20 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
     public function testImmediateForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
+            "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
         $currency_id = $currency["id"];
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id/force");
+            ->delete("/api/v1/currencies/force/$currency_id");
 
-        $result->assertNoContent();
-        $this->dontSeeInDatabase("currencies", [
-            "id" => $currency["id"]
-        ]);
+        $result->assertStatus(204);
+        $this->seeNumRecords(0, "currencies", []);
     }
 
     public function testDoubleForceDelete()
@@ -357,8 +352,9 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id/force");
+            ->delete("/api/v1/currencies/force/$currency_id");
 
         $result->assertNotFound();
+        $this->seeNumRecords(0, "currencies", []);
     }
 }
