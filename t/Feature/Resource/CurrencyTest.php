@@ -71,6 +71,9 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
         $currency = $currency_fabricator->create();
         $currency_id = $currency["id"];
         $new_details = $currency_fabricator->make();
@@ -82,10 +85,11 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
                 "currency" => $new_details
             ]);
 
-        $result->assertOk();
-        $result->assertJSONFragment([
-            "currency" => $new_details
-        ]);
+        $result->assertNoContent();
+        $this->seeInDatabase("currencies", array_merge(
+            [ "id" => $currency["id"] ],
+            $new_details
+        ));
     }
 
     public function testEmptyIndex()
