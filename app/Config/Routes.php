@@ -31,8 +31,12 @@ $routes->set404Override();
 use App\Controllers\CurrencyController;
 use App\Models\CurrencyModel;
 
-$routes->get("/api/v1/currencies", [ CurrencyController::class, "index" ]);
-$routes->post("/api/v1/currencies", [ CurrencyController::class, "create" ]);
+$routes->delete("/api/v1/currencies/force/(:num)", [ CurrencyController::class, "forceDelete" ], [
+    "filter" => "ensure_ownership:".implode(",", [
+        CurrencyModel::class,
+        SEARCH_WITH_DELETED
+    ])
+]);
 $routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [
     "filter" => "ensure_ownership:".implode(",", [
         CurrencyModel::class,
@@ -57,12 +61,8 @@ $routes->patch("/api/v1/currencies/(:num)", [ CurrencyController::class, "restor
         SEARCH_ONLY_DELETED
     ])
 ]);
-$routes->delete("/api/v1/currencies/(:num)/force", [ CurrencyController::class, "forceDelete" ], [
-    "filter" => "ensure_ownership:".implode(",", [
-        CurrencyModel::class,
-        SEARCH_WITH_DELETED
-    ])
-]);
+$routes->get("/api/v1/currencies", [ CurrencyController::class, "index" ]);
+$routes->post("/api/v1/currencies", [ CurrencyController::class, "create" ]);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
