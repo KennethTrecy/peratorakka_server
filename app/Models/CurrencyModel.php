@@ -4,6 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 use CodeIgniter\Test\Interfaces\FabricatorModel;
+use Faker\Generator;
 
 class CurrencyModel extends Model implements FabricatorModel
 {
