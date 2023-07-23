@@ -109,8 +109,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result->assertNoContent();
         $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency["id"] ],
-            $currency
+            [ "id" => $currency["id"] ]
         ));
         $this->dontSeeInDatabase("currencies", [
             "id" => $currency["id"],
@@ -217,6 +216,13 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             ->delete("/api/v1/currencies/$currency_id");
 
         $result->assertNotFound();
+        $this->seeInDatabase("currencies", array_merge(
+            [ "id" => $currency["id"] ]
+        ));
+        $this->seeInDatabase("currencies", [
+            "id" => $currency["id"],
+            "deleted_at" => null
+        ]);
     }
 
     public function testDoubleDelete()
@@ -237,5 +243,12 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             ->delete("/api/v1/currencies/$currency_id");
 
         $result->assertNotFound();
+        $this->seeInDatabase("currencies", array_merge(
+            [ "id" => $currency["id"] ]
+        ));
+        $this->dontSeeInDatabase("currencies", [
+            "id" => $currency["id"],
+            "deleted_at" => null
+        ]);
     }
 }
