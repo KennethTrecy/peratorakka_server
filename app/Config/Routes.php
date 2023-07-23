@@ -32,6 +32,7 @@ use App\Controllers\CurrencyController;
 use App\Models\CurrencyModel;
 
 $routes->get("/api/v1/currencies", [ CurrencyController::class, "index" ]);
+$routes->post("/api/v1/currencies", [ CurrencyController::class, "create" ]);
 $routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [
     "filter" => "ensure_ownership:".CurrencyModel::class
 ]);
