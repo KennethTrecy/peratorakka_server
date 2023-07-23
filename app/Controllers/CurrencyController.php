@@ -42,7 +42,7 @@ class CurrencyController extends BaseController
             return $this->failNotFound()->setJSON([
                 "errors" => [
                     [
-                        "message" => "The request resource was not found."
+                        "message" => "The requested resource was not found."
                     ]
                 ]
             ]);

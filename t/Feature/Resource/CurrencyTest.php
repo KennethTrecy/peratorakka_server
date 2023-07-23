@@ -65,4 +65,58 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "currency" => $currency
         ]);
     }
+
+    public function testEmptyIndex()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $result = $authenticated_info->getRequest()->get("/api/v1/currencies");
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "currencies" => []
+        ]);
+    }
+
+    public function testMissingShow()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"] + 1;
+
+        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency_id");
+
+        $result->assertNotFound();
+        $result->assertJSONFragment([
+            "errors" => []
+        ]);
+    }
+
+    public function testInvalidCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "name" => "@only alphanumeric characters only"
+        ]);
+        $currency = $currency_fabricator->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v1/currencies", [
+                "currency" => $currency
+            ]);
+
+        $result->assertInvalid();
+        $result->assertJSONFragment([
+            "errors" => []
+        ]);
+    }
 }
