@@ -20,7 +20,8 @@ class CurrencyModel extends Model implements FabricatorModel, OwnedResource
     protected $allowedFields    = [
         "user_id",
         "code",
-        "name"
+        "name",
+        "deleted_at"
     ];
 
     // Dates
@@ -51,7 +52,7 @@ class CurrencyModel extends Model implements FabricatorModel, OwnedResource
     {
         return [
             "code"  => $faker->unique()->currencyCode(),
-            "name"  => $faker->unique()->firstName,
+            "name"  => $faker->unique()->firstName(),
         ];
     }
 
