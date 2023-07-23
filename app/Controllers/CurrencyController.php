@@ -82,20 +82,6 @@ class CurrencyController extends BaseController
     public function update(int $id)
     {
         $controller = $this;
-        $currency_data = $currency_model->find($id);
-
-        $is_success = !is_null($currency_data);
-
-        if (!$is_success) {
-            return $this->failNotFound()->setJSON([
-                "errors" => [
-                    [
-                        "message" => "The requested resource was not found."
-                    ]
-                ]
-            ]);
-        }
-
         return $this->processValidInputsOnly(function($request_data) use ($controller, $id) {
             $current_user = auth()->user();
 
