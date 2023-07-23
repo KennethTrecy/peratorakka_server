@@ -31,10 +31,11 @@ $routes->set404Override();
 use App\Controllers\CurrencyController;
 use App\Models\CurrencyModel;
 
-$routes->delete("/api/v1/currencies/force/(:num)", [ CurrencyController::class, "forceDelete" ], [
+$routes->delete("/api/v1/currencies/(:num)/force", [ CurrencyController::class, "forceDelete" ], [
     "filter" => "ensure_ownership:".implode(",", [
         CurrencyModel::class,
-        SEARCH_WITH_DELETED
+        SEARCH_WITH_DELETED,
+        4
     ])
 ]);
 $routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [

@@ -61,7 +61,11 @@ class EnsureOwnership implements FilterInterface
 
         $model = model($arguments[0]);
         $URI = $request->getUri();
-        $id = $URI->getSegment($URI->getTotalSegments());
+        $id = $URI->getSegment(
+            isset($arguments[2]) && is_numeric($arguments[2])
+            ? intval($arguments[2])
+            : $URI->getTotalSegments()
+        );
         $current_user = auth()->user();
         $search_mode = $arguments[1];
         if (!$model->isOwnedBy($current_user, $search_mode, intval($id))) {

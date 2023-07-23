@@ -154,7 +154,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/force/$currency_id");
+            ->delete("/api/v1/currencies/$currency_id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
@@ -331,8 +331,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/force/$currency_id");
-
+            ->delete("/api/v1/currencies/$currency_id/force");
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
     }
@@ -352,7 +351,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/force/$currency_id");
+            ->delete("/api/v1/currencies/$currency_id/force");
 
         $result->assertNotFound();
         $this->seeNumRecords(0, "currencies", []);
