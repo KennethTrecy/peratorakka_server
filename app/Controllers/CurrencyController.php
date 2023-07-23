@@ -116,6 +116,34 @@ class CurrencyController extends BaseController
         );
     }
 
+    public function restore(int $id)
+    {
+        $currency_model = model(CurrencyModel::class);
+
+        $is_success = $currency_model->update($id, [ "deleted_at" => null ]);
+        if ($is_success) {
+            return $this->respondNoContent();
+        }
+
+        return $this->makeServerError(
+            "There is an error on restoring to the database server."
+        );
+    }
+
+    public function forceDelete(int $id)
+    {
+        $currency_model = model(CurrencyModel::class);
+
+        $is_success = $currency_model->delete($id, true);
+        if ($is_success) {
+            return $this->respondNoContent();
+        }
+
+        return $this->makeServerError(
+            "There is an error on force deleting to the database server."
+        );
+    }
+
     private function processValidInputsOnly(callable $operation)
     {
         $validation = single_service("validation");
