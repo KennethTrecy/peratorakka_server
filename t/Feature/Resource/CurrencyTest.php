@@ -117,6 +117,51 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
+    public function testDefaultRestore()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->patch("/api/v1/currencies/$currency_id");
+        model(CurrencyModel::class)->delete($currency_id);
+
+        $result->assertNoContent();
+        $this->seeInDatabase("currencies", [
+            "id" => $currency["id"],
+            "deleted_at" => null
+        ]);
+    }
+
+    public function testDefaultForceDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v1/currencies/$currency_id/force");
+        model(CurrencyModel::class)->delete($currency_id);
+
+        $result->assertNoContent();
+        $this->dontSeeInDatabase("currencies", [
+            "id" => $currency["id"]
+        ]);
+    }
+
     public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
@@ -250,5 +295,70 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "id" => $currency["id"],
             "deleted_at" => null
         ]);
+    }
+
+    public function testDoubleRestore()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $another_user->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->patch("/api/v1/currencies/$currency_id");
+
+        $result->assertNotFound();
+        $this->seeInDatabase("currencies", [
+            "id" => $currency["id"],
+            "deleted_at" => null
+        ]);
+    }
+
+    public function testImmediateForceDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $another_user->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v1/currencies/$currency_id/force");
+
+        $result->assertNoContent();
+        $this->dontSeeInDatabase("currencies", [
+            "id" => $currency["id"]
+        ]);
+    }
+
+    public function testDoubleForceDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $another_user->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $currency_id = $currency["id"];
+        model(CurrencyModel::class)->delete($currency_id, true);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v1/currencies/$currency_id/force");
+
+        $result->assertNotFound();
     }
 }
