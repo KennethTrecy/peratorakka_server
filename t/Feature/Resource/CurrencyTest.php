@@ -147,6 +147,9 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
         $currency = $currency_fabricator->create();
         $currency_id = $currency["id"];
         $currency_fabricator->setOverrides([
