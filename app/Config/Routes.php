@@ -36,6 +36,9 @@ $routes->post("/api/v1/currencies", [ CurrencyController::class, "create" ]);
 $routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [
     "filter" => "ensure_ownership:".CurrencyModel::class
 ]);
+$routes->put("/api/v1/currencies/(:num)", [ CurrencyController::class, "update" ], [
+    "filter" => "ensure_ownership:".CurrencyModel::class
+]);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
