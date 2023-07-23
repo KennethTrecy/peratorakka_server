@@ -53,9 +53,8 @@ class CurrencyController extends BaseController
     {
         $current_user = auth()->user();
         $validation = single_service("validation");
-        $validation->setRule("currency", "code", [
-            "required",
-            "array"
+        $validation->setRule("currency", "currency info", [
+            "required"
         ]);
         $validation->setRule("currency.code", "code", [
             "required",
@@ -71,32 +70,45 @@ class CurrencyController extends BaseController
 
         if ($is_success) {
             $currency_model = model(CurrencyModel::class);
+            $currency_info = array_merge(
+                [ "user_id" => $current_user->id ],
+                $request_document["currency"]
+            );
 
-            $response_document = [
-                "currencies" => $currency_model->insert(
-                    array_merge(
-                        [
-                            "user_id" => $current_user->id
-                        ],
-                        $request_document
+            $is_success = $currency_model->insert($currency_info, false);
+            if ($is_success) {
+                $response_document = [
+                    "currency" => array_merge(
+                        [ "id" =>  $currency_model->getInsertID() ],
+                        $currency_info
                     )
-                )
-            ];
+                ];
 
-            return $this->respondCreated()->setJSON($response_document);
-        } else {
-            $raw_errors = $validation->getErrors();
-            $formalized_errors = [];
-            foreach ($raw_errors as $field => $message) {
-                array_push($formalized_errors, [
-                    "field" => $field,
-                    "message" => $message
-                ]);
+                return $this->respondCreated()->setJSON($response_document);
             }
 
-            return $this->failValidationError()->setJSON([
-                "errors" => $formalized_errors
+            return $this->failServerError()->setJSON([
+                "errors" => [
+                    [
+                        "message" => $request->getServer("CI_ENVIRONMENT") === "development"
+                            ? "There is an error on inserting to the database server."
+                            : "Please contact the developer because there is an error."
+                    ]
+                ]
             ]);
         }
+
+        $raw_errors = $validation->getErrors();
+        $formalized_errors = [];
+        foreach ($raw_errors as $field => $message) {
+            array_push($formalized_errors, [
+                "field" => $field,
+                "message" => $message
+            ]);
+        }
+
+        return $this->failValidationError()->setJSON([
+            "errors" => $formalized_errors
+        ]);
     }
 }
