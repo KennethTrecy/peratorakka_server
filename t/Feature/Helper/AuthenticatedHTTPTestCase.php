@@ -8,7 +8,7 @@ class AuthenticatedHTTPTestCase extends HTTPTestCase
 {
     use AuthenticationTesting;
 
-    protected function actAsAuthenticatedUser() {
-        return $this->actingAs($this->user);
+    protected function actAsAuthenticatedUser($session_details = null) {
+        return $this->actingAs($this->user)->withSession($session_details);
     }
 }
