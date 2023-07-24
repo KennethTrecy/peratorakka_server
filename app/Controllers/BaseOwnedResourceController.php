@@ -14,11 +14,16 @@ abstract class BaseOwnedResourceController extends BaseController
 
     abstract protected static function getIndividualName(): string;
     abstract protected static function getCollectiveName(): string;
-    abstract protected static function getModel(): OwnedResource;
+    abstract protected static function getModelName(): string;
+
     abstract protected static function makeValidation(): Validation;
 
     protected static function prepareRequestData(array $raw_request_data): array {
         return $raw_request_data;
+    }
+
+    protected static function getModel(): OwnedResource {
+        return model(static::getModelName());
     }
 
     public function index()

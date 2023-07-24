@@ -17,8 +17,8 @@ class CurrencyController extends BaseOwnedResourceController
         return "currencies";
     }
 
-    protected static function getModel(): OwnedResource {
-        return model(CurrencyModel::class);
+    protected static function getModelName(): string {
+        return CurrencyModel::class;
     }
 
     protected static function makeValidation(): Validation {
