@@ -18,6 +18,13 @@ abstract class BaseOwnedResourceController extends BaseController
 
     abstract protected static function makeValidation(): Validation;
 
+    public static function getInfo(): OwnedResourceInfo {
+        return new OwnedResourceInfo(
+            static::getCollectiveName(),
+            static::getModelName()
+        );
+    }
+
     protected static function prepareRequestData(array $raw_request_data): array {
         return $raw_request_data;
     }
