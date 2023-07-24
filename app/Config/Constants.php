@@ -98,6 +98,7 @@ define("SEARCH_NORMALLY", "NORMAL");
 define("SEARCH_WITH_DELETED", "WITH_DELETED");
 define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
 
+define("UNKNOWN_ACCOUNT_KIND", "unknown");
 define("ASSET_ACCOUNT_KIND", "asset");
 define("LIABILITY_ACCOUNT_KIND", "liability");
 define("EQUITY_ACCOUNT_KIND", "equity");
@@ -105,6 +106,7 @@ define("EXPENSE_ACCOUNT_KIND", "expense");
 define("INCOME_ACCOUNT_KIND", "income");
 
 define("ACCOUNT_KINDS", [
+    UNKNOWN_ACCOUNT_KIND,
     ASSET_ACCOUNT_KIND,
     LIABILITY_ACCOUNT_KIND,
     EQUITY_ACCOUNT_KIND,
