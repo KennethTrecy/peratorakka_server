@@ -21,7 +21,6 @@ class AccountController extends BaseOwnedResourceController
         return AccountModel::class;
     }
 
-
     protected static function makeCreateValidation(): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
@@ -47,10 +46,10 @@ class AccountController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $validation->setRule("$individual_name.code", "code", [
+        $validation->setRule("$individual_name.name", "name", [
             "required",
             "alpha_numeric_space",
-            "is_unique[$table_name.code,id,$id]"
+            "is_unique[$table_name.name,id,$id]"
         ]);
 
         return $validation;
@@ -59,8 +58,6 @@ class AccountController extends BaseOwnedResourceController
     private static function makeValidation(): Validation {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
-        $table_name = static::getCollectiveName();
-        $currency_table_name = CurrencyController::getInfo()->getCollectiveName();
 
         $validation->setRule($individual_name, "account info", [
             "required"
