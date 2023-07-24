@@ -30,11 +30,6 @@ class AccountController extends BaseOwnedResourceController
         $validation->setRule($individual_name, "account info", [
             "required"
         ]);
-        $validation->setRule("$individual_name.currency_id", "currency", [
-            "required",
-            "is_natural_no_zero",
-            "is_unique[$currency_table_name.id]"
-        ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "alpha_numeric_space",
@@ -49,6 +44,14 @@ class AccountController extends BaseOwnedResourceController
             "alpha",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]"
         ]);
+
+        if ($this->request->is("post")) {
+            $validation->setRule("$individual_name.currency_id", "currency", [
+                "required",
+                "is_natural_no_zero",
+                "is_unique[$currency_table_name.id]"
+            ]);
+        }
 
         return $validation;
     }
