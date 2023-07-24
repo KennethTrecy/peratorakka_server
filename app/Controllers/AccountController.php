@@ -21,7 +21,42 @@ class AccountController extends BaseOwnedResourceController
         return AccountModel::class;
     }
 
-    protected static function makeValidation(): Validation {
+
+    protected static function makeCreateValidation(): Validation {
+        $validation = static::makeValidation();
+        $individual_name = static::getIndividualName();
+        $table_name = static::getCollectiveName();
+        $currency_table_name = CurrencyController::getInfo()->getCollectiveName();
+
+        $validation->setRule("$individual_name.currency_id", "currency", [
+            "required",
+            "is_natural_no_zero",
+            "is_unique[$currency_table_name.id]"
+        ]);
+        $validation->setRule("$individual_name.name", "name", [
+            "required",
+            "alpha_numeric_space",
+            "is_unique[$table_name.name]"
+        ]);
+
+        return $validation;
+    }
+
+    protected static function makeUpdateValidation(int $id): Validation {
+        $validation = static::makeValidation();
+        $individual_name = static::getIndividualName();
+        $table_name = static::getCollectiveName();
+
+        $validation->setRule("$individual_name.code", "code", [
+            "required",
+            "alpha_numeric_space",
+            "is_unique[$table_name.code,id,$id]"
+        ]);
+
+        return $validation;
+    }
+
+    private static function makeValidation(): Validation {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -29,11 +64,6 @@ class AccountController extends BaseOwnedResourceController
 
         $validation->setRule($individual_name, "account info", [
             "required"
-        ]);
-        $validation->setRule("$individual_name.name", "name", [
-            "required",
-            "alpha_numeric_space",
-            "is_unique[$table_name.id]"
         ]);
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
@@ -44,14 +74,6 @@ class AccountController extends BaseOwnedResourceController
             "alpha",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]"
         ]);
-
-        if ($this->request->is("post")) {
-            $validation->setRule("$individual_name.currency_id", "currency", [
-                "required",
-                "is_natural_no_zero",
-                "is_unique[$currency_table_name.id]"
-            ]);
-        }
 
         return $validation;
     }

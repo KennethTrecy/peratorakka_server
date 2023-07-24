@@ -16,7 +16,8 @@ abstract class BaseOwnedResourceController extends BaseController
     abstract protected static function getCollectiveName(): string;
     abstract protected static function getModelName(): string;
 
-    abstract protected static function makeValidation(): Validation;
+    abstract protected static function makeCreateValidation(): Validation;
+    abstract protected static function makeUpdateValidation(int $id): Validation;
 
     public static function getInfo(): OwnedResourceInfo {
         return new OwnedResourceInfo(
@@ -76,48 +77,58 @@ abstract class BaseOwnedResourceController extends BaseController
     public function create()
     {
         $controller = $this;
-        return $this->processValidInputsOnly(function($request_data) use ($controller) {
-            $current_user = auth()->user();
+        $validation = $this->makeCreateValidation();
+        return $this
+            ->useValidInputsOnly(
+                $validation,
+                function($request_data) use ($controller) {
+                    $current_user = auth()->user();
 
-            $model = static::getModel();
-            $info = static::prepareRequestData($request_data);
+                    $model = static::getModel();
+                    $info = static::prepareRequestData($request_data);
 
-            $is_success = $model->insert($info, false);
-            if ($is_success) {
-                $response_document = [
-                    static::getIndividualName() => array_merge(
-                        [ "id" =>  $model->getInsertID() ],
-                        $info
-                    )
-                ];
+                    $is_success = $model->insert($info, false);
+                    if ($is_success) {
+                        $response_document = [
+                            static::getIndividualName() => array_merge(
+                                [ "id" =>  $model->getInsertID() ],
+                                $info
+                            )
+                        ];
 
-                return $controller->respondCreated()->setJSON($response_document);
-            }
+                        return $controller->respondCreated()->setJSON($response_document);
+                    }
 
-            return $controller->makeServerError(
-                "There is an error on inserting to the database server."
+                    return $controller->makeServerError(
+                        "There is an error on inserting to the database server."
+                    );
+                }
             );
-        });
     }
 
     public function update(int $id)
     {
         $controller = $this;
-        return $this->processValidInputsOnly(function($request_data) use ($controller, $id) {
-            $current_user = auth()->user();
+        $validation = $this->makeUpdateValidation($id);
+        return $this
+            ->useValidInputsOnly(
+                $validation,
+                function($request_data) use ($controller, $id) {
+                    $current_user = auth()->user();
 
-            $model = static::getModel();
-            $info = static::prepareRequestData($request_data);
+                    $model = static::getModel();
+                    $info = static::prepareRequestData($request_data);
 
-            $is_success = $model->update($id, $info);
-            if ($is_success) {
-                return $controller->respondNoContent();
-            }
+                    $is_success = $model->update($id, $info);
+                    if ($is_success) {
+                        return $controller->respondNoContent();
+                    }
 
-            return $controller->makeServerError(
-                "There is an error on updating to the database server."
+                    return $controller->makeServerError(
+                        "There is an error on updating to the database server."
+                    );
+                }
             );
-        });
     }
 
     public function delete(int $id)
@@ -162,10 +173,8 @@ abstract class BaseOwnedResourceController extends BaseController
         );
     }
 
-    private function processValidInputsOnly(callable $operation)
+    private function useValidInputsOnly(Validation $validation, callable $operation)
     {
-        $validation = static::makeValidation();
-
         $request_document = $this->request->getJson(true);
         $is_success = $validation->run($request_document);
 

@@ -21,19 +21,39 @@ class CurrencyController extends BaseOwnedResourceController
         return CurrencyModel::class;
     }
 
-    protected static function makeValidation(): Validation {
-        $validation = single_service("validation");
+    protected static function makeCreateValidation(): Validation {
+        $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
-        $validation->setRule($individual_name, "currency info", [
-            "required"
-        ]);
+        $table_name = static::getCollectiveName();
+
         $validation->setRule("$individual_name.code", "code", [
             "required",
-            "alpha_numeric"
+            "alpha_numeric_space",
+            "is_unique[$table_name.code]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
-            "alpha_numeric"
+            "alpha_numeric_space",
+            "is_unique[$table_name.name]"
+        ]);
+
+        return $validation;
+    }
+
+    protected static function makeUpdateValidation(int $id): Validation {
+        $validation = static::makeValidation();
+        $individual_name = static::getIndividualName();
+        $table_name = static::getCollectiveName();
+
+        $validation->setRule("$individual_name.code", "code", [
+            "required",
+            "alpha_numeric_space",
+            "is_unique[$table_name.code,id,$id]"
+        ]);
+        $validation->setRule("$individual_name.name", "name", [
+            "required",
+            "alpha_numeric_space",
+            "is_unique[$table_name.name,id,$id]"
         ]);
 
         return $validation;
@@ -48,4 +68,14 @@ class CurrencyController extends BaseOwnedResourceController
         );
     }
 
+    private static function makeValidation(): Validation {
+        $validation = single_service("validation");
+        $individual_name = static::getIndividualName();
+
+        $validation->setRule($individual_name, "currency info", [
+            "required"
+        ]);
+
+        return $validation;
+    }
 }
