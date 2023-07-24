@@ -12,11 +12,11 @@ class TimestampCurrencies extends Migration
         $this->forge->addColumn("currencies", [
             "created_at" => [
                 "type" => "DATETIME",
-                "default" => new RawSql("NOW"),
+                "default" => new RawSql("CURRENT_TIMESTAMP"),
             ],
             "updated_at" => [
                 "type" => "DATETIME",
-                "default" => new RawSql("NOW"),
+                "default" => new RawSql("CURRENT_TIMESTAMP"),
             ],
             "deleted_at" => [
                 "type" => "DATETIME",
