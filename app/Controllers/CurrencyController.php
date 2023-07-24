@@ -38,4 +38,14 @@ class CurrencyController extends BaseOwnedResourceController
 
         return $validation;
     }
+
+    protected static function prepareRequestData(array $raw_request_data): array {
+        $current_user = auth()->user();
+
+        return array_merge(
+            [ "user_id" => $current_user->id ],
+            $raw_request_data
+        );
+    }
+
 }

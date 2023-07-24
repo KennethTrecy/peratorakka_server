@@ -17,6 +17,10 @@ abstract class BaseOwnedResourceController extends BaseController
     abstract protected static function getModel(): OwnedResource;
     abstract protected static function makeValidation(): Validation;
 
+    protected static function prepareRequestData(array $raw_request_data): array {
+        return $raw_request_data;
+    }
+
     public function index()
     {
         $current_user = auth()->user();
@@ -64,10 +68,7 @@ abstract class BaseOwnedResourceController extends BaseController
             $current_user = auth()->user();
 
             $model = static::getModel();
-            $info = array_merge(
-                [ "user_id" => $current_user->id ],
-                $request_data
-            );
+            $info = static::prepareRequestData($request_data);
 
             $is_success = $model->insert($info, false);
             if ($is_success) {
@@ -94,10 +95,7 @@ abstract class BaseOwnedResourceController extends BaseController
             $current_user = auth()->user();
 
             $model = static::getModel();
-            $info = array_merge(
-                [ "user_id" =>  $current_user->id ],
-                $request_data
-            );
+            $info = static::prepareRequestData($request_data);
 
             $is_success = $model->update($id, $info);
             if ($is_success) {
