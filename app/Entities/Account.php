@@ -4,7 +4,7 @@ namespace App\Entities;
 
 use CodeIgniter\Entity\Entity;
 
-class Currency extends Entity
+class Account extends Entity
 {
     protected $datamap = [];
 
@@ -16,8 +16,9 @@ class Currency extends Entity
 
     protected $casts = [
         "id" => "integer",
-        "user_id" => "integer",
-        "code" => "string",
-        "name" => "string"
+        "currency_id" => "integer",
+        "name" => "string",
+        "description" => "?string",
+        "kind" => "string"
     ];
 }
