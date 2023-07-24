@@ -2,6 +2,8 @@
 
 namespace Config;
 
+use CodeIgniter\Router\RouteCollection;
+
 // Create a new instance of our RouteCollection class.
 $routes = Services::routes();
 
@@ -27,43 +29,48 @@ $routes->set404Override();
  * --------------------------------------------------------------------
  */
 
+function make_owned_resource_routes(RouteCollection $routes, string $controller) {
+    $owned_resource_info = $controller::getInfo();
+    $collective_name = $owned_resource_info->getCollectiveName();
+    $model_name = $owned_resource_info->getModelName();
+
+    $routes->delete("/api/v1/$collective_name/(:num)/force", [ $controller, "forceDelete" ], [
+        "filter" => "ensure_ownership:".implode(",", [
+            $model_name,
+            SEARCH_WITH_DELETED,
+            4
+        ])
+    ]);
+    $routes->get("/api/v1/$collective_name/(:num)", [ $controller, "show" ], [
+        "filter" => "ensure_ownership:".implode(",", [
+            $model_name,
+            SEARCH_WITH_DELETED
+        ])
+    ]);
+    $routes->put("/api/v1/$collective_name/(:num)", [ $controller, "update" ], [
+        "filter" => "ensure_ownership:".implode(",", [
+            $model_name,
+            SEARCH_NORMALLY
+        ])
+    ]);
+    $routes->delete("/api/v1/$collective_name/(:num)", [ $controller, "delete" ], [
+        "filter" => "ensure_ownership:".implode(",", [
+            $model_name,
+            SEARCH_NORMALLY
+        ])
+    ]);
+    $routes->patch("/api/v1/$collective_name/(:num)", [ $controller, "restore" ], [
+        "filter" => "ensure_ownership:".implode(",", [
+            $model_name,
+            SEARCH_ONLY_DELETED
+        ])
+    ]);
+    $routes->get("/api/v1/$collective_name", [ $controller, "index" ]);
+    $routes->post("/api/v1/$collective_name", [ $controller, "create" ]);
+}
 
 use App\Controllers\CurrencyController;
-use App\Models\CurrencyModel;
-
-$routes->delete("/api/v1/currencies/(:num)/force", [ CurrencyController::class, "forceDelete" ], [
-    "filter" => "ensure_ownership:".implode(",", [
-        CurrencyModel::class,
-        SEARCH_WITH_DELETED,
-        4
-    ])
-]);
-$routes->get("/api/v1/currencies/(:num)", [ CurrencyController::class, "show" ], [
-    "filter" => "ensure_ownership:".implode(",", [
-        CurrencyModel::class,
-        SEARCH_WITH_DELETED
-    ])
-]);
-$routes->put("/api/v1/currencies/(:num)", [ CurrencyController::class, "update" ], [
-    "filter" => "ensure_ownership:".implode(",", [
-        CurrencyModel::class,
-        SEARCH_NORMALLY
-    ])
-]);
-$routes->delete("/api/v1/currencies/(:num)", [ CurrencyController::class, "delete" ], [
-    "filter" => "ensure_ownership:".implode(",", [
-        CurrencyModel::class,
-        SEARCH_NORMALLY
-    ])
-]);
-$routes->patch("/api/v1/currencies/(:num)", [ CurrencyController::class, "restore" ], [
-    "filter" => "ensure_ownership:".implode(",", [
-        CurrencyModel::class,
-        SEARCH_ONLY_DELETED
-    ])
-]);
-$routes->get("/api/v1/currencies", [ CurrencyController::class, "index" ]);
-$routes->post("/api/v1/currencies", [ CurrencyController::class, "create" ]);
+make_owned_resource_routes($routes, CurrencyController::class);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
