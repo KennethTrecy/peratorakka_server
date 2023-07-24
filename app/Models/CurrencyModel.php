@@ -5,11 +5,13 @@ namespace App\Models;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
+use App\Entities\Currency;
+
 class CurrencyModel extends BaseResourceModel
 {
-    protected $table            = "currencies";
-    protected $returnType       = "array";
-    protected $allowedFields    = [
+    protected $table = "currencies";
+    protected $returnType = Currency::class;
+    protected $allowedFields = [
         "user_id",
         "code",
         "name",

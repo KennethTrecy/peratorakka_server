@@ -36,9 +36,8 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency_id");
+        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency->id");
 
         $result->assertOk();
         $result->assertJSONExact([
@@ -57,12 +56,12 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/currencies", [
-                "currency" => $currency
+                "currency" => $currency->toArray()
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "currency" => $currency
+            "currency" => $currency->toArray()
         ]);
     }
 
@@ -75,20 +74,19 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
         $new_details = $currency_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/currencies/$currency_id", [
-                "currency" => $new_details
+            ->put("/api/v1/currencies/$currency->id", [
+                "currency" => $new_details->toArray()
             ]);
 
         $result->assertStatus(204);
         $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency["id"] ],
-            $new_details
+            [ "id" => $currency->id ],
+            $new_details->toArray()
         ));
     }
 
@@ -101,18 +99,17 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id");
+            ->delete("/api/v1/currencies/$currency->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency["id"] ]
+            [ "id" => $currency->id ]
         ));
         $this->dontSeeInDatabase("currencies", [
-            "id" => $currency["id"],
+            "id" => $currency->id,
             "deleted_at" => null
         ]);
     }
@@ -126,16 +123,15 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
-        model(CurrencyModel::class)->delete($currency_id);
+        model(CurrencyModel::class)->delete($currency->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/currencies/$currency_id");
+            ->patch("/api/v1/currencies/$currency->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("currencies", [
-            "id" => $currency["id"],
+            "id" => $currency->id,
             "deleted_at" => null
         ]);
     }
@@ -149,12 +145,11 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
-        model(CurrencyModel::class)->delete($currency_id);
+        model(CurrencyModel::class)->delete($currency->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id/force");
+            ->delete("/api/v1/currencies/$currency->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
@@ -181,9 +176,9 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"] + 1;
+        $currency->id = $currency->id + 1;
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency_id");
+        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency->id");
 
         $result->assertNotFound();
         $result->assertJSONFragment([
@@ -205,7 +200,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/currencies", [
-                "currency" => $currency
+                "currency" => $currency->toArray()
             ]);
 
         $result->assertInvalid();
@@ -223,7 +218,6 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
         $currency_fabricator->setOverrides([
             "name" => "@only alphanumeric characters only"
         ]);
@@ -232,8 +226,8 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/currencies/$currency_id", [
-                "currency" => $new_details
+            ->put("/api/v1/currencies/$currency->id", [
+                "currency" => $new_details->toArray()
             ]);
 
         $result->assertInvalid();
@@ -252,18 +246,17 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id");
+            ->delete("/api/v1/currencies/$currency->id");
 
         $result->assertNotFound();
         $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency["id"] ]
+            [ "id" => $currency->id ]
         ));
         $this->seeInDatabase("currencies", [
-            "id" => $currency["id"],
+            "id" => $currency->id,
             "deleted_at" => null
         ]);
     }
@@ -278,19 +271,18 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
-        model(CurrencyModel::class)->delete($currency_id);
+        model(CurrencyModel::class)->delete($currency->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id");
+            ->delete("/api/v1/currencies/$currency->id");
 
         $result->assertNotFound();
         $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency["id"] ]
+            [ "id" => $currency->id ]
         ));
         $this->dontSeeInDatabase("currencies", [
-            "id" => $currency["id"],
+            "id" => $currency->id,
             "deleted_at" => null
         ]);
     }
@@ -305,15 +297,14 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/currencies/$currency_id");
+            ->patch("/api/v1/currencies/$currency->id");
 
         $result->assertNotFound();
         $this->seeInDatabase("currencies", [
-            "id" => $currency["id"],
+            "id" => $currency->id,
             "deleted_at" => null
         ]);
     }
@@ -327,11 +318,10 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id/force");
+            ->delete("/api/v1/currencies/$currency->id/force");
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
     }
@@ -346,12 +336,11 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_id = $currency["id"];
-        model(CurrencyModel::class)->delete($currency_id, true);
+        model(CurrencyModel::class)->delete($currency->id, true);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency_id/force");
+            ->delete("/api/v1/currencies/$currency->id/force");
 
         $result->assertNotFound();
         $this->seeNumRecords(0, "currencies", []);
