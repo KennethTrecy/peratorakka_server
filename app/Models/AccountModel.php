@@ -9,7 +9,7 @@ use App\Entities\Account;
 
 class AccountModel extends BaseResourceModel
 {
-    protected $table = "currencies";
+    protected $table = "accounts";
     protected $returnType = Account::class;
     protected $allowedFields = [
         "currency_id",
