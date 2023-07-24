@@ -28,7 +28,7 @@ class CurrencyController extends BaseOwnedResourceController
 
         $validation->setRule("$individual_name.code", "code", [
             "required",
-            "alpha_numeric_space",
+            "alpha_numeric",
             "is_unique[$table_name.code]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
@@ -47,7 +47,7 @@ class CurrencyController extends BaseOwnedResourceController
 
         $validation->setRule("$individual_name.code", "code", [
             "required",
-            "alpha_numeric_space",
+            "alpha_numeric",
             "is_unique[$table_name.code,id,$id]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
