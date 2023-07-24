@@ -32,7 +32,8 @@ class AccountModel extends BaseResourceModel
         return $query_builder
             ->whereIn(
                 "currency_id",
-                model(Currency::class)
+                model(CurrencyModel::class)
+                    ->builder()
                     ->select("id")
                     ->where("user_id", $user->id)
             );
