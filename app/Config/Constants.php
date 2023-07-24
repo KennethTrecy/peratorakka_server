@@ -93,11 +93,39 @@ define("EVENT_PRIORITY_NORMAL", 100);
  */
 define("EVENT_PRIORITY_HIGH", 10);
 
-
+/*
+ | --------------------------------------------------------------------------
+ | Ownership Search Modes
+ | --------------------------------------------------------------------------
+ |
+ | Influences how to search for resource(s) to be checked for ownership.
+ | - SEARCH_NORMALLY. Checks for resource(s) owned by the user and present.
+ | - SEARCH_WITH_DELETED. Checks for resource(s) owned by the user, regardless whether it is
+ |   present or has been soft deleted.
+ | - SEARCH_ONLY_DELETED. Checks for resource(s) owned by the user and has been soft deleted.
+ */
 define("SEARCH_NORMALLY", "NORMAL");
 define("SEARCH_WITH_DELETED", "WITH_DELETED");
 define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
 
+/*
+ | --------------------------------------------------------------------------
+ | Account Kinds
+ | --------------------------------------------------------------------------
+ |
+ | Different account kinds that the system can handle.
+ | - UNKNOWN_ACCOUNT_KIND. Account that may represent other kinds not supported by the system at
+ |   the current version. This case may happen when the system downgraded.
+ | - ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts.
+ | - LIABILITY_ACCOUNT_KIND. Account kind that may represent liability accounts.
+ | - EQUITY_ACCOUNT_KIND. Account kind that may represent equity accounts.
+ | - EXPENSE_ACCOUNT_KIND. Account kind that may represent expense accounts.
+ | - INCOME_ACCOUNT_KIND. Account kind that may represent income accounts.
+ |
+ | When the user creates an account, certain kinds can be accepted by the server.
+ | When the server finds an account kind not existing in the current version,
+ | it will be labeled as unknown.
+ */
 define("UNKNOWN_ACCOUNT_KIND", "unknown");
 define("ASSET_ACCOUNT_KIND", "asset");
 define("LIABILITY_ACCOUNT_KIND", "liability");
@@ -105,11 +133,15 @@ define("EQUITY_ACCOUNT_KIND", "equity");
 define("EXPENSE_ACCOUNT_KIND", "expense");
 define("INCOME_ACCOUNT_KIND", "income");
 
-define("ACCOUNT_KINDS", [
-    UNKNOWN_ACCOUNT_KIND,
+define("ACCEPTABLE_ACCOUNT_KINDS", [
     ASSET_ACCOUNT_KIND,
     LIABILITY_ACCOUNT_KIND,
     EQUITY_ACCOUNT_KIND,
     EXPENSE_ACCOUNT_KIND,
     INCOME_ACCOUNT_KIND,
+]);
+
+define("ACCOUNT_KINDS", [
+    UNKNOWN_ACCOUNT_KIND,
+    ...ACCEPTABLE_ACCOUNT_KINDS
 ]);
