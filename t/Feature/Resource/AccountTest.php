@@ -6,10 +6,11 @@ use CodeIgniter\Test\Fabricator;
 
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 use App\Models\CurrencyModel;
+use App\Models\AccountModel;
 
 class AccountTest extends AuthenticatedHTTPTestCase
 {
-    public function DefaultIndex()
+    public function testDefaultIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -17,13 +18,19 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
         ]);
-        $currencies = $currency_fabricator->create(10);
+        $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $accounts = $account_fabricator->create(10);
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/currencies");
+        $result = $authenticated_info->getRequest()->get("/api/v1/accounts");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "currencies" => json_decode(json_encode($currencies))
+            "currencies" => [ $currency ],
+            "accounts" => json_decode(json_encode($accounts), true),
         ]);
     }
 
@@ -155,15 +162,16 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $this->seeNumRecords(0, "currencies", []);
     }
 
-    public function EmptyIndex()
+    public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/currencies");
+        $result = $authenticated_info->getRequest()->get("/api/v1/accounts");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "currencies" => []
+            "currencies" => [],
+            "accounts" => [],
         ]);
     }
 
