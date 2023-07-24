@@ -29,8 +29,8 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "currencies" => [ $currency ],
             "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => [ $currency ],
         ]);
     }
 
@@ -170,8 +170,8 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "currencies" => [],
             "accounts" => [],
+            "currencies" => [],
         ]);
     }
 

@@ -26,12 +26,16 @@ abstract class BaseOwnedResourceController extends BaseController
         );
     }
 
-    protected static function prepareRequestData(array $raw_request_data): array {
-        return $raw_request_data;
+    protected static function prepareRequestData(array $raw_data): array {
+        return $raw_data;
     }
 
     protected static function getModel(): OwnedResource {
         return model(static::getModelName());
+    }
+
+    protected static function enrichResponseDocument(array $initial_document): array {
+        return $initial_document;
     }
 
     public function index()
@@ -45,6 +49,7 @@ abstract class BaseOwnedResourceController extends BaseController
                 ->limitSearchToUser($model, $current_user)
                 ->findAll()
         ];
+        $response_document = static::enrichResponseDocument($response_document);
 
         return response()->setJSON($response_document);
     }
@@ -61,6 +66,7 @@ abstract class BaseOwnedResourceController extends BaseController
             $response_document = [
                 static::getIndividualName() => $model->find($id)
             ];
+            $response_document = static::enrichResponseDocument($response_document);
 
             return response()->setJSON($response_document);
         } else {
@@ -95,6 +101,7 @@ abstract class BaseOwnedResourceController extends BaseController
                                 $info
                             )
                         ];
+                        $response_document = static::enrichResponseDocument($response_document);
 
                         return $controller->respondCreated()->setJSON($response_document);
                     }
