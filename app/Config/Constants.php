@@ -97,3 +97,11 @@ define("EVENT_PRIORITY_HIGH", 10);
 define("SEARCH_NORMALLY", "NORMAL");
 define("SEARCH_WITH_DELETED", "WITH_DELETED");
 define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
+
+define("ACCOUNT_KINDS", [
+    "asset" => 0,
+    "liability" => 1,
+    "equity" => 2,
+    "expense" => 3,
+    "income" => 4
+]);
