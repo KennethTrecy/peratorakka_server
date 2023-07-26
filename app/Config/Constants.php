@@ -159,7 +159,7 @@ define("ACCOUNT_KINDS", [
 define("DEBIT_SIDE", "debit");
 define("CREDIT_SIDE", "credit");
 
-define("RESULT_SIDE", [
+define("RESULT_SIDES", [
     DEBIT_SIDE,
     CREDIT_SIDE
 ]);

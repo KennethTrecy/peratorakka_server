@@ -8,12 +8,12 @@ class ResultSide extends BaseCast
 {
     public static function get($value, array $params = [])
     {
-        return RESULT_SIDE[$value];
+        return RESULT_SIDES[$value];
     }
 
     public static function set($value, array $params = [])
     {
-        $index = array_search($value, RESULT_SIDE, true);
+        $index = array_search($value, RESULT_SIDES, true);
         return $index;
     }
 }
