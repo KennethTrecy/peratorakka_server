@@ -151,7 +151,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "opposite_account_id" => $opposite_account->id
         ]);
         $modifier = $modifier_fabricator->create();
-        $new_details = $modifier_fabricator->make();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
+        $new_details = $financial_entry_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
@@ -435,7 +440,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator->setOverrides([
             "name" => "@only alphanumeric characters only"
         ]);
-        $new_details = $modifier_fabricator->make();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
+        $new_details = $financial_entry_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
