@@ -19,6 +19,8 @@ class UnknownableKind extends BaseCast
     public static function set($value, array $params = [])
     {
         $index = array_search($value, static::$KINDS, true);
-        return max(0, $index);
+        return $index < 0
+            ? array_search(static::$UNKNOWN_KIND, static::$KINDS, true)
+            : $index;
     }
 }
