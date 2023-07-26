@@ -32,7 +32,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "account_id" => $account->id,
             "opposite_account_id" => $opposite_account->id
         ]);
-        $modifiers = $modifier_fabricator->create();
+        $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -46,7 +46,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
             "currencies" => [ $currency ],
             "financial_entry" => json_decode(json_encode($financial_entry)),
-            "modifiers" => json_decode(json_encode($modifiers)),
+            "modifiers" => json_decode(json_encode([ $modifier ])),
         ]);
     }
 
@@ -71,6 +71,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "opposite_account_id" => $opposite_account->id
         ]);
         $modifier = $modifier_fabricator->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
@@ -80,6 +85,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $result->assertJSONExact([
             "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
             "currencies" => [ $currency ],
+            "financial_entry" => json_decode(json_encode($financial_entry)),
             "modifier" => json_decode(json_encode($modifier)),
         ]);
     }
@@ -293,6 +299,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "opposite_account_id" => $opposite_account->id
         ]);
         $modifier = $modifier_fabricator->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
         $financial_entry->id = $financial_entry->id + 1;
 
         $result = $authenticated_info
