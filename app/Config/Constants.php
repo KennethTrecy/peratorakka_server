@@ -113,7 +113,7 @@ define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
  | Account Kinds
  | --------------------------------------------------------------------------
  |
- | Different account kinds that the system can handle.
+ | There are different account kinds that the system can handle.
  | - UNKNOWN_ACCOUNT_KIND. Account that may represent other kinds not supported by the system at
  |   the current version. This case may happen when the system downgraded.
  | - ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts.
@@ -149,11 +149,10 @@ define("ACCOUNT_KINDS", [
 
 /*
  | --------------------------------------------------------------------------
- | Result side
+ | Result Sides
  | --------------------------------------------------------------------------
  |
  | There are only two result sides.
- |
  | - DEBIT_SIDE. In adds or subtracts a value from a specific account depending on its kind.
  | - CREDIT_SIDE. It has inverse effect of the debit side.
  */
@@ -163,4 +162,34 @@ define("CREDIT_SIDE", "credit");
 define("RESULT_SIDE", [
     DEBIT_SIDE,
     CREDIT_SIDE
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Modifier Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different modifier kinds that the system can handle.
+ | - UNKNOWN_MODIFIER_KIND. A modifier with this kind is not supported by the system at
+ |   the current version. This case may happen when the system downgraded.
+ | - REACTIVE_MODIFIER_KIND. A modifier with this kind can be invoked through events.
+ | - DEPENDENT_MODIFIER_KIND. A modifier with this kind can be invoked if the parent modifier was
+ |   invoked.
+ | - MANUAL_MODIFIER_KIND. A modifier with this kind can be invoked through manual input by the
+ |   user.
+ */
+define("UNKNOWN_MODIFIER_KIND", "unknown");
+define("REACTIVE_MODIFIER_KIND", "reactive");
+define("DEPENDENT_MODIFIER_KIND", "dependent");
+define("MANUAL_MODIFIER_KIND", "manual");
+
+define("ACCEPTABLE_MODIFIER_KINDS", [
+    REACTIVE_MODIFIER_KIND,
+    DEPENDENT_MODIFIER_KIND,
+    MANUAL_MODIFIER_KIND
+]);
+
+define("MODIFIER_KINDS", [
+    UNKNOWN_MODIFIER_KIND,
+    ...ACCEPTABLE_MODIFIER_KINDS
 ]);
