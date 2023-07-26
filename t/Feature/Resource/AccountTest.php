@@ -172,7 +172,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultForceDelete()
+    public function testDefaultForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -181,14 +181,19 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        model(CurrencyModel::class)->delete($currency->id);
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        model(AccountModel::class)->delete($account->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/accounts/$currency->id/force");
+            ->delete("/api/v1/accounts/$account->id/force");
 
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "currencies", []);
+        $this->seeNumRecords(0, "accounts", []);
     }
 
     public function testEmptyIndex()
@@ -379,7 +384,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function ImmediateForceDelete()
+    public function testImmediateForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -388,15 +393,20 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/accounts/$currency->id/force");
+            ->delete("/api/v1/accounts/$account->id/force");
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "currencies", []);
+        $this->seeNumRecords(0, "accounts", []);
     }
 
-    public function DoubleForceDelete()
+    public function testDoubleForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -406,13 +416,18 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
-        model(CurrencyModel::class)->delete($currency->id, true);
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        model(AccountModel::class)->delete($account->id, true);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/accounts/$currency->id/force");
+            ->delete("/api/v1/accounts/$account->id/force");
 
         $result->assertNotFound();
-        $this->seeNumRecords(0, "currencies", []);
+        $this->seeNumRecords(0, "accounts", []);
     }
 }
