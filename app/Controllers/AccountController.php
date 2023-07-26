@@ -26,7 +26,6 @@ class AccountController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
-        $currency_table_name = CurrencyController::getInfo()->getCollectiveName();
 
         $validation->setRule("$individual_name.currency_id", "currency", [
             "required",
