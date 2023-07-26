@@ -114,9 +114,9 @@ class FinancialEntryController extends BaseOwnedResourceController
             "max_length[255]",
             "numeric"
         ]);
-        $validation->setRule("$individual_name.transacted_date", "transacted date", [
+        $validation->setRule("$individual_name.transacted_at", "transacted date", [
             "required",
-            "valid_date[YYYY-MM-DDTHH:MM:SS]"
+            "valid_date[Y-m-d H:i:s]"
         ]);
         $validation->setRule("$individual_name.remarks", "remarks", [
             "permit_empty",
