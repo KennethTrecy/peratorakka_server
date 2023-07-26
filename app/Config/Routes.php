@@ -69,10 +69,12 @@ function make_owned_resource_routes(RouteCollection $routes, string $controller)
     $routes->post("/api/v1/$collective_name", [ $controller, "create" ]);
 }
 
-use App\Controllers\CurrencyController;
 use App\Controllers\AccountController;
+use App\Controllers\CurrencyController;
+use App\Controllers\ModifierController;
 make_owned_resource_routes($routes, CurrencyController::class);
 make_owned_resource_routes($routes, AccountController::class);
+make_owned_resource_routes($routes, ModifierController::class);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
