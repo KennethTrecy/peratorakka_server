@@ -29,12 +29,12 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => json_decode(json_encode($accounts), true),
+            "accounts" => json_decode(json_encode($accounts)),
             "currencies" => [ $currency ],
         ]);
     }
 
-    public function DefaultShow()
+    public function testDefaultShow()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -43,12 +43,18 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency->id");
+        $result = $authenticated_info->getRequest()->get("/api/v1/accounts/$account->id");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "currency" => json_decode(json_encode($currency))
+            "account" => json_decode(json_encode($account)),
+            "currencies" => json_decode(json_encode([ $currency ]))
         ]);
     }
 
@@ -62,7 +68,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/currencies", [
+            ->post("/api/v1/accounts", [
                 "currency" => $currency->toArray()
             ]);
 
@@ -86,7 +92,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/currencies/$currency->id", [
+            ->put("/api/v1/accounts/$currency->id", [
                 "currency" => $new_details->toArray()
             ]);
 
@@ -109,7 +115,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id");
+            ->delete("/api/v1/accounts/$currency->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("currencies", array_merge(
@@ -134,7 +140,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/currencies/$currency->id");
+            ->patch("/api/v1/accounts/$currency->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("currencies", [
@@ -156,7 +162,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id/force");
+            ->delete("/api/v1/accounts/$currency->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
@@ -175,7 +181,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function MissingShow()
+    public function testMissingShow()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -184,9 +190,14 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency->id = $currency->id + 1;
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        $account->id = $account->id + 1;
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency->id");
+        $result = $authenticated_info->getRequest()->get("/api/v1/accounts/$account->id");
 
         $result->assertNotFound();
         $result->assertJSONFragment([
@@ -207,7 +218,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/currencies", [
+            ->post("/api/v1/accounts", [
                 "currency" => $currency->toArray()
             ]);
 
@@ -234,7 +245,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/currencies/$currency->id", [
+            ->put("/api/v1/accounts/$currency->id", [
                 "currency" => $new_details->toArray()
             ]);
 
@@ -257,7 +268,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id");
+            ->delete("/api/v1/accounts/$currency->id");
 
         $result->assertNotFound();
         $this->seeInDatabase("currencies", array_merge(
@@ -283,7 +294,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id");
+            ->delete("/api/v1/accounts/$currency->id");
 
         $result->assertNotFound();
         $this->seeInDatabase("currencies", array_merge(
@@ -308,7 +319,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/currencies/$currency->id");
+            ->patch("/api/v1/accounts/$currency->id");
 
         $result->assertNotFound();
         $this->seeInDatabase("currencies", [
@@ -329,7 +340,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id/force");
+            ->delete("/api/v1/accounts/$currency->id/force");
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
     }
@@ -348,7 +359,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id/force");
+            ->delete("/api/v1/accounts/$currency->id/force");
 
         $result->assertNotFound();
         $this->seeNumRecords(0, "currencies", []);
