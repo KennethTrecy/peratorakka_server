@@ -124,18 +124,25 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
-        $new_details = $account_fabricator->make();
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        $new_details = $modifier_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/modifiers/$account->id", [
-                "account" => $new_details->toArray()
+            ->put("/api/v1/modifiers/$modifier->id", [
+                "modifier" => $new_details->toArray()
             ]);
 
         $result->assertStatus(204);
-        $this->seeInDatabase("accounts", array_merge(
-            [ "id" => $account->id ],
+        $this->seeInDatabase("modifiers", array_merge(
+            [ "id" => $modifier->id ],
             $new_details->toArray()
         ));
     }
@@ -277,15 +284,15 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $currency = $currency_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "name" => "@only alphanumeric characters only"
+            "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
         $opposite_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "opposite_account_id" => $opposite_account->id,
+            "name" => "@only alphanumeric characters only"
         ]);
         $modifier = $modifier_fabricator->make();
 
@@ -316,17 +323,23 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        $modifier_fabricator->setOverrides([
             "name" => "@only alphanumeric characters only"
         ]);
-        $new_details = $account_fabricator->make();
+        $new_details = $modifier_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/modifiers/$account->id", [
-                "account" => $new_details->toArray()
+            ->put("/api/v1/modifiers/$modifier->id", [
+                "modifier" => $new_details->toArray()
             ]);
 
         $result->assertInvalid();
