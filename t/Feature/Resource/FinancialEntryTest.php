@@ -411,7 +411,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "account_id" => $account->id,
             "opposite_account_id" => $opposite_account->id
         ]);
-        $modifiers = $modifier_fabricator->create();
+        $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
