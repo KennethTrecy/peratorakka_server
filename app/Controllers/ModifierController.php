@@ -28,7 +28,7 @@ class ModifierController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $validation->setRule("$individual_name.account_id", "currency", [
+        $validation->setRule("$individual_name.account_id", "account", [
             "required",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
@@ -36,7 +36,7 @@ class ModifierController extends BaseOwnedResourceController
                 SEARCH_NORMALLY
             ])."]"
         ]);
-        $validation->setRule("$individual_name.opposite_account_id", "currency", [
+        $validation->setRule("$individual_name.opposite_account_id", "opposite account", [
             "required",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
@@ -115,13 +115,13 @@ class ModifierController extends BaseOwnedResourceController
             "max_length[500]",
             "alpha_numeric_punct"
         ]);
-        $validation->setRule("$individual_name.result_side", "description", [
+        $validation->setRule("$individual_name.result_side", "result side", [
             "required",
             "min_length[3]",
             "max_length[10]",
             "in_list[".implode(",", RESULT_SIDES)."]"
         ]);
-        $validation->setRule("$individual_name.kind", "description", [
+        $validation->setRule("$individual_name.kind", "kind", [
             "required",
             "min_length[3]",
             "max_length[255]",
