@@ -24,6 +24,7 @@ mechanism is dependent to the developer's preference.
 	- Name
 	- Description (optional)
 	- Kind (enumeration)
+		- Unknown (to represent kinds in later versions in case the user downgraded)
 		- Asset
 		- Liability
 		- Equity
@@ -35,6 +36,7 @@ mechanism is dependent to the developer's preference.
 	- Name
 	- Description (optional)
 	- Kind (enumeration)
+		- Unknown (to represent kinds in later versions in case the user downgraded)
 		- Timeout
 		- Interval
 		- Manual
@@ -59,7 +61,8 @@ mechanism is dependent to the developer's preference.
 	- Result Side
 		- Debit
 		- Credit
-	- Kind
+	- Kind (enumeration)
+		- Unknown (to represent kinds in later versions in case the user downgraded)
 		- Reactive
 		- Dependent
 		- Manual Input
@@ -68,6 +71,7 @@ mechanism is dependent to the developer's preference.
 	- Modifier ID
 	- Event ID
 	- Operation
+		- Unknown (to represent kinds in later versions in case the user downgraded)
 		- Adder
 		- Multiplier
 	- Value
@@ -76,6 +80,7 @@ mechanism is dependent to the developer's preference.
 	- Modifier ID
 	- Parent modifier ID
 	- Operation
+		- Unknown (to represent kinds in later versions in case the user downgraded)
 		- Adder
 		- Multiplier
 	- Value
