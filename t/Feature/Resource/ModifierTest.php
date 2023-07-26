@@ -197,15 +197,22 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
-        model(AccountModel::class)->delete($account->id);
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        model(ModifierModel::class)->delete($modifier->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/modifiers/$account->id");
+            ->patch("/api/v1/modifiers/$modifier->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("accounts", [
-            "id" => $account->id,
+        $this->seeInDatabase("modifiers", [
+            "id" => $modifier->id,
             "deleted_at" => null
         ]);
     }
@@ -387,7 +394,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             [ "id" => $modifier->id ]
         ));
         $this->seeInDatabase("modifiers", [
-            "id" => $account->id,
+            "id" => $modifier->id,
             "deleted_at" => null
         ]);
     }
@@ -445,14 +452,21 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/modifiers/$account->id");
+            ->patch("/api/v1/modifiers/$modifier->id");
 
         $result->assertNotFound();
-        $this->seeInDatabase("accounts", [
-            "id" => $account->id,
+        $this->seeInDatabase("modifiers", [
+            "id" => $modifier->id,
             "deleted_at" => null
         ]);
     }
