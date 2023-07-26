@@ -27,7 +27,6 @@ class FinancialEntryController extends BaseOwnedResourceController
     protected static function makeCreateValidation(): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
-        $table_name = static::getCollectiveName();
 
         $validation->setRule("$individual_name.modifier_id", "modifier", [
             "required",
@@ -37,12 +36,32 @@ class FinancialEntryController extends BaseOwnedResourceController
                 SEARCH_NORMALLY
             ])."]"
         ]);
+        $validation->setRule("$individual_name.debit_amount", "debit amount", [
+            "required",
+            "string",
+            "min_length[1]",
+            "max_length[255]",
+            "numeric",
+            "must_be_same_for_modifier[$individual_name.modifier_id,$individual_name.credit_amount]"
+        ]);
 
         return $validation;
     }
 
     protected static function makeUpdateValidation(int $id): Validation {
-        return static::makeValidation();
+        $validation = static::makeValidation();
+        $individual_name = static::getIndividualName();
+
+        $validation->setRule("$individual_name.debit_amount", "debit amount", [
+            "required",
+            "string",
+            "min_length[1]",
+            "max_length[255]",
+            "numeric",
+            "must_be_same_for_financial_entry[$id,$individual_name.credit_amount]"
+        ]);
+
+        return $validation;
     }
 
     protected static function enrichResponseDocument(array $initial_document): array {
@@ -99,13 +118,6 @@ class FinancialEntryController extends BaseOwnedResourceController
 
         $validation->setRule($individual_name, "financial entry info", [
             "required"
-        ]);
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "numeric"
         ]);
         $validation->setRule("$individual_name.credit_amount", "credit amount", [
             "required",
