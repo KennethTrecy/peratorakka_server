@@ -6,6 +6,7 @@ use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
+use App\Models\CurrencyModel;
 
 class AccountController extends BaseOwnedResourceController
 {
@@ -53,6 +54,26 @@ class AccountController extends BaseOwnedResourceController
         ]);
 
         return $validation;
+    }
+
+    protected static function enrichResponseDocument(array $initial_document): array {
+        $enriched_document = array_merge([], $initial_document);
+        $main_documents = isset($initial_document[static::getIndividualName()])
+            ? [ $initial_document[static::getIndividualName()] ]
+            : ($initial_document[static::getCollectiveName()] ?? [] );
+
+        $linked_currencies = [];
+        foreach ($main_documents as $document) {
+            $currency_id = $document->currency_id;
+            array_push($linked_currencies, $currency_id);
+        }
+
+        $currencies = model(CurrencyModel::class)
+            ->whereIn("id", array_unique($linked_currencies))
+            ->findAll();
+        $enriched_document["currencies"] = $currencies;
+
+        return $enriched_document;
     }
 
     private static function makeValidation(): Validation {
