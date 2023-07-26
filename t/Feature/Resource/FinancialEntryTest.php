@@ -37,7 +37,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
         ]);
-        $financial_entry = $financial_entry_fabricator->create();
+        $financial_entries = $financial_entry_fabricator->create(10);
 
         $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries");
 
@@ -45,7 +45,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $result->assertJSONExact([
             "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
             "currencies" => [ $currency ],
-            "financial_entries" => json_decode(json_encode($financial_entry)),
+            "financial_entries" => json_decode(json_encode($financial_entries)),
             "modifiers" => json_decode(json_encode([ $modifier ])),
         ]);
     }
