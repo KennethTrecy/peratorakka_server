@@ -98,7 +98,6 @@ class AccountController extends BaseOwnedResourceController
             "required",
             "min_length[3]",
             "max_length[255]",
-            "alpha",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]"
         ]);
 
