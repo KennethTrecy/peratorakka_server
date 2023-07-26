@@ -428,6 +428,49 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
+    public function testDualCurrencyUpdate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currencyA = $currency_fabricator->create();
+        $currencyB = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currencyA->id
+        ]);
+        $account = $account_fabricator->create();
+        $account_fabricator->setOverrides([
+            "currency_id" => $currencyB->id
+        ]);
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id,
+            "debit_amount" => "1.0"
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
+        $new_details = $financial_entry_fabricator->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->put("/api/v1/financial_entries/$financial_entry->id", [
+                "financial_entry" => $new_details->toArray()
+            ]);
+
+        $result->assertStatus(204);
+    }
+
     public function testPartiallyUnownedCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
