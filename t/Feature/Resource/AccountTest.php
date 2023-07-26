@@ -58,23 +58,32 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultCreate()
+    public function testDefaultCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->make();
+        $currency = $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/accounts", [
-                "currency" => $currency->toArray()
+                "account" => $account->toArray()
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "currency" => $currency->toArray()
+            "account" => $account->toArray(),
+            "currencies" => []
         ]);
     }
 
@@ -205,21 +214,28 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function InvalidCreate()
+    public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency = $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "name" => "@only alphanumeric characters only"
         ]);
-        $currency = $currency_fabricator->make();
+        $account = $account_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/accounts", [
-                "currency" => $currency->toArray()
+                "account" => $account->toArray()
             ]);
 
         $result->assertInvalid();
