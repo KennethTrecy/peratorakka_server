@@ -330,6 +330,49 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
+    public function testPartiallyUnownedCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currencyA = $currency_fabricator->create();
+        $currency_fabricator->setOverrides([
+            "user_id" => $another_user->id
+        ]);
+        $currencyB = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currencyA->id
+        ]);
+        $account = $account_fabricator->create();
+        $account_fabricator->setOverrides([
+            "currency_id" => $currencyB->id
+        ]);
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v1/modifiers", [
+                "modifier" => $modifier->toArray()
+            ]);
+
+        $result->assertInvalid();
+        $result->assertJSONFragment([
+            "errors" => []
+        ]);
+    }
+
     public function testInvalidUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
