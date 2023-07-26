@@ -8,6 +8,7 @@ use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 use App\Models\CurrencyModel;
 use App\Models\AccountModel;
 use App\Models\ModifierModel;
+use App\Models\FinancialEntryModel;
 
 class FinancialEntryTest extends AuthenticatedHTTPTestCase
 {
@@ -31,7 +32,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "account_id" => $account->id,
             "opposite_account_id" => $opposite_account->id
         ]);
-        $modifiers = $modifier_fabricator->create(10);
+        $modifiers = $modifier_fabricator->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
 
         $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries");
 
@@ -39,7 +45,8 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $result->assertJSONExact([
             "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
             "currencies" => [ $currency ],
-            "financial_entries" => json_decode(json_encode($modifiers)),
+            "financial_entry" => json_decode(json_encode($financial_entry)),
+            "modifiers" => json_decode(json_encode($modifiers)),
         ]);
     }
 
@@ -261,6 +268,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "accounts" => [],
             "currencies" => [],
             "financial_entries" => [],
+            "modifiers" => [],
         ]);
     }
 
