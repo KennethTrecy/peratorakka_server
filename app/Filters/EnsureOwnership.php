@@ -52,7 +52,7 @@ class EnsureOwnership implements FilterInterface
                 "errors" => [
                     [
                         "message" => $request->getServer("CI_ENVIRONMENT") === "development"
-                            ? "A owned resource model and search mode allows to check ownership."
+                            ? "An owned resource model and search mode allows to check ownership."
                             : "Please contact the developer because there is an error."
                     ]
                 ]
