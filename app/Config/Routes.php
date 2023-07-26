@@ -103,10 +103,13 @@ function make_owned_resource_routes(
 
 use App\Controllers\AccountController;
 use App\Controllers\CurrencyController;
+use App\Controllers\FinancialEntryController;
 use App\Controllers\ModifierController;
+
 make_owned_resource_routes($routes, CurrencyController::class);
 make_owned_resource_routes($routes, AccountController::class);
 make_owned_resource_routes($routes, ModifierController::class);
+make_owned_resource_routes($routes, FinancialEntryController::class);
 
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
