@@ -29,44 +29,76 @@ $routes->set404Override();
  * --------------------------------------------------------------------
  */
 
-function make_owned_resource_routes(RouteCollection $routes, string $controller) {
+function make_owned_resource_routes(
+    RouteCollection $routes,
+    string $controller,
+    array $accessible_operations = [
+        "forceDelete",
+        "show",
+        "update",
+        "delete",
+        "restore",
+        "index",
+        "create"
+    ]
+) {
     $owned_resource_info = $controller::getInfo();
     $collective_name = $owned_resource_info->getCollectiveName();
     $model_name = $owned_resource_info->getModelName();
+    $possible_operations = [
+        "forceDelete" => [
+            "http_method" => "delete",
+            "uri" => "/api/v1/$collective_name/(:num)/force",
+            "search_mode_options" => [ SEARCH_WITH_DELETED, 4 ]
+        ],
+        "show" => [
+            "http_method" => "get",
+            "uri" => "/api/v1/$collective_name/(:num)",
+            "search_mode_options" => [ SEARCH_WITH_DELETED ]
+        ],
+        "update" => [
+            "http_method" => "put",
+            "uri" => "/api/v1/$collective_name/(:num)",
+            "search_mode_options" => [ SEARCH_NORMALLY ]
+        ],
+        "delete" => [
+            "http_method" => "delete",
+            "uri" => "/api/v1/$collective_name/(:num)",
+            "search_mode_options" => [ SEARCH_NORMALLY ]
+        ],
+        "restore" => [
+            "http_method" => "patch",
+            "uri" => "/api/v1/$collective_name/(:num)",
+            "search_mode_options" => [ SEARCH_ONLY_DELETED ]
+        ],
+        "index" => [
+            "http_method" => "get",
+            "uri" => "/api/v1/$collective_name"
+        ],
+        "create" => [
+            "http_method" => "post",
+            "uri" => "/api/v1/$collective_name"
+        ]
+    ];
 
-    $routes->delete("/api/v1/$collective_name/(:num)/force", [ $controller, "forceDelete" ], [
-        "filter" => "ensure_ownership:".implode(",", [
-            $model_name,
-            SEARCH_WITH_DELETED,
-            4
-        ])
-    ]);
-    $routes->get("/api/v1/$collective_name/(:num)", [ $controller, "show" ], [
-        "filter" => "ensure_ownership:".implode(",", [
-            $model_name,
-            SEARCH_WITH_DELETED
-        ])
-    ]);
-    $routes->put("/api/v1/$collective_name/(:num)", [ $controller, "update" ], [
-        "filter" => "ensure_ownership:".implode(",", [
-            $model_name,
-            SEARCH_NORMALLY
-        ])
-    ]);
-    $routes->delete("/api/v1/$collective_name/(:num)", [ $controller, "delete" ], [
-        "filter" => "ensure_ownership:".implode(",", [
-            $model_name,
-            SEARCH_NORMALLY
-        ])
-    ]);
-    $routes->patch("/api/v1/$collective_name/(:num)", [ $controller, "restore" ], [
-        "filter" => "ensure_ownership:".implode(",", [
-            $model_name,
-            SEARCH_ONLY_DELETED
-        ])
-    ]);
-    $routes->get("/api/v1/$collective_name", [ $controller, "index" ]);
-    $routes->post("/api/v1/$collective_name", [ $controller, "create" ]);
+    $remaining_operations = array_intersect_key(
+        $possible_operations,
+        array_flip($accessible_operations)
+    );
+    foreach ($remaining_operations as $controller_method => $route_info) {
+        $HTTP_method = $route_info["http_method"];
+        $URI = $route_info["uri"];
+        if (isset($route_info["search_mode_options"])) {
+            $routes->$HTTP_method($URI, [ $controller, $controller_method ], [
+                "filter" => "ensure_ownership:".implode(",", [
+                    $model_name,
+                    ...$route_info["search_mode_options"]
+                ])
+            ]);
+        } else {
+            $routes->$HTTP_method($URI, [ $controller, $controller_method ]);
+        }
+    }
 }
 
 use App\Controllers\AccountController;
