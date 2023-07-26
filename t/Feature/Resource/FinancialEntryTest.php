@@ -45,7 +45,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $result->assertJSONExact([
             "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
             "currencies" => [ $currency ],
-            "financial_entry" => json_decode(json_encode($financial_entry)),
+            "financial_entries" => json_decode(json_encode($financial_entry)),
             "modifiers" => json_decode(json_encode([ $modifier ])),
         ]);
     }
