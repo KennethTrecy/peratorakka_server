@@ -23,7 +23,7 @@ class SimilarityRules {
             || is_null(dot_array_search($parameters[1], $data))
         ) {
             $error = '"{0}" needs a key to modifier ID and key to credit value'
-                .'to check the required similarity for {field}.';
+                .' to check the required similarity for {field}.';
             return false;
         }
 
@@ -47,18 +47,17 @@ class SimilarityRules {
 
         if (
             count($parameters) < 2
-            || is_null(dot_array_search($parameters[0], $data))
             || is_null(dot_array_search($parameters[1], $data))
         ) {
             $error = '"{0}" needs a key to financial entry ID and key to credit value'
-                .'to check the required similarity for {field}.';
+                .' to check the required similarity for {field}.';
             return false;
         }
 
         $credit_value = dot_array_search($parameters[1], $data);
         if ($credit_value === $debit_value) return true;
 
-        $financial_entry_id = dot_array_search($parameters[0], $data);
+        $financial_entry_id = intval($parameters[0]);
         $financial_entry = model(FinancialEntryModel::class)->find($financial_entry_id);
         $modifier_id = $financial_entry->modifier_id;
 
