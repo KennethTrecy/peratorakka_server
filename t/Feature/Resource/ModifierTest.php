@@ -231,14 +231,21 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
-        model(AccountModel::class)->delete($account->id);
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        model(ModifierModel::class)->delete($modifier->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/modifiers/$account->id/force");
+            ->delete("/api/v1/modifiers/$modifier->id/force");
 
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "accounts", []);
+        $this->seeNumRecords(0, "modifiers", []);
     }
 
     public function testEmptyIndex()
@@ -485,12 +492,19 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/modifiers/$account->id/force");
+            ->delete("/api/v1/modifiers/$modifier->id/force");
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "accounts", []);
+        $this->seeNumRecords(0, "modifiers", []);
     }
 
     public function testDoubleForceDelete()
@@ -508,13 +522,20 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
-        model(AccountModel::class)->delete($account->id, true);
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        model(ModifierModel::class)->delete($modifier->id, true);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/modifiers/$account->id/force");
+            ->delete("/api/v1/modifiers/$modifier->id/force");
 
         $result->assertNotFound();
-        $this->seeNumRecords(0, "accounts", []);
+        $this->seeNumRecords(0, "modifiers", []);
     }
 }
