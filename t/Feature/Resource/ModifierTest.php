@@ -101,7 +101,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/modifiers", [
-                "modifier" => $account->toArray()
+                "modifier" => $modifier->toArray()
             ]);
 
         $result->assertOk();
