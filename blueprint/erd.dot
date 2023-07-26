@@ -441,25 +441,29 @@ digraph {
 		rank = source;
 		timeout_events
 		interval_events
-		event_started_times
 		users
 	}
 
 	{
 		rank = same;
-		currencies
 		events
 	}
 
 	{
 		rank = same;
-		accounts
+		currencies
 		reactive_modifiers
 	}
 
 	{
 		rank = same;
+		accounts
+	}
+
+	{
+		rank = same;
 		modifiers
+		event_started_times
 	}
 
 	{
