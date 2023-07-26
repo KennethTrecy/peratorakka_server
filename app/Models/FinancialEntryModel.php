@@ -47,7 +47,7 @@ class FinancialEntryModel extends BaseResourceModel
         return $query_builder
             ->whereIn(
                 "modifier_id",
-                model(ModifiertModel::class, false)
+                model(ModifierModel::class, false)
                     ->builder()
                     ->select("id")
                     ->whereIn("account_id", $account_subquery)
