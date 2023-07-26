@@ -161,17 +161,24 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/modifiers/$account->id");
+            ->delete("/api/v1/modifiers/$modifier->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("accounts", array_merge(
-            [ "id" => $account->id ]
+        $this->seeInDatabase("modifiers", array_merge(
+            [ "id" => $modifier->id ]
         ));
-        $this->dontSeeInDatabase("accounts", [
-            "id" => $account->id,
+        $this->dontSeeInDatabase("modifiers", [
+            "id" => $modifier->id,
             "deleted_at" => null
         ]);
     }
@@ -363,16 +370,23 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/modifiers/$account->id");
+            ->delete("/api/v1/modifiers/$modifier->id");
 
         $result->assertNotFound();
-        $this->seeInDatabase("accounts", array_merge(
-            [ "id" => $account->id ]
+        $this->seeInDatabase("modifiers", array_merge(
+            [ "id" => $modifier->id ]
         ));
-        $this->seeInDatabase("accounts", [
+        $this->seeInDatabase("modifiers", [
             "id" => $account->id,
             "deleted_at" => null
         ]);
@@ -393,18 +407,25 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "currency_id" => $currency->id
         ]);
         $account = $account_fabricator->create();
-        model(AccountModel::class)->delete($account->id);
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        model(ModifierModel::class)->delete($modifier->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/modifiers/$account->id");
+            ->delete("/api/v1/modifiers/$modifier->id");
 
         $result->assertNotFound();
-        $this->seeInDatabase("accounts", array_merge(
-            [ "id" => $account->id ]
+        $this->seeInDatabase("modifiers", array_merge(
+            [ "id" => $modifier->id ]
         ));
-        $this->dontSeeInDatabase("accounts", [
-            "id" => $account->id,
+        $this->dontSeeInDatabase("modifiers", [
+            "id" => $modifier->id,
             "deleted_at" => null
         ]);
     }
