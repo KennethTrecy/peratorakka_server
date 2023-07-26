@@ -116,7 +116,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ));
     }
 
-    public function DefaultDelete()
+    public function testDefaultDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -125,17 +125,22 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/accounts/$currency->id");
+            ->delete("/api/v1/accounts/$account->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency->id ]
+        $this->seeInDatabase("accounts", array_merge(
+            [ "id" => $account->id ]
         ));
-        $this->dontSeeInDatabase("currencies", [
-            "id" => $currency->id,
+        $this->dontSeeInDatabase("accounts", [
+            "id" => $account->id,
             "deleted_at" => null
         ]);
     }
@@ -281,7 +286,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function UnownedDelete()
+    public function testUnownedDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -291,22 +296,27 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/accounts/$currency->id");
+            ->delete("/api/v1/accounts/$account->id");
 
         $result->assertNotFound();
-        $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency->id ]
+        $this->seeInDatabase("accounts", array_merge(
+            [ "id" => $account->id ]
         ));
-        $this->seeInDatabase("currencies", [
-            "id" => $currency->id,
+        $this->seeInDatabase("accounts", [
+            "id" => $account->id,
             "deleted_at" => null
         ]);
     }
 
-    public function DoubleDelete()
+    public function testDoubleDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -316,18 +326,23 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
-        model(CurrencyModel::class)->delete($currency->id);
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        model(AccountModel::class)->delete($account->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/accounts/$currency->id");
+            ->delete("/api/v1/accounts/$account->id");
 
         $result->assertNotFound();
-        $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency->id ]
+        $this->seeInDatabase("accounts", array_merge(
+            [ "id" => $account->id ]
         ));
-        $this->dontSeeInDatabase("currencies", [
-            "id" => $currency->id,
+        $this->dontSeeInDatabase("accounts", [
+            "id" => $account->id,
             "deleted_at" => null
         ]);
     }
