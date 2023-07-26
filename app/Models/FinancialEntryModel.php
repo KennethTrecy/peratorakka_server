@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use DateTimeInterface;
+
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
@@ -25,7 +27,7 @@ class FinancialEntryModel extends BaseResourceModel
     {
         $amount = $faker->regexify('\d{5}\.\d{3}');
         return [
-            "transacted_at"  => Time::now(),
+            "transacted_at"  => Time::now()->toDateTimeString(),
             "debit_amount"  => $amount,
             "credit_amount"  => $amount,
             "remarks"  => $faker->paragraph(),
