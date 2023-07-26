@@ -2,11 +2,9 @@
 
 namespace App\Entities;
 
-use CodeIgniter\Entity\Entity;
-
 use App\Casts\AccountKind;
 
-class Account extends Entity
+class Account extends BaseResourceEntity
 {
     protected $datamap = [];
 
