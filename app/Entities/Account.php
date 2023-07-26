@@ -8,12 +8,6 @@ class Account extends BaseResourceEntity
 {
     protected $datamap = [];
 
-    protected $dates = [
-        "created_at",
-        "updated_at",
-        "deleted_at"
-    ];
-
     protected $casts = [
         "id" => "integer",
         "currency_id" => "integer",
