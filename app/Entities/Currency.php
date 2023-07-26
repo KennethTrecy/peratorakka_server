@@ -20,4 +20,22 @@ class Currency extends Entity
         "code" => "string",
         "name" => "string"
     ];
+
+    public function toArray(
+        bool $onlyChanged = false,
+        bool $cast = true,
+        bool $recursive = false
+    ): array {
+        $array_entity = parent::toArray($onlyChanged, $cast, $recursive);
+
+        foreach ($this->dates as $date_property) {
+            if (isset($array_entity[$date_property])) {
+                $array_entity[$date_property] = $array_entity[$date_property]
+                    ->setTimezone("UTC")
+                    ->toDateTimeString();
+            }
+        }
+
+        return $array_entity;
+    }
 }
