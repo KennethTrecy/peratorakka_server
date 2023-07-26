@@ -72,6 +72,6 @@ class SimilarityRules {
 
         // If the accounts are not in the same currency, allow the debit and credit amount to be
         // different.
-        return $account[0]->currency_id !== $account[1]->currency_id;
+        return $accounts[0]->currency_id !== $accounts[1]->currency_id;
     }
 }
