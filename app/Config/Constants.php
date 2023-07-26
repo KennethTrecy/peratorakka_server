@@ -145,3 +145,22 @@ define("ACCOUNT_KINDS", [
     UNKNOWN_ACCOUNT_KIND,
     ...ACCEPTABLE_ACCOUNT_KINDS
 ]);
+
+
+/*
+ | --------------------------------------------------------------------------
+ | Result side
+ | --------------------------------------------------------------------------
+ |
+ | There are only two result sides.
+ |
+ | - DEBIT_SIDE. In adds or subtracts a value from a specific account depending on its kind.
+ | - CREDIT_SIDE. It has inverse effect of the debit side.
+ */
+define("DEBIT_SIDE", "debit");
+define("CREDIT_SIDE", "credit");
+
+define("RESULT_SIDE", [
+    DEBIT_SIDE,
+    CREDIT_SIDE
+]);
