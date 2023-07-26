@@ -107,7 +107,7 @@ class ModifierController extends BaseOwnedResourceController
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
-        $validation->setRule($individual_name, "account info", [
+        $validation->setRule($individual_name, "modifier info", [
             "required"
         ]);
         $validation->setRule("$individual_name.description", "description", [
