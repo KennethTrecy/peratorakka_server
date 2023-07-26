@@ -24,7 +24,7 @@ class RegisterTest extends HTTPTestCase
         ])->post("register", $user_data);
 
         $result->assertRedirect();
-        sleep(1);
+        sleep(2);
         $this->seeInDatabase("users", [
             "username" => $user_data["username"]
         ]);
