@@ -38,6 +38,12 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
+    private static function enrichAndOrganizeResponseDocument(array $initial_document): array {
+        $enriched_document = static::enrichResponseDocument($initial_document);
+        ksort($enriched_document);
+        return $enriched_document;
+    }
+
     public function index()
     {
         $current_user = auth()->user();
@@ -49,7 +55,7 @@ abstract class BaseOwnedResourceController extends BaseController
                 ->limitSearchToUser($model, $current_user)
                 ->findAll()
         ];
-        $response_document = static::enrichResponseDocument($response_document);
+        $response_document = static::enrichAndOrganizeResponseDocument($response_document);
 
         return response()->setJSON($response_document);
     }
@@ -66,7 +72,7 @@ abstract class BaseOwnedResourceController extends BaseController
             $response_document = [
                 static::getIndividualName() => $model->find($id)
             ];
-            $response_document = static::enrichResponseDocument($response_document);
+            $response_document = static::enrichAndOrganizeResponseDocument($response_document);
 
             return response()->setJSON($response_document);
         } else {
