@@ -145,7 +145,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultRestore()
+    public function testDefaultRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -154,15 +154,20 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        model(CurrencyModel::class)->delete($currency->id);
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        model(AccountModel::class)->delete($account->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/accounts/$currency->id");
+            ->patch("/api/v1/accounts/$account->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("currencies", [
-            "id" => $currency->id,
+        $this->seeInDatabase("accounts", [
+            "id" => $account->id,
             "deleted_at" => null
         ]);
     }
@@ -347,7 +352,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DoubleRestore()
+    public function testDoubleRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -357,14 +362,19 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/accounts/$currency->id");
+            ->patch("/api/v1/accounts/$account->id");
 
         $result->assertNotFound();
-        $this->seeInDatabase("currencies", [
-            "id" => $currency->id,
+        $this->seeInDatabase("accounts", [
+            "id" => $account->id,
             "deleted_at" => null
         ]);
     }
