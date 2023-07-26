@@ -6,7 +6,7 @@ use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
-use App\Models\CurrencyMode;
+use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
 
 class ModifierController extends BaseOwnedResourceController
