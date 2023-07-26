@@ -2,20 +2,8 @@
 
 namespace App\Casts;
 
-use CodeIgniter\Entity\Cast\BaseCast;
-
-class AccountKind extends BaseCast
+class AccountKind extends UnknownableKind
 {
-    public static function get($value, array $params = [])
-    {
-        return isset(ACCOUNT_KINDS[$value])
-            ? ACCOUNT_KINDS[$value]
-            : UNKNOWN_ACCOUNT_KIND;
-    }
-
-    public static function set($value, array $params = [])
-    {
-        $index = array_search($value, ACCOUNT_KINDS, true);
-        return max(0, $index);
-    }
+    protected static array $KINDS = ACCOUNT_KINDS;
+    protected static string $UNKNOWN_KIND = UNKNOWN_ACCOUNT_KIND;
 }
