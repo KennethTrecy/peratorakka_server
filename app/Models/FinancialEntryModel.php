@@ -27,7 +27,7 @@ class FinancialEntryModel extends BaseResourceModel
         return [
             "transacted_at"  => Time::now(),
             "debit_amount"  => $amount,
-            "crebit_amount"  => $amount,
+            "credit_amount"  => $amount,
             "remarks"  => $faker->paragraph(),
         ];
     }
