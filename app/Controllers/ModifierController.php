@@ -9,7 +9,7 @@ use App\Models\AccountModel;
 use App\Models\CurrencyMode;
 use App\Models\ModifierModel;
 
-class AccountController extends BaseOwnedResourceController
+class ModifierController extends BaseOwnedResourceController
 {
     protected static function getIndividualName(): string {
         return "modifier";
