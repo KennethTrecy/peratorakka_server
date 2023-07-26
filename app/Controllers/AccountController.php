@@ -38,6 +38,8 @@ class AccountController extends BaseOwnedResourceController
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
+            "min_length[3]",
+            "max_length[255]",
             "alpha_numeric_space",
             "is_unique[$table_name.name]"
         ]);
@@ -52,6 +54,8 @@ class AccountController extends BaseOwnedResourceController
 
         $validation->setRule("$individual_name.name", "name", [
             "required",
+            "min_length[3]",
+            "max_length[255]",
             "alpha_numeric_space",
             "is_unique[$table_name.name,id,$id]"
         ]);
@@ -88,10 +92,13 @@ class AccountController extends BaseOwnedResourceController
         ]);
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
+            "max_length[500]",
             "alpha_numeric_punct"
         ]);
         $validation->setRule("$individual_name.kind", "description", [
             "required",
+            "min_length[3]",
+            "max_length[255]",
             "alpha",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]"
         ]);

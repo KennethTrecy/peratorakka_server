@@ -28,11 +28,15 @@ class CurrencyController extends BaseOwnedResourceController
 
         $validation->setRule("$individual_name.code", "code", [
             "required",
+            "min_length[2]",
+            "max_length[255]",
             "alpha_numeric",
             "is_unique[$table_name.code]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
+            "min_length[2]",
+            "max_length[255]",
             "alpha_numeric_space",
             "is_unique[$table_name.name]"
         ]);
@@ -47,11 +51,15 @@ class CurrencyController extends BaseOwnedResourceController
 
         $validation->setRule("$individual_name.code", "code", [
             "required",
+            "min_length[2]",
+            "max_length[255]",
             "alpha_numeric",
             "is_unique[$table_name.code,id,$id]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
+            "min_length[2]",
+            "max_length[255]",
             "alpha_numeric_space",
             "is_unique[$table_name.name,id,$id]"
         ]);
