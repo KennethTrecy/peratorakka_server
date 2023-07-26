@@ -31,7 +31,10 @@ class AccountController extends BaseOwnedResourceController
         $validation->setRule("$individual_name.currency_id", "currency", [
             "required",
             "is_natural_no_zero",
-            "is_unique[$currency_table_name.id]"
+            "ensure_ownership[".implode(",", [
+                CurrencyModel::class,
+                SEARCH_NORMALLY
+            ])."]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
