@@ -82,8 +82,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "account" => $account->toArray(),
-            "currencies" => []
+            "account" => $account->toArray()
         ]);
     }
 

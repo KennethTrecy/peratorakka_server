@@ -101,7 +101,6 @@ abstract class BaseOwnedResourceController extends BaseController
                                 $info
                             )
                         ];
-                        $response_document = static::enrichResponseDocument($response_document);
 
                         return $controller->respondCreated()->setJSON($response_document);
                     }
