@@ -11,7 +11,7 @@ use App\Models\ModifierModel;
 
 class ModifierTest extends AuthenticatedHTTPTestCase
 {
-    public function DefaultIndex()
+    public function testDefaultIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -24,18 +24,26 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $accounts = $account_fabricator->create(10);
+        $account = $account_fabricator->create();
+        $opposite_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "account_id" => $account->id,
+            "opposite_account_id" => $opposite_account->id
+        ]);
+        $modifiers = $modifier_fabricator->create(10);
 
         $result = $authenticated_info->getRequest()->get("/api/v1/modifiers");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => json_decode(json_encode($accounts)),
+            "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
             "currencies" => [ $currency ],
+            "modifiers" => json_decode(json_encode($modifiers)),
         ]);
     }
 
-    public function DefaultShow()
+    public function testDefaultShow()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -59,7 +67,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultCreate()
+    public function testDefaultCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -87,7 +95,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultUpdate()
+    public function testDefaultUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -117,7 +125,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ));
     }
 
-    public function DefaultDelete()
+    public function testDefaultDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -146,7 +154,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultRestore()
+    public function testDefaultRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -173,7 +181,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultForceDelete()
+    public function testDefaultForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -197,7 +205,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $this->seeNumRecords(0, "accounts", []);
     }
 
-    public function EmptyIndex()
+    public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -207,10 +215,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $result->assertJSONExact([
             "accounts" => [],
             "currencies" => [],
+            "modifiers" => [],
         ]);
     }
 
-    public function MissingShow()
+    public function testMissingShow()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -234,7 +243,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function InvalidCreate()
+    public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -264,7 +273,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function InvalidUpdate()
+    public function testInvalidUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -297,7 +306,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function UnownedDelete()
+    public function testUnownedDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -327,7 +336,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DoubleDelete()
+    public function testDoubleDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -358,7 +367,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DoubleRestore()
+    public function testDoubleRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
@@ -385,7 +394,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function ImmediateForceDelete()
+    public function testImmediateForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -407,7 +416,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $this->seeNumRecords(0, "accounts", []);
     }
 
-    public function DoubleForceDelete()
+    public function testDoubleForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
