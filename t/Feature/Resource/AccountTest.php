@@ -63,7 +63,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
+        $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
@@ -86,7 +86,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function DefaultUpdate()
+    public function testDefaultUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -95,18 +95,23 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $new_details = $currency_fabricator->make();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        $new_details = $account_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/accounts/$currency->id", [
-                "currency" => $new_details->toArray()
+            ->put("/api/v1/accounts/$account->id", [
+                "account" => $new_details->toArray()
             ]);
 
         $result->assertStatus(204);
-        $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency->id ],
+        $this->seeInDatabase("accounts", array_merge(
+            [ "id" => $account->id ],
             $new_details->toArray()
         ));
     }
@@ -219,7 +224,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
+        $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
@@ -243,7 +248,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
-    public function InvalidUpdate()
+    public function testInvalidUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -252,16 +257,22 @@ class AccountTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
-        $currency_fabricator->setOverrides([
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $account = $account_fabricator->create();
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "name" => "@only alphanumeric characters only"
         ]);
-        $new_details = $currency_fabricator->make();
+        $new_details = $account_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/accounts/$currency->id", [
-                "currency" => $new_details->toArray()
+            ->put("/api/v1/accounts/$account->id", [
+                "account" => $new_details->toArray()
             ]);
 
         $result->assertInvalid();
