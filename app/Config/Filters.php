@@ -8,6 +8,7 @@ use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\SecureHeaders;
+use Fluent\Cors\Filters\CorsFilter;
 
 use App\Filters\EnsureOwnership;
 
@@ -18,12 +19,13 @@ class Filters extends BaseConfig
      * make reading things nicer and simpler.
      */
     public array $aliases = [
-        "csrf"          => CSRF::class,
-        "toolbar"       => DebugToolbar::class,
-        "honeypot"      => Honeypot::class,
-        "invalidchars"  => InvalidChars::class,
+        "csrf" => CSRF::class,
+        "toolbar" => DebugToolbar::class,
+        "honeypot" => Honeypot::class,
+        "invalidchars" => InvalidChars::class,
         "secureheaders" => SecureHeaders::class,
         "ensure_ownership" => EnsureOwnership::class,
+        "cors" => CorsFilter::class,
     ];
 
     /**
@@ -43,9 +45,11 @@ class Filters extends BaseConfig
                     "auth/a/*"
                 ]
             ],
+            "cors",
         ],
         "after" => [
             "toolbar",
+            "cors",
             // "honeypot",
             // "secureheaders",
         ],
