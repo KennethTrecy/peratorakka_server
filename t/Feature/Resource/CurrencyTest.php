@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Authentication;
+namespace Tests\Feature\Resource;
 
 use CodeIgniter\Test\Fabricator;
 
