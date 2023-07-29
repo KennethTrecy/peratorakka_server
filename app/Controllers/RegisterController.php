@@ -16,6 +16,15 @@ class RegisterController extends BaseRegisterController {
 
         $errors = $session->getFlashdata("errors");
         if (is_null($errors)) {
+            $message = $session->getFlashdata("message");
+            if (is_null($message)) {
+                $new_response = $new_response->setJSON([
+                    "meta" => [
+                        "message" => $message
+                    ]
+                ]);
+            }
+
             $new_response = $new_response->setStatusCode(200);
         } else {
             $new_response = $new_response
