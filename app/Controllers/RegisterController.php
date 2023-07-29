@@ -14,8 +14,8 @@ class RegisterController extends BaseRegisterController {
 
         $new_response = response();
 
-        $errors = $session->getFlashdata("errors");
-        if (is_null($errors)) {
+        $raw_errors = $session->getFlashdata("errors");
+        if (is_null($raw_errors)) {
             $message = $session->getFlashdata("message");
             if (is_null($message)) {
                 $new_response = $new_response->setJSON([
@@ -27,10 +27,19 @@ class RegisterController extends BaseRegisterController {
 
             $new_response = $new_response->setStatusCode(200);
         } else {
+            $formalized_errors = [];
+
+            foreach ($raw_errors as $field => $message) {
+                array_push($formalized_errors, [
+                    "field" => $field,
+                    "message" => $message
+                ]);
+            }
+
             $new_response = $new_response
                 ->setStatusCode(401)
                 ->setJSON([
-                    "errors" => $errors
+                    "errors" => $formalized_errors
                 ]);
         }
 
