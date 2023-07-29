@@ -6,6 +6,8 @@ namespace Config;
 
 use CodeIgniter\Shield\Config\AuthRoutes as ShieldAuthRoutes;
 
+use App\Controllers\RegisterController;
+
 class AuthRoutes extends ShieldAuthRoutes
 {
     public array $routes = [
@@ -19,7 +21,7 @@ class AuthRoutes extends ShieldAuthRoutes
             [
                 "post",
                 "register",
-                "RegisterController::registerAction",
+                [ RegisterController::class, "customRegisterAction" ],
             ],
         ],
         "login" => [
