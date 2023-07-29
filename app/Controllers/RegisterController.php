@@ -33,9 +33,8 @@ class RegisterController extends BaseRegisterController {
         $raw_errors = $session->getFlashdata("errors");
         if (is_null($raw_errors)) {
             $message = $session->getFlashdata("message");
-            if (is_null($message)) {
+            if (!is_null($message)) {
                 $new_response = $new_response
-                    ->setStatusCode(201)
                     ->setJSON([
                         "meta" => [
                             "message" => $message
@@ -43,7 +42,7 @@ class RegisterController extends BaseRegisterController {
                     ]);
             }
 
-            $new_response = $new_response->setStatusCode(200);
+            $new_response = $new_response->setStatusCode(201);
         } else {
             $formalized_errors = [];
 
