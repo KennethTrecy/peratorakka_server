@@ -7,6 +7,7 @@ namespace Config;
 use CodeIgniter\Shield\Config\AuthRoutes as ShieldAuthRoutes;
 
 use App\Controllers\RegisterController;
+use App\Controllers\LoginController;
 
 class AuthRoutes extends ShieldAuthRoutes
 {
@@ -34,7 +35,7 @@ class AuthRoutes extends ShieldAuthRoutes
             [
                 "post",
                 "login",
-                "LoginController::loginAction",
+                [ LoginController::class, "customLoginAction" ],
             ],
         ],
         "magic-link" => [
