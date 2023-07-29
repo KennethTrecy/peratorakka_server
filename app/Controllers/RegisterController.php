@@ -2,17 +2,33 @@
 
 namespace App\Controllers;
 
+// use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
-use \CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
+use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
 
+// use Config\App;
+use Config\Services;
 
 class RegisterController extends BaseRegisterController {
     public function customRegisterAction(): ResponseInterface {
         $session = session();
+        $_POST = array_merge($_POST, $this->request->getJSON(true));
+        Services::resetSingle("request");
+
+        // Uncomment if the rebuilding request from new instance is preferred.
+        // Do not forget to use necessary classes.
+        // $this->request = new IncomingRequest(
+        //     new App(),
+        //     $this->request->getUri(),
+        //     $this->request->getJSON(true),
+        //     $this->request->getUserAgent()
+        // );
+        $this->request = service("request");
+
         $original_response = parent::registerAction();
 
-        $new_response = response();
+        $new_response = $this->response;
 
         $raw_errors = $session->getFlashdata("errors");
         if (is_null($raw_errors)) {
