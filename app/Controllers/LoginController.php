@@ -26,22 +26,19 @@ class LoginController extends BaseLoginController {
         // );
         $this->request = service("request");
 
-        $original_response = parent::loginAction();
+        $original_response = $this->loginAction();
 
-        $new_response = $this->response;
+        $new_response = $original_response->removeHeader("Location");
 
-        $raw_errors = $session->getFlashdata("errors");
-        if (is_null($raw_errors)) {
+        $raw_error = $session->getFlashdata("error");
+        if (is_null($raw_error)) {
             $new_response = $new_response->setStatusCode(200);
         } else {
-            $formalized_errors = [];
-
-            foreach ($raw_errors as $field => $message) {
-                array_push($formalized_errors, [
-                    "field" => $field,
-                    "message" => $message
-                ]);
-            }
+            $formalized_errors = [
+                [
+                    "message" => $raw_error
+                ]
+            ];
 
             $new_response = $new_response
                 ->setStatusCode(401)
