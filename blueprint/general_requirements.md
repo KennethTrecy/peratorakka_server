@@ -24,6 +24,6 @@ The requirements below must be implemented as soon as possible.
 12. The result of modifier has a side, either debit or credit. Therefore, it needs an opposite
     account too.
 13. An event can be deleted as long as it has no associated modifier.
-14. A user may have multiple financial statement periods.
-15. Each financial statement period have associated final calculation for each account.
-16. If a financial entry is within a financial statement period, it cannot be modified.
+14. A user may have multiple frozen periods.
+15. Each frozen period have associated final calculation for each account.
+16. If a financial entry is within a frozen period, it cannot be modified or removed.
