@@ -394,6 +394,79 @@ digraph {
 			</table>
 			>
 		]
+		frozen_periods [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Frozen Periods
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						started_at<br align="left"/>
+						finished_at<br align="left"/>
+					</td>
+					<td align="left">
+						datetime<br align="left"/>
+						datetime<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		summary_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Summary Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_period_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						debit_amount<br align="left"/>
+						crebit_amount<br align="left"/>
+					</td>
+					<td align="left">
+						string<br align="left"/>
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" ]
@@ -425,6 +498,8 @@ digraph {
 		events -> event_started_times
 		events -> reactive_modifiers
 		modifiers -> financial_entries
+		users -> frozen_periods
+		accounts -> summary_calculations
 	}
 
 	{
@@ -438,6 +513,16 @@ digraph {
 	}
 
 	{
+		// one to many
+		edge [
+			arrowhead = nonecrowtee
+			arrowtail = noneteetee
+		]
+
+		frozen_periods -> summary_calculations
+	}
+
+	{
 		rank = source;
 		timeout_events
 		interval_events
@@ -447,12 +532,14 @@ digraph {
 	{
 		rank = same;
 		events
+		frozen_periods
 	}
 
 	{
 		rank = same;
 		currencies
 		reactive_modifiers
+		summary_calculations
 	}
 
 	{
