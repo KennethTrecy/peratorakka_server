@@ -49,4 +49,34 @@ class LoginController extends BaseLoginController {
 
         return $new_response;
     }
+
+    public function customLogoutAction(): ResponseInterface {
+        $session = session();
+        $original_response = $this->logoutAction();
+
+        $new_response = $original_response->removeHeader("Location");
+
+        $raw_error = $session->getFlashdata("error");
+        if (is_null($raw_error)) {
+            $new_response = $new_response
+                ->setStatusCode(200)
+                ->setJSON([
+                    "message" => $session->getFlashdata("message")
+                ]);
+        } else {
+            $formalized_errors = [
+                [
+                    "message" => $raw_error
+                ]
+            ];
+
+            $new_response = $new_response
+                ->setStatusCode(401)
+                ->setJSON([
+                    "errors" => $formalized_errors
+                ]);
+        }
+
+        return $new_response;
+    }
 }

@@ -61,7 +61,7 @@ class AuthRoutes extends ShieldAuthRoutes
             [
                 "get",
                 "logout",
-                "LoginController::logoutAction",
+                [ LoginController::class, "customLogoutAction" ],
                 "logout", // Route name
             ],
         ],
