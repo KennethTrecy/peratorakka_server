@@ -11,6 +11,7 @@ use CodeIgniter\Filters\SecureHeaders;
 use Fluent\Cors\Filters\CorsFilter;
 
 use App\Filters\EnsureOwnership;
+use App\Filters\SessionAuth;
 
 class Filters extends BaseConfig
 {
@@ -26,6 +27,7 @@ class Filters extends BaseConfig
         "secureheaders" => SecureHeaders::class,
         "ensure_ownership" => EnsureOwnership::class,
         "cors" => CorsFilter::class,
+        "session" => SessionAuth::class
     ];
 
     /**
