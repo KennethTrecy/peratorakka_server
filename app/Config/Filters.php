@@ -27,7 +27,7 @@ class Filters extends BaseConfig
         "secureheaders" => SecureHeaders::class,
         "ensure_ownership" => EnsureOwnership::class,
         "cors" => CorsFilter::class,
-        "session" => SessionAuth::class
+        "custom_session" => SessionAuth::class
     ];
 
     /**
@@ -39,7 +39,7 @@ class Filters extends BaseConfig
             // "honeypot",
             // "csrf",
             // "invalidchars",
-            "session" => [
+            "custom_session" => [
                 "except" => [
                     "/",
                     "login*",
