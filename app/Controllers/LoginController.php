@@ -22,7 +22,6 @@ class LoginController extends BaseLoginController {
             return $this->respondNoContent();
         }
 
-        log_message("error", "user_id".json_encode(current_user_id));
         $_POST = array_merge($_POST, $this->request->getJSON(true));
         Services::resetSingle("request");
 
