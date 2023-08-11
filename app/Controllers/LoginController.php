@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\API\ResponseTrait;
 // use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -11,8 +12,17 @@ use CodeIgniter\Shield\Controllers\LoginController as BaseLoginController;
 use Config\Services;
 
 class LoginController extends BaseLoginController {
+    use ResponseTrait;
+
     public function customLoginAction(): ResponseInterface {
         $session = session();
+
+        $current_user_id = $session->get("user.id", null);
+        if (!is_null($current_user_id)) {
+            return $this->respondNoContent();
+        }
+
+        log_message("error", "user_id".json_encode(current_user_id));
         $_POST = array_merge($_POST, $this->request->getJSON(true));
         Services::resetSingle("request");
 
@@ -32,7 +42,7 @@ class LoginController extends BaseLoginController {
 
         $raw_error = $session->getFlashdata("error");
         if (is_null($raw_error)) {
-            $new_response = $new_response->setStatusCode(200);
+            $new_response = $new_response->setStatusCode(204);
         } else {
             $formalized_errors = [
                 [
