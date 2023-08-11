@@ -50,7 +50,7 @@ class Filters extends BaseConfig
             "cors",
         ],
         "after" => [
-            "toolbar",
+            // "toolbar",
             "cors",
             // "honeypot",
             // "secureheaders",
