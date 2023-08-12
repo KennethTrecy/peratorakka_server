@@ -13,7 +13,7 @@ use Config\Services;
 class RegisterController extends BaseRegisterController {
     public function customRegisterAction(): ResponseInterface {
         $session = session();
-        $_POST = array_merge($_POST, $this->request->getJSON(true));
+        $_POST = array_merge($_POST, $this->request->getJSON(true) ?? []);
         Services::resetSingle("request");
 
         // Uncomment if the rebuilding request from new instance is preferred.
