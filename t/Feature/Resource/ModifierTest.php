@@ -143,7 +143,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $result->assertStatus(204);
         $this->seeInDatabase("modifiers", array_merge(
             [ "id" => $modifier->id ],
-            $new_details->toArray()
+            $new_details->toRawArray()
         ));
     }
 

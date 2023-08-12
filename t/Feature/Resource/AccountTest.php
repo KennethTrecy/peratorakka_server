@@ -112,7 +112,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $result->assertStatus(204);
         $this->seeInDatabase("accounts", array_merge(
             [ "id" => $account->id ],
-            $new_details->toArray()
+            $new_details->toRawArray()
         ));
     }
 
