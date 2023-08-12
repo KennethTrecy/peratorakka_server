@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-
 class OwnedResourceInfo
 {
     private string $collective_name;

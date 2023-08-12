@@ -7,6 +7,7 @@ use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Controllers\BaseController;
+use App\Entities\BaseResourceEntity;
 
 abstract class BaseOwnedResourceController extends BaseController
 {
@@ -32,6 +33,11 @@ abstract class BaseOwnedResourceController extends BaseController
 
     protected static function getModel(): OwnedResource {
         return model(static::getModelName());
+    }
+
+    protected static function getEntity(): BaseResourceEntity {
+        $entityName = static::getModel()->returnType;
+        return new $entityName();
     }
 
     protected static function enrichResponseDocument(array $initial_document): array {
@@ -98,8 +104,9 @@ abstract class BaseOwnedResourceController extends BaseController
 
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
+                    $entity = static::getEntity()->fill($info);
 
-                    $is_success = $model->insert($info, false);
+                    $is_success = $model->save($entity);
                     if ($is_success) {
                         $response_document = [
                             static::getIndividualName() => array_merge(
@@ -129,9 +136,13 @@ abstract class BaseOwnedResourceController extends BaseController
                     $current_user = auth()->user();
 
                     $model = static::getModel();
-                    $info = static::prepareRequestData($request_data);
+                    $info = array_merge(
+                        static::prepareRequestData($request_data),
+                        [ "id" => $id ]
+                    );
+                    $entity = static::getEntity()->fill($info);
 
-                    $is_success = $model->update($id, $info);
+                    $is_success = $model->save($entity);
                     if ($is_success) {
                         return $controller->respondNoContent();
                     }
