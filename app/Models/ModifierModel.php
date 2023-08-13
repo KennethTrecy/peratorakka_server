@@ -12,11 +12,10 @@ class ModifierModel extends BaseResourceModel
     protected $table = "modifiers";
     protected $returnType = Modifier::class;
     protected $allowedFields = [
-        "account_id",
-        "opposite_account_id",
+        "debit_account_id",
+        "credit_account_id",
         "name",
         "description",
-        "result_side",
         "kind",
         "deleted_at"
     ];
@@ -26,7 +25,6 @@ class ModifierModel extends BaseResourceModel
         return [
             "name"  => $faker->unique()->firstName(),
             "description"  => $faker->paragraph(),
-            "result_side"  => $faker->randomElement(RESULT_SIDES),
             "kind"  => $faker->randomElement(ACCEPTABLE_MODIFIER_KINDS),
         ];
     }
@@ -44,7 +42,7 @@ class ModifierModel extends BaseResourceModel
             );
 
         return $query_builder
-            ->whereIn("account_id", $account_subquery)
-            ->whereIn("opposite_account_id", $account_subquery);
+            ->whereIn("debit_account_id", $account_subquery)
+            ->whereIn("credit_account_id", $account_subquery);
     }
 }
