@@ -84,9 +84,12 @@ class ModifierController extends BaseOwnedResourceController
             array_push($linked_accounts, $debit_account_id, $credit_account_id);
         }
 
-        $accounts = model(AccountModel::class)
-            ->whereIn("id", array_unique($linked_accounts))
-            ->findAll();
+        $accounts = [];
+        if (count($linked_accounts) > 0) {
+            $accounts = model(AccountModel::class)
+                ->whereIn("id", array_unique($linked_accounts))
+                ->findAll();
+        }
         $enriched_document["accounts"] = $accounts;
 
         $linked_currencies = [];
