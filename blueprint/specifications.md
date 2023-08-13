@@ -25,22 +25,22 @@ mechanism is dependent to the developer's preference.
    - Name
    - Description (optional)
    - Kind (enumeration)
-   - Unknown (to represent kinds in later versions in case the user downgraded)
-   - Asset
-   - Liability
-   - Equity
-   - Expense
-   - Income
+     - Unknown (to represent kinds in later versions in case the user downgraded)
+     - Asset
+     - Liability
+     - Equity
+     - Expense
+     - Income
 4. An event has the following information:
    - Primary ID
    - User ID
    - Name
    - Description (optional)
    - Kind (enumeration)
-   - Unknown (to represent kinds in later versions in case the user downgraded)
-   - Timeout
-   - Interval
-   - Manual
+     - Unknown (to represent kinds in later versions in case the user downgraded)
+     - Timeout
+     - Interval
+     - Manual
 5. A timeout event has the following information:
    - Primary ID
    - Event ID
@@ -55,27 +55,24 @@ mechanism is dependent to the developer's preference.
    - Started time
 8. A modifier has the following information:
    - Primary ID
-   - Account ID
-   - Opposite account ID
+   - Debit Account ID
+   - Credit account ID
    - Name
    - Description (optional)
-   - Result Side
-   - Debit
-   - Credit
    - Kind (enumeration)
-   - Unknown (to represent kinds in later versions in case the user downgraded)
-   - Reactive
-   - Dependent
-   - Manual Input
+     - Unknown (to represent kinds in later versions in case the user downgraded)
+     - Reactive
+     - Dependent
+     - Manual Input
 9. A reactive modifier has the following special information:
    - Primary ID
    - Modifier ID
    - Event ID
    - Operation
-   - Unknown (to represent kinds in later versions in case the user downgraded)
-   - Adder
-   - Multiplier
-   - Value
+     - Unknown (to represent kinds in later versions in case the user downgraded)
+     - Adder
+     - Multiplier
+     - Value
 10. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
     following special information:
     - Primary ID
