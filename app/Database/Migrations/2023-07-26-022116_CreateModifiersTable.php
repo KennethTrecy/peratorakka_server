@@ -15,11 +15,11 @@ class CreateModifiersTable extends Migration
                 "unsigned" => true,
                 "auto_increment" => true,
             ],
-            "account_id" => [
+            "debit_account_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
-            "opposite_account_id" => [
+            "credit_account_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
@@ -31,10 +31,6 @@ class CreateModifiersTable extends Migration
             "description" => [
                 "type" => "TEXT",
                 "null" => true,
-            ],
-            "result_side" => [
-                "type" => "INT",
-                "unsigned" => true,
             ],
             "kind" => [
                 "type" => "INT",
@@ -54,8 +50,8 @@ class CreateModifiersTable extends Migration
             ]
         ]);
         $this->forge->addPrimaryKey("id");
-        $this->forge->addForeignKey("account_id", "accounts", "id", "CASCADE", "CASCADE");
-        $this->forge->addForeignKey("opposite_account_id", "accounts", "id", "CASCADE", "CASCADE");
+        $this->forge->addForeignKey("debit_account_id", "accounts", "id", "CASCADE", "CASCADE");
+        $this->forge->addForeignKey("credit_account_id", "accounts", "id", "CASCADE", "CASCADE");
         $this->forge->createTable("modifiers");
     }
 
