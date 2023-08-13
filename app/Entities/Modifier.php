@@ -2,7 +2,6 @@
 
 namespace App\Entities;
 
-use App\Casts\ResultSide;
 use App\Casts\ModifierKind;
 
 class Modifier extends BaseResourceEntity
