@@ -95,9 +95,12 @@ class ModifierController extends BaseOwnedResourceController
             array_push($linked_currencies, $currency_id);
         }
 
-        $currencies = model(CurrencyModel::class)
-            ->whereIn("id", array_unique($linked_currencies))
-            ->findAll();
+        $currencies = [];
+        if (count($linked_currencies) > 0) {
+            $currencies = model(CurrencyModel::class)
+                ->whereIn("id", array_unique($linked_currencies))
+                ->findAll();
+        }
         $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
