@@ -18,11 +18,13 @@ The requirements below must be implemented as soon as possible.
 8. An account may have multiple modifiers.
 9. A modifier may be invoked after the results of other modifiers, react on an event, or manual
    input.
-11. An automated modifier can be one of the following operation:
+10. A modifier requires two accounts to represent the sides. One would be in the debit side and the
+    other is in the credit side.
+11. An automated modifier may have only one of the following operation:
     - Adder
     - Multiplier
-12. The result of modifier has a side, either debit or credit. Therefore, it needs an opposite
-    account too.
+12. Automated modifiers should only have accounts that has the same currency for simplicity.
+    Modifiers for manual input may allow accounts from different currencies.
 13. An event can be deleted as long as it has no associated modifier.
 14. A user may have multiple frozen periods.
 15. Each frozen period have associated final calculation for each account.
