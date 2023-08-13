@@ -67,7 +67,7 @@ class SimilarityRules {
     private function mayAllowForDualCurrency(int $modifier_id): bool {
         $modifier = model(ModifierModel::class)->find($modifier_id);
         $accounts = model(AccountModel::class)
-            ->whereIn("id", [ $modifier->account_id, $modifier->opposite_account_id ])
+            ->whereIn("id", [ $modifier->debit_account_id, $modifier->credit_account_id ])
             ->find();
 
         // If the accounts are not in the same currency, allow the debit and credit amount to be

@@ -88,9 +88,9 @@ class FinancialEntryController extends BaseOwnedResourceController
 
         $linked_accounts = [];
         foreach ($modifiers as $document) {
-            $account_id = $document->account_id;
-            $opposite_account_id = $document->opposite_account_id;
-            array_push($linked_accounts, $account_id, $opposite_account_id);
+            $debit_account_id = $document->debit_account_id;
+            $credit_account_id = $document->credit_account_id;
+            array_push($linked_accounts, $debit_account_id, $credit_account_id);
         }
 
         $accounts = model(AccountModel::class)
