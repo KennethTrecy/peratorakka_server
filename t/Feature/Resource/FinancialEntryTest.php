@@ -25,12 +25,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -43,7 +43,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
+            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
             "currencies" => [ $currency ],
             "financial_entries" => json_decode(json_encode($financial_entries)),
             "modifiers" => json_decode(json_encode([ $modifier ])),
@@ -63,12 +63,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -83,7 +83,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => json_decode(json_encode([ $account, $opposite_account ])),
+            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
             "currencies" => [ $currency ],
             "financial_entry" => json_decode(json_encode($financial_entry)),
             "modifier" => json_decode(json_encode($modifier)),
@@ -103,12 +103,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -143,12 +143,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -185,12 +185,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -226,12 +226,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -265,12 +265,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -316,12 +316,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -355,12 +355,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id,
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id,
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -397,15 +397,15 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
         ]);
-        $account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
         $account_fabricator->setOverrides([
             "currency_id" => $currencyB->id
         ]);
-        $opposite_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -442,15 +442,15 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
         ]);
-        $account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
         $account_fabricator->setOverrides([
             "currency_id" => $currencyB->id
         ]);
-        $opposite_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -489,15 +489,15 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
         ]);
-        $account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
         $account_fabricator->setOverrides([
             "currency_id" => $currencyB->id
         ]);
-        $opposite_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -532,12 +532,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -575,12 +575,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -617,12 +617,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -660,12 +660,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -698,12 +698,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -733,12 +733,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $account = $account_fabricator->create();
-        $opposite_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
-            "account_id" => $account->id,
-            "opposite_account_id" => $opposite_account->id
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
