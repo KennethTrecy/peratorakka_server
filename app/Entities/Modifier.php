@@ -11,16 +11,14 @@ class Modifier extends BaseResourceEntity
 
     protected $casts = [
         "id" => "integer",
-        "account_id" => "integer",
-        "opposite_account_id" => "integer",
+        "debit_account_id" => "integer",
+        "credit_account_id" => "integer",
         "name" => "string",
         "description" => "?string",
-        "result_side" => "side",
         "kind" => "modifier_kind"
     ];
 
     protected $castHandlers = [
-        "side" => ResultSide::class,
         "modifier_kind" => ModifierKind::class,
     ];
 }
