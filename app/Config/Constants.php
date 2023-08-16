@@ -148,6 +148,31 @@ define("ACCOUNT_KINDS", [
 
 /*
  | --------------------------------------------------------------------------
+ | Modifier Actions
+ | --------------------------------------------------------------------------
+ |
+ | There are different modifier actions that the system can handle.
+ | - UNKNOWN_MODIFIER_ACTION. A modifier with this action is not supported by the system at
+ |   the current version. This case may happen when the system downgraded.
+ | - RECORD_MODIFIER_ACTION. A modifier with this action can create normal journal entries.
+ | - CLOSE_MODIFIER_ACTION. A modifier with this action can create closing journal entries.
+ */
+define("UNKNOWN_MODIFIER_ACTION", "unknown");
+define("RECORD_MODIFIER_ACTION", "record");
+define("CLOSE_MODIFIER_ACTION", "close");
+
+define("ACCEPTABLE_MODIFIER_ACTIONS", [
+    RECORD_MODIFIER_ACTION,
+    CLOSE_MODIFIER_ACTION,
+]);
+
+define("MODIFIER_ACTIONS", [
+    UNKNOWN_MODIFIER_ACTION,
+    ...ACCEPTABLE_MODIFIER_ACTIONS
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Modifier Kinds
  | --------------------------------------------------------------------------
  |
