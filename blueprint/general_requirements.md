@@ -27,5 +27,8 @@ The requirements below must be implemented as soon as possible.
     Modifiers for manual input may allow accounts from different currencies.
 13. An event can be deleted as long as it has no associated modifier.
 14. A user may have multiple frozen periods.
-15. Each frozen period have associated final calculation for each account.
+15. Each frozen period have associated summarized calculation for each account.
+    - Unadjusted total would represent the result before including the closing financial entries in
+      calculation.
+    - Adjusted total would represent the result after including the closing financial entries.
 16. If a financial entry is within a frozen period, it cannot be modified or removed.
