@@ -59,6 +59,10 @@ mechanism is dependent to the developer's preference.
    - Credit account ID
    - Name
    - Description (optional)
+   - Action (enumeration)
+     - Unknown (to represent kinds in later versions in case the user downgraded)
+     - Record
+     - Close
    - Kind (enumeration)
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - Reactive
@@ -97,5 +101,7 @@ mechanism is dependent to the developer's preference.
 13. A summary calculation has the following information:
     - Primary ID
     - Frozen Period ID
-    - Debit Amount
-    - Credit Amount
+    - Unadjusted Debit Amount
+    - Adjusted Debit Amount
+    - Unadjusted Credit Amount
+    - Adjusted Credit Amount
