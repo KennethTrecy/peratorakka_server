@@ -16,6 +16,7 @@ class ModifierModel extends BaseResourceModel
         "credit_account_id",
         "name",
         "description",
+        "action",
         "kind",
         "deleted_at"
     ];
@@ -25,6 +26,7 @@ class ModifierModel extends BaseResourceModel
         return [
             "name"  => $faker->unique()->firstName(),
             "description"  => $faker->paragraph(),
+            "action"  => $faker->randomElement(ACCEPTABLE_MODIFIER_ACTIONS),
             "kind"  => $faker->randomElement(ACCEPTABLE_MODIFIER_KINDS),
         ];
     }
