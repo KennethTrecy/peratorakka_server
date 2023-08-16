@@ -51,6 +51,12 @@ class ModifierController extends BaseOwnedResourceController
             "alpha_numeric_space",
             "is_unique[$table_name.name]"
         ]);
+        $validation->setRule("$individual_name.action", "action", [
+            "required",
+            "min_length[3]",
+            "max_length[255]",
+            "in_list[".implode(",", ACCEPTABLE_MODIFIER_ACTIONS)."]"
+        ]);
 
         return $validation;
     }
