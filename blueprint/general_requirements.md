@@ -18,13 +18,14 @@ The requirements below must be implemented as soon as possible.
 8. An account may have multiple modifiers.
 9. A modifier may be invoked after the results of other modifiers, react on an event, or manual
    input.
-10. A modifier requires two accounts to represent the sides. One would be in the debit side and the
+10. A modifier requires an account pair to represent the sides. One would be in the debit side and the
     other is in the credit side.
 11. An automated modifier may have only one of the following operation:
     - Adder
     - Multiplier
-12. Automated modifiers should only have accounts that has the same currency for simplicity.
-    Modifiers for manual input may allow accounts from different currencies.
+12. Automated modifiers should only have account pairs that has the same currency for simplicity.
+    Modifiers with account pairs from different currencies may be useful with dependent modifiers
+    having a multiplier operation.
 13. An event can be deleted as long as it has no associated modifier.
 14. A user may have multiple frozen periods.
 15. Each frozen period have associated summarized calculation for each account.
@@ -32,3 +33,8 @@ The requirements below must be implemented as soon as possible.
       calculation.
     - Adjusted total would represent the result after including the closing financial entries.
 16. If a financial entry is within a frozen period, it cannot be modified or removed.
+17. If a modifier has an account pair with different currencies, it may have an exchange action.
+    This action creates exchange entries.
+18. Exchange entries has the same properties as record entries with several additional purposes:
+    - They can be used to calculate unrealized profits and losses.
+    - They balance the accounts on different currencies.
