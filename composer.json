@@ -59,6 +59,11 @@
 		],
 		"test:offline:all": [
 			"./vendor/bin/phpunit"
+		],
+		"migrate:all": [
+			"php spark migrate -n \"CodeIgniter\\Settings\"",
+			"php spark migrate -n \"CodeIgniter\\Shield\"",
+			"php spark migrate -n \"App\""
 		]
 	},
 	"minimum-stability": "dev",
