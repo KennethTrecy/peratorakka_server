@@ -37,6 +37,7 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 #### Instructions
 1. Copy `env` to `.env` and tailor for your machine, specifically the baseURL and any database
    settings.
+2. Run `composer run migrate:all`.
 
 ### Initialization (for developers)
 If you want to contribute, the repository should be initialized to adhere in [Conventional Commits
