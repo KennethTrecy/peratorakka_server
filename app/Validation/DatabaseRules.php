@@ -3,6 +3,7 @@
 namespace App\Validation;
 
 use App\Contracts\OwnedResource;
+use App\Models\BaseResourceModel;
 
 class DatabaseRules {
     public function ensure_ownership(
@@ -34,6 +35,38 @@ class DatabaseRules {
 
         if (!$model->isOwnedBy($current_user, $search_mode, intval($id))) {
             $error = "{field} must be owned by the current user and present.";
+            return false;
+        }
+
+        return true;
+    }
+
+    public function has_column_value_in_list(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+
+        if (
+            count($parameters) < 2
+            || !(model($parameters[0]) instanceof BaseResourceModel)
+            || !in_array($parameters[1], model($parameters[0])->allowedFields)
+        ) {
+            $error = 'A resource model, column to check, and acceptable list of column values is required'
+                .' in "{0}" to check if the selected option in {field} is allowed.';
+            return false;
+        }
+
+        $model = model($parameters[0]);
+        $id = $value;
+        $column = $parameters[1];
+        $allowed_values = array_slice($parameters, 2);
+        $entity = $model->find($id);
+
+        if (!in_array($entity->$column, $allowed_values)) {
+            $error = "{field} does not match the acceptable values.";
             return false;
         }
 
