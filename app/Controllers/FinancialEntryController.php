@@ -34,6 +34,11 @@ class FinancialEntryController extends BaseOwnedResourceController
             "ensure_ownership[".implode(",", [
                 ModifierModel::class,
                 SEARCH_NORMALLY
+            ])."]",
+            "has_column_value_in_list[".implode(",", [
+                ModifierModel::class,
+                "kind",
+                MANUAL_MODIFIER_KIND
             ])."]"
         ]);
         $validation->setRule("$individual_name.debit_amount", "debit amount", [
