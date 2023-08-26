@@ -10,6 +10,7 @@ use App\Models\AccountModel;
 use App\Models\ModifierModel;
 use App\Models\FinancialEntryModel;
 use App\Models\FrozenPeriodModel;
+use App\Models\SummaryCalculation;
 
 class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 {
@@ -43,10 +44,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
         $financial_entry = $financial_entry_fabricator->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $frozen_period_fabricator->setOverrides([
+        $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $frozen_period = $frozen_period_fabricator->create();
+        ], false)->create();
 
         $result = $authenticated_info->getRequest()->get("/api/v1/frozen_periods");
 
@@ -111,10 +111,36 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "credit_amount" => $recorded_expense_financial_entry->debit_amount
         ], false)->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $frozen_period_fabricator->setOverrides([
+        $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
+        ], false)->create();
+        $summary_calculation_fabricator = new Fabricator(SummaryCalculation::class);
+        $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id
         ]);
-        $frozen_period = $frozen_period_fabricator->create();
+        $equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "account_id" => $equity_account->id,
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
+            "adjusted_debit_amount" => "0",
+            "adjusted_credit_amount" => $recorded_normal_financial_entry
+                ->credit_amount
+                ->minus($closed_financial_entry->debit_amount)
+        ]);
+        $asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "account_id" => $asset_account->id,
+            "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
+            "adjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
+            "adjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount
+        ]);
+        $expenses_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "account_id" => $expense_account->id,
+            "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => "0",
+            "adjusted_debit_amount" => "0",
+            "adjusted_credit_amount" => "0"
+        ]);
 
         $result = $authenticated_info
             ->getRequest()
@@ -157,29 +183,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "currencies" => [ $currency ],
             "frozen_period" => json_decode(json_encode($frozen_period)),
             "summary_calculations" => json_decode(json_encode([
-                [
-                    "account_id" => $equity_account->id,
-                    "unadjusted_debit_amount" => "0",
-                    "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
-                    "adjusted_debit_amount" => "0",
-                    "adjusted_credit_amount" => $recorded_normal_financial_entry
-                        ->credit_amount
-                        ->minus($closed_financial_entry->debit_amount)
-                ],
-                [
-                    "account_id" => $asset_account->id,
-                    "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
-                    "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
-                    "adjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
-                    "adjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount
-                ],
-                [
-                    "account_id" => $expense_account->id,
-                    "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
-                    "unadjusted_credit_amount" => "0",
-                    "adjusted_debit_amount" => "0",
-                    "adjusted_credit_amount" => "0"
-                ]
+                $equity_summary_calculation,
+                $asset_summary_calculation,
+                $expense_summary_calculation
             ])),
         ]);
     }

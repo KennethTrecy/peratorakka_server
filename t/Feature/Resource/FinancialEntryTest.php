@@ -128,7 +128,6 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
                 ]
             ]);
 
-        $result->assertInvalid();
         $result->assertOk();
         $result->assertJSONFragment([
             "financial_entry" => [
