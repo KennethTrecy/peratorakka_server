@@ -87,7 +87,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ->where("transacted_at <=", $main_document["finished_at"])
             ->findAll();
 
-        $raw_summary_calculations = $this->makeRawSummaryCalculations($financial_entries);
+        $raw_summary_calculations = static::makeRawSummaryCalculations($financial_entries);
         $raw_summary_calculations = array_map(
             function ($raw_summary_calculation) use ($main_document) {
                 return array_merge(
