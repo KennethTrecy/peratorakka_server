@@ -7,8 +7,6 @@ use CodeIgniter\I18n\Time;
 class TimeRules {
     public function must_be_on_or_before_current_time(
         $value,
-        string $parameters,
-        array $data,
         ?string &$error = null
     ): bool {
         $does_not_exceed = $this->isOnOrBeforeOtherTime($value, Time::now()->toDateTimeString());
@@ -34,12 +32,12 @@ class TimeRules {
             count($parameters) < 1
             || is_null(dot_array_search($parameters[0], $data))
         ) {
-            $error = '"{0}" needs a valid to be a valid date to check the {field}.';
+            $error = '"{0}" needs a valid date to check the {field}.';
             return false;
         }
 
         $other_time = dot_array_search($parameters[0], $data);
-        if (!isValidDate($other_time)) {
+        if (!$this->isValidDate($other_time)) {
             return false;
         }
 
