@@ -3,8 +3,9 @@
 namespace App\Casts;
 
 use Brick\Math\BigRational;
+use CodeIgniter\Entity\Cast\BaseCast;
 
-class PreciseNumber extends UnknownableKind
+class RationalNumber extends BaseCast
 {
     public static function get($value, array $params = [])
     {
