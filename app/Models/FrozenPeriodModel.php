@@ -17,9 +17,10 @@ class FrozenPeriodModel extends BaseResourceModel
     protected $allowedFields = [
         "user_id",
         "started_at",
-        "finished_at",
-        "deleted_at"
+        "finished_at"
     ];
+    protected $useTimestamps = false;
+    protected $useSoftDeletes = false;
 
     public function fake(Generator &$faker)
     {

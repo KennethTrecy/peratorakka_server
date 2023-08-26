@@ -3,7 +3,6 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
-use CodeIgniter\Database\RawSql;
 
 class CreateFrozenPeriodsTable extends Migration
 {
@@ -24,18 +23,6 @@ class CreateFrozenPeriodsTable extends Migration
             ],
             "finished_at" => [
                 "type" => "DATETIME",
-            ],
-            "created_at" => [
-                "type" => "DATETIME",
-                "default" => new RawSql("CURRENT_TIMESTAMP"),
-            ],
-            "updated_at" => [
-                "type" => "DATETIME",
-                "default" => new RawSql("CURRENT_TIMESTAMP"),
-            ],
-            "deleted_at" => [
-                "type" => "DATETIME",
-                "null" => true,
             ]
         ]);
         $this->forge->addPrimaryKey("id");

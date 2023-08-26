@@ -9,9 +9,6 @@ class FrozenPeriod extends BaseResourceEntity
     protected $dates = [
         "started_at",
         "finished_at",
-        "created_at",
-        "updated_at",
-        "deleted_at",
     ];
 
     protected $casts = [
