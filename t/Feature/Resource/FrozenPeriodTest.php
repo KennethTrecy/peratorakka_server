@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Resource;
 
+use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 
@@ -124,21 +125,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "adjusted_credit_amount" => $recorded_normal_financial_entry
                 ->credit_amount
                 ->minus($closed_financial_entry->debit_amount)
-        ]);
+        ])->create();
         $asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "account_id" => $asset_account->id,
             "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
             "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
             "adjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
             "adjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount
-        ]);
-        $expenses_summary_calculation = $summary_calculation_fabricator->setOverrides([
+        ])->create();
+        $expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "account_id" => $expense_account->id,
             "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
             "unadjusted_credit_amount" => "0",
             "adjusted_debit_amount" => "0",
             "adjusted_credit_amount" => "0"
-        ]);
+        ])->create();
 
         $result = $authenticated_info
             ->getRequest()
@@ -294,12 +295,17 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ])->create();
         $new_details = $frozen_period_fabricator->make();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->withBodyFormat("json")
-            ->put("/api/v1/frozen_periods/$frozen_period->id", [
-                "frozen_period" => $new_details->toArray()
-            ]);
+        try {
+            $result = $authenticated_info
+                ->getRequest()
+                ->withBodyFormat("json")
+                ->put("/api/v1/frozen_periods/$frozen_period->id", [
+                    "frozen_period" => $new_details->toArray()
+                ]);
+            $result->assertTrue(false);
+        } catch(PageNotFoundException $error) {
+            $result->assertTrue(true);
+        }
 
         $result->assertStatus(404);
     }
@@ -336,11 +342,14 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ])->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/frozen_periods/$financial_entry->id");
-
-        $result->assertStatus(404);
+        try {
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/frozen_periods/$financial_entry->id");
+            $result->assertTrue(false);
+        } catch(PageNotFoundException $error) {
+            $result->assertTrue(true);
+        }
     }
 
     public function testDefaultRestore()
@@ -376,11 +385,14 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ])->create();
         model(FrozenPeriodModel::class)->delete($frozen_period->id);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->patch("/api/v1/frozen_periods/$financial_entry->id");
-
-        $result->assertStatus(404);
+        try {
+            $result = $authenticated_info
+                ->getRequest()
+                ->patch("/api/v1/frozen_periods/$financial_entry->id");
+            $result->assertTrue(false);
+        } catch(PageNotFoundException $error) {
+            $result->assertTrue(true);
+        }
     }
 
     public function testDefaultForceDelete()
