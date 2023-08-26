@@ -125,8 +125,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
     }
 
     private static function makeRawSummaryCalculations(array $financial_entries): array {
-        helper("array");
-
         $linked_modifiers = [];
         foreach ($financial_entries as $document) {
             $modifier_id = $document->modifier_id;
@@ -168,18 +166,20 @@ class FrozenPeriodController extends BaseOwnedResourceController
             []
         );
 
-        $raw_summary_calculations = array_group_by(
-            array_map(
-                fn ($account) => [
+        $raw_summary_calculations = array_reduce(
+            $accounts,
+            function ($raw_calculations, $account) {
+                $raw_calculations[$account->id] = [
                     "account_id" => $account->id,
                     "unadjusted_debit_amount" => BigRational::zero(),
                     "unadjusted_credit_amount" => BigRational::zero(),
                     "adjusted_debit_amount" => BigRational::zero(),
                     "adjusted_credit_amount" => BigRational::zero()
-                ],
-                $accounts
-            ),
-            [ "account_id" ]
+                ];
+
+                return $raw_calculations;
+            },
+            []
         );
         $raw_summary_calculations = array_reduce(
             $modifiers,
