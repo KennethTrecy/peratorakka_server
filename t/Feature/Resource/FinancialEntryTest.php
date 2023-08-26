@@ -121,12 +121,21 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/financial_entries", [
-                "financial_entry" => $financial_entry->toArray()
+                "financial_entry" => [
+                    ...$financial_entry->toArray(),
+                    "debit_amount" => $financial_entry->debit_amount->toScale(4),
+                    "credit_amount" => $financial_entry->credit_amount->toScale(4)
+                ]
             ]);
 
+        $result->assertInvalid();
         $result->assertOk();
         $result->assertJSONFragment([
-            "financial_entry" => $financial_entry->toArray()
+            "financial_entry" => [
+                ...$financial_entry->toArray(),
+                "debit_amount" => $financial_entry->debit_amount->toScale(4),
+                "credit_amount" => $financial_entry->credit_amount->toScale(4)
+            ]
         ]);
     }
 
@@ -162,13 +171,21 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->put("/api/v1/financial_entries/$financial_entry->id", [
-                "financial_entry" => $new_details->toArray()
+                "financial_entry" => [
+                    ...$new_details->toArray(),
+                    "debit_amount" => $new_details->debit_amount->toScale(4),
+                    "credit_amount" => $new_details->credit_amount->toScale(4)
+                ]
             ]);
 
         $result->assertStatus(204);
         $this->seeInDatabase("financial_entries", array_merge(
             [ "id" => $financial_entry->id ],
-            $new_details->toArray()
+            [
+                ...$new_details->toArray(),
+                "debit_amount" => $new_details->debit_amount->toScale(4),
+                "credit_amount" => $new_details->credit_amount->toScale(4)
+            ]
         ));
     }
 
@@ -419,12 +436,20 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/financial_entries", [
-                "financial_entry" => $financial_entry->toArray()
+                "financial_entry" => [
+                    ...$financial_entry->toArray(),
+                    "debit_amount" => $financial_entry->debit_amount->toScale(4),
+                    "credit_amount" => $financial_entry->credit_amount->toScale(4)
+                ]
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "financial_entry" => $financial_entry->toArray()
+            "financial_entry" => [
+                ...$financial_entry->toArray(),
+                "debit_amount" => $financial_entry->debit_amount->toScale(4),
+                "credit_amount" => $financial_entry->credit_amount->toScale(4)
+            ]
         ]);
     }
 
@@ -465,7 +490,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             ->getRequest()
             ->withBodyFormat("json")
             ->put("/api/v1/financial_entries/$financial_entry->id", [
-                "financial_entry" => $new_details->toArray()
+                "financial_entry" => [
+                    ...$new_details->toArray(),
+                    "debit_amount" => $new_details->debit_amount->toScale(4),
+                    "credit_amount" => $new_details->credit_amount->toScale(4)
+                ]
             ]);
 
         $result->assertStatus(204);

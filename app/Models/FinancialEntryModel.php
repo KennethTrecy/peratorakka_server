@@ -25,7 +25,7 @@ class FinancialEntryModel extends BaseResourceModel
 
     public function fake(Generator &$faker)
     {
-        $amount = $faker->regexify('\d{5}\.\d{3}');
+        $amount = $faker->regexify("\d{5}\.\d{3}");
         return [
             "transacted_at"  => Time::now()->toDateTimeString(),
             "debit_amount"  => $amount,
