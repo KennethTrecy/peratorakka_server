@@ -118,6 +118,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "frozen_period_id" => $frozen_period->id
         ]);
         $equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
             "account_id" => $equity_account->id,
             "unadjusted_debit_amount" => "0",
             "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
@@ -127,6 +128,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                 ->minus($closed_financial_entry->debit_amount)
         ])->create();
         $asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
             "account_id" => $asset_account->id,
             "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
             "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
@@ -134,6 +136,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "adjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount
         ])->create();
         $expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
             "account_id" => $expense_account->id,
             "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
             "unadjusted_credit_amount" => "0",
