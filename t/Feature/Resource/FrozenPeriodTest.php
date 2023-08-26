@@ -566,6 +566,71 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
+    public function testImbalanceCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency = $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => EQUITY_ACCOUNT_KIND
+        ])->create();
+        $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => ASSET_ACCOUNT_KIND
+        ])->create();
+        $expense_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => EXPENSE_ACCOUNT_KIND
+        ])->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $normal_record_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $expense_record_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $expense_account->id,
+            "credit_account_id" => $asset_account->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $close_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $equity_account->id,
+            "credit_account_id" => $expense_account->id,
+            "action" => CLOSE_MODIFIER_ACTION
+        ])->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $normal_record_modifier->id,
+            "debit_amount" => "1000",
+            "credit_amount" => "1000"
+        ])->create();
+        $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $expense_record_modifier->id,
+            "debit_amount" => "250",
+            "credit_amount" => "250"
+        ])->create();
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v1/frozen_periods", [
+                "frozen_period" => $frozen_period->toArray()
+            ]);
+
+        $result->assertStatus(400);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "summary_calculations", []);
+    }
+
     public function testInvalidUpdate()
     {
         // There is no update route for frozen period so this passes automatically.
