@@ -236,24 +236,30 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $adjusted_debit_amount = $raw_calculation["adjusted_debit_amount"];
                 $adjusted_credit_amount = $raw_calculation["adjusted_credit_amount"];
 
-                $unadjusted_balance = $unadjusted_debit_amount->minus($unadjusted_credit_amount);
-                $adjusted_balance = $adjusted_debit_amount->minus($adjusted_credit_amount);
+                $unadjusted_balance = $unadjusted_debit_amount
+                    ->minus($unadjusted_credit_amount)
+                    ->simplified();
+                $adjusted_balance = $adjusted_debit_amount
+                    ->minus($adjusted_credit_amount)
+                    ->simplified();
 
                 $is_unadjusted_balance_positive = $unadjusted_balance->getSign() > 0;
                 $is_adjusted_balance_positive = $adjusted_balance->getSign() > 0;
+                $is_unadjusted_balance_negative = $unadjusted_balance->getSign() < 0;
+                $is_adjusted_balance_negative = $adjusted_balance->getSign() < 0;
 
                 $raw_calculation["unadjusted_debit_amount"] = $is_unadjusted_balance_positive
                     ? $unadjusted_balance
                     : BigRational::zero();
-                $raw_calculation["unadjusted_credit_amount"] = $is_unadjusted_balance_positive
-                    ? BigRational::zero()
-                    : $unadjusted_balance->negated();
+                $raw_calculation["unadjusted_credit_amount"] = $is_unadjusted_balance_negative
+                    ? $unadjusted_balance->negated()
+                    : BigRational::zero();
                 $raw_calculation["adjusted_debit_amount"] = $is_adjusted_balance_positive
                     ? $adjusted_balance
                     : BigRational::zero();
-                $raw_calculation["adjusted_credit_amount"] = $is_adjusted_balance_positive
-                    ? BigRational::zero()
-                    : $adjusted_balance->negated();
+                $raw_calculation["adjusted_credit_amount"] = $is_adjusted_balance_negative
+                    ? $adjusted_balance->negated()
+                    : BigRational::zero();
 
                 return $raw_calculation;
             },
