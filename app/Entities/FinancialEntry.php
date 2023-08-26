@@ -2,6 +2,8 @@
 
 namespace App\Entities;
 
+use App\Casts\RationalNumber;
+
 class FinancialEntry extends BaseResourceEntity
 {
     protected $datamap = [];
@@ -16,8 +18,12 @@ class FinancialEntry extends BaseResourceEntity
     protected $casts = [
         "id" => "integer",
         "modifier_id" => "integer",
-        "debit_amount" => "string",
-        "credit_amount" => "string",
+        "debit_amount" => "rational_number",
+        "credit_amount" => "rational_number",
         "remarks" => "?string"
+    ];
+
+    protected $castHandlers = [
+        "rational_number" => RationalNumber::class
     ];
 }
