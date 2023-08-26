@@ -10,6 +10,7 @@ use CodeIgniter\Validation\StrictRules\Rules;
 
 use App\Validation\DatabaseRules;
 use App\Validation\SimilarityRules;
+use App\Validation\TimeRules;
 
 class Validation extends BaseConfig
 {
@@ -29,7 +30,8 @@ class Validation extends BaseConfig
         FileRules::class,
         CreditCardRules::class,
         DatabaseRules::class,
-        SimilarityRules::class
+        SimilarityRules::class,
+        TimeRules::class,
     ];
 
     /**
