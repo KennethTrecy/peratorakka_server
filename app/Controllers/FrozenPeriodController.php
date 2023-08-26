@@ -113,8 +113,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[INCOME_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["unadjusted_credit_amount"])
-                            ->minus($summary["unadjusted_debit_amount"]);
+                            ->plus($summary->unadjusted_credit_amount)
+                            ->minus($summary->unadjusted_debit_amount);
                     },
                     BigRational::zero()
                 );
@@ -122,8 +122,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[EXPENSE_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["unadjusted_debit_amount"])
-                            ->minus($summary["unadjusted_credit_amount"]);
+                            ->plus($summary->unadjusted_debit_amount)
+                            ->minus($summary->unadjusted_credit_amount);
                     },
                     BigRational::zero()
                 );
@@ -132,8 +132,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[ASSET_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["unadjusted_debit_amount"])
-                            ->minus($summary["unadjusted_credit_amount"]);
+                            ->plus($summary->unadjusted_debit_amount)
+                            ->minus($summary->unadjusted_credit_amount);
                     },
                     BigRational::zero()
                 );
@@ -141,8 +141,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[LIABILITY_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["unadjusted_credit_amount"])
-                            ->minus($summary["unadjusted_debit_amount"]);
+                            ->plus($summary->unadjusted_credit_amount)
+                            ->minus($summary->unadjusted_debit_amount);
                     },
                     BigRational::zero()
                 );
@@ -150,8 +150,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[EQUITY_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["unadjusted_credit_amount"])
-                            ->minus($summary["unadjusted_debit_amount"]);
+                            ->plus($summary->unadjusted_credit_amount)
+                            ->minus($summary->unadjusted_debit_amount);
                     },
                     BigRational::zero()
                 );
@@ -160,8 +160,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[EXPENSE_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["adjusted_debit_amount"])
-                            ->minus($summary["adjusted_credit_amount"]);
+                            ->plus($summary->adjusted_debit_amount)
+                            ->minus($summary->adjusted_credit_amount);
                     },
                     BigRational::zero()
                 );
@@ -169,8 +169,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[ASSET_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary["adjusted_debit_amount"])
-                            ->minus($summary["adjusted_credit_amount"]);
+                            ->plus($summary->adjusted_debit_amount)
+                            ->minus($summary->adjusted_credit_amount);
                     },
                     BigRational::zero()
                 );
@@ -179,10 +179,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     ->plus($unadjusted_total_assets);
                 $income_statement_total = $unadjusted_total_income
                     ->minus($unadjusted_total_expenses);
-                $adjusted_trial_balance_total = $adjusted_total_income
+                $adjusted_trial_balance_total = $adjusted_total_assets
                     ->plus($adjusted_total_expenses);
 
-                $statements[$currency->id] = [
+                array_push($statements, [
                     "currency_id" => $currency->id,
                     "unadjusted_trial_balance" => [
                         "total" => $unadjusted_trial_balance_total
@@ -199,7 +199,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "adjusted_trial_balance" => [
                         "total" => $adjusted_trial_balance_total
                     ]
-                ];
+                ]);
 
                 return $statements;
             },
