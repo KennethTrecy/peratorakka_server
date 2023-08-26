@@ -457,9 +457,9 @@ digraph {
 					<td></td>
 					<td align="left">
 						unadjusted_debit_amount<br align="left"/>
-						unadjusted_crebit_amount<br align="left"/>
+						unadjusted_credit_amount<br align="left"/>
 						adjusted_debit_amount<br align="left"/>
-						adjusted_crebit_amount<br align="left"/>
+						adjusted_credit_amount<br align="left"/>
 					</td>
 					<td align="left">
 						string<br align="left"/>
