@@ -136,7 +136,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $modifiers = [];
         if (count($linked_modifiers) > 0) {
             $modifiers = model(ModifierModel::class)
-                ->whereIn("id", array_unique($linked_accounts))
+                ->whereIn("id", array_unique($linked_modifiers))
                 ->findAll();
         }
 
