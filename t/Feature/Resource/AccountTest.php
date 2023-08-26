@@ -238,7 +238,6 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
         ]);
