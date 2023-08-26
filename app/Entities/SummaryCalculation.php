@@ -8,11 +8,7 @@ class SummaryCalculation extends BaseResourceEntity
 {
     protected $datamap = [];
 
-    protected $dates = [
-        "created_at",
-        "updated_at",
-        "deleted_at",
-    ];
+    protected $dates = [];
 
     protected $casts = [
         "id" => "integer",

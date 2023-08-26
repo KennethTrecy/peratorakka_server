@@ -34,18 +34,6 @@ class CreateSummaryCalculationsTable extends Migration
             ],
             "adjusted_credit_amount" => [
                 "type" => "TEXT",
-            ],
-            "created_at" => [
-                "type" => "DATETIME",
-                "default" => new RawSql("CURRENT_TIMESTAMP"),
-            ],
-            "updated_at" => [
-                "type" => "DATETIME",
-                "default" => new RawSql("CURRENT_TIMESTAMP"),
-            ],
-            "deleted_at" => [
-                "type" => "DATETIME",
-                "null" => true,
             ]
         ]);
         $this->forge->addPrimaryKey("id");
