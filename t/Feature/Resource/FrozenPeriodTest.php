@@ -11,7 +11,7 @@ use App\Models\AccountModel;
 use App\Models\ModifierModel;
 use App\Models\FinancialEntryModel;
 use App\Models\FrozenPeriodModel;
-use App\Models\SummaryCalculation;
+use App\Models\SummaryCalculationModel;
 
 class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 {
@@ -22,22 +22,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -46,7 +45,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
 
         $result = $authenticated_info->getRequest()->get("/api/v1/frozen_periods");
 
@@ -63,57 +62,57 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $expense_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EXPENSE_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $normal_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id,
             "action" => RECORD_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $expense_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $expense_account->id,
             "credit_account_id" => $asset_account->id,
             "action" => RECORD_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $close_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $equity_account->id,
             "credit_account_id" => $expense_account->id,
             "action" => CLOSE_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $normal_record_modifier->id,
             "debit_amount" => "1000",
             "credit_amount" => "1000"
-        ], false)->create();
+        ])->create();
         $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $expense_record_modifier->id,
             "debit_amount" => "250",
             "credit_amount" => "250"
-        ], false)->create();
+        ])->create();
         $closed_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $close_modifier->id,
             "debit_amount" => $recorded_expense_financial_entry->credit_amount,
             "credit_amount" => $recorded_expense_financial_entry->debit_amount
-        ], false)->create();
+        ])->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculation::class);
+        ])->create();
+        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
         $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id
         ]);
@@ -196,56 +195,56 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $expense_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EXPENSE_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $normal_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id,
             "action" => RECORD_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $expense_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $expense_account->id,
             "credit_account_id" => $asset_account->id,
             "action" => RECORD_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $close_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $equity_account->id,
             "credit_account_id" => $expense_account->id,
             "action" => CLOSE_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $normal_record_modifier->id,
             "debit_amount" => "1000",
             "credit_amount" => "1000"
-        ], false)->create();
+        ])->create();
         $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $expense_record_modifier->id,
             "debit_amount" => "250",
             "credit_amount" => "250"
-        ], false)->create();
+        ])->create();
         $closed_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $close_modifier->id,
             "debit_amount" => $recorded_expense_financial_entry->credit_amount,
             "credit_amount" => $recorded_expense_financial_entry->debit_amount
-        ], false)->create();
+        ])->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->make();
+        ])->make();
 
         $result = $authenticated_info
             ->getRequest()
@@ -269,22 +268,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -293,7 +291,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $new_details = $frozen_period_fabricator->make();
 
         $result = $authenticated_info
@@ -313,22 +311,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -337,7 +334,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
 
         $result = $authenticated_info
             ->getRequest()
@@ -353,22 +350,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -377,7 +373,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         model(FrozenPeriodModel::class)->delete($frozen_period->id);
 
         $result = $authenticated_info
@@ -394,22 +390,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -418,7 +413,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         // Uncomment below if frozen period can be soft deleted.
         // model(FrozenPeriodModel::class)->delete($frozen_period->id);
 
@@ -449,22 +444,21 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
@@ -474,7 +468,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $frozen_period->id = $frozen_period->id + 1;
 
         $result = $authenticated_info
@@ -494,57 +488,57 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ], false)->create();
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
         $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EQUITY_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => ASSET_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $expense_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
             "kind" => EXPENSE_ACCOUNT_KIND
-        ], false)->create();
+        ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $normal_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id,
             "action" => RECORD_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $expense_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $expense_account->id,
             "credit_account_id" => $asset_account->id,
             "action" => RECORD_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $close_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $equity_account->id,
             "credit_account_id" => $expense_account->id,
             "action" => CLOSE_MODIFIER_ACTION
-        ], false)->create();
+        ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $normal_record_modifier->id,
             "debit_amount" => "1000",
             "credit_amount" => "1000"
-        ], false)->create();
+        ])->create();
         $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $expense_record_modifier->id,
             "debit_amount" => "250",
             "credit_amount" => "250"
-        ], false)->create();
+        ])->create();
         $closed_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $close_modifier->id,
             "debit_amount" => $recorded_expense_financial_entry->credit_amount,
             "credit_amount" => $recorded_expense_financial_entry->debit_amount
-        ], false)->create();
+        ])->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id,
             "started_at"  => Time::tomorrow()->toDateTimeString(),
-        ], false)->make();
+        ])->make();
 
         $result = $authenticated_info
             ->getRequest()
