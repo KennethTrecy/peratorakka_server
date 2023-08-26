@@ -6,6 +6,7 @@ use Brick\Math\BigRational;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
+use App\Entities\SummaryCalculation;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
@@ -249,6 +250,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $raw_calculation["adjusted_credit_amount"] = $is_adjusted_balance_negative
                     ? $adjusted_balance->negated()
                     : BigRational::zero();
+                $raw_calculation = (new SummaryCalculation())->fill($raw_calculation);
 
                 return $raw_calculation;
             },
