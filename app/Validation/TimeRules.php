@@ -20,7 +20,7 @@ class TimeRules {
         return $does_not_exceed;
     }
 
-    public function must_not_exceed_other_time_field(
+    public function must_be_on_before_time_of_other_field(
         $value,
         string $parameters,
         array $data,
