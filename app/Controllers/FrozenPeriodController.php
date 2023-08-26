@@ -97,10 +97,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             $raw_summary_calculations
         );
-        $summary_calculations = model(SummaryCalculationModel::class)
-            ->insertBatch($raw_summary_calculations)
-            ->findAll();
-        $processed_document["summary_calculations"] = $summary_calculations;
+
+        model(SummaryCalculationModel::class)->insertBatch($raw_summary_calculations);
 
         return $created_document;
     }
@@ -153,19 +151,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_accounts) > 0) {
             $accounts = model(AccountModel::class)
                 ->whereIn("id", array_unique($linked_accounts))
-                ->findAll();
-        }
-
-        $linked_currencies = [];
-        foreach ($accounts as $document) {
-            $currency_id = $document->currency_id;
-            array_push($linked_currencies, $currency_id);
-        }
-
-        $currencies = [];
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->whereIn("id", array_unique($linked_currencies))
                 ->findAll();
         }
 
