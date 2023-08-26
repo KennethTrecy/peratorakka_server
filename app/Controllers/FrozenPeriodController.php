@@ -157,7 +157,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $grouped_financial_entries = array_reduce(
             $financial_entries,
             function ($groups, $entry) {
-                if (isset($groups[$entry->modifier_id])) {
+                if (!isset($groups[$entry->modifier_id])) {
                     $groups[$entry->modifier_id] = [];
                 }
 
