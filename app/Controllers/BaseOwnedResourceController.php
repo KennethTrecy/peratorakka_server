@@ -44,10 +44,20 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
+    protected static function processCreatedDocument(array $initial_document): array {
+        return $initial_document;
+    }
+
     private static function enrichAndOrganizeResponseDocument(array $initial_document): array {
         $enriched_document = static::enrichResponseDocument($initial_document);
         ksort($enriched_document);
         return $enriched_document;
+    }
+
+    private static function processAndOrganizeCreatedDocument(array $initial_document): array {
+        $processed_document = static::processCreatedDocument($initial_document);
+        ksort($processed_document);
+        return $processed_document;
     }
 
     public function index()
@@ -114,6 +124,9 @@ abstract class BaseOwnedResourceController extends BaseController
                                 $info
                             )
                         ];
+                        $response_document = static::processAndOrganizeCreatedDocument(
+                            $response_document
+                        );
 
                         return $controller->respondCreated()->setJSON($response_document);
                     }
