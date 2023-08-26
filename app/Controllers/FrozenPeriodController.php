@@ -76,6 +76,137 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
         $enriched_document["currencies"] = $currencies;
 
+        $keyed_summaries = array_reduce(
+            $summary_calculations,
+            function ($keyed_collection, $summary) {
+                $keyed_collection[$summary->account_id] = $summary;
+
+                return $keyed_collection;
+            },
+            []
+        );
+        $grouped_summaries = array_reduce(
+            $accounts,
+            function ($groups, $account) use ($keyed_summaries) {
+                if (!isset($groups[$account->currency_id])) {
+                    $groups[$account->currency_id] = array_fill_keys(
+                        [ ...ACCEPTABLE_ACCOUNT_KINDS ],
+                        []
+                    );
+                }
+
+                array_push(
+                    $groups[$account->currency_id][$account->kind],
+                    $keyed_summaries[$account->id]
+                );
+
+                return $groups;
+            },
+            []
+        );
+        $statements = array_reduce(
+            $currencies,
+            function ($statements, $currency) use ($grouped_summaries) {
+                $summaries = $grouped_summaries[$currency->id];
+
+                $unadjusted_total_income = array_reduce(
+                    $summaries[INCOME_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["unadjusted_credit_amount"])
+                            ->minus($summary["unadjusted_debit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+                $unadjusted_total_expenses = array_reduce(
+                    $summaries[EXPENSE_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["unadjusted_debit_amount"])
+                            ->minus($summary["unadjusted_credit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+
+                $unadjusted_total_assets = array_reduce(
+                    $summaries[ASSET_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["unadjusted_debit_amount"])
+                            ->minus($summary["unadjusted_credit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+                $unadjusted_total_liabilities = array_reduce(
+                    $summaries[LIABILITY_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["unadjusted_credit_amount"])
+                            ->minus($summary["unadjusted_debit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+                $unadjusted_total_equities = array_reduce(
+                    $summaries[EQUITY_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["unadjusted_credit_amount"])
+                            ->minus($summary["unadjusted_debit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+
+                $adjusted_total_expenses = array_reduce(
+                    $summaries[EXPENSE_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["adjusted_debit_amount"])
+                            ->minus($summary["adjusted_credit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+                $adjusted_total_assets = array_reduce(
+                    $summaries[ASSET_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary["adjusted_debit_amount"])
+                            ->minus($summary["adjusted_credit_amount"]);
+                    },
+                    BigRational::zero()
+                );
+
+                $unadjusted_trial_balance_total = $unadjusted_total_expenses
+                    ->plus($unadjusted_total_assets);
+                $income_statement_total = $unadjusted_total_income
+                    ->minus($unadjusted_total_expenses);
+                $adjusted_trial_balance_total = $adjusted_total_income
+                    ->plus($adjusted_total_expenses);
+
+                $statements[$currency->id] = [
+                    "currency_id" => $currency->id,
+                    "unadjusted_trial_balance" => [
+                        "total" => $unadjusted_trial_balance_total
+                    ],
+                    "income_statement" => [
+                        "total" => $income_statement_total
+                    ],
+                    "balance_sheet" => [
+                        "total_assets" => $unadjusted_total_assets,
+                        "total_liabilities" => $unadjusted_total_liabilities,
+                        "total_equities" => $unadjusted_total_equities
+                            ->plus($income_statement_total)
+                    ],
+                    "adjusted_trial_balance" => [
+                        "total" => $adjusted_trial_balance_total
+                    ]
+                ];
+
+                return $statements;
+            },
+            []
+        );
+        $enriched_document["@meta"] = [ "statements" => $statements ];
+
         return $enriched_document;
     }
 
