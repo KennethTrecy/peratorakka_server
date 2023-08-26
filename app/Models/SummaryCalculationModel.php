@@ -21,6 +21,8 @@ class SummaryCalculationModel extends BaseResourceModel
         "adjusted_debit_amount",
         "adjusted_credit_amount"
     ];
+    protected $useTimestamps = false;
+    protected $useSoftDeletes = false;
 
     public function fake(Generator &$faker)
     {
