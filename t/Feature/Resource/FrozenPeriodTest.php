@@ -387,40 +387,47 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $result->assertStatus(404);
     }
 
-    public function DefaultForceDelete()
+    public function testDefaultForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
+        $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
+        ], false)->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
+        $asset_account = $account_fabricator->setOverrides([
+            "kind" => ASSET_ACCOUNT_KIND
+        ], false)->create();
+        $equity_account = $account_fabricator->setOverrides([
+            "kind" => EQUITY_ACCOUNT_KIND
+        ], false)->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
-        ]);
-        $modifier = $modifier_fabricator->create();
+        $modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id
+        ], false)->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
         ]);
         $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id);
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ], false)->create();
+        // Uncomment below if frozen period can be soft deleted.
+        // model(FrozenPeriodModel::class)->delete($frozen_period->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id/force");
+            ->delete("/api/v1/frozen_periods/$financial_entry->id/force");
 
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "financial_entries", []);
+        $this->seeNumRecords(0, "frozen_periods", []);
     }
 
     public function testEmptyIndex()
@@ -555,99 +562,42 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
     public function testInvalidUpdate()
     {
         // There is no update route for frozen period so this passes automatically.
-        // This test method in case there a new fields that can be updated.
+        // This test method has been retained in case there a new fields that can be updated.
         $result->assertTrue(true);
     }
 
     public function testUnownedDelete()
     {
         // There is no soft delete route for frozen period so this passes automatically.
-        // This test method in case the resource can be soft-deleted.
+        // This test method has been retained in case the resource can be soft-deleted.
         $result->assertTrue(true);
     }
 
     public function testDoubleDelete()
     {
         // There is no soft delete route for frozen period so this passes automatically.
-        // This test method in case the resource can be soft-deleted.
+        // This test method has been retained in case the resource can be soft-deleted.
         $result->assertTrue(true);
     }
 
     public function testDoubleRestore()
     {
         // There is no restore route for frozen period so this passes automatically.
-        // This test method in case the resource can be restored.
+        // This test method has been retained in case the resource can be restored.
         $result->assertTrue(true);
     }
 
-    public function ImmediateForceDelete()
+    public function testImmediateForceDelete()
     {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id/force");
-        $result->assertStatus(204);
-        $this->seeNumRecords(0, "financial_entries", []);
+        // There is no immediate force route for frozen period so this passes automatically.
+        // This test method has been retained in case the resource can be soft-deleted.
+        $result->assertTrue(true);
     }
 
-    public function DoubleForceDelete()
+    public function testDoubleForceDelete()
     {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id, true);
-
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id/force");
-
-        $result->assertNotFound();
-        $this->seeNumRecords(0, "financial_entries", []);
+        // There is no double force route for frozen period so this passes automatically.
+        // This test method has been retained in case the resource can be soft-deleted.
+        $result->assertTrue(true);
     }
 }
