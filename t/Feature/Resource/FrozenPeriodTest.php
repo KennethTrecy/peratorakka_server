@@ -9,10 +9,11 @@ use App\Models\CurrencyModel;
 use App\Models\AccountModel;
 use App\Models\ModifierModel;
 use App\Models\FinancialEntryModel;
+use App\Models\FrozenPeriodModel;
 
 class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 {
-    public function DefaultIndex()
+    public function testDefaultIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -25,8 +26,12 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
+        $debit_account = $account_fabricator->setOverrides([
+            "kind" => ASSET_ACCOUNT_KIND
+        ], false)->create();
+        $credit_account = $account_fabricator->setOverrides([
+            "kind" => EQUITY_ACCOUNT_KIND
+        ], false)->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
@@ -37,16 +42,18 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
         ]);
-        $financial_entries = $financial_entry_fabricator->create(10);
+        $financial_entry = $financial_entry_fabricator->create();
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $frozen_period = $frozen_period_fabricator->create();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries");
+        $result = $authenticated_info->getRequest()->get("/api/v1/frozen_periods");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
-            "currencies" => [ $currency ],
-            "financial_entries" => json_decode(json_encode($financial_entries)),
-            "modifiers" => json_decode(json_encode([ $modifier ])),
+            "frozen_periods" => json_decode(json_encode([ $frozen_period ]))
         ]);
     }
 
@@ -305,18 +312,15 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $this->seeNumRecords(0, "financial_entries", []);
     }
 
-    public function EmptyIndex()
+    public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries");
+        $result = $authenticated_info->getRequest()->get("/api/v1/frozen_periods");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => [],
-            "currencies" => [],
-            "financial_entries" => [],
-            "modifiers" => [],
+            "frozen_periods" => json_decode(json_encode([ $frozen_period ])),
         ]);
     }
 
