@@ -305,9 +305,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                 ->put("/api/v1/frozen_periods/$frozen_period->id", [
                     "frozen_period" => $new_details->toArray()
                 ]);
-            $result->assertTrue(false);
+            $this->assertTrue(false);
         } catch(PageNotFoundException $error) {
-            $result->assertTrue(true);
+            $this->assertTrue(true);
         }
 
         $result->assertStatus(404);
@@ -349,9 +349,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             $result = $authenticated_info
                 ->getRequest()
                 ->delete("/api/v1/frozen_periods/$financial_entry->id");
-            $result->assertTrue(false);
+            $this->assertTrue(false);
         } catch(PageNotFoundException $error) {
-            $result->assertTrue(true);
+            $this->assertTrue(true);
         }
     }
 
@@ -392,9 +392,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             $result = $authenticated_info
                 ->getRequest()
                 ->patch("/api/v1/frozen_periods/$financial_entry->id");
-            $result->assertTrue(false);
+            $this->assertTrue(false);
         } catch(PageNotFoundException $error) {
-            $result->assertTrue(true);
+            $this->assertTrue(true);
         }
     }
 
@@ -572,41 +572,41 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
     {
         // There is no update route for frozen period so this passes automatically.
         // This test method has been retained in case there a new fields that can be updated.
-        $result->assertTrue(true);
+        $this->assertTrue(true);
     }
 
     public function testUnownedDelete()
     {
         // There is no soft delete route for frozen period so this passes automatically.
         // This test method has been retained in case the resource can be soft-deleted.
-        $result->assertTrue(true);
+        $this->assertTrue(true);
     }
 
     public function testDoubleDelete()
     {
         // There is no soft delete route for frozen period so this passes automatically.
         // This test method has been retained in case the resource can be soft-deleted.
-        $result->assertTrue(true);
+        $this->assertTrue(true);
     }
 
     public function testDoubleRestore()
     {
         // There is no restore route for frozen period so this passes automatically.
         // This test method has been retained in case the resource can be restored.
-        $result->assertTrue(true);
+        $this->assertTrue(true);
     }
 
     public function testImmediateForceDelete()
     {
         // There is no immediate force route for frozen period so this passes automatically.
         // This test method has been retained in case the resource can be soft-deleted.
-        $result->assertTrue(true);
+        $this->assertTrue(true);
     }
 
     public function testDoubleForceDelete()
     {
         // There is no double force route for frozen period so this passes automatically.
         // This test method has been retained in case the resource can be soft-deleted.
-        $result->assertTrue(true);
+        $this->assertTrue(true);
     }
 }
