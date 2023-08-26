@@ -346,43 +346,45 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $result->assertStatus(404);
     }
 
-    public function DefaultRestore()
+    public function testDefaultRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
+        $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
+        ], false)->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
+        $asset_account = $account_fabricator->setOverrides([
+            "kind" => ASSET_ACCOUNT_KIND
+        ], false)->create();
+        $equity_account = $account_fabricator->setOverrides([
+            "kind" => EQUITY_ACCOUNT_KIND
+        ], false)->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
-        ]);
-        $modifier = $modifier_fabricator->create();
+        $modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id
+        ], false)->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
             "modifier_id" => $modifier->id
         ]);
         $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id);
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ], false)->create();
+        model(FrozenPeriodModel::class)->delete($frozen_period->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/financial_entries/$financial_entry->id");
+            ->patch("/api/v1/frozen_periods/$financial_entry->id");
 
-        $result->assertStatus(204);
-        $this->seeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
-            "deleted_at" => null
-        ]);
+        $result->assertStatus(404);
     }
 
     public function DefaultForceDelete()
@@ -571,43 +573,11 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $result->assertTrue(true);
     }
 
-    public function DoubleRestore()
+    public function testDoubleRestore()
     {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-
-        $result = $authenticated_info
-            ->getRequest()
-            ->patch("/api/v1/financial_entries/$financial_entry->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
-            "deleted_at" => null
-        ]);
+        // There is no restore route for frozen period so this passes automatically.
+        // This test method in case the resource can be restored.
+        $result->assertTrue(true);
     }
 
     public function ImmediateForceDelete()
