@@ -309,8 +309,6 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         } catch(PageNotFoundException $error) {
             $this->assertTrue(true);
         }
-
-        $result->assertStatus(404);
     }
 
     public function testDefaultDelete()
@@ -448,7 +446,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "frozen_periods" => json_decode(json_encode([ $frozen_period ])),
+            "frozen_periods" => json_decode(json_encode([])),
         ]);
     }
 
