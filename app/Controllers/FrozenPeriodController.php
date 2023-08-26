@@ -87,11 +87,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
         ]);
         $validation->setRule("$individual_name.started_at", "start date", [
             "required",
-            "valid_date[Y-m-d H:i:s]"
+            "valid_date[".DATE_TIME_STRING_FORMAT."]"
         ]);
         $validation->setRule("$individual_name.finished_at", "finish date", [
             "required",
-            "valid_date[Y-m-d H:i:s]"
+            "valid_date[".DATE_TIME_STRING_FORMAT."]"
         ]);
 
         return $validation;

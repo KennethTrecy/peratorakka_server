@@ -93,6 +93,8 @@ define("EVENT_PRIORITY_NORMAL", 100);
  */
 define("EVENT_PRIORITY_HIGH", 10);
 
+define("DATE_TIME_STRING_FORMAT", "Y-m-d H:i:s");
+
 /*
  | --------------------------------------------------------------------------
  | Ownership Search Modes
