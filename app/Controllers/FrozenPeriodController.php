@@ -248,7 +248,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 return $raw_calculation;
             },
-            array_values($raw_calculations)
+            array_values($raw_summary_calculations)
         );
 
         return $raw_summary_calculations;
