@@ -24,7 +24,7 @@ class FrozenPeriodModel extends BaseResourceModel
     public function fake(Generator &$faker)
     {
         return [
-            "started_at"  => Time::now()->toDateTimeString(),
+            "started_at"  => Time::yesterday()->toDateTimeString(),
             "finished_at"  => Time::now()->toDateTimeString()
         ];
     }
