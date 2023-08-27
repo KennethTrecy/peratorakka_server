@@ -92,7 +92,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ->where("transacted_at <=", $main_document["finished_at"])
             ->findAll();
 
-        $raw_summary_calculations = static::makeRawSummaryCalculations($financial_entries);
+        [
+            $accounts,
+            $raw_summary_calculations
+        ] = static::makeRawSummaryCalculations($financial_entries);
 
         $raw_summary_calculations = array_map(
             function ($raw_summary_calculation) use ($main_document) {
@@ -220,7 +223,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             $raw_summary_calculations
         );
-        $raw_calculations = array_map(
+        $raw_summary_calculations = array_map(
             function ($raw_calculation) {
                 $unadjusted_debit_amount = $raw_calculation["unadjusted_debit_amount"];
                 $unadjusted_credit_amount = $raw_calculation["unadjusted_credit_amount"];
@@ -258,7 +261,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
             array_values($raw_summary_calculations)
         );
 
-        return $raw_summary_calculations;
+        return [
+            $accounts,
+            $raw_summary_calculations
+        ];
     }
 
     private static function makeStatements($currencies, $accounts, $summary_calculations): array {
