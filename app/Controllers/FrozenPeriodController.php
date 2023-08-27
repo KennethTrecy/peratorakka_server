@@ -93,6 +93,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ->findAll();
 
         $raw_summary_calculations = static::makeRawSummaryCalculations($financial_entries);
+
         $raw_summary_calculations = array_map(
             function ($raw_summary_calculation) use ($main_document) {
                 return array_merge(
@@ -312,7 +313,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     },
                     BigRational::zero()
                 );
-
                 $unadjusted_total_assets = array_reduce(
                     $summaries[ASSET_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
@@ -341,6 +341,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     BigRational::zero()
                 );
 
+                $adjusted_total_income = array_reduce(
+                    $summaries[INCOME_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary->adjusted_credit_amount)
+                            ->minus($summary->adjusted_debit_amount);
+                    },
+                    BigRational::zero()
+                );
                 $adjusted_total_expenses = array_reduce(
                     $summaries[EXPENSE_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
@@ -359,21 +368,46 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     },
                     BigRational::zero()
                 );
+                $adjusted_total_liabilities = array_reduce(
+                    $summaries[LIABILITY_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary->adjusted_credit_amount)
+                            ->minus($summary->adjusted_debit_amount);
+                    },
+                    BigRational::zero()
+                );
+                $adjusted_total_equities = array_reduce(
+                    $summaries[EQUITY_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total
+                            ->plus($summary->adjusted_credit_amount)
+                            ->minus($summary->adjusted_debit_amount);
+                    },
+                    BigRational::zero()
+                );
 
-                $unadjusted_trial_balance_total = $unadjusted_total_expenses
+                $unadjusted_trial_balance_debit_total = $unadjusted_total_expenses
                     ->plus($unadjusted_total_assets);
+                $unadjusted_trial_balance_credit_total = $unadjusted_total_equities
+                    ->plus($unadjusted_total_liabilities)
+                    ->plus($unadjusted_total_income);
                 $income_statement_total = $unadjusted_total_income
                     ->minus($unadjusted_total_expenses);
-                $adjusted_trial_balance_total = $adjusted_total_assets
-                    ->plus($adjusted_total_expenses);
+                $adjusted_trial_balance_debit_total = $adjusted_total_expenses
+                    ->plus($adjusted_total_assets);
+                $adjusted_trial_balance_credit_total = $adjusted_total_equities
+                    ->plus($adjusted_total_liabilities)
+                    ->plus($adjusted_total_income);
 
                 array_push($statements, [
                     "currency_id" => $currency->id,
                     "unadjusted_trial_balance" => [
-                        "total" => $unadjusted_trial_balance_total
+                        "debit_total" => $unadjusted_trial_balance_debit_total,
+                        "credit_total" => $unadjusted_trial_balance_credit_total
                     ],
                     "income_statement" => [
-                        "total" => $income_statement_total
+                        "net_total" => $income_statement_total
                     ],
                     "balance_sheet" => [
                         "total_assets" => $unadjusted_total_assets,
@@ -382,7 +416,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             ->plus($income_statement_total)
                     ],
                     "adjusted_trial_balance" => [
-                        "total" => $adjusted_trial_balance_total
+                        "debit_total" => $adjusted_trial_balance_debit_total,
+                        "credit_total" => $adjusted_trial_balance_credit_total
                     ]
                 ]);
 
