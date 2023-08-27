@@ -9,6 +9,7 @@ use CodeIgniter\Validation\Validation;
 use App\Contracts\OwnedResource;
 use App\Controllers\BaseController;
 use App\Entities\BaseResourceEntity;
+use App\Exceptions\ServerFailure;
 use Config\Database;
 
 abstract class BaseOwnedResourceController extends BaseController
@@ -148,7 +149,7 @@ abstract class BaseOwnedResourceController extends BaseController
 
                         if (static::mustTransactForCreation()) $database->transRollback();
 
-                        return $controller->makeServerError(
+                        throw new ServerFailure(
                             "There is an error on inserting to the database server."
                         );
                     } catch (HTTPExceptionInterface $exception) {
@@ -182,7 +183,7 @@ abstract class BaseOwnedResourceController extends BaseController
                         return $controller->respondNoContent();
                     }
 
-                    return $controller->makeServerError(
+                    throw new ServerFailure(
                         "There is an error on updating to the database server."
                     );
                 }
@@ -198,7 +199,7 @@ abstract class BaseOwnedResourceController extends BaseController
             return $this->respondNoContent();
         }
 
-        return $this->makeServerError(
+        throw new ServerFailure(
             "There is an error on deleting to the database server."
         );
     }
@@ -212,7 +213,7 @@ abstract class BaseOwnedResourceController extends BaseController
             return $this->respondNoContent();
         }
 
-        return $this->makeServerError(
+        throw new ServerFailure(
             "There is an error on restoring to the database server."
         );
     }
@@ -226,7 +227,7 @@ abstract class BaseOwnedResourceController extends BaseController
             return $this->respondNoContent();
         }
 
-        return $this->makeServerError(
+        throw new ServerFailure(
             "There is an error on force deleting to the database server."
         );
     }
@@ -251,18 +252,6 @@ abstract class BaseOwnedResourceController extends BaseController
 
         return $this->failValidationError()->setJSON([
             "errors" => $formalized_errors
-        ]);
-    }
-
-    private function makeServerError(string $development_message) {
-        return $this->failServerError()->setJSON([
-            "errors" => [
-                [
-                    "message" => $this->request->getServer("CI_ENVIRONMENT") === "development"
-                        ? $development_message
-                        : "Please contact the developer because there is an error."
-                ]
-            ]
         ]);
     }
 }
