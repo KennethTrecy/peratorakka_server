@@ -125,7 +125,6 @@ abstract class BaseOwnedResourceController extends BaseController
                         ? Database::connect()
                         : null;
                     if (static::mustTransactForCreation()) {
-                        $database->transOff();
                         $database->transException(true)->transBegin();
                     }
 
@@ -142,9 +141,7 @@ abstract class BaseOwnedResourceController extends BaseController
                                 $response_document
                             );
 
-                            if (static::mustTransactForCreation()) {
-                                $database->transCommit();
-                            }
+                            if (static::mustTransactForCreation()) $database->transCommit();
 
                             return $controller->respondCreated()->setJSON($response_document);
                         }
