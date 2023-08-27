@@ -37,6 +37,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return static::makeValidation();
     }
 
+    protected static function mustTransactForCreation(): bool {
+        return true;
+    }
+
     protected static function enrichResponseDocument(array $initial_document): array {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
