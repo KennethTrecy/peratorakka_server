@@ -141,17 +141,7 @@ abstract class BaseOwnedResourceController extends BaseController
                                 $response_document
                             );
 
-                            if (static::mustTransactForCreation()) {
-                                if ($database->transStatus() === true) {
-                                    $database->transCommit();
-                                } else {
-                                    $database->transRollback();
-
-                                    return $controller->makeServerError(
-                                        "There is an error on inserting to the database server."
-                                    );
-                                }
-                            }
+                            if (static::mustTransactForCreation()) $database->transCommit();
 
                             return $controller->respondCreated()->setJSON($response_document);
                         }
