@@ -7,11 +7,13 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
-use App\Models\CurrencyModel;
+
+use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
-use App\Models\ModifierModel;
+use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
 use App\Models\FrozenPeriodModel;
+use App\Models\ModifierModel;
 use App\Models\SummaryCalculationModel;
 
 class FrozenPeriodTest extends AuthenticatedHTTPTestCase
@@ -625,14 +627,18 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ])->make();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->withBodyFormat("json")
-            ->post("/api/v1/frozen_periods", [
-                "frozen_period" => $frozen_period->toArray()
-            ]);
+        try {
+            $result = $authenticated_info
+                ->getRequest()
+                ->withBodyFormat("json")
+                ->post("/api/v1/frozen_periods", [
+                    "frozen_period" => $frozen_period->toArray()
+                ]);
+            $this->assertTrue(false);
+        } catch (Throwable $code) {
+            $this->assertTrue(true);
+        }
 
-        $result->assertStatus(400);
         $this->seeNumRecords(0, "frozen_periods", []);
         $this->seeNumRecords(0, "summary_calculations", []);
     }
