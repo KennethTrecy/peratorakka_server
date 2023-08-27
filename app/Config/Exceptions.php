@@ -2,8 +2,14 @@
 
 namespace Config;
 
+use Throwable;
+
 use CodeIgniter\Config\BaseConfig;
+use CodeIgniter\Debug\ExceptionHandlerInterface;
+use CodeIgniter\Exceptions\HTTPExceptionInterface;
 use Psr\Log\LogLevel;
+
+use App\Libraries\HTTPExceptionHandler;
 
 /**
  * Setup how the exception handler works.
@@ -74,4 +80,13 @@ class Exceptions extends BaseConfig
      * to capture logging the deprecations.
      */
     public string $deprecationLogLevel = LogLevel::WARNING;
+
+    public function handler(int $statusCode, Throwable $exception): ExceptionHandlerInterface
+    {
+        if ($exception instanceof HTTPExceptionInterface) {
+            return new HTTPExceptionHandler($this);
+        }
+
+        return parent::handler($statusCode, $exception);
+    }
 }
