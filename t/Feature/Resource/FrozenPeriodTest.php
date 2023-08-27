@@ -155,10 +155,13 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     [
                         "currency_id" => $currency->id,
                         "unadjusted_trial_balance" => [
-                            "total" => $recorded_normal_financial_entry->credit_amount
+                            "debit_total" => $recorded_normal_financial_entry->debit_amount,
+                            "credit_total" => $recorded_normal_financial_entry->credit_amount
                         ],
                         "income_statement" => [
-                            "total" => $recorded_expense_financial_entry->debit_amount->negated()
+                            "net_total" => $recorded_expense_financial_entry
+                                ->debit_amount
+                                ->negated()
                         ],
                         "balance_sheet" => [
                             "total_assets" => $recorded_normal_financial_entry
@@ -170,7 +173,10 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                                 ->minus($closed_financial_entry->debit_amount)
                         ],
                         "adjusted_trial_balance" => [
-                            "total" => $recorded_normal_financial_entry
+                            "debit_total" => $recorded_normal_financial_entry
+                                ->debit_amount
+                                ->minus($recorded_expense_financial_entry->credit_amount),
+                            "credit_total" => $recorded_normal_financial_entry
                                 ->credit_amount
                                 ->minus($closed_financial_entry->debit_amount)
                         ]
