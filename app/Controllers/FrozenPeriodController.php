@@ -7,6 +7,7 @@ use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Entities\SummaryCalculation;
+use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
@@ -63,18 +64,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
         $enriched_document["accounts"] = $accounts;
 
-        $linked_currencies = [];
-        foreach ($accounts as $document) {
-            $currency_id = $document->currency_id;
-            array_push($linked_currencies, $currency_id);
-        }
-
-        $currencies = [];
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->whereIn("id", array_unique($linked_currencies))
-                ->findAll();
-        }
+        $currencies = static::getRelatedCurrencies($accounts);
         $enriched_document["currencies"] = $currencies;
 
         $enriched_document["@meta"] = [
@@ -96,12 +86,29 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $accounts,
             $raw_summary_calculations
         ] = static::makeRawSummaryCalculations($financial_entries);
+        $keyed_calculations = static::keySummaryCalculationsWithAccounts($raw_summary_calculations);
+
+        foreach ($accounts as $account) {
+            if ($account->kind === EXPENSE_ACCOUNT_KIND || $account->kind === INCOME_ACCOUNT_KIND) {
+                $raw_calculation = $keyed_calculations[$account->id];
+                if (
+                    !(
+                        $raw_calculation->adjusted_debit_amount->getSign() === 0
+                        && $raw_calculation->adjusted_debit_amount->getSign() === 0
+                    )
+                ) {
+                    throw new UnprocessableRequest(
+                        "Temporary accounts must be closed first to create the frozen period."
+                    );
+                }
+            }
+        }
 
         $raw_summary_calculations = array_map(
             function ($raw_summary_calculation) use ($main_document) {
                 return array_merge(
                     [ "frozen_period_id" => $main_document["id"] ],
-                    $raw_summary_calculation
+                    $raw_summary_calculation->toArray()
                 );
             },
             $raw_summary_calculations
@@ -268,15 +275,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
     }
 
     private static function makeStatements($currencies, $accounts, $summary_calculations): array {
-        $keyed_calculations = array_reduce(
-            $summary_calculations,
-            function ($keyed_collection, $summary) {
-                $keyed_collection[$summary->account_id] = $summary;
-
-                return $keyed_collection;
-            },
-            []
-        );
+        $keyed_calculations = static::keySummaryCalculationsWithAccounts($summary_calculations);
         $grouped_summaries = array_reduce(
             $accounts,
             function ($groups, $account) use ($keyed_calculations) {
@@ -433,5 +432,36 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
 
         return $statements;
+    }
+
+    private static function getRelatedCurrencies(array $accounts): array {
+        $linked_currencies = [];
+        foreach ($accounts as $document) {
+            $currency_id = $document->currency_id;
+            array_push($linked_currencies, $currency_id);
+        }
+
+        $currencies = [];
+        if (count($linked_currencies) > 0) {
+            $currencies = model(CurrencyModel::class)
+                ->whereIn("id", array_unique($linked_currencies))
+                ->findAll();
+        }
+
+        return $currencies;
+    }
+
+    private static function keySummaryCalculationsWithAccounts(array $summary_calculations): array {
+        $keyed_calculations = array_reduce(
+            $summary_calculations,
+            function ($keyed_collection, $summary) {
+                $keyed_collection[$summary->account_id] = $summary;
+
+                return $keyed_collection;
+            },
+            []
+        );
+
+        return $keyed_calculations;
     }
 }
