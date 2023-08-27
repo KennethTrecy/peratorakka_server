@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Resource;
 
+use Throwable;
+
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
@@ -635,7 +637,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     "frozen_period" => $frozen_period->toArray()
                 ]);
             $this->assertTrue(false);
-        } catch (Throwable $code) {
+        } catch (Throwable $exception) {
             $this->assertTrue(true);
         }
 
