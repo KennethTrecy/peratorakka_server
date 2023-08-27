@@ -132,7 +132,7 @@ nb-configuration.xml
 !/.vscode
 
 .env
-composer.lock
+
 vendor
 *.cache
 
