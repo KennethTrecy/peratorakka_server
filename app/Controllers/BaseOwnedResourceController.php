@@ -3,11 +3,13 @@
 namespace App\Controllers;
 
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\Exceptions\HTTPExceptionInterface;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Controllers\BaseController;
 use App\Entities\BaseResourceEntity;
+use Config\Database;
 
 abstract class BaseOwnedResourceController extends BaseController
 {
@@ -38,6 +40,10 @@ abstract class BaseOwnedResourceController extends BaseController
     protected static function getEntity(): BaseResourceEntity {
         $entityName = static::getModel()->returnType;
         return new $entityName();
+    }
+
+    protected static function mustTransactForCreation(): bool {
+        return false;
     }
 
     protected static function enrichResponseDocument(array $initial_document): array {
@@ -115,25 +121,44 @@ abstract class BaseOwnedResourceController extends BaseController
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
                     $entity = static::getEntity()->fill($info);
-
-                    $is_success = $model->save($entity);
-                    if ($is_success) {
-                        $response_document = [
-                            static::getIndividualName() => array_merge(
-                                [ "id" =>  $model->getInsertID() ],
-                                $info
-                            )
-                        ];
-                        $response_document = static::processAndOrganizeCreatedDocument(
-                            $response_document
-                        );
-
-                        return $controller->respondCreated()->setJSON($response_document);
+                    $database = static::mustTransactForCreation()
+                        ? Database::connect()
+                        : null;
+                    if (static::mustTransactForCreation()) {
+                        $database->transOff();
+                        $database->transException(true)->transBegin();
                     }
 
-                    return $controller->makeServerError(
-                        "There is an error on inserting to the database server."
-                    );
+                    try {
+                        $is_success = $model->save($entity);
+                        if ($is_success) {
+                            $response_document = [
+                                static::getIndividualName() => array_merge(
+                                    [ "id" =>  $model->getInsertID() ],
+                                    $info
+                                )
+                            ];
+                            $response_document = static::processAndOrganizeCreatedDocument(
+                                $response_document
+                            );
+
+                            if (static::mustTransactForCreation()) {
+                                $database->transCommit();
+                            }
+
+                            return $controller->respondCreated()->setJSON($response_document);
+                        }
+
+                        if (static::mustTransactForCreation()) $database->transRollback();
+
+                        return $controller->makeServerError(
+                            "There is an error on inserting to the database server."
+                        );
+                    } catch (HTTPExceptionInterface $exception) {
+                        if (static::mustTransactForCreation()) $database->transRollback();
+
+                        throw $exception;
+                    }
                 }
             );
     }
