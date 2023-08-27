@@ -3,8 +3,8 @@
 namespace App\Exceptions;
 
 use RuntimeException;
-use CodeIgniter\HTTP\Exceptions\ExceptionInterface;
-use CodeIgniter\HTTP\Exceptions\HTTPExceptionInterface;
+use CodeIgniter\Exceptions\ExceptionInterface;
+use CodeIgniter\Exceptions\HTTPExceptionInterface;
 
 class UnprocessableRequest
 extends RuntimeException
