@@ -9,6 +9,8 @@ use CodeIgniter\Debug\ExceptionHandlerInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
+use App\Contracts\APIExecption;
+
 class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHandlerInterface
 {
     public function handle(
@@ -18,13 +20,17 @@ class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHand
         int $statusCode,
         int $exitCode
     ): void {
-        $this->setResponseFormat("json")->respond([
-            "errors" => [
-                [
-                    "message" => $exception->getMessage()
+        $this->setResponseFormat("json")->respond(
+            $exception instanceof APIExecption
+            ? $exception->serialize()
+            : [
+                "errors" => [
+                    [
+                        "message" => $exception->getMessage()
+                    ]
                 ]
             ]
-        ]);
+        );
 
         exit($exitCode);
     }

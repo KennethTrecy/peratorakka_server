@@ -6,10 +6,14 @@ use RuntimeException;
 use CodeIgniter\Exceptions\ExceptionInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
 
+use App\Contracts\APIExecption;
+
 class ServerFailure
 extends RuntimeException
-implements ExceptionInterface, HTTPExceptionInterface
+implements ExceptionInterface, HTTPExceptionInterface, APIExecption
 {
+    use SerializableException;
+
     public function __construct($development_message) {
         parent::__construct(
             request()->getServer("CI_ENVIRONMENT") === "development"
