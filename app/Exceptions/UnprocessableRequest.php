@@ -10,7 +10,7 @@ use App\Contracts\APIExecption;
 
 class UnprocessableRequest
 extends RuntimeException
-implements ExceptionInterface, HTTPExceptionInterface
+implements ExceptionInterface, HTTPExceptionInterface, APIException
 {
     use SerializableException;
 
