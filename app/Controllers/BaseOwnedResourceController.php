@@ -9,6 +9,7 @@ use CodeIgniter\Validation\Validation;
 use App\Contracts\OwnedResource;
 use App\Controllers\BaseController;
 use App\Entities\BaseResourceEntity;
+use App\Exceptions\InvalidRequest;
 use App\Exceptions\ServerFailure;
 use Config\Database;
 
@@ -241,17 +242,6 @@ abstract class BaseOwnedResourceController extends BaseController
             return call_user_func($operation, $request_document[static::getIndividualName()]);
         }
 
-        $raw_errors = $validation->getErrors();
-        $formalized_errors = [];
-        foreach ($raw_errors as $field => $message) {
-            array_push($formalized_errors, [
-                "field" => $field,
-                "message" => $message
-            ]);
-        }
-
-        return $this->failValidationError()->setJSON([
-            "errors" => $formalized_errors
-        ]);
+        throw new InvalidRequest($validation);
     }
 }
