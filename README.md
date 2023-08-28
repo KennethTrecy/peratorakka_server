@@ -48,21 +48,20 @@ specification] for organize commits and automated generation of change log.
 - [pnpm] (optional)
 
 #### Instructions
-By running the command below, all your commits will be linted to follow the [Conventional Commits
+1. By running the command below, all your commits will be linted to follow the [Conventional Commits
 specification].
-```
-$ npm install
-```
+   ```
+   $ npm install
+   ```
 
-Or if you have installed [pnpm], run the following command:
-```
-$ pnpm install
-```
-
-To generate the change log automatically, run the command below:
-```
-$ npx changelogen --from=[tag name or branch name or commit itself] --to=master
-```
+   Or if you have installed [pnpm], run the following command:
+   ```
+   $ pnpm install
+   ```
+2. To generate the change log automatically, run the command below:
+   ```
+   $ npx changelogen --from=[tag name or branch name or commit itself] --to=master
+   ```
 
 ### Syncing template
 To synchronize the files in this repository's history from the template:
