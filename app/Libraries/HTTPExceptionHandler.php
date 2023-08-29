@@ -9,7 +9,7 @@ use CodeIgniter\Debug\ExceptionHandlerInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
-use App\Contracts\APIExecption;
+use App\Contracts\APIException;
 
 class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHandlerInterface
 {
@@ -21,7 +21,7 @@ class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHand
         int $exitCode
     ): void {
         $this->setResponseFormat("json")->respond(
-            $exception instanceof APIExecption
+            $exception instanceof APIException
             ? $exception->serialize()
             : [
                 "errors" => [

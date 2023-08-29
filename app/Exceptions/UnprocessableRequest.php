@@ -6,7 +6,7 @@ use RuntimeException;
 use CodeIgniter\Exceptions\ExceptionInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
 
-use App\Contracts\APIExecption;
+use App\Contracts\APIException;
 
 class UnprocessableRequest
 extends RuntimeException
