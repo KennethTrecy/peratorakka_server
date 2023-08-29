@@ -10,6 +10,7 @@ use App\Contracts\OwnedResource;
 use App\Controllers\BaseController;
 use App\Entities\BaseResourceEntity;
 use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
 use App\Exceptions\ServerFailure;
 use Config\Database;
 
@@ -100,13 +101,7 @@ abstract class BaseOwnedResourceController extends BaseController
 
             return response()->setJSON($response_document);
         } else {
-            return $this->failNotFound()->setJSON([
-                "errors" => [
-                    [
-                        "message" => "The requested resource was not found."
-                    ]
-                ]
-            ]);
+            throw new MissingResource();
         }
     }
 
