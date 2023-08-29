@@ -8,6 +8,8 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 use App\Contracts\OwnedResource;
+use App\Exceptions\MissingResource;
+use App\Exceptions\ServerFailure;
 
 class EnsureOwnership implements FilterInterface
 {
@@ -48,15 +50,9 @@ class EnsureOwnership implements FilterInterface
                 SEARCH_ONLY_DELETED
             ])
         ) {
-            return $this->failServerError()->setJSON([
-                "errors" => [
-                    [
-                        "message" => $request->getServer("CI_ENVIRONMENT") === "development"
-                            ? "An owned resource model and search mode allows to check ownership."
-                            : "Please contact the developer because there is an error."
-                    ]
-                ]
-            ]);
+            throw new ServerFailure(
+                "An owned resource model and search mode allows to check ownership."
+            );
         }
 
         $model = model($arguments[0]);
@@ -69,13 +65,7 @@ class EnsureOwnership implements FilterInterface
         $current_user = auth()->user();
         $search_mode = $arguments[1];
         if (!$model->isOwnedBy($current_user, $search_mode, intval($id))) {
-            return $this->failNotFound()->setJSON([
-                "errors" => [
-                    [
-                        "message" => "The request resource is not found."
-                    ]
-                ]
-            ]);
+            throw new MissingResource();
         }
     }
 
