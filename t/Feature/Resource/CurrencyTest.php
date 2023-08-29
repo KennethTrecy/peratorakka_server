@@ -2,10 +2,14 @@
 
 namespace Tests\Feature\Resource;
 
+use Throwable;
+
 use CodeIgniter\Test\Fabricator;
 
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
 use App\Models\CurrencyModel;
+use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
 class CurrencyTest extends AuthenticatedHTTPTestCase
 {
@@ -178,12 +182,9 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $currency = $currency_fabricator->create();
         $currency->id = $currency->id + 1;
 
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/currencies/$currency->id");
-
-        $result->assertNotFound();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidCreate()
@@ -196,17 +197,14 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
         $currency = $currency_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/currencies", [
                 "currency" => $currency->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidUpdate()
@@ -223,17 +221,14 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
         $new_details = $currency_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->put("/api/v1/currencies/$currency->id", [
                 "currency" => $new_details->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testUnownedDelete()
@@ -247,18 +242,24 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
         $currency = $currency_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency->id ]
-        ));
-        $this->seeInDatabase("currencies", [
-            "id" => $currency->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/currencies/$currency->id");
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("currencies", array_merge(
+                [ "id" => $currency->id ]
+            ));
+            $this->seeInDatabase("currencies", [
+                "id" => $currency->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleDelete()
@@ -273,18 +274,24 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $currency = $currency_fabricator->create();
         model(CurrencyModel::class)->delete($currency->id);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("currencies", array_merge(
-            [ "id" => $currency->id ]
-        ));
-        $this->dontSeeInDatabase("currencies", [
-            "id" => $currency->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/currencies/$currency->id");
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("currencies", array_merge(
+                [ "id" => $currency->id ]
+            ));
+            $this->dontSeeInDatabase("currencies", [
+                "id" => $currency->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleRestore()
@@ -298,15 +305,21 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         ]);
         $currency = $currency_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->patch("/api/v1/currencies/$currency->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("currencies", [
-            "id" => $currency->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->patch("/api/v1/currencies/$currency->id");
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("currencies", [
+                "id" => $currency->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testImmediateForceDelete()
@@ -322,6 +335,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->delete("/api/v1/currencies/$currency->id/force");
+
         $result->assertStatus(204);
         $this->seeNumRecords(0, "currencies", []);
     }
@@ -338,11 +352,17 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
         $currency = $currency_fabricator->create();
         model(CurrencyModel::class)->delete($currency->id, true);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/currencies/$currency->id/force");
-
-        $result->assertNotFound();
-        $this->seeNumRecords(0, "currencies", []);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/currencies/$currency->id/force");
+        } catch (MissingResource $error) {
+            $this->seeNumRecords(0, "currencies", []);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 }
