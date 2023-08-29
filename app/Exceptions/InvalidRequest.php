@@ -3,8 +3,10 @@
 namespace App\Exceptions;
 
 use RuntimeException;
+
 use CodeIgniter\Exceptions\ExceptionInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
+use CodeIgniter\Validation\Validation;
 
 use App\Contracts\APIException;
 
