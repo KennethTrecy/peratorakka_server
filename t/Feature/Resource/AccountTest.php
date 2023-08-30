@@ -2,11 +2,15 @@
 
 namespace Tests\Feature\Resource;
 
+use Throwable;
+
 use CodeIgniter\Test\Fabricator;
 
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
-use App\Models\CurrencyModel;
+use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
+use App\Models\CurrencyModel;
+use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
 class AccountTest extends AuthenticatedHTTPTestCase
 {
@@ -225,12 +229,9 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $account = $account_fabricator->create();
         $account->id = $account->id + 1;
 
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/accounts/$account->id");
-
-        $result->assertNotFound();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidCreate()
@@ -249,17 +250,14 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
         $account = $account_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/accounts", [
                 "account" => $account->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidUpdate()
@@ -282,17 +280,14 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
         $new_details = $account_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->put("/api/v1/accounts/$account->id", [
                 "account" => $new_details->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testUnownedDelete()
@@ -311,18 +306,25 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
         $account = $account_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/accounts/$account->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("accounts", array_merge(
-            [ "id" => $account->id ]
-        ));
-        $this->seeInDatabase("accounts", [
-            "id" => $account->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/accounts/$account->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("accounts", array_merge(
+                [ "id" => $account->id ]
+            ));
+            $this->seeInDatabase("accounts", [
+                "id" => $account->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleDelete()
@@ -342,18 +344,25 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $account = $account_fabricator->create();
         model(AccountModel::class)->delete($account->id);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/accounts/$account->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("accounts", array_merge(
-            [ "id" => $account->id ]
-        ));
-        $this->dontSeeInDatabase("accounts", [
-            "id" => $account->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/accounts/$account->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("accounts", array_merge(
+                [ "id" => $account->id ]
+            ));
+            $this->dontSeeInDatabase("accounts", [
+                "id" => $account->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleRestore()
@@ -372,15 +381,22 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
         $account = $account_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->patch("/api/v1/accounts/$account->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("accounts", [
-            "id" => $account->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->patch("/api/v1/accounts/$account->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("accounts", [
+                "id" => $account->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testImmediateForceDelete()
@@ -422,11 +438,18 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $account = $account_fabricator->create();
         model(AccountModel::class)->delete($account->id, true);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/accounts/$account->id/force");
-
-        $result->assertNotFound();
-        $this->seeNumRecords(0, "accounts", []);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/accounts/$account->id/force");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeNumRecords(0, "accounts", []);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 }
