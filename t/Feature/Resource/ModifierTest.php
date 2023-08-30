@@ -2,12 +2,16 @@
 
 namespace Tests\Feature\Resource;
 
+use Throwable;
+
 use CodeIgniter\Test\Fabricator;
 
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
-use App\Models\CurrencyModel;
+use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
+use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
+use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
 class ModifierTest extends AuthenticatedHTTPTestCase
 {
@@ -285,12 +289,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier = $modifier_fabricator->create();
         $modifier->id = $modifier->id + 1;
 
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/modifiers/$modifier->id");
-
-        $result->assertNotFound();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidCreate()
@@ -316,17 +317,14 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
         $modifier = $modifier_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/modifiers", [
                 "modifier" => $modifier->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testPartiallyUnownedCreate()
@@ -359,17 +357,14 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
         $modifier = $modifier_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/modifiers", [
                 "modifier" => $modifier->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidUpdate()
@@ -398,17 +393,14 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
         $new_details = $modifier_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->put("/api/v1/modifiers/$modifier->id", [
                 "modifier" => $new_details->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testUnownedDelete()
@@ -434,18 +426,26 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
         $modifier = $modifier_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/modifiers/$modifier->id");
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/modifiers/$modifier->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("modifiers", array_merge(
+                [ "id" => $modifier->id ]
+            ));
+            $this->seeInDatabase("modifiers", [
+                "id" => $modifier->id,
+                "deleted_at" => null
+            ]);
 
-        $result->assertNotFound();
-        $this->seeInDatabase("modifiers", array_merge(
-            [ "id" => $modifier->id ]
-        ));
-        $this->seeInDatabase("modifiers", [
-            "id" => $modifier->id,
-            "deleted_at" => null
-        ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleDelete()
@@ -472,18 +472,26 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier = $modifier_fabricator->create();
         model(ModifierModel::class)->delete($modifier->id);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/modifiers/$modifier->id");
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/modifiers/$modifier->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("modifiers", array_merge(
+                [ "id" => $modifier->id ]
+            ));
+            $this->dontSeeInDatabase("modifiers", [
+                "id" => $modifier->id,
+                "deleted_at" => null
+            ]);
 
-        $result->assertNotFound();
-        $this->seeInDatabase("modifiers", array_merge(
-            [ "id" => $modifier->id ]
-        ));
-        $this->dontSeeInDatabase("modifiers", [
-            "id" => $modifier->id,
-            "deleted_at" => null
-        ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleRestore()
@@ -509,15 +517,22 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         ]);
         $modifier = $modifier_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->patch("/api/v1/modifiers/$modifier->id");
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->patch("/api/v1/modifiers/$modifier->id");
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("modifiers", [
+                "id" => $modifier->id,
+                "deleted_at" => null
+            ]);
 
-        $result->assertNotFound();
-        $this->seeInDatabase("modifiers", [
-            "id" => $modifier->id,
-            "deleted_at" => null
-        ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testImmediateForceDelete()
@@ -573,11 +588,19 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier = $modifier_fabricator->create();
         model(ModifierModel::class)->delete($modifier->id, true);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/modifiers/$modifier->id/force");
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/modifiers/$modifier->id/force");
+                $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeNumRecords(0, "modifiers", []);
 
-        $result->assertNotFound();
-        $this->seeNumRecords(0, "modifiers", []);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 }
