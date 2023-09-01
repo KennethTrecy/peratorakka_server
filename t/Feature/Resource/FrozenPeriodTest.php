@@ -10,6 +10,8 @@ use CodeIgniter\Test\Fabricator;
 
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
+use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
 use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
@@ -494,14 +496,11 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ])->create();
         $frozen_period->id = $frozen_period->id + 1;
 
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
             ->get("/api/v1/frozen_periods/$frozen_period->id");
-
-        $result->assertNotFound();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidCreate()
@@ -563,17 +562,14 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "started_at"  => Time::tomorrow()->toDateTimeString(),
         ])->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/frozen_periods", [
                 "frozen_period" => $frozen_period->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testImbalanceCreate()
@@ -630,6 +626,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ])->make();
 
         try {
+            $this->expectException(UnprocessableRequest::class);
+            $this->expectExceptionCode(422);
             $result = $authenticated_info
                 ->getRequest()
                 ->withBodyFormat("json")
@@ -637,12 +635,14 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     "frozen_period" => $frozen_period->toArray()
                 ]);
             $this->assertTrue(false);
+        } catch (UnprocessableRequest $error) {
+            $this->seeNumRecords(0, "frozen_periods", []);
+            $this->seeNumRecords(0, "summary_calculations", []);
+
+            throw $error;
         } catch (Throwable $exception) {
             $this->assertTrue(true);
         }
-
-        $this->seeNumRecords(0, "frozen_periods", []);
-        $this->seeNumRecords(0, "summary_calculations", []);
     }
 
     public function testInvalidUpdate()
