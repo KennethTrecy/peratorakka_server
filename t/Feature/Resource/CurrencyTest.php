@@ -248,6 +248,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
             $result = $authenticated_info
                 ->getRequest()
                 ->delete("/api/v1/currencies/$currency->id");
+            $this->assertTrue(false);
         } catch (MissingResource $error) {
             $this->seeInDatabase("currencies", array_merge(
                 [ "id" => $currency->id ]

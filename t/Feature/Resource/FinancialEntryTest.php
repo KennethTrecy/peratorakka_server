@@ -2,13 +2,17 @@
 
 namespace Tests\Feature\Resource;
 
+use Throwable;
+
 use CodeIgniter\Test\Fabricator;
 
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
-use App\Models\CurrencyModel;
+use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
-use App\Models\ModifierModel;
+use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
+use App\Models\ModifierModel;
+use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
 class FinancialEntryTest extends AuthenticatedHTTPTestCase
 {
@@ -347,14 +351,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $financial_entry = $financial_entry_fabricator->create();
         $financial_entry->id = $financial_entry->id + 1;
 
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
             ->get("/api/v1/financial_entries/$financial_entry->id");
-
-        $result->assertNotFound();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidCreate()
@@ -385,17 +386,14 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
         $financial_entry = $financial_entry_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/financial_entries", [
                 "financial_entry" => $financial_entry->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testDualCurrencyCreate()
@@ -533,17 +531,14 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
         $financial_entry = $financial_entry_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->post("/api/v1/financial_entries", [
                 "financial_entry" => $financial_entry->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testInvalidUpdate()
@@ -575,17 +570,14 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $financial_entry = $financial_entry_fabricator->create();
         $new_details = $financial_entry_fabricator->make();
 
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
             ->put("/api/v1/financial_entries/$financial_entry->id", [
                 "financial_entry" => $new_details->toArray()
             ]);
-
-        $result->assertInvalid();
-        $result->assertJSONFragment([
-            "errors" => []
-        ]);
     }
 
     public function testUnownedDelete()
@@ -616,18 +608,26 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
         $financial_entry = $financial_entry_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id");
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/financial_entries/$financial_entry->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("financial_entries", array_merge(
+                [ "id" => $financial_entry->id ]
+            ));
+            $this->seeInDatabase("financial_entries", [
+                "id" => $financial_entry->id,
+                "deleted_at" => null
+            ]);
 
-        $result->assertNotFound();
-        $this->seeInDatabase("financial_entries", array_merge(
-            [ "id" => $financial_entry->id ]
-        ));
-        $this->seeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
-            "deleted_at" => null
-        ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleDelete()
@@ -659,18 +659,26 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $financial_entry = $financial_entry_fabricator->create();
         model(FinancialEntryModel::class)->delete($financial_entry->id);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id");
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/financial_entries/$financial_entry->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("financial_entries", array_merge(
+                [ "id" => $financial_entry->id ]
+            ));
+            $this->dontSeeInDatabase("financial_entries", [
+                "id" => $financial_entry->id,
+                "deleted_at" => null
+            ]);
 
-        $result->assertNotFound();
-        $this->seeInDatabase("financial_entries", array_merge(
-            [ "id" => $financial_entry->id ]
-        ));
-        $this->dontSeeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
-            "deleted_at" => null
-        ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testDoubleRestore()
@@ -701,15 +709,22 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
         $financial_entry = $financial_entry_fabricator->create();
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->patch("/api/v1/financial_entries/$financial_entry->id");
-
-        $result->assertNotFound();
-        $this->seeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
-            "deleted_at" => null
-        ]);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->patch("/api/v1/financial_entries/$financial_entry->id");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeInDatabase("financial_entries", [
+                "id" => $financial_entry->id,
+                "deleted_at" => null
+            ]);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 
     public function testImmediateForceDelete()
@@ -775,11 +790,18 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $financial_entry = $financial_entry_fabricator->create();
         model(FinancialEntryModel::class)->delete($financial_entry->id, true);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id/force");
-
-        $result->assertNotFound();
-        $this->seeNumRecords(0, "financial_entries", []);
+        try {
+            $this->expectException(MissingResource::class);
+            $this->expectExceptionCode(404);
+            $result = $authenticated_info
+                ->getRequest()
+                ->delete("/api/v1/financial_entries/$financial_entry->id/force");
+            $this->assertTrue(false);
+        } catch (MissingResource $error) {
+            $this->seeNumRecords(0, "financial_entries", []);
+            throw $error;
+        } catch (Throwable $error) {
+            $this->assertTrue(false);
+        }
     }
 }
