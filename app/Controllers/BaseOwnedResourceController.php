@@ -228,7 +228,7 @@ abstract class BaseOwnedResourceController extends BaseController
         );
     }
 
-    private function useValidInputsOnly(Validation $validation, callable $operation)
+    protected function useValidInputsOnly(Validation $validation, callable $operation)
     {
         $request_document = $this->request->getJson(true);
         $is_success = $validation->run($request_document);
