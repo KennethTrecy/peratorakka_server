@@ -555,13 +555,6 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "frozen_period" => $second_frozen_period->toArray(),
             "summary_calculations" => [
                 [
-                    "account_id" => $asset_account->id,
-                    "unadjusted_debit_amount" => "2750",
-                    "unadjusted_credit_amount" => "0",
-                    "adjusted_debit_amount" => "2750",
-                    "adjusted_credit_amount" => "0"
-                ],
-                [
                     "account_id" => $equity_account->id,
                     "unadjusted_debit_amount" => "0",
                     "unadjusted_credit_amount" => "3000",
@@ -569,8 +562,15 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     "adjusted_credit_amount" => "2750"
                 ],
                 [
+                    "account_id" => $asset_account->id,
+                    "unadjusted_debit_amount" => "2750",
+                    "unadjusted_credit_amount" => "0",
+                    "adjusted_debit_amount" => "2750",
+                    "adjusted_credit_amount" => "0"
+                ],
+                [
                     "account_id" => $expense_account->id,
-                    "unadjusted_debit_amount" => "0",
+                    "unadjusted_debit_amount" => "250",
                     "unadjusted_credit_amount" => "0",
                     "adjusted_debit_amount" => "0",
                     "adjusted_credit_amount" => "0"
