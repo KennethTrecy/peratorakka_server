@@ -92,6 +92,13 @@ make_owned_resource_routes($routes, FrozenPeriodController::class, [
     "index",
     "create"
 ]);
+$routes->post(
+    "api/v1/".FrozenPeriodController::getInfo()->getCollectiveName()."/dry_run",
+    [
+        FrozenPeriodController::class,
+        "dry_run_create"
+    ]
+);
 
 $routes->get("/", "Home::index");
 
