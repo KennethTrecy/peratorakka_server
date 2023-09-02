@@ -82,6 +82,27 @@ class FrozenPeriodController extends BaseOwnedResourceController
     protected static function processCreatedDocument(array $created_document): array {
         $main_document = $created_document[static::getIndividualName()];
 
+        [
+            $accounts,
+            $raw_summary_calculations
+        ] = static::calculateValidSummaryCalculations($main_document);
+
+        $raw_summary_calculations = array_map(
+            function ($raw_summary_calculation) use ($main_document) {
+                return array_merge(
+                    [ "frozen_period_id" => $main_document["id"] ],
+                    $raw_summary_calculation->toArray()
+                );
+            },
+            $raw_summary_calculations
+        );
+
+        model(SummaryCalculationModel::class)->insertBatch($raw_summary_calculations);
+
+        return $created_document;
+    }
+
+    protected static function calculateValidSummaryCalculations(array $main_document): array {
         $financial_entries = model(FinancialEntryModel::class)
             ->where("transacted_at >=", $main_document["started_at"])
             ->where("transacted_at <=", $main_document["finished_at"])
@@ -109,19 +130,40 @@ class FrozenPeriodController extends BaseOwnedResourceController
             }
         }
 
-        $raw_summary_calculations = array_map(
-            function ($raw_summary_calculation) use ($main_document) {
-                return array_merge(
-                    [ "frozen_period_id" => $main_document["id"] ],
-                    $raw_summary_calculation->toArray()
-                );
-            },
+        return [
+            $accounts,
             $raw_summary_calculations
-        );
+        ];
+    }
 
-        model(SummaryCalculationModel::class)->insertBatch($raw_summary_calculations);
+    public function dry_run_create()
+    {
+        $controller = $this;
+        $validation = $this->makeCreateValidation();
+        return $this
+            ->useValidInputsOnly(
+                $validation,
+                function($request_data) use ($controller) {
+                    $current_user = auth()->user();
 
-        return $created_document;
+                    $model = static::getModel();
+                    $info = static::prepareRequestData($request_data);
+                    [
+                        $accounts,
+                        $raw_summary_calculations
+                    ] = static::calculateValidSummaryCalculations(
+                        $info
+                    );
+
+                    $response_document = [
+                        static::getIndividualName() => $info,
+                        "summary_calculations" => $raw,
+                        "accounts" => $accounts
+                    ];
+
+                    return $controller->respondCreated()->setJSON($response_document);
+                }
+            );
     }
 
     private static function makeValidation(): Validation {
