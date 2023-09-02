@@ -570,19 +570,17 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "frozen_period_id" => $first_frozen_period->id,
             "account_id" => $equity_account->id,
             "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
+            "unadjusted_credit_amount" => "2500",
             "adjusted_debit_amount" => "0",
-            "adjusted_credit_amount" => $recorded_normal_financial_entry
-                ->credit_amount
-                ->minus($closed_financial_entry->debit_amount)
+            "adjusted_credit_amount" => "2000"
         ])->create();
         $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $first_frozen_period->id,
             "account_id" => $asset_account->id,
-            "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
-            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
-            "adjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
-            "adjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount
+            "unadjusted_debit_amount" => "2500",
+            "unadjusted_credit_amount" => "0",
+            "adjusted_debit_amount" => "2000",
+            "adjusted_credit_amount" => "0"
         ])->create();
         $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $first_frozen_period->id,
@@ -611,6 +609,20 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
         $this->seeNumRecords(2, "frozen_periods", []);
         $this->seeNumRecords(6, "summary_calculations", []);
+        $this->seeInDatabase("summary_calculations", [
+            "account_id" => $asset_account->id,
+            "unadjusted_debit_amount" => "2750",
+            "unadjusted_credit_amount" => "0",
+            "adjusted_debit_amount" => "2750",
+            "adjusted_credit_amount" => "0"
+        ]);
+        $this->seeInDatabase("summary_calculations", [
+            "account_id" => $equity_account->id,
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => "3000",
+            "adjusted_debit_amount" => "0",
+            "adjusted_credit_amount" => "2750"
+        ]);
     }
 
     public function testInvalidCreate()
