@@ -157,7 +157,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     $response_document = [
                         static::getIndividualName() => $info,
-                        "summary_calculations" => $raw,
+                        "summary_calculations" => $raw_summary_calculations,
                         "accounts" => $accounts
                     ];
 
