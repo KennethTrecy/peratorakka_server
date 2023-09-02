@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use Brick\Math\BigRational;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
@@ -201,6 +202,62 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             []
         );
+
+        $first_entry_transacted_time = array_reduce(
+            $financial_entries,
+            function ($previous_time, $current_entry) {
+                $current_time = $current_entry->transacted_at;
+                $earlier_time = $previous_time->isBefore($current_time)
+                    ? $previous_time
+                    : $current_time;
+
+                return $earlier_time;
+            },
+            Time::now()
+        );
+
+        $previous_frozen_period = model(FrozenPeriodModel::class, false)
+            ->where("finished_at <", $first_entry_transacted_time)
+            ->orderBy("finished_at", "DESC")
+            ->first();
+        if ($previous_frozen_period) {
+            $previous_summary_calculations = model(SummaryCalculationModel::class, false)
+                ->where("frozen_period_id", $previous_frozen_period->id)
+                ->findAll();
+
+            foreach ($previous_summary_calculations as $previous_summary_calculation) {
+                $account = $previous_summary_calculation->account_id;
+
+                if (isset($raw_summary_calculations[$account])) {
+                    $raw_summary_calculations[$account]["unadjusted_debit_amount"]
+                        = $raw_summary_calculations[$account]["unadjusted_debit_amount"]
+                            ->plus($previous_summary_calculation->adjusted_debit_amount);
+                    $raw_summary_calculations[$account]["unadjusted_credit_amount"]
+                        = $raw_summary_calculations[$account]["unadjusted_credit_amount"]
+                            ->plus($previous_summary_calculation->adjusted_credit_amount);
+
+                    $raw_summary_calculations[$account]["adjusted_debit_amount"]
+                        = $raw_summary_calculations[$account]["adjusted_debit_amount"]
+                            ->plus($previous_summary_calculation->adjusted_debit_amount);
+                    $raw_summary_calculations[$account]["adjusted_credit_amount"]
+                        = $raw_summary_calculations[$account]["adjusted_credit_amount"]
+                            ->plus($previous_summary_calculation->adjusted_credit_amount);
+                } else {
+                    $raw_summary_calculations[$account] = [
+                        "account_id" => $account->id,
+                        "unadjusted_debit_amount"
+                            => $previous_summary_calculation->unadjusted_debit_amount,
+                        "unadjusted_credit_amount"
+                            => $previous_summary_calculation->unadjusted_credit_amount,
+                        "adjusted_debit_amount"
+                            => $previous_summary_calculation->adjusted_debit_amount,
+                        "adjusted_credit_amount"
+                            => $previous_summary_calculation->adjusted_credit_amount
+                    ];
+                }
+            }
+        }
+
         $raw_summary_calculations = array_reduce(
             $modifiers,
             function ($raw_calculations, $modifier) use ($grouped_financial_entries) {
