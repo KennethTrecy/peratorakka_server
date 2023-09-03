@@ -576,7 +576,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     "adjusted_credit_amount" => "0"
                 ]
             ],
-            "accounts" => []
+            "accounts" => [],
+            "currencies" => []
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "summary_calculations", []);
