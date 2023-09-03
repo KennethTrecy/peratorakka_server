@@ -161,7 +161,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         "accounts" => $accounts
                     ];
 
-                    return $controller->respondCreated()->setJSON($response_document);
+                    return $controller->response->setJSON($response_document);
                 }
             );
     }
