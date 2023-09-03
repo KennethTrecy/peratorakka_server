@@ -552,6 +552,29 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "3000",
+                            "credit_total" => "3000"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "-250"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "2750",
+                            "total_liabilities" => "0",
+                            "total_equities" => "2750"
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "2750",
+                            "credit_total" => "2750"
+                        ]
+                    ]
+                ]
+            ],
             "frozen_period" => $second_frozen_period->toArray(),
             "summary_calculations" => [
                 [
