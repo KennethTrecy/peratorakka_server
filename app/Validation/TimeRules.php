@@ -9,7 +9,10 @@ class TimeRules {
         $value,
         ?string &$error = null
     ): bool {
-        $does_not_exceed = $this->isOnOrBeforeOtherTime($value, Time::now()->toDateTimeString());
+        $does_not_exceed = $this->isOnOrBeforeOtherTime(
+            $value,
+            Time::now("Asia/Manila")->toDateTimeString()
+        );
 
         if (!$does_not_exceed) {
             $error = "{field} must be on or before the current time.";
@@ -24,7 +27,7 @@ class TimeRules {
     ): bool {
         $does_not_exceed = $this->isOnOrBeforeOtherTime(
             $value,
-            Time::now()
+            Time::now("Asia/Manila")
                 ->setHour(23)
                 ->setMinute(59)
                 ->setSecond(59)
@@ -72,7 +75,7 @@ class TimeRules {
 
     private function isValidDate($value): bool {
         try {
-            Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value);
+            Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value, "Asia/Manila");
             return true;
         } finally {
         }
