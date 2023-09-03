@@ -154,11 +154,21 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     ] = static::calculateValidSummaryCalculations(
                         $info
                     );
+                    $currencies = static::getRelatedCurrencies($accounts);
+                    $statements = static::makeStatements(
+                        $currencies,
+                        $accounts,
+                        $raw_summary_calculations
+                    );
 
                     $response_document = [
+                        "@meta" => [
+                            "statements" => $statements
+                        ],
                         static::getIndividualName() => $info,
                         "summary_calculations" => $raw_summary_calculations,
-                        "accounts" => $accounts
+                        "accounts" => $accounts,
+                        "currencies" => $currencies
                     ];
 
                     return $controller->response->setJSON($response_document);
