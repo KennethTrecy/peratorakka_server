@@ -20,7 +20,7 @@ class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHand
         int $statusCode,
         int $exitCode
     ): void {
-        $this->setResponseFormat("json")->respond(
+        response()->setJSON(
             $exception instanceof APIException
             ? $exception->serialize()
             : [
@@ -29,7 +29,8 @@ class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHand
                         "message" => $exception->getMessage()
                     ]
                 ]
-            ]
+            ],
+            $statusCode
         );
 
         exit($exitCode);
