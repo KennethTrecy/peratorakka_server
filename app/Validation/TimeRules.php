@@ -18,6 +18,26 @@ class TimeRules {
         return $does_not_exceed;
     }
 
+    public function must_be_before_incoming_midnight(
+        $value,
+        ?string &$error = null
+    ): bool {
+        $does_not_exceed = $this->isOnOrBeforeOtherTime(
+            $value,
+            Time::now()
+                ->setHour(23)
+                ->setMinute(59)
+                ->setSecond(59)
+                ->toDateTimeString()
+        );
+
+        if (!$does_not_exceed) {
+            $error = "{field} must be before the incoming midnight.";
+        }
+
+        return $does_not_exceed;
+    }
+
     public function must_be_on_before_time_of_other_field(
         $value,
         string $parameters,
