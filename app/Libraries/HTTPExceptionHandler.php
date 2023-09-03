@@ -8,6 +8,7 @@ use CodeIgniter\Debug\BaseExceptionHandler;
 use CodeIgniter\Debug\ExceptionHandlerInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Fluent\Cors\Filters\CorsFilter;
 
 use App\Contracts\APIException;
 
@@ -20,18 +21,22 @@ class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHand
         int $statusCode,
         int $exitCode
     ): void {
-        response()->setJSON(
-            $exception instanceof APIException
-            ? $exception->serialize()
-            : [
-                "errors" => [
-                    [
-                        "message" => $exception->getMessage()
+        $filter = new CorsFilter();
+        $response = $filter->after($request, $response);
+        $response
+            ->setStatusCode($statusCode)
+            ->setJSON(
+                $exception instanceof APIException
+                ? $exception->serialize()
+                : [
+                    "errors" => [
+                        [
+                            "message" => $exception->getMessage()
+                        ]
                     ]
                 ]
-            ],
-            $statusCode
-        );
+            )
+            ->send();
 
         exit($exitCode);
     }
