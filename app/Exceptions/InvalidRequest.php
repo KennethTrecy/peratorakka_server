@@ -23,7 +23,7 @@ implements ExceptionInterface, HTTPExceptionInterface, APIException
     }
 
     public function serialize(): array {
-        $raw_errors = $ran_validation->getErrors();
+        $raw_errors = $this->ran_validation->getErrors();
         $formalized_errors = [];
         foreach ($raw_errors as $field => $message) {
             array_push($formalized_errors, [
