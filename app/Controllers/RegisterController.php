@@ -34,7 +34,8 @@ class RegisterController extends BaseRegisterController {
         if (is_null($raw_errors)) {
             $message = $session->getFlashdata("message");
             if (!is_null($message)) {
-                $token = $user->generateAccessToken(
+                $current_user = auth()->user();
+                $token = $current_user->generateAccessToken(
                     Time::now("Asia/Manila")->toDateTimeString()
                 );
 

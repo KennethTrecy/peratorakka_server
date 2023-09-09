@@ -41,7 +41,8 @@ class LoginController extends BaseLoginController {
 
         $raw_error = $session->getFlashdata("error");
         if (is_null($raw_error)) {
-            $token = $user->generateAccessToken(
+            $current_user = auth()->user();
+            $token = $current_user->generateAccessToken(
                 Time::now("Asia/Manila")->toDateTimeString()
             );
 
@@ -87,7 +88,8 @@ class LoginController extends BaseLoginController {
 
             if (strtolower($scheme) === "bearer") {
                 $token = substr($authorization, $separator_index + 1);
-                $user->revokeAccessToken($token);
+                $current_user = auth()->user();
+                $current_user->revokeAccessToken($token);
             } else {
                 $formalized_errors = [
                     [
