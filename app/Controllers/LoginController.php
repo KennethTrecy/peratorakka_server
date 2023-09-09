@@ -83,7 +83,7 @@ class LoginController extends BaseLoginController {
 
         if ($has_authorization_header) {
             $authorization = $this->request->header("Authorization");
-            $separator_index = strstr($authorization, " ");
+            $separator_index = strpos($authorization, " ");
             $scheme = substr($authorization, 0, $separator_index);
 
             if (strtolower($scheme) === "bearer") {
