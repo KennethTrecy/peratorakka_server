@@ -107,6 +107,7 @@ class LoginController extends BaseLoginController {
         }
 
         $original_response = $this->logoutAction();
+        $session->set("user.id", null)
 
         $new_response = $original_response->removeHeader("Location");
 
