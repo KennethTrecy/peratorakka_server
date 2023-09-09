@@ -6,11 +6,11 @@ use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-use CodeIgniter\Shield\Filters\SessionAuth as BaseSessionAuth;
+use CodeIgniter\Shield\Filters\ChainAuth as BaseAuth;
 
 use App\Contracts\OwnedResource;
 
-class SessionAuth extends BaseSessionAuth implements FilterInterface
+class ChainAuth extends BaseAuth implements FilterInterface
 {
     use ResponseTrait;
 

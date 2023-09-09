@@ -11,7 +11,7 @@ use CodeIgniter\Filters\SecureHeaders;
 use Fluent\Cors\Filters\CorsFilter;
 
 use App\Filters\EnsureOwnership;
-use App\Filters\SessionAuth;
+use App\Filters\ChainAuth;
 
 class Filters extends BaseConfig
 {
@@ -30,7 +30,7 @@ class Filters extends BaseConfig
         "secureheaders"    => SecureHeaders::class,
         "ensure_ownership" => EnsureOwnership::class,
         "cors"             => CorsFilter::class,
-        "custom_session"   => SessionAuth::class
+        "auth_thru_chain"  => ChainAuth::class
     ];
 
     /**
@@ -45,7 +45,7 @@ class Filters extends BaseConfig
             // "honeypot",
             // "csrf",
             // "invalidchars",
-            "custom_session" => [
+            "auth_thru_chain" => [
                 "except" => [
                     "/",
                     "login*",

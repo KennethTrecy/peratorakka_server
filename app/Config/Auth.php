@@ -158,7 +158,7 @@ class Auth extends ShieldAuth
      * The Authenticator to use when none is specified.
      * Uses the $key from the $authenticators array above.
      */
-    public string $defaultAuthenticator = 'session';
+    public string $defaultAuthenticator = "tokens";
 
     /**
      * --------------------------------------------------------------------
