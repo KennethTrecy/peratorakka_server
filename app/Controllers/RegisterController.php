@@ -39,6 +39,7 @@ class RegisterController extends BaseRegisterController {
                 );
 
                 $new_response = $new_response
+                    ->setStatusCode(200)
                     ->setJSON([
                         "meta" => [
                             "message" => $message,

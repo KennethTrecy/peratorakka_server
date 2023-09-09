@@ -41,7 +41,24 @@ class LoginController extends BaseLoginController {
 
         $raw_error = $session->getFlashdata("error");
         if (is_null($raw_error)) {
-            $new_response = $new_response->setStatusCode(204);
+            $token = $user->generateAccessToken(
+                Time::now("Asia/Manila")->toDateTimeString()
+            );
+
+            $new_response = $new_response
+                ->setStatusCode(200)
+                ->setJSON([
+                    "meta" => [
+                        "message" => $message,
+                        "token" => [
+                            "data" => $token,
+                            "expiration" => [
+                                "type" => "maintainance",
+                                "data" => YEAR
+                            ]
+                        ]
+                    ]
+                ]);
         } else {
             $formalized_errors = [
                 [
