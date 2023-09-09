@@ -51,7 +51,6 @@ class LoginController extends BaseLoginController {
                 ->setStatusCode(200)
                 ->setJSON([
                     "meta" => [
-                        "message" => $message,
                         "token" => [
                             "data" => $token,
                             "expiration" => [
@@ -107,7 +106,7 @@ class LoginController extends BaseLoginController {
         }
 
         $original_response = $this->logoutAction();
-        $session->set("user.id", null)
+        $session->set("user.id", null);
 
         $new_response = $original_response->removeHeader("Location");
 
