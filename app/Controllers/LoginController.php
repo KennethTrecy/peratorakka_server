@@ -78,6 +78,31 @@ class LoginController extends BaseLoginController {
 
     public function customLogoutAction(): ResponseInterface {
         $session = session();
+        $has_authorization_header = $this->request->hasHeader("Authorization");
+
+        if ($has_authorization_header) {
+            $authorization = $this->request->header("Authorization");
+            $separator_index = strstr($authorization, " ");
+            $scheme = substr($authorization, 0, $separator_index);
+
+            if (strtolower($scheme) === "bearer") {
+                $token = substr($authorization, $separator_index + 1);
+                $user->revokeAccessToken($token);
+            } else {
+                $formalized_errors = [
+                    [
+                        "message" => "The authentication scheme \"$scheme\" is not supported by the server."
+                    ]
+                ];
+
+                $new_response = $new_response
+                    ->setStatusCode(400)
+                    ->setJSON([
+                        "errors" => $formalized_errors
+                    ]);
+            }
+        }
+
         $original_response = $this->logoutAction();
 
         $new_response = $original_response->removeHeader("Location");
