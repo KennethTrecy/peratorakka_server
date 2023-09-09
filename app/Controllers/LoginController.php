@@ -6,6 +6,7 @@ use CodeIgniter\API\ResponseTrait;
 // use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Controllers\LoginController as BaseLoginController;
 
 // use Config\App;

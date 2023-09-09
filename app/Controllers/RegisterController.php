@@ -5,6 +5,7 @@ namespace App\Controllers;
 // use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
 
 // use Config\App;
