@@ -34,10 +34,21 @@ class RegisterController extends BaseRegisterController {
         if (is_null($raw_errors)) {
             $message = $session->getFlashdata("message");
             if (!is_null($message)) {
+                $token = $user->generateAccessToken(
+                    Time::now("Asia/Manila")->toDateTimeString()
+                );
+
                 $new_response = $new_response
                     ->setJSON([
                         "meta" => [
-                            "message" => $message
+                            "message" => $message,
+                            "token" => [
+                                "data" => $token,
+                                "expiration" => [
+                                    "type" => "maintainance",
+                                    "data" => YEAR
+                                ]
+                            ]
                         ]
                     ]);
             }
