@@ -46,7 +46,7 @@ class RegisterController extends BaseRegisterController {
                         "meta" => [
                             "message" => $message,
                             "token" => [
-                                "data" => $token,
+                                "data" => $token->raw_token,
                                 "expiration" => [
                                     "type" => "maintainance",
                                     "data" => YEAR

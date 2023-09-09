@@ -52,7 +52,7 @@ class LoginController extends BaseLoginController {
                 ->setJSON([
                     "meta" => [
                         "token" => [
-                            "data" => $token,
+                            "data" => $token->raw_token,
                             "expiration" => [
                                 "type" => "maintainance",
                                 "data" => YEAR
