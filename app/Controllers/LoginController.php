@@ -82,7 +82,7 @@ class LoginController extends BaseLoginController {
         $has_authorization_header = $this->request->hasHeader("Authorization");
 
         if ($has_authorization_header) {
-            $authorization = $this->request->header("Authorization");
+            $authorization = $this->request->getHeaderLine("Authorization");
             $separator_index = strpos($authorization, " ");
             $scheme = substr($authorization, 0, $separator_index);
 
@@ -97,7 +97,7 @@ class LoginController extends BaseLoginController {
                     ]
                 ];
 
-                $new_response = $new_response
+                return $this->response
                     ->setStatusCode(400)
                     ->setJSON([
                         "errors" => $formalized_errors
