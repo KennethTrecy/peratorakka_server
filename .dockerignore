@@ -1,0 +1,13 @@
+*
+!package.json
+!package-lock.json
+!composer.json
+!composer.lock
+!.env
+!.env.example
+!app
+!spark
+!blueprint
+!public
+!t
+!writable
