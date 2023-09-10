@@ -1,5 +1,6 @@
 version: "3"
 
+name: peratorakka_server
 services:
   http_server:
     build:
