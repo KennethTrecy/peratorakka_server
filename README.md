@@ -14,7 +14,7 @@ Some parts of the repository was based from [`filled_composer_json`] branch of [
 The template has been specialized for backend development.
 
 Other parts were auto-generated using the command `composer create-project codeigniter4/appstarter`.
-Therefore, any changes in [composer-installable app starter development repository] should if
+Therefore, any changes in [composer-installable app starter development repository] should be updated if
 necessary.
 
 ## Usage
@@ -63,10 +63,10 @@ specification].
    $ npx changelogen --from=[tag name or branch name or commit itself] --to=master
    ```
 
-### Syncing template
-To synchronize the files in this repository's history from the template:
+### Syncing application space
+To synchronize the files in this repository's history from the framework's application space:
 1. Reset/rebase the `master` branch on any desired branch.
-2. Run `./setup_codebase.ps1 -branch [branch you want to use from the template]`.
+2. Run `Copy-Item vendor/codeigniter4/framework/[path to the updated file] [path to the old file on your root]`.
 
 ## Notes
 
@@ -84,7 +84,7 @@ This personal project may contain references to trademarks, which are included i
 
 [`filled_composer_json`]: https://github.com/KennethTrecy/web_template/tree/filled_composer_json
 [Web Template]: http://github.com/KennethTrecy/web_template
-[composer-installable app starter repository]: https://github.com/codeigniter4/CodeIgniter4
+[composer-installable app starter development repository]: https://github.com/codeigniter4/CodeIgniter4
 [intl]: http://php.net/manual/en/intl.requirements.php
 [mbstring]: http://php.net/manual/en/mbstring.installation.php
 [mysqlnd]: http://php.net/manual/en/mysqlnd.install.php
