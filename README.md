@@ -34,10 +34,16 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 - [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
 - [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
 
-#### Instructions
-1. Copy `env` to `.env` and tailor for your machine, specifically the baseURL and any database
-   settings.
+#### Instructions (if you want dedicated server)\
+1. Copy `env` to `.env` and tailor the configuration for your machine, specifically the baseURL and
+   any database settings.
 2. Run `composer run migrate:all`.
+
+#### Instructions (if you want containerized server)
+1. Copy `env.container.example` to `.env.container` and tailor the configuration for your container.
+1. Copy `env` to `.env` and tailor the configuration for your server, specifically the baseURL and
+   any database settings. Note that `.env` is for the server *inside* the container while `.env.container` is for the container itself.
+2. Run `docker compose --env-file .env.container up --detach`.
 
 ### Initialization (for developers)
 If you want to contribute, the repository should be initialized to adhere in [Conventional Commits
