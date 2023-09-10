@@ -132,6 +132,8 @@ nb-configuration.xml
 !/.vscode
 
 .env
+.env.container.*
+!.env.container.example
 
 vendor
 *.cache
