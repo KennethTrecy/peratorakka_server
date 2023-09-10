@@ -34,10 +34,10 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 - [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
 - [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
 
-#### Instructions (if you want dedicated server)\
+#### Instructions (if you want dedicated server)
 1. Copy `env` to `.env` and tailor the configuration for your machine, specifically the `baseURL` and
    any database settings.
-2. Run `composer run migrate:all`.
+2. Run `composer run migrate:all`. It is recommended to run the command every update.
 
 #### Instructions (if you want containerized server)
 1. Copy `env.container.example` to `.env.container` and tailor the configuration for your container.
@@ -45,6 +45,8 @@ Additionally, make sure that the following extensions are enabled in your PHP:
    any database settings. Note that `.env` is for the server *inside* the container while `.env.container` is for the container itself.
 3. Use `host.docker.internal` for hostname to connect the database server and HTTP server correctly.
 4. Run `docker compose --env-file .env.container up --detach`.
+4. Run `docker compose --env-file .env.container up --detach --build` if you want to rebuild the
+   HTTP server after receiving updates by using `git pull origin master`.
 
 ### Initialization (for developers)
 If you want to contribute, the repository should be initialized to adhere in [Conventional Commits
