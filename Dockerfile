@@ -161,5 +161,5 @@ RUN sudo chmod -R a+rw /var/www/html/vendor
 # 5. Migrate all tables
 RUN /usr/bin/composer run migrate:all
 
-# 6. Restart HTTP services
-RUN service apache2 Restart
+# 6. Restart HTTP service to apply changes
+RUN service apache2 restart
