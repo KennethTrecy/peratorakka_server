@@ -28,7 +28,7 @@ services:
     networks:
       - peratorakka_server_network
     volumes:
-      - ${RELATIONAL_DATABASE_DIRECTORY}:/var/lib/postgresql/data
+      - ./stage_database:/var/lib/postgresql/data
 
 networks:
   peratorakka_server_network:
