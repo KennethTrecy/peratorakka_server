@@ -34,4 +34,4 @@ services:
       - ${RELATIONAL_DATABASE_DIRECTORY}:/var/lib/postgresql/data
 
 networks:
-  - peratorakka_server_network
+  peratorakka_server_network:
