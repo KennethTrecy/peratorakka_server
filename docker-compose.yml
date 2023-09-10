@@ -16,7 +16,7 @@ services:
       - APACHE_RUN_USER=#1000
       - APACHE_RUN_GROUP=#1000
     networks:
-      - peratorakka_server
+      - peratorakka_server_network
 
   relational_database_server:
     image: postgres
@@ -29,10 +29,9 @@ services:
       POSTGRES_USER: ${RELATIONAL_DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${RELATIONAL_DATABASE_PASSWORD}
     networks:
-      - peratorakka_server
+      - peratorakka_server_network
     volumes:
       - ${RELATIONAL_DATABASE_DIRECTORY}:/var/lib/postgresql/data
 
 networks:
-  peratorakka_server:
-    name: peratorakka_server-network
+  - peratorakka_server_network
