@@ -154,4 +154,4 @@ RUN sudo chmod -R a+rw /var/www/html
 
 RUN /usr/bin/composer install
 RUN sudo chmod -R a+rw /var/www/html/vendor
-ENTRYPOINT /usr/bin/composer run migrate:all && httpd
+RUN /usr/bin/composer run migrate:all
