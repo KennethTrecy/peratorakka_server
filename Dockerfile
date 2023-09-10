@@ -152,6 +152,14 @@ RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY . /var/www/html/
 RUN sudo chmod -R a+rw /var/www/html
 
+# 3. Install dependencies
 RUN /usr/bin/composer install
+
+# 4. Reconfigure permissions for new directories after installation
 RUN sudo chmod -R a+rw /var/www/html/vendor
+
+# 5. Migrate all tables
 RUN /usr/bin/composer run migrate:all
+
+# 6. Restart HTTP services
+RUN service apache2 Restart
