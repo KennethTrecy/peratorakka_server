@@ -37,7 +37,8 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 #### Instructions (if you want dedicated server)
 1. Copy `env` to `.env` and tailor the configuration for your machine, specifically the `baseURL` and
    any database settings.
-2. Run `composer run migrate:all`. It is recommended to run the command every update.
+2. Run `composer install --no-dev`. Install dependencies for production.
+3. Run `composer run migrate:all`. It is recommended to run the command every update.
 
 #### Instructions (if you want containerized server)
 1. Copy `env.container.example` to `.env.container` and tailor the configuration for your container.
