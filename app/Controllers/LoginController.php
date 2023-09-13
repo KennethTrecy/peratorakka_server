@@ -54,7 +54,7 @@ class LoginController extends BaseLoginController {
                         "token" => [
                             "data" => $token->raw_token,
                             "expiration" => [
-                                "type" => "maintainance",
+                                "type" => "maintenance",
                                 "data" => YEAR
                             ]
                         ]
