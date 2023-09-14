@@ -85,7 +85,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         [
             $accounts,
             $raw_summary_calculations
-        ] = static::calculateValidSummaryCalculations($main_document);
+        ] = static::calculateValidSummaryCalculations($main_document, true);
 
         $raw_summary_calculations = array_map(
             function ($raw_summary_calculation) use ($main_document) {
@@ -102,7 +102,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $created_document;
     }
 
-    protected static function calculateValidSummaryCalculations(array $main_document): array {
+    protected static function calculateValidSummaryCalculations(
+        array $main_document,
+        bool $must_be_strict
+    ): array {
         $financial_entries = model(FinancialEntryModel::class)
             ->where("transacted_at >=", $main_document["started_at"])
             ->where("transacted_at <=", $main_document["finished_at"])
@@ -114,18 +117,23 @@ class FrozenPeriodController extends BaseOwnedResourceController
         ] = static::makeRawSummaryCalculations($financial_entries);
         $keyed_calculations = static::keySummaryCalculationsWithAccounts($raw_summary_calculations);
 
-        foreach ($accounts as $account) {
-            if ($account->kind === EXPENSE_ACCOUNT_KIND || $account->kind === INCOME_ACCOUNT_KIND) {
-                $raw_calculation = $keyed_calculations[$account->id];
+        if ($must_be_strict) {
+            foreach ($accounts as $account) {
                 if (
-                    !(
-                        $raw_calculation->adjusted_debit_amount->getSign() === 0
-                        && $raw_calculation->adjusted_debit_amount->getSign() === 0
-                    )
+                    $account->kind === EXPENSE_ACCOUNT_KIND
+                    || $account->kind === INCOME_ACCOUNT_KIND
                 ) {
-                    throw new UnprocessableRequest(
-                        "Temporary accounts must be closed first to create the frozen period."
-                    );
+                    $raw_calculation = $keyed_calculations[$account->id];
+                    if (
+                        !(
+                            $raw_calculation->adjusted_debit_amount->getSign() === 0
+                            && $raw_calculation->adjusted_debit_amount->getSign() === 0
+                        )
+                    ) {
+                        throw new UnprocessableRequest(
+                            "Temporary accounts must be closed first to create the frozen period."
+                        );
+                    }
                 }
             }
         }
@@ -152,7 +160,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $accounts,
                         $raw_summary_calculations
                     ] = static::calculateValidSummaryCalculations(
-                        $info
+                        $info,
+                        false
                     );
                     $currencies = static::getRelatedCurrencies($accounts);
                     $statements = static::makeStatements(
