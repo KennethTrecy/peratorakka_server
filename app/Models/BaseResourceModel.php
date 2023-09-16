@@ -42,13 +42,25 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     protected $afterDelete = [];
 
     // Custom attributes
+    protected $available_search_modes = [
+        SEARCH_NORMALLY,
+        SEARCH_ONLY_DELETED
+    ];
     protected $sortable_fields = [];
     protected $sortable_factors = [];
 
     abstract public function limitSearchToUser(BaseResourceModel $query_builder, User $user);
 
     public function filterList(BaseResourceModel $query_builder, array $options) {
-        return $query_builder;
+        $filter_search_mode = $options["search_mode"] ?? SEARCH_NORMALLY;
+
+        if (in_array($filter_search_mode, $this->available_search_modes, true)) {
+            return $query_builder->getSearchQuery($filter_search_mode);
+        } else {
+            throw new UnprocessableRequest(
+                "The search mode \"$filter_search_mode\" is unavailable."
+            );
+        }
     }
 
     public function sortList(BaseResourceModel $query_builder, array $options)  {
@@ -67,7 +79,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
                 $query_builder = $this->sortListByFactor($query_builder, $criteria, $order);
             } else {
                 throw new UnprocessableRequest(
-                    "The criteria \"$criteria\" is not available for sorting."
+                    "The criteria \"$criteria\" is unavailable for sorting."
                 );
             }
         }
