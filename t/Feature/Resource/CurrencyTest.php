@@ -27,6 +27,9 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 10
+            ],
             "currencies" => json_decode(json_encode($currencies))
         ]);
     }
@@ -167,7 +170,35 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 0
+            ],
             "currencies" => []
+        ]);
+    }
+
+    public function testQueriedIndex()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currencies = $currency_fabricator->create(10);
+
+        $result = $authenticated_info->getRequest()->get("/api/v1/currencies", [
+            "page" => [
+                "limit" => 5
+            ]
+        ]);
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 10
+            ],
+            "currencies" => json_decode(json_encode(array_slice($currencies, 0, 5)))
         ]);
     }
 
