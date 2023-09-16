@@ -84,7 +84,10 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     }
 
     public function paginateList(BaseResourceModel $query_builder, array $options) {
-        return $query_builder;
+        $offset = $options["offset"] ?? 0;
+        $limit = min($options["limit"] ?? 100, 100);
+
+        return $query_builder->limit($limit, $offset);
     }
 
     public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool {
