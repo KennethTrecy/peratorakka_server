@@ -40,22 +40,10 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     protected $beforeDelete = [];
     protected $afterDelete = [];
 
-    abstract public function limitSearchToUser(
-        BaseResourceModel $query_builder,
-        User $user
-    ): BaseResourceModel;
-    abstract public function filterModel(
-        BaseResourceModel $query_builder,
-        array $options
-    ): BaseResourceModel;
-    abstract public function sortModel(
-        BaseResourceModel $query_builder,
-        array $options
-    ): BaseResourceModel;
-    abstract public function paginateModel(
-        BaseResourceModel $query_builder,
-        array $options
-    ): BaseResourceModel;
+    abstract public function limitSearchToUser(BaseResourceModel $query_builder, User $user);
+    abstract public function filterModel(BaseResourceModel $query_builder, array $options);
+    abstract public function sortModel(BaseResourceModel $query_builder, array $options);
+    abstract public function paginateModel(BaseResourceModel $query_builder, array $options);
 
     public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool {
         $match = $this
