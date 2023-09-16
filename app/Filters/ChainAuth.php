@@ -59,6 +59,8 @@ class ChainAuth extends BaseAuth implements FilterInterface
                         "errors" => $formalized_errors
                     ]);
             }
+
+            return $new_response;
         }
 
         return;
