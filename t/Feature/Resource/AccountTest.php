@@ -33,6 +33,9 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 10
+            ],
             "accounts" => json_decode(json_encode($accounts)),
             "currencies" => [ $currency ],
         ]);
@@ -208,8 +211,42 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 0
+            ],
             "accounts" => [],
             "currencies" => [],
+        ]);
+    }
+
+    public function testQueriedIndex()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $accounts = $account_fabricator->create(10);
+
+        $result = $authenticated_info->getRequest()->get("/api/v1/accounts", [
+            "page" => [
+                "limit" => 5
+            ]
+        ]);
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 10
+            ],
+            "accounts" => json_decode(json_encode(array_slice($accounts, 0, 5))),
+            "currencies" => [ $currency ],
         ]);
     }
 
