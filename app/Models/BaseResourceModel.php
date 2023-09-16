@@ -8,6 +8,7 @@ use CodeIgniter\Test\Interfaces\FabricatorModel;
 use Faker\Generator;
 
 use App\Contracts\OwnedResource;
+use App\Exceptions\UnprocessableRequest;
 
 abstract class BaseResourceModel extends Model implements FabricatorModel, OwnedResource
 {
@@ -40,6 +41,10 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     protected $beforeDelete = [];
     protected $afterDelete = [];
 
+    // Custom attributes
+    protected $sortable_fields = [];
+    protected $sortable_factors = [];
+
     abstract public function limitSearchToUser(BaseResourceModel $query_builder, User $user);
 
     public function filterList(BaseResourceModel $query_builder, array $options) {
@@ -47,6 +52,34 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     }
 
     public function sortList(BaseResourceModel $query_builder, array $options)  {
+        $order_translation = [
+            "ascending" => "ASC",
+            "descending" => "DESC"
+        ];
+
+        foreach ($options as $option) {
+            [ $criteria, $order ] = $option;
+            $order = in_array($order, $order_translation, true) ? $order : "ASC";
+
+            if (in_array($criteria, $this->sortable_fields)) {
+                $query_builder = $query_builder->orderBy($criteria, $order);
+            } else if (in_array($criteria, $this->sortable_factors)) {
+                $query_builder = $this->sortListByFactor($query_builder, $criteria, $order);
+            } else {
+                throw new UnprocessableRequest(
+                    "The criteria \"$criteria\" is not available for sorting."
+                );
+            }
+        }
+
+        return $query_builder;
+    }
+
+    protected function sortListByFactor(
+        BaseResourceModel $query_builder,
+        string $factor_name,
+        string $order
+    ) {
         return $query_builder;
     }
 
