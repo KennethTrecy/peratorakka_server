@@ -21,6 +21,13 @@ class ModifierModel extends BaseResourceModel
         "deleted_at"
     ];
 
+    protected $sortable_fields = [
+        "name",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+    ];
+
     public function fake(Generator &$faker)
     {
         return [
