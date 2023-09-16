@@ -87,7 +87,21 @@ abstract class BaseOwnedResourceController extends BaseController
         $page = $request->getVar("page") ?? [];
         $scoped_model = $model->paginateList($scoped_model, $page);
 
+        $overall_filtered_count = model(static::getModelName(), false);
+        $overall_filtered_count = $overall_filtered_count->limitSearchToUser(
+            $overall_filtered_count,
+            $current_user
+        );
+        $overall_filtered_count = $overall_filtered_count->filterList(
+            $overall_filtered_count,
+            $filter
+        );
+        $overall_filtered_count = $overall_filtered_count->countAllResults();
+
         $response_document = [
+            "meta" => [
+                "overall_filtered_count" => $overall_filtered_count
+            ],
             static::getCollectiveName() => $scoped_model->findAll()
         ];
         $response_document = static::enrichAndOrganizeResponseDocument($response_document);
