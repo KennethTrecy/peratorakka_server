@@ -58,6 +58,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 1
+            ],
             "frozen_periods" => json_decode(json_encode([ $frozen_period ]))
         ]);
     }
@@ -614,7 +617,58 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 0
+            ],
             "frozen_periods" => json_decode(json_encode([])),
+        ]);
+    }
+
+    public function testQueriedIndex()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency = $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => ASSET_ACCOUNT_KIND
+        ])->create();
+        $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => EQUITY_ACCOUNT_KIND
+        ])->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id
+        ])->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id
+        ]);
+        $financial_entry = $financial_entry_fabricator->create();
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+
+        $result = $authenticated_info->getRequest()->get("/api/v1/frozen_periods", [
+            "page" => [
+                "offset" => 1,
+                "limit" => 5
+            ]
+        ]);
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 1
+            ],
+            "frozen_periods" => []
         ]);
     }
 
