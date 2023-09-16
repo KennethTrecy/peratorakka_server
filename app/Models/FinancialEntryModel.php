@@ -23,6 +23,13 @@ class FinancialEntryModel extends BaseResourceModel
         "deleted_at"
     ];
 
+    protected $sortable_fields = [
+        "transacted_at",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+    ];
+
     public function fake(Generator &$faker)
     {
         $amount = $faker->regexify("\d{5}\.\d{3}");
