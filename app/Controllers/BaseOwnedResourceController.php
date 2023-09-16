@@ -79,13 +79,13 @@ abstract class BaseOwnedResourceController extends BaseController
         $scoped_model = $model->limitSearchToUser($model, $current_user);
 
         $filter = $request->getVar("filter") ?? [];
-        $scoped_model = $model->filterModel($scoped_model, $filter);
+        $scoped_model = $model->filterList($scoped_model, $filter);
 
         $sort = $request->getVar("sort") ?? [];
-        $scoped_model = $model->filterModel($scoped_model, $sort);
+        $scoped_model = $model->filterList($scoped_model, $sort);
 
         $page = $request->getVar("page") ?? [];
-        $scoped_model = $model->paginateModel($scoped_model, $page);
+        $scoped_model = $model->paginateList($scoped_model, $page);
 
         $response_document = [
             static::getCollectiveName() => $scoped_model->findAll()
