@@ -11,6 +11,7 @@ use App\Controllers\BaseController;
 use App\Entities\BaseResourceEntity;
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
+use App\Exceptions\UnauthorizedRequest;
 use App\Exceptions\ServerFailure;
 use Config\Database;
 
@@ -72,13 +73,22 @@ abstract class BaseOwnedResourceController extends BaseController
     public function index()
     {
         $current_user = auth()->user();
+        $request = $this->request;
 
         $model = static::getModel();
+        $scoped_model = $model->limitSearchToUser($model, $current_user);
+
+        $filter = $request->getVar("filter") ?? [];
+        $scoped_model = $model->filterModel($scoped_model, $filter);
+
+        $sort = $request->getVar("sort") ?? [];
+        $scoped_model = $model->filterModel($scoped_model, $sort);
+
+        $page = $request->getVar("page") ?? [];
+        $scoped_model = $model->paginateModel($scoped_model, $page);
 
         $response_document = [
-            static::getCollectiveName() => $model
-                ->limitSearchToUser($model, $current_user)
-                ->findAll()
+            static::getCollectiveName() => $scoped_model->findAll()
         ];
         $response_document = static::enrichAndOrganizeResponseDocument($response_document);
 
