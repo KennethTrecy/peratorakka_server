@@ -99,7 +99,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
         $offset = $options["offset"] ?? 0;
         $limit = min($options["limit"] ?? 100, 100);
 
-        return $query_builder->limit($limit, $offset);
+        return $query_builder->limit($limit)->offset($offset);
     }
 
     public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool {

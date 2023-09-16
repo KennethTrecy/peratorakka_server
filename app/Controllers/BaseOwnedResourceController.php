@@ -82,7 +82,7 @@ abstract class BaseOwnedResourceController extends BaseController
         $scoped_model = $model->filterList($scoped_model, $filter);
 
         $sort = $request->getVar("sort") ?? [];
-        $scoped_model = $model->filterList($scoped_model, $sort);
+        $scoped_model = $model->sortList($scoped_model, $sort);
 
         $page = $request->getVar("page") ?? [];
         $scoped_model = $model->paginateList($scoped_model, $page);
