@@ -87,12 +87,12 @@ class FinancialEntryController extends BaseOwnedResourceController
             $modifiers = model(ModifierModel::class)
                 ->whereIn("id", array_unique($linked_modifiers))
                 ->findAll();
+        }
 
-            if ($is_single_main_document) {
-                $enriched_document["modifier"] = $modifiers[0];
-            } else {
-                $enriched_document["modifiers"] = $modifiers;
-            }
+        if ($is_single_main_document) {
+            $enriched_document["modifier"] = $modifiers[0] ?? null;
+        } else {
+            $enriched_document["modifiers"] = $modifiers;
         }
 
         $linked_accounts = [];
