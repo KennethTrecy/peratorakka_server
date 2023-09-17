@@ -71,7 +71,9 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
 
         foreach ($options as $option) {
             [ $criteria, $order ] = $option;
-            $order = in_array($order, $order_translation, true) ? $order : "ASC";
+            $order = in_array($order, array_keys($order_translation))
+                ? $order_translation[$order]
+                : "ASC";
 
             if (in_array($criteria, $this->sortable_fields)) {
                 $query_builder = $query_builder->orderBy($criteria, $order);
