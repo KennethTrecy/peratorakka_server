@@ -52,7 +52,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     abstract public function limitSearchToUser(BaseResourceModel $query_builder, User $user);
 
     public function filterList(BaseResourceModel $query_builder, array $options) {
-        $filter_search_mode = $options["search_mode"] ?? SEARCH_NORMALLY;
+        $filter_search_mode = strtoupper($options["search_mode"] ?? SEARCH_NORMALLY);
 
         if (in_array($filter_search_mode, $this->available_search_modes, true)) {
             return $query_builder->getSearchQuery($filter_search_mode);
