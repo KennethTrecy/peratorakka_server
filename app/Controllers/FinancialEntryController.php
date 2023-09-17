@@ -82,13 +82,17 @@ class FinancialEntryController extends BaseOwnedResourceController
             array_push($linked_modifiers, $modifier_id);
         }
 
-        $modifiers = model(ModifierModel::class)
-            ->whereIn("id", array_unique($linked_modifiers))
-            ->findAll();
-        if ($is_single_main_document) {
-            $enriched_document["modifier"] = $modifiers[0];
-        } else {
-            $enriched_document["modifiers"] = $modifiers;
+        $modifiers = [];
+        if (count($linked_modifiers) > 0) {
+            $modifiers = model(ModifierModel::class)
+                ->whereIn("id", array_unique($linked_modifiers))
+                ->findAll();
+
+            if ($is_single_main_document) {
+                $enriched_document["modifier"] = $modifiers[0];
+            } else {
+                $enriched_document["modifiers"] = $modifiers;
+            }
         }
 
         $linked_accounts = [];
@@ -98,9 +102,12 @@ class FinancialEntryController extends BaseOwnedResourceController
             array_push($linked_accounts, $debit_account_id, $credit_account_id);
         }
 
-        $accounts = model(AccountModel::class)
-            ->whereIn("id", array_unique($linked_accounts))
-            ->findAll();
+        $accounts = [];
+        if (count($linked_accounts) > 0) {
+            $accounts = model(AccountModel::class)
+                ->whereIn("id", array_unique($linked_accounts))
+                ->findAll();
+        }
         $enriched_document["accounts"] = $accounts;
 
         $linked_currencies = [];
@@ -109,9 +116,12 @@ class FinancialEntryController extends BaseOwnedResourceController
             array_push($linked_currencies, $currency_id);
         }
 
-        $currencies = model(CurrencyModel::class)
-            ->whereIn("id", array_unique($linked_currencies))
-            ->findAll();
+        $currencies = [];
+        if (count($linked_currencies) > 0) {
+            $currencies = model(CurrencyModel::class)
+                ->whereIn("id", array_unique($linked_currencies))
+                ->findAll();
+        }
         $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
