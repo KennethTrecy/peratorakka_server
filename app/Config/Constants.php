@@ -158,14 +158,17 @@ define("ACCOUNT_KINDS", [
  |   the current version. This case may happen when the system downgraded.
  | - RECORD_MODIFIER_ACTION. A modifier with this action can create normal journal entries.
  | - CLOSE_MODIFIER_ACTION. A modifier with this action can create closing journal entries.
+ | - EXCHANGE_MODIFIER_ACTION. A modifier with this action can create exchange journal entries.
  */
 define("UNKNOWN_MODIFIER_ACTION", "unknown");
 define("RECORD_MODIFIER_ACTION", "record");
 define("CLOSE_MODIFIER_ACTION", "close");
+define("EXCHANGE_MODIFIER_ACTION", "exchange");
 
 define("ACCEPTABLE_MODIFIER_ACTIONS", [
     RECORD_MODIFIER_ACTION,
     CLOSE_MODIFIER_ACTION,
+    EXCHANGE_MODIFIER_ACTION,
 ]);
 
 define("MODIFIER_ACTIONS", [
