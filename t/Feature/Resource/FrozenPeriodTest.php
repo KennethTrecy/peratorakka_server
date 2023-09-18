@@ -581,18 +581,18 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "frozen_period" => $second_frozen_period->toArray(),
             "summary_calculations" => [
                 [
-                    "account_id" => $equity_account->id,
-                    "unadjusted_debit_amount" => "0",
-                    "unadjusted_credit_amount" => "3000",
-                    "adjusted_debit_amount" => "0",
-                    "adjusted_credit_amount" => "2750"
-                ],
-                [
                     "account_id" => $asset_account->id,
                     "unadjusted_debit_amount" => "2750",
                     "unadjusted_credit_amount" => "0",
                     "adjusted_debit_amount" => "2750",
                     "adjusted_credit_amount" => "0"
+                ],
+                [
+                    "account_id" => $equity_account->id,
+                    "unadjusted_debit_amount" => "0",
+                    "unadjusted_credit_amount" => "3000",
+                    "adjusted_debit_amount" => "0",
+                    "adjusted_credit_amount" => "2750"
                 ],
                 [
                     "account_id" => $expense_account->id,
@@ -1241,18 +1241,18 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "frozen_period" => $second_frozen_period->toArray(),
             "summary_calculations" => [
                 [
-                    "account_id" => $equity_account->id,
-                    "unadjusted_debit_amount" => "0",
-                    "unadjusted_credit_amount" => "3000",
-                    "adjusted_debit_amount" => "0",
-                    "adjusted_credit_amount" => "3000"
-                ],
-                [
                     "account_id" => $asset_account->id,
                     "unadjusted_debit_amount" => "2750",
                     "unadjusted_credit_amount" => "0",
                     "adjusted_debit_amount" => "2750",
                     "adjusted_credit_amount" => "0"
+                ],
+                [
+                    "account_id" => $equity_account->id,
+                    "unadjusted_debit_amount" => "0",
+                    "unadjusted_credit_amount" => "3000",
+                    "adjusted_debit_amount" => "0",
+                    "adjusted_credit_amount" => "3000"
                 ],
                 [
                     "account_id" => $expense_account->id,
@@ -1320,11 +1320,6 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "modifier_id" => $expense_record_modifier->id,
             "debit_amount" => "250",
             "credit_amount" => "250"
-        ])->create();
-        $closed_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_modifier->id,
-            "debit_amount" => $recorded_expense_financial_entry->credit_amount,
-            "credit_amount" => $recorded_expense_financial_entry->debit_amount
         ])->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $first_frozen_period = $frozen_period_fabricator->setOverrides([
@@ -1409,18 +1404,18 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "frozen_period" => $second_frozen_period->toArray(),
             "summary_calculations" => [
                 [
-                    "account_id" => $equity_account->id,
-                    "unadjusted_debit_amount" => "0",
-                    "unadjusted_credit_amount" => "5000",
-                    "adjusted_debit_amount" => "0",
-                    "adjusted_credit_amount" => "5000"
-                ],
-                [
                     "account_id" => $asset_account->id,
                     "unadjusted_debit_amount" => "2750",
                     "unadjusted_credit_amount" => "0",
                     "adjusted_debit_amount" => "2750",
                     "adjusted_credit_amount" => "0"
+                ],
+                [
+                    "account_id" => $equity_account->id,
+                    "unadjusted_debit_amount" => "0",
+                    "unadjusted_credit_amount" => "5000",
+                    "adjusted_debit_amount" => "0",
+                    "adjusted_credit_amount" => "5000"
                 ],
                 [
                     "account_id" => $expense_account->id,
@@ -1440,8 +1435,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "accounts" => json_decode(json_encode([
                 $equity_account,
                 $asset_account,
-                $expense_account,
-                $asset_b_account
+                $asset_b_account,
+                $expense_account
             ]), true),
             "currencies" => []
         ]);
