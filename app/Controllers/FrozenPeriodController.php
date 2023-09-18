@@ -296,25 +296,25 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 ->findAll();
 
             foreach ($previous_summary_calculations as $previous_summary_calculation) {
-                $account = $previous_summary_calculation->account_id;
+                $account_id = $previous_summary_calculation->account_id;
 
-                if (isset($raw_summary_calculations[$account])) {
-                    $raw_summary_calculations[$account]["unadjusted_debit_amount"]
-                        = $raw_summary_calculations[$account]["unadjusted_debit_amount"]
+                if (isset($raw_summary_calculations[$account_id])) {
+                    $raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
+                        = $raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
                             ->plus($previous_summary_calculation->adjusted_debit_amount);
-                    $raw_summary_calculations[$account]["unadjusted_credit_amount"]
-                        = $raw_summary_calculations[$account]["unadjusted_credit_amount"]
+                    $raw_summary_calculations[$account_id]["unadjusted_credit_amount"]
+                        = $raw_summary_calculations[$account_id]["unadjusted_credit_amount"]
                             ->plus($previous_summary_calculation->adjusted_credit_amount);
 
-                    $raw_summary_calculations[$account]["adjusted_debit_amount"]
-                        = $raw_summary_calculations[$account]["adjusted_debit_amount"]
+                    $raw_summary_calculations[$account_id]["adjusted_debit_amount"]
+                        = $raw_summary_calculations[$account_id]["adjusted_debit_amount"]
                             ->plus($previous_summary_calculation->adjusted_debit_amount);
-                    $raw_summary_calculations[$account]["adjusted_credit_amount"]
-                        = $raw_summary_calculations[$account]["adjusted_credit_amount"]
+                    $raw_summary_calculations[$account_id]["adjusted_credit_amount"]
+                        = $raw_summary_calculations[$account_id]["adjusted_credit_amount"]
                             ->plus($previous_summary_calculation->adjusted_credit_amount);
                 } else {
-                    $raw_summary_calculations[$account] = [
-                        "account_id" => $account->id,
+                    $raw_summary_calculations[$account_id] = [
+                        "account_id" => $account_id,
                         "unadjusted_debit_amount"
                             => $previous_summary_calculation->unadjusted_debit_amount,
                         "unadjusted_credit_amount"
