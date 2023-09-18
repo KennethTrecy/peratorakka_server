@@ -11,6 +11,7 @@ use CodeIgniter\Validation\StrictRules\Rules;
 use App\Validation\DatabaseRules;
 use App\Validation\SimilarityRules;
 use App\Validation\TimeRules;
+use App\Validation\EnumerationRules;
 
 class Validation extends BaseConfig
 {
@@ -32,6 +33,7 @@ class Validation extends BaseConfig
         DatabaseRules::class,
         SimilarityRules::class,
         TimeRules::class,
+        EnumerationRules::class,
     ];
 
     /**
