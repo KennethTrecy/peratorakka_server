@@ -19,24 +19,26 @@ class EnumerationRules {
         if (
             count($parameters) < 2
             || is_null(dot_array_search($parameters[0], $data))
+            || is_null(dot_array_search($parameters[1], $data))
         ) {
-            $error = '"{0}" needs a key to modifier ID to check the validity for {field}.';
+            $error = '"{0}" needs keys to account IDs from both sides'
+                .' to check the validity for {field}.';
             return false;
         }
 
         if ($value === EXCHANGE_MODIFIER_ACTION) {
-            $modifier_id = dot_array_search($parameters[0], $data);
+            $debit_account_id = dot_array_search($parameters[0], $data);
+            $credit_account_id = dot_array_search($parameters[1], $data);
 
-            return $this->mustUseDualCurrency($modifier_id);
+            return $this->mustBeDifferentCurrecies($debit_account_id, $credit_account_id);
         }
 
         return true;
     }
 
-    private function mustUseDualCurrency(int $modifier_id): bool {
-        $modifier = model(ModifierModel::class)->find($modifier_id);
+    private function mustBeDifferentCurrecies(int $debit_account_id, int $credit_account_id): bool {
         $accounts = model(AccountModel::class)
-            ->whereIn("id", [ $modifier->debit_account_id, $modifier->credit_account_id ])
+            ->whereIn("id", [ $debit_account_id, $credit_account_id ])
             ->find();
 
         // If the accounts are in the same currency, prevent exchange modifier action.
