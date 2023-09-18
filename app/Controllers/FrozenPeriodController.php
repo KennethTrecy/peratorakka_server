@@ -401,6 +401,28 @@ class FrozenPeriodController extends BaseOwnedResourceController
             array_values($raw_summary_calculations)
         );
 
+        $raw_summary_calculations = array_filter(
+            $raw_summary_calculations,
+            function ($raw_summary_calculation) {
+                return $raw_summary_calculation->unadjusted_debit_amount->getSign() !== 0
+                    || $raw_summary_calculation->unadjusted_credit_amount->getSign() !== 0
+                    || $raw_summary_calculation->adjusted_debit_amount->getSign() !== 0
+                    || $raw_summary_calculation->adjusted_credit_amount->getSign() !== 0;
+            }
+        );
+        $retained_accounts_on_summary_calculations = array_map(
+            function ($raw_summary_calculation) {
+                return $raw_summary_calculation->account_id;
+            },
+            $raw_summary_calculations
+        );
+        $accounts = array_filter(
+            $accounts,
+            function ($account) use ($retained_accounts_on_summary_calculations) {
+                return in_array($account->id, $retained_accounts_on_summary_calculations);
+            }
+        );
+
         return [
             $accounts,
             $raw_summary_calculations
