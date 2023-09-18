@@ -41,6 +41,8 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 3. Run `composer run migrate:all`. It is recommended to run the command every update.
 
 #### Instructions (if you want containerized server)
+Below are instructions to host your application in a container. However, they are not yet clear and
+may vary depending on machine and admin's preferences.
 1. Copy `env.container.example` to `.env.container` and tailor the configuration for your container.
 2. Copy `env` to `.env` and tailor the configuration for your server, specifically the `baseURL` and
    any database settings. Note that `.env` is for the server *inside* the container while `.env.container` is for the container itself.
