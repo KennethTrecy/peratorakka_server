@@ -33,7 +33,10 @@ class ModifierModel extends BaseResourceModel
         return [
             "name"  => $faker->unique()->firstName(),
             "description"  => $faker->paragraph(),
-            "action"  => $faker->randomElement(ACCEPTABLE_MODIFIER_ACTIONS),
+            "action"  => $faker->randomElement([
+                RECORD_MODIFIER_ACTION,
+                CLOSE_MODIFIER_ACTION,
+            ]),
             "kind"  => $faker->randomElement(ACCEPTABLE_MODIFIER_KINDS),
         ];
     }
