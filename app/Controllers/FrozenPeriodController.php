@@ -316,9 +316,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $raw_summary_calculations[$account_id] = [
                         "account_id" => $account_id,
                         "unadjusted_debit_amount"
-                            => $previous_summary_calculation->unadjusted_debit_amount,
+                            => $previous_summary_calculation->adjusted_debit_amount,
                         "unadjusted_credit_amount"
-                            => $previous_summary_calculation->unadjusted_credit_amount,
+                            => $previous_summary_calculation->adjusted_credit_amount,
                         "adjusted_debit_amount"
                             => $previous_summary_calculation->adjusted_debit_amount,
                         "adjusted_credit_amount"
