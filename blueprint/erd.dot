@@ -271,7 +271,7 @@ digraph {
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,record,close)<br align="left"/>
+						enum(unknown,record,close,exchange)<br align="left"/>
 						enum(unknown,reactive,dependent,manual)<br align="left"/>
 					</td>
 				</tr>
