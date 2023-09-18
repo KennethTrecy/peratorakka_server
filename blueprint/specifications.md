@@ -63,6 +63,7 @@ mechanism is dependent to the developer's preference.
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - Record
      - Close
+     - Exchange
    - Kind (enumeration)
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - Reactive
