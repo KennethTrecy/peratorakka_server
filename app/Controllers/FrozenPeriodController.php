@@ -236,32 +236,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
             array_push($linked_accounts, $debit_account_id, $credit_account_id);
         }
 
-        $accounts = [];
-        if (count($linked_accounts) > 0) {
-            $accounts = model(AccountModel::class)
-                ->whereIn("id", array_unique($linked_accounts))
-                ->findAll();
-        }
-
-        $grouped_financial_entries = array_reduce(
-            $financial_entries,
-            function ($groups, $entry) {
-                if (!isset($groups[$entry->modifier_id])) {
-                    $groups[$entry->modifier_id] = [];
-                }
-
-                array_push($groups[$entry->modifier_id], $entry);
-
-                return $groups;
-            },
-            []
-        );
-
         $raw_summary_calculations = array_reduce(
-            $accounts,
-            function ($raw_calculations, $account) {
-                $raw_calculations[$account->id] = [
-                    "account_id" => $account->id,
+            $linked_accounts,
+            function ($raw_calculations, $account_id) {
+                $raw_calculations[$account_id] = [
+                    "account_id" => $account_id,
                     "unadjusted_debit_amount" => BigRational::zero(),
                     "unadjusted_credit_amount" => BigRational::zero(),
                     "adjusted_debit_amount" => BigRational::zero(),
@@ -324,9 +303,32 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         "adjusted_credit_amount"
                             => $previous_summary_calculation->adjusted_credit_amount
                     ];
+
+                    array_push($linked_accounts, $account_id);
                 }
             }
         }
+
+        $accounts = [];
+        if (count($linked_accounts) > 0) {
+            $accounts = model(AccountModel::class)
+                ->whereIn("id", array_unique($linked_accounts))
+                ->findAll();
+        }
+
+        $grouped_financial_entries = array_reduce(
+            $financial_entries,
+            function ($groups, $entry) {
+                if (!isset($groups[$entry->modifier_id])) {
+                    $groups[$entry->modifier_id] = [];
+                }
+
+                array_push($groups[$entry->modifier_id], $entry);
+
+                return $groups;
+            },
+            []
+        );
 
         $raw_summary_calculations = array_reduce(
             $modifiers,
