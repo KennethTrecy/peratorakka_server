@@ -61,7 +61,8 @@ class ModifierController extends BaseOwnedResourceController
             "required",
             "min_length[3]",
             "max_length[255]",
-            "in_list[".implode(",", ACCEPTABLE_MODIFIER_ACTIONS)."]"
+            "in_list[".implode(",", ACCEPTABLE_MODIFIER_ACTIONS)."]",
+            "may_allow_exchange_action[$individual_name.modifier_id]",
         ]);
 
         return $validation;
