@@ -113,7 +113,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         [
             $accounts,
-            $raw_summary_calculations
+            $raw_summary_calculations,
+            $raw_exchange_rates
         ] = static::makeRawSummaryCalculations($financial_entries);
         $keyed_calculations = static::keySummaryCalculationsWithAccounts($raw_summary_calculations);
 
@@ -140,7 +141,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         return [
             $accounts,
-            $raw_summary_calculations
+            $raw_summary_calculations,
+            $raw_exchange_rates
         ];
     }
 
@@ -158,7 +160,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $info = static::prepareRequestData($request_data);
                     [
                         $accounts,
-                        $raw_summary_calculations
+                        $raw_summary_calculations,
+                        $raw_exchange_rates
                     ] = static::calculateValidSummaryCalculations(
                         $info,
                         false
@@ -172,7 +175,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     $response_document = [
                         "@meta" => [
-                            "statements" => $statements
+                            "statements" => $statements,
+                            "exchange_rates" => $raw_exchange_rates
                         ],
                         static::getIndividualName() => $info,
                         "summary_calculations" => $raw_summary_calculations,
@@ -520,7 +524,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             "currency_id" => $destination_currency_id,
                             "value" => $destination_value
                         ],
-                        "updated_at" => $financial_entry->updated_at
+                        "updated_at" => $financial_entry->updated_at->toDateTimeString()
                     ];
                 }
 
@@ -528,7 +532,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             []
         );
-        $raw_exchange_rates = array_value($raw_exchange_rates);
+        $raw_exchange_rates = array_values($raw_exchange_rates);
 
         $accounts = array_filter(
             $accounts,
