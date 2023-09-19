@@ -449,27 +449,86 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             $exchange_modifiers
         );
-        $raw_exchange_rates = array_reduce(
+        $raw_exchange_entries = array_reduce(
             $exchange_modifiers,
-            function ($raw_exchanges, $modifier) use ($grouped_financial_entries) {
+            function ($raw_entries, $modifier) use ($grouped_financial_entries) {
                 $financial_entries = $grouped_financial_entries[$modifier["id"]];
 
                 foreach ($financial_entries as $financial_entry) {
-                    if (isset($raw_exchanges[$modifier["id"]])) {
+                    if (isset($raw_entries[$modifier["id"]])) {
                         if (
-                            $raw_exchanges[$modifier["id"]]
-                            ->created_at
-                            ->isAfter($financial_entry->created_at)
+                            $financial_entry
+                            ->updated_at
+                            ->isAfter($raw_entries[$modifier["id"]]->updated_at)
                         ) {
-                            $raw_exchanges[$modifier["id"]] = $financial_entry;
+                            $raw_entries[$modifier["id"]] = $financial_entry;
                         }
                     } else {
-                        $raw_exchanges[$modifier["id"]] = $financial_entry;
+                        $raw_entries[$modifier["id"]] = $financial_entry;
                     }
                 }
+
+                return $raw_entries;
             },
             []
         );
+        $raw_exchange_rates = array_reduce(
+            $exchange_modifiers,
+            function ($raw_exchanges, $modifier) use ($raw_exchange_entries) {
+                $financial_entry = $raw_exchange_entries[$modifier["id"]];
+                $debit_account = $modifier["debit_account"];
+                $credit_account = $modifier["credit_account"];
+                $may_use_debit_account_as_destination = $debit_account->kind === ASSET_ACCOUNT_KIND
+                    || $debit_account->kind === EXPENSE_ACCOUNT_KIND;
+                $debit_currency_id = $debit_account->currency_id;
+                $credit_currency_id = $credit_account->currency_id;
+                $debit_value = $financial_entry->debit_amount;
+                $credit_value = $financial_entry->credit_amount;
+
+                $source_currency_id = $may_use_debit_account_as_destination
+                    ? $credit_currency_id
+                    : $debit_currency_id;
+                $destination_currency_id = $may_use_debit_account_as_destination
+                    ? $debit_currency_id
+                    : $credit_currency_id;
+
+                $exchange_id = $source_currency_id."_".$destination_currency_id;
+
+                $source_value = $may_use_debit_account_as_destination
+                    ? $credit_value
+                    : $debit_value;
+                $destination_value = $may_use_debit_account_as_destination
+                    ? $debit_value
+                    : $credit_value;
+
+                if (isset($raw_exchanges[$exchange_id])) {
+                    if (
+                        $financial_entry
+                        ->updated_at
+                        ->isAfter($raw_exchanges[$exchange_id]["updated_at"])
+                    ) {
+                        $raw_exchanges[$exchange_id]["source"]["value"] = $source_value;
+                        $raw_exchanges[$exchange_id]["destination"]["value"] = $destination_value;
+                    }
+                } else {
+                    $raw_exchanges[$exchange_id] = [
+                        "source" => [
+                            "currency_id" => $source_currency_id,
+                            "value" => $source_value
+                        ],
+                        "destination" => [
+                            "currency_id" => $destination_currency_id,
+                            "value" => $destination_value
+                        ],
+                        "updated_at" => $financial_entry->updated_at
+                    ];
+                }
+
+                return $raw_exchanges;
+            },
+            []
+        );
+        $raw_exchange_rates = array_value($raw_exchange_rates);
 
         $accounts = array_filter(
             $accounts,
