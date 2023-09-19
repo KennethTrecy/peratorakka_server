@@ -342,7 +342,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $credit_account_id = $modifier->credit_account_id;
                     $credit_amount = $financial_entry->credit_amount;
 
-                    if ($modifier->action !== "close") {
+                    if ($modifier->action !== CLOSE_MODIFIER_ACTION) {
                         $raw_calculations[$debit_account_id]["unadjusted_debit_amount"]
                             = $raw_calculations[$debit_account_id]["unadjusted_debit_amount"]
                                 ->plus($debit_amount);
@@ -416,6 +416,61 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             $raw_summary_calculations
         );
+
+        $exchange_modifiers = array_filter(
+            $modifiers,
+            function ($modifier) {
+                return $modifier->action === EXCHANGE_MODIFIER_ACTION;
+            }
+        );
+        $exchange_modifiers = array_map(
+            function ($exchange_modifier) use ($accounts) {
+                $debit_account = array_values(array_filter(
+                    $accounts,
+                    function ($account) use ($exchange_modifier) {
+                        log_message("error", "exchange: ".json_encode([
+                            $account->id, $exchange_modifier->debit_account_id
+                        ]));
+                        return $account->id === $exchange_modifier->debit_account_id;
+                    }
+                ))[0];
+                $credit_account = array_values(array_filter(
+                    $accounts,
+                    function ($account) use ($exchange_modifier) {
+                        return $account->id === $exchange_modifier->credit_account_id;
+                    }
+                ))[0];
+
+                return [
+                    "id" => $exchange_modifier->id,
+                    "debit_account" => $debit_account,
+                    "credit_account" => $credit_account
+                ];
+            },
+            $exchange_modifiers
+        );
+        $raw_exchange_rates = array_reduce(
+            $exchange_modifiers,
+            function ($raw_exchanges, $modifier) use ($grouped_financial_entries) {
+                $financial_entries = $grouped_financial_entries[$modifier["id"]];
+
+                foreach ($financial_entries as $financial_entry) {
+                    if (isset($raw_exchanges[$modifier["id"]])) {
+                        if (
+                            $raw_exchanges[$modifier["id"]]
+                            ->created_at
+                            ->isAfter($financial_entry->created_at)
+                        ) {
+                            $raw_exchanges[$modifier["id"]] = $financial_entry;
+                        }
+                    } else {
+                        $raw_exchanges[$modifier["id"]] = $financial_entry;
+                    }
+                }
+            },
+            []
+        );
+
         $accounts = array_filter(
             $accounts,
             function ($account) use ($retained_accounts_on_summary_calculations) {
@@ -425,7 +480,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         return [
             $accounts,
-            $raw_summary_calculations
+            $raw_summary_calculations,
+            $raw_exchange_rates
         ];
     }
 
