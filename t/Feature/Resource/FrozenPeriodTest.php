@@ -1609,7 +1609,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                             "currency_id" => $currency_b->id,
                             "value" => "3"
                         ],
-                        "updated_at" => $exchange_normal_financial_entry->updated_at
+                        "updated_at" => $exchange_normal_financial_entry
+                            ->updated_at
+                            ->toDateTimeString()
                     ]
                 ]
             ],
