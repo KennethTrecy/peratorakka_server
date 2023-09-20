@@ -6,6 +6,7 @@ use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Validation\Validation;
 
+use App\Casts\ModifierAction;
 use App\Contracts\OwnedResource;
 use App\Entities\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
@@ -72,9 +73,41 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $currencies = static::getRelatedCurrencies($accounts);
         $enriched_document["currencies"] = $currencies;
 
-        // TODO: Show exchange rates here too
+        $exchange_modifiers = model(ModifierModel::class)
+            ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
+            ->findAll();
+        $financial_entries = count($exchange_modifiers) > 0
+            ? model(FinancialEntryModel::class)
+                ->where(
+                    "transacted_at >=",
+                    $enriched_document[static::getIndividualName()]->started_at
+                )
+                ->where(
+                    "transacted_at <=",
+                    $enriched_document[static::getIndividualName()]->finished_at
+                )
+                ->whereIn("modifier_id", array_map(
+                    function ($modifier) {
+                        return $modifier->id;
+                    },
+                    $exchange_modifiers
+                ))
+                ->findAll()
+            : [];
+        $grouped_financial_entries = count($financial_entries) > 0
+            ? static::groupFinancialEntriesByModifier($financial_entries)
+            : [];
+
+        $raw_exchange_rates = count($grouped_financial_entries) > 0
+            ? static::makeExchangeRates(
+                $exchange_modifiers,
+                $accounts,
+                $grouped_financial_entries
+            ) : [];
+
         $enriched_document["@meta"] = [
-            "statements" => static::makeStatements($currencies, $accounts, $summary_calculations)
+            "statements" => static::makeStatements($currencies, $accounts, $summary_calculations),
+            "exchange_rates" => $raw_exchange_rates
         ];
 
         return $enriched_document;
@@ -321,19 +354,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 ->findAll();
         }
 
-        $grouped_financial_entries = array_reduce(
-            $financial_entries,
-            function ($groups, $entry) {
-                if (!isset($groups[$entry->modifier_id])) {
-                    $groups[$entry->modifier_id] = [];
-                }
-
-                array_push($groups[$entry->modifier_id], $entry);
-
-                return $groups;
-            },
-            []
-        );
+        $grouped_financial_entries = static::groupFinancialEntriesByModifier($financial_entries);
 
         $raw_summary_calculations = array_reduce(
             $modifiers,
@@ -735,6 +756,24 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
 
         return $currencies;
+    }
+
+    private static function groupFinancialEntriesByModifier(array $financial_entries): array {
+        $grouped_financial_entries = array_reduce(
+            $financial_entries,
+            function ($groups, $entry) {
+                if (!isset($groups[$entry->modifier_id])) {
+                    $groups[$entry->modifier_id] = [];
+                }
+
+                array_push($groups[$entry->modifier_id], $entry);
+
+                return $groups;
+            },
+            []
+        );
+
+        return $grouped_financial_entries;
     }
 
     private static function keySummaryCalculationsWithAccounts(array $summary_calculations): array {

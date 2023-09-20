@@ -190,7 +190,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                                 ->minus($closed_financial_entry->debit_amount)
                         ]
                     ]
-                ]
+                ],
+                "exchange_rates" => []
             ],
             "accounts" => json_decode(json_encode([
                 $equity_account,
