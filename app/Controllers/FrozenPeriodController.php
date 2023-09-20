@@ -72,6 +72,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $currencies = static::getRelatedCurrencies($accounts);
         $enriched_document["currencies"] = $currencies;
 
+        // TODO: Show exchange rates here too
         $enriched_document["@meta"] = [
             "statements" => static::makeStatements($currencies, $accounts, $summary_calculations)
         ];
@@ -427,14 +428,36 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 return $modifier->action === EXCHANGE_MODIFIER_ACTION;
             }
         );
+        $raw_exchange_rates = static::makeExchangeRates(
+            $exchange_modifiers,
+            $accounts,
+            $grouped_financial_entries
+        );
+
+        $accounts = array_filter(
+            $accounts,
+            function ($account) use ($retained_accounts_on_summary_calculations) {
+                return in_array($account->id, $retained_accounts_on_summary_calculations);
+            }
+        );
+
+        return [
+            $accounts,
+            $raw_summary_calculations,
+            $raw_exchange_rates
+        ];
+    }
+
+    private static function makeExchangeRates(
+        array $exchange_modifiers,
+        array $accounts,
+        array $grouped_financial_entries
+    ): array {
         $exchange_modifiers = array_map(
             function ($exchange_modifier) use ($accounts) {
                 $debit_account = array_values(array_filter(
                     $accounts,
                     function ($account) use ($exchange_modifier) {
-                        log_message("error", "exchange: ".json_encode([
-                            $account->id, $exchange_modifier->debit_account_id
-                        ]));
                         return $account->id === $exchange_modifier->debit_account_id;
                     }
                 ))[0];
@@ -534,18 +557,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
         $raw_exchange_rates = array_values($raw_exchange_rates);
 
-        $accounts = array_filter(
-            $accounts,
-            function ($account) use ($retained_accounts_on_summary_calculations) {
-                return in_array($account->id, $retained_accounts_on_summary_calculations);
-            }
-        );
-
-        return [
-            $accounts,
-            $raw_summary_calculations,
-            $raw_exchange_rates
-        ];
+        return $raw_exchange_rates;
     }
 
     private static function makeStatements($currencies, $accounts, $summary_calculations): array {
