@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
@@ -23,8 +24,11 @@ abstract class BaseOwnedResourceController extends BaseController
     abstract protected static function getCollectiveName(): string;
     abstract protected static function getModelName(): string;
 
-    abstract protected static function makeCreateValidation(): Validation;
-    abstract protected static function makeUpdateValidation(int $id): Validation;
+    abstract protected static function makeCreateValidation(User $owner): Validation;
+    abstract protected static function makeUpdateValidation(
+        User $owner,
+        int $resource_id
+    ): Validation;
 
     public static function getInfo(): OwnedResourceInfo {
         return new OwnedResourceInfo(
@@ -133,8 +137,9 @@ abstract class BaseOwnedResourceController extends BaseController
 
     public function create()
     {
+        $current_user = auth()->user();
         $controller = $this;
-        $validation = $this->makeCreateValidation();
+        $validation = static::makeCreateValidation($current_user);
         return $this
             ->useValidInputsOnly(
                 $validation,
@@ -185,8 +190,9 @@ abstract class BaseOwnedResourceController extends BaseController
 
     public function update(int $id)
     {
+        $current_user = auth()->user();
         $controller = $this;
-        $validation = $this->makeUpdateValidation($id);
+        $validation = $this->makeUpdateValidation($current_user, $id);
         return $this
             ->useValidInputsOnly(
                 $validation,

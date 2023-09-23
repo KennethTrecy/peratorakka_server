@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
@@ -21,13 +22,12 @@ class CurrencyController extends BaseOwnedResourceController
         return CurrencyModel::class;
     }
 
-    protected static function makeCreateValidation(): Validation {
+    protected static function makeCreateValidation(User $owner): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $current_user = auth()->user();
-        $user_id = $current_user->id;
+        $user_id = $owner->id;
 
         $validation->setRule("$individual_name.code", "code", [
             "required",
@@ -59,13 +59,12 @@ class CurrencyController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(int $id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $current_user = auth()->user();
-        $user_id = $current_user->id;
+        $user_id = $owner->id;
 
         $validation->setRule("$individual_name.code", "code", [
             "required",
@@ -78,7 +77,7 @@ class CurrencyController extends BaseOwnedResourceController
                     "name->$individual_name.name",
                     "user_id=$user_id"
                 ]),
-                "id=$id"
+                "id=$resource_id"
             ])."]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
