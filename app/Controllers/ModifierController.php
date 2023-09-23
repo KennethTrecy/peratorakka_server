@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
@@ -23,7 +24,7 @@ class ModifierController extends BaseOwnedResourceController
         return ModifierModel::class;
     }
 
-    protected static function makeCreateValidation(): Validation {
+    protected static function makeCreateValidation(User $owner): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -49,7 +50,13 @@ class ModifierController extends BaseOwnedResourceController
             "min_length[3]",
             "max_length[255]",
             "alpha_numeric_space",
-            "is_unique[$table_name.name]"
+            "is_unique_compositely[".implode(",", [
+                implode("|", [
+                    static::getModelName().":"."name",
+                    "debit_account_id->$individual_name.debit_account_id",
+                    "credit_account_id->$individual_name.credit_account_id"
+                ])
+            ])."]"
         ]);
         $validation->setRule("$individual_name.kind", "kind", [
             "required",
@@ -71,7 +78,7 @@ class ModifierController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(int $id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -81,7 +88,14 @@ class ModifierController extends BaseOwnedResourceController
             "min_length[3]",
             "max_length[255]",
             "alpha_numeric_space",
-            "is_unique[$table_name.name,id,$id]"
+            "is_unique_compositely[".implode(",", [
+                implode("|", [
+                    static::getModelName().":"."name",
+                    "debit_account_id->$individual_name.debit_account_id",
+                    "credit_account_id->$individual_name.credit_account_id"
+                ]),
+                "id=$resource_id"
+            ])."]"
         ]);
 
         return $validation;
