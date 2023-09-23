@@ -26,19 +26,34 @@ class CurrencyController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
+        $current_user = auth()->user();
+        $user_id = $current_user->id;
+
         $validation->setRule("$individual_name.code", "code", [
             "required",
             "min_length[2]",
             "max_length[255]",
             "alpha_numeric",
-            "is_unique[$table_name.code]"
+            "is_unique_compositely[".implode(",", [
+                implode("|", [
+                    static::getModelName().":"."code",
+                    "name->$individual_name.name",
+                    "user_id=$user_id"
+                ])
+            ])."]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[2]",
             "max_length[255]",
             "alpha_numeric_space",
-            "is_unique[$table_name.name]"
+            "is_unique_compositely[".implode(",", [
+                implode("|", [
+                    static::getModelName().":"."name",
+                    "code->$individual_name.code",
+                    "user_id=$user_id"
+                ])
+            ])."]"
         ]);
 
         return $validation;
@@ -49,19 +64,36 @@ class CurrencyController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
+        $current_user = auth()->user();
+        $user_id = $current_user->id;
+
         $validation->setRule("$individual_name.code", "code", [
             "required",
             "min_length[2]",
             "max_length[255]",
             "alpha_numeric",
-            "is_unique[$table_name.code,id,$id]"
+            "is_unique_compositely[".implode(",", [
+                implode("|", [
+                    static::getModelName().":"."code",
+                    "name->$individual_name.name",
+                    "user_id=$user_id"
+                ]),
+                "id=$id"
+            ])."]"
         ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[2]",
             "max_length[255]",
             "alpha_numeric_space",
-            "is_unique[$table_name.name,id,$id]"
+            "is_unique_compositely[".implode(",", [
+                implode("|", [
+                    static::getModelName().":"."name",
+                    "code->$individual_name.code",
+                    "user_id=$user_id"
+                ]),
+                "id=$id"
+            ])."]"
         ]);
 
         return $validation;
