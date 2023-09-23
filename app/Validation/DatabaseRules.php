@@ -87,6 +87,17 @@ class DatabaseRules {
             return false;
         }
 
+        $essential_parameters = explode(":", $parameters[0]);
+        if (
+            count($essential_parameters) < 2
+            || !(model($essential_parameters[0]) instanceof BaseResourceModel)
+            || !in_array($essential_parameters[1], model($essential_parameters[0])->allowedFields)
+        ) {
+            $error = 'A model name and column name of the existing value is required'
+                .' in "{0}" to check if the value in {field} is unique.';
+            return false;
+        }
+
         return true;
     }
 }
