@@ -54,8 +54,8 @@ class DatabaseRules {
             || !(model($parameters[0]) instanceof BaseResourceModel)
             || !in_array($parameters[1], model($parameters[0])->allowedFields)
         ) {
-            $error = 'A resource model, column to check, and acceptable list of column values is required'
-                .' in "{0}" to check if the selected option in {field} is allowed.';
+            $error = 'A resource model, column to check, and acceptable list of column values is'
+                .' required in "{0}" to check if the selected option in {field} is allowed.';
             return false;
         }
 
@@ -67,6 +67,23 @@ class DatabaseRules {
 
         if (!in_array($entity->$column, $allowed_values)) {
             $error = "{field} does not match the acceptable values.";
+            return false;
+        }
+
+        return true;
+    }
+
+    public function is_unique_compositely(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+
+        if (count($parameters) < 2) {
+            $error = 'Number of parameters is fewer than required number'
+                .' in "{0}" to check if the value in {field} is unique.';
             return false;
         }
 
