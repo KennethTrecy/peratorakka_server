@@ -91,7 +91,7 @@ class CurrencyController extends BaseOwnedResourceController
                     "code->$individual_name.code",
                     "user_id=$user_id"
                 ]),
-                "id=$id"
+                "id=$resource_id"
             ])."]"
         ]);
 

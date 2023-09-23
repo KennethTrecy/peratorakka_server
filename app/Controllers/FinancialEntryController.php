@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
@@ -24,7 +25,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         return FinancialEntryModel::class;
     }
 
-    protected static function makeCreateValidation(): Validation {
+    protected static function makeCreateValidation(User $owner): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
@@ -53,7 +54,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(int $id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
@@ -63,7 +64,7 @@ class FinancialEntryController extends BaseOwnedResourceController
             "min_length[1]",
             "max_length[255]",
             "numeric",
-            "must_be_same_for_financial_entry[$id,$individual_name.credit_amount]"
+            "must_be_same_for_financial_entry[$resource_id,$individual_name.credit_amount]"
         ]);
 
         return $validation;

@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Casts\ModifierAction;
@@ -31,11 +32,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return FrozenPeriodModel::class;
     }
 
-    protected static function makeCreateValidation(): Validation {
+    protected static function makeCreateValidation(User $owner): Validation {
         return static::makeValidation();
     }
 
-    protected static function makeUpdateValidation(int $id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
         return static::makeValidation();
     }
 
@@ -182,14 +183,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
     public function dry_run_create()
     {
+        $current_user = auth()->user();
         $controller = $this;
-        $validation = $this->makeCreateValidation();
+        $validation = $this->makeCreateValidation($current_user);
         return $this
             ->useValidInputsOnly(
                 $validation,
-                function($request_data) use ($controller) {
-                    $current_user = auth()->user();
-
+                function($request_data) use ($controller, $current_user) {
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
                     [
