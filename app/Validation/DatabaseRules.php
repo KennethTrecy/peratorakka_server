@@ -120,8 +120,8 @@ class DatabaseRules {
         $parameter_count = count($combined_parameters);
         for ($i = 1; $i < $parameter_count; $i++) {
             $composite_column_data = $combined_parameters[$i];
-            $position_of_equals = strpos($composite_column_data, "=") || -1;
-            $position_of_pointer = strpos($composite_column_data, "->") || -1;
+            $position_of_equals = strpos($composite_column_data, "=");
+            $position_of_pointer = strpos($composite_column_data, "->");
 
             $position_of_equals = $position_of_equals === false ? -1 : $position_of_equals;
             $position_of_pointer = $position_of_pointer === false ? -1 : $position_of_pointer;
@@ -169,7 +169,7 @@ class DatabaseRules {
                 );
             },
             model($essential_parameters[0], false)
-                ->where($essential_parameters[0], $value)
+                ->where($essential_parameters[1], $value)
         );
         $found_model = $query_builder->withDeleted()->first();
 
@@ -179,7 +179,7 @@ class DatabaseRules {
                 return false;
             }
 
-            $ignored_parameters = explode("=", $parameters[2]);
+            $ignored_parameters = explode("=", $parameters[1]);
             if (count($ignored_parameters) < 2) {
                 $error = 'Ignore column and ignore value is required'
                     .' in "{0}" to check if the value in {field} is unique.';
@@ -188,7 +188,7 @@ class DatabaseRules {
 
             $column_name = $ignored_parameters[0];
             $column_value = $ignored_parameters[1];
-            if ($found_model->$column_name !== $column_value) {
+            if (strval($found_model->$column_name) !== $column_value) {
                 $error = '{field} must be a unique value in the database.';
                 return false;
             }
