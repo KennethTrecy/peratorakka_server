@@ -152,6 +152,19 @@ class DatabaseRules {
             }
         }
 
+        $query_builder = array_reduce(
+            $extra_parameters,
+            function($builder, $extra_parameter) {
+                return $builder->where(
+                    $extra_parameter[0],
+                    $extra_parameter[1]
+                );
+            },
+            model($essential_parameters[0], false)
+                ->where($essential_parameters[0], $value)
+        );
+        $found_model = $query_builder->withDeleted()->first();
+
         return true;
     }
 }
