@@ -120,25 +120,33 @@ class DatabaseRules {
         $parameter_count = count($combined_parameters);
         for ($i = 1; $i < $parameter_count; $i++) {
             $composite_column_data = $combined_parameters[$i];
-            $position_of_equals = strpos($composite_column_data, "=");
-            $position_of_pointer = strpos($composite_column_data, "->");
+            $position_of_equals = strpos($composite_column_data, "=") || -1;
+            $position_of_pointer = strpos($composite_column_data, "->") || -1;
+
+            $position_of_equals = $position_of_equals === false ? -1 : $position_of_equals;
+            $position_of_pointer = $position_of_pointer === false ? -1 : $position_of_pointer;
 
             if (
                 (
                     $position_of_pointer === -1
                     && $position_of_equals >= 0
                 ) || (
-                    $position_of_equals < $position_of_pointer
+                    $position_of_equals >= 0
+                    && $position_of_pointer >= 0
+                    && $position_of_equals < $position_of_pointer
                 )
             ) {
                 $extra_parameter = explode("=", $composite_column_data);
+
                 array_push($extra_parameters, $extra_parameter);
             } else if (
                 (
                     $position_of_equals === -1
                     && $position_of_pointer >= 0
                 ) || (
-                    $position_of_pointer < $position_of_equals
+                    $position_of_pointer >= 0
+                    && $position_of_equals >= 0
+                    && $position_of_pointer < $position_of_equals
                 )
             ) {
                 $extra_parameter = explode("->", $composite_column_data);
