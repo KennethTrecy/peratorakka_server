@@ -165,6 +165,27 @@ class DatabaseRules {
         );
         $found_model = $query_builder->withDeleted()->first();
 
+        if ($found_model !== null) {
+            if (count($parameters) === 1) {
+                $error = '{field} must be a unique value in the database.';
+                return false;
+            }
+
+            $ignored_parameters = explode("=", $parameters[2]);
+            if (count($ignored_parameters) < 2) {
+                $error = 'Ignore column and ignore value is required'
+                    .' in "{0}" to check if the value in {field} is unique.';
+                return false;
+            }
+
+            $column_name = $ignored_parameters[0];
+            $column_value = $ignored_parameters[1];
+            if ($found_model->$column_name !== $column_value) {
+                $error = '{field} must be a unique value in the database.';
+                return false;
+            }
+        }
+
         return true;
     }
 }
