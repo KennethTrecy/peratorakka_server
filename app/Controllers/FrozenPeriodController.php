@@ -715,21 +715,22 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 array_push($statements, [
                     "currency_id" => $currency->id,
                     "unadjusted_trial_balance" => [
-                        "debit_total" => $unadjusted_trial_balance_debit_total,
-                        "credit_total" => $unadjusted_trial_balance_credit_total
+                        "debit_total" => $unadjusted_trial_balance_debit_total->simplified(),
+                        "credit_total" => $unadjusted_trial_balance_credit_total->simplified()
                     ],
                     "income_statement" => [
-                        "net_total" => $income_statement_total
+                        "net_total" => $income_statement_total->simplified()
                     ],
                     "balance_sheet" => [
-                        "total_assets" => $unadjusted_total_assets,
-                        "total_liabilities" => $unadjusted_total_liabilities,
+                        "total_assets" => $unadjusted_total_assets->simplified(),
+                        "total_liabilities" => $unadjusted_total_liabilities->simplified(),
                         "total_equities" => $unadjusted_total_equities
                             ->plus($income_statement_total)
+                            ->simplified()
                     ],
                     "adjusted_trial_balance" => [
-                        "debit_total" => $adjusted_trial_balance_debit_total,
-                        "credit_total" => $adjusted_trial_balance_credit_total
+                        "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
+                        "credit_total" => $adjusted_trial_balance_credit_total->simplified()
                     ]
                 ]);
 
