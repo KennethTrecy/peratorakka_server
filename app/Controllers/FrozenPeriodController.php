@@ -583,6 +583,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
     private static function makeStatements($currencies, $accounts, $summary_calculations): array {
         $keyed_calculations = static::keySummaryCalculationsWithAccounts($summary_calculations);
+        $accounts = array_filter(
+            $accounts,
+            function ($account) use ($keyed_calculations) {
+                return isset($keyed_calculations[$account->id]);
+            }
+        );
         $grouped_summaries = array_reduce(
             $accounts,
             function ($groups, $account) use ($keyed_calculations) {
