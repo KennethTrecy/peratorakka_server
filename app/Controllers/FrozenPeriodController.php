@@ -63,6 +63,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
             array_push($linked_accounts, $account_id);
         }
 
+        $exchange_modifiers = model(ModifierModel::class)
+            ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
+            ->findAll();
+        foreach ($exchange_modifiers as $modifier) {
+            $debit_account_id = $modifier->debit_account_id;
+            $credit_account_id = $modifier->credit_account_id;
+            array_push($linked_accounts, $debit_account_id, $credit_account_id);
+        }
+
         $accounts = [];
         if (count($linked_accounts) > 0) {
             $accounts = model(AccountModel::class)
@@ -74,19 +83,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $currencies = static::getRelatedCurrencies($accounts);
         $enriched_document["currencies"] = $currencies;
 
-        $exchange_modifiers = model(ModifierModel::class)
-            ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
-            ->findAll();
+        // TODO: Find a way to preperly select entries by a date range.
         $financial_entries = count($exchange_modifiers) > 0
             ? model(FinancialEntryModel::class)
-                ->where(
-                    "transacted_at >=",
-                    $enriched_document[static::getIndividualName()]->started_at
-                )
-                ->where(
-                    "transacted_at <=",
-                    $enriched_document[static::getIndividualName()]->finished_at
-                )
                 ->whereIn("modifier_id", array_map(
                     function ($modifier) {
                         return $modifier->id;
@@ -95,6 +94,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 ))
                 ->findAll()
             : [];
+
         $grouped_financial_entries = count($financial_entries) > 0
             ? static::groupFinancialEntriesByModifier($financial_entries)
             : [];
