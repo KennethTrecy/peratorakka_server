@@ -205,3 +205,16 @@ define("MODIFIER_KINDS", [
     UNKNOWN_MODIFIER_KIND,
     ...ACCEPTABLE_MODIFIER_KINDS
 ]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Token Expiration Types
+ | --------------------------------------------------------------------------
+ |
+ | There are different token expiration types that the system can handle.
+ | - MAINTENANCE_TOKEN_EXPIRATION_TYPE. Default behaviour of the framework.
+ */
+define("MAINTENANCE_TOKEN_EXPIRATION_TYPE", "maintenance");
+define("SUPPORTED_TOKEN_EXPIRATION_TYPES", [
+    MAINTENANCE_TOKEN_EXPIRATION_TYPE
+]);
