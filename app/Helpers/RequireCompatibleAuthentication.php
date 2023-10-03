@@ -14,8 +14,8 @@ trait RequireCompatibleTokenExpiration {
             && count(
                 array_diff(
                     SUPPORTED_TOKEN_EXPIRATION_TYPES,
-                    $current_body["@meta"]["expiration_type"]
+                    [ $current_body["@meta"]["expiration_type"] ]
                 )
-            ) > 0;
+            ) < count(SUPPORTED_TOKEN_EXPIRATION_TYPES);
     }
 }
