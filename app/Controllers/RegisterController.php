@@ -11,6 +11,8 @@ use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
 // use Config\App;
 use Config\Services;
 
+use App\Helpers\RequireCompatibleTokenExpiration;
+
 class RegisterController extends BaseRegisterController {
     public function customRegisterAction(): ResponseInterface {
         $session = session();
@@ -26,6 +28,16 @@ class RegisterController extends BaseRegisterController {
         //     $this->request->getUserAgent()
         // );
         $this->request = service("request");
+
+        if (!$this->isRequestHasCompatibleAuthentication($request)) {
+            return $this->fail([
+                "errors" => [
+                    [
+                        "message" => "The client is not compatible with the server."
+                    ]
+                ]
+            ], 422);
+        }
 
         $original_response = parent::registerAction();
 

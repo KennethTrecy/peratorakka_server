@@ -12,8 +12,11 @@ use CodeIgniter\Shield\Controllers\LoginController as BaseLoginController;
 // use Config\App;
 use Config\Services;
 
+use App\Helpers\RequireCompatibleTokenExpiration;
+
 class LoginController extends BaseLoginController {
     use ResponseTrait;
+    use RequireCompatibleTokenExpiration;
 
     public function customLoginAction(): ResponseInterface {
         $session = session();
@@ -35,6 +38,16 @@ class LoginController extends BaseLoginController {
         //     $this->request->getUserAgent()
         // );
         $this->request = service("request");
+
+        if (!$this->isRequestHasCompatibleAuthentication($request)) {
+            return $this->fail([
+                "errors" => [
+                    [
+                        "message" => "The client is not compatible with the server."
+                    ]
+                ]
+            ], 422);
+        }
 
         $original_response = $this->loginAction();
 
