@@ -14,6 +14,8 @@ use Config\Services;
 use App\Helpers\RequireCompatibleTokenExpiration;
 
 class RegisterController extends BaseRegisterController {
+    use RequireCompatibleTokenExpiration;
+
     public function customRegisterAction(): ResponseInterface {
         $session = session();
         $_POST = array_merge($_POST, $this->request->getJSON(true) ?? []);
@@ -29,7 +31,7 @@ class RegisterController extends BaseRegisterController {
         // );
         $this->request = service("request");
 
-        if (!$this->isRequestHasCompatibleAuthentication($request)) {
+        if (!$this->hasCompatibleTokenExpirationType($this->request)) {
             return $this->fail([
                 "errors" => [
                     [

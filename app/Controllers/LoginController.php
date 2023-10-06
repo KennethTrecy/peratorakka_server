@@ -39,7 +39,7 @@ class LoginController extends BaseLoginController {
         // );
         $this->request = service("request");
 
-        if (!$this->isRequestHasCompatibleAuthentication($request)) {
+        if (!$this->hasCompatibleTokenExpirationType($this->request)) {
             return $this->fail([
                 "errors" => [
                     [
