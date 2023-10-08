@@ -32,13 +32,15 @@ class RegisterController extends BaseRegisterController {
         $this->request = service("request");
 
         if (!$this->hasCompatibleTokenExpirationType($this->request)) {
-            return $this->fail([
-                "errors" => [
-                    [
-                        "message" => "The client is not compatible with the server."
+            return $this->response
+                ->setStatusCode(422)
+                ->setJSON([
+                    "errors" => [
+                        [
+                            "message" => "The client is not compatible with the server."
+                        ]
                     ]
-                ]
-            ], 422);
+                ]);
         }
 
         $original_response = parent::registerAction();
