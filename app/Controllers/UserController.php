@@ -5,8 +5,8 @@ namespace App\Controllers;
 use Exception;
 
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\Shield\Authentication\Passwords;
 use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
-use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Exceptions\UnauthorizedRequest;
@@ -58,7 +58,7 @@ class UserController extends BaseRegisterController
             $current_user->fill($request_document);
 
             try {
-                $users->save($user);
+                $users->save($current_user);
 
                 return $this->respondNoContent();
             } catch (Exception $error) {
@@ -97,8 +97,12 @@ class UserController extends BaseRegisterController
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
-        $oldPasswordRules = "required|" . Passwords::getMaxLenghtRule();
-        $newPasswordRules = "required|" . Passwords::getMaxLenghtRule() . "|strong_password";
+        $oldPasswordRules = "required|"
+            . Passwords::getMaxLenghtRule()
+            . "|must_be_same_as_password_of_current_user";
+        $newPasswordRules = "required|"
+            . Passwords::getMaxLenghtRule()
+            . "|strong_password";
         $confirmNewPasswordRules = "required|matches[$individual_name.new_password]";
 
         $validation->setRule($individual_name, "user", [
