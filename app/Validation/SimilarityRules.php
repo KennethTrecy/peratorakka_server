@@ -64,6 +64,20 @@ class SimilarityRules {
         return $this->mayAllowForDualCurrency($modifier_id);
     }
 
+    public function must_be_same_as_password_of_current_user(
+        $given_password,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        helper("array");
+
+        $current_user = auth()->user();
+        $password_service = service("passwords");
+
+        return $passwords->verify($given_password, $current_user->password_hash);
+    }
+
     private function mayAllowForDualCurrency(int $modifier_id): bool {
         $modifier = model(ModifierModel::class)->find($modifier_id);
         $accounts = model(AccountModel::class)

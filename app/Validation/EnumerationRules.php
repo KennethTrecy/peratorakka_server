@@ -30,13 +30,16 @@ class EnumerationRules {
             $debit_account_id = dot_array_search($parameters[0], $data);
             $credit_account_id = dot_array_search($parameters[1], $data);
 
-            return $this->mustBeDifferentCurrecies($debit_account_id, $credit_account_id);
+            return $this->mustBeDifferentCurrencies($debit_account_id, $credit_account_id);
         }
 
         return true;
     }
 
-    private function mustBeDifferentCurrecies(int $debit_account_id, int $credit_account_id): bool {
+    private function mustBeDifferentCurrencies(
+        int $debit_account_id,
+        int $credit_account_id
+    ): bool {
         $accounts = model(AccountModel::class)
             ->whereIn("id", [ $debit_account_id, $credit_account_id ])
             ->find();
