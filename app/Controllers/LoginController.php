@@ -66,6 +66,8 @@ class LoginController extends BaseLoginController {
                 ->setStatusCode(200)
                 ->setJSON([
                     "meta" => [
+                        "id" => $current_user->id,
+                        "username" => $current_user->username,
                         "token" => [
                             "data" => $token->raw_token,
                             "expiration" => [

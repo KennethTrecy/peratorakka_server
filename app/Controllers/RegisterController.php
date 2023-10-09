@@ -60,6 +60,8 @@ class RegisterController extends BaseRegisterController {
                     ->setStatusCode(200)
                     ->setJSON([
                         "meta" => [
+                            "id" => $current_user->id,
+                            "username" => $current_user->username,
                             "message" => $message,
                             "token" => [
                                 "data" => $token->raw_token,
