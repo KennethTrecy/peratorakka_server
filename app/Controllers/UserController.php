@@ -21,7 +21,7 @@ class UserController extends BaseRegisterController
 
     public function update() {
         $current_user = auth()->user();
-        $validation = static::makeIdentityValidation();
+        $validation = static::makeIdentityValidation($current_user->id);
 
         $request_document = $this->request->getJson(true);
         $is_success = $validation->run($request_document);
@@ -32,7 +32,7 @@ class UserController extends BaseRegisterController
             $current_user->fill($request_document);
 
             try {
-                $users->save($user);
+                $users->save($current_user);
 
                 return $this->respondNoContent();
             } catch (Exception $error) {
@@ -71,17 +71,17 @@ class UserController extends BaseRegisterController
         throw new InvalidRequest($validation);
     }
 
-    private static function makeIdentityValidation(): Validation {
+    private static function makeIdentityValidation(int $current_user_id): Validation {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
         $usernameRules = array_merge(
             config("AuthSession")->usernameValidationRules,
-            [sprintf("is_unique[%s.username]", $this->tables["users"])]
+            [sprintf("is_unique[%s.username,id,$current_user_id]", $this->tables["users"])]
         );
         $emailRules = array_merge(
             config("AuthSession")->emailValidationRules,
-            [sprintf("is_unique[%s.secret]", $this->tables["identities"])]
+            [sprintf("is_unique[%s.secret,id,$current_user_id]", $this->tables["identities"])]
         );
 
         $validation->setRule($individual_name, "user", [
