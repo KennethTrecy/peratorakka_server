@@ -81,6 +81,7 @@ use App\Controllers\CurrencyController;
 use App\Controllers\FinancialEntryController;
 use App\Controllers\FrozenPeriodController;
 use App\Controllers\ModifierController;
+use App\Controllers\UserController;
 
 make_owned_resource_routes($routes, CurrencyController::class);
 make_owned_resource_routes($routes, AccountController::class);
@@ -97,6 +98,20 @@ $routes->post(
     [
         FrozenPeriodController::class,
         "dry_run_create"
+    ]
+);
+$routes->patch(
+    "api/v1/user",
+    [
+        UserController::class,
+        "update"
+    ]
+);
+$routes->patch(
+    "api/v1/user/password",
+    [
+        UserController::class,
+        "updatePassword"
     ]
 );
 
