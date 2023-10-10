@@ -55,8 +55,8 @@ class FinancialEntryModel extends BaseResourceModel
                     model(ModifierModel::class, false)
                         ->builder()
                         ->select("id")
-                        ->whereIn("debit_account_id", $filter_account_id)
-                        ->orWhereIn("credit_account_id", $filter_account_id)
+                        ->where("debit_account_id", $filter_account_id)
+                        ->orWhere("credit_account_id", $filter_account_id)
                 );
         }
     }
