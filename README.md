@@ -35,7 +35,7 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 - [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
 
 #### Instructions (if you want dedicated server)
-1. Copy `env` to `.env` and tailor the configuration for your machine, specifically the `baseURL` and
+1. Copy `.env.lax.example` to `.env` and tailor the configuration for your machine, specifically the `baseURL` and
    any database settings.
 2. Run `composer install --no-dev`. Install dependencies for production.
 3. Run `composer run migrate:all`. It is recommended to run the command every update.
