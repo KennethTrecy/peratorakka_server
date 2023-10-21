@@ -47,8 +47,15 @@ class CreateFinancialEntriesTable extends Migration
                 "null" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id");
-        $this->forge->addForeignKey("modifier_id", "modifiers", "id", "CASCADE", "CASCADE");
+        $this->forge->addPrimaryKey("id", "pk_financial_entries");
+        $this->forge->addForeignKey(
+            "modifier_id",
+            "modifiers",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "financial_entries_modifier_id_foreign"
+        );
         $this->forge->createTable("financial_entries");
     }
 
