@@ -16,7 +16,7 @@ class RenewCurrencyUniqueness extends Migration
 
         $this->forge->dropKey("currencies", "currencies_code_key", false);
         $this->forge->dropKey("currencies", "currencies_name_key", false);
-        $this->forge->addUniqueKey([ "user_id", "code", "name" ]);
+        $this->forge->addUniqueKey([ "user_id", "code", "name" ], "currencies_user_id_code_name");
         $this->forge->processIndexes("currencies");
     }
 

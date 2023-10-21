@@ -21,16 +21,23 @@ class CreateCurrencies extends Migration
             "code" => [
                 "type" => "VARCHAR",
                 "constraint" => "255",
-                "unique" => true,
             ],
             "name" => [
                 "type" => "VARCHAR",
                 "constraint" => "255",
-                "unique" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id");
-        $this->forge->addForeignKey("user_id", "users", "id", "CASCADE", "CASCADE");
+        $this->forge->addPrimaryKey("id", "pk_currencies");
+        $this->forge->addUniqueKey("code", "currencies_code_key");
+        $this->forge->addUniqueKey("name", "currencies_name_key");
+        $this->forge->addForeignKey(
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "currencies_user_id_foreign"
+        );
         $this->forge->createTable("currencies");
     }
 
