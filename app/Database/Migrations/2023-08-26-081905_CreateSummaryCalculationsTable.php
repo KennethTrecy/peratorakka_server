@@ -36,15 +36,23 @@ class CreateSummaryCalculationsTable extends Migration
                 "type" => "TEXT",
             ]
         ]);
-        $this->forge->addPrimaryKey("id");
+        $this->forge->addPrimaryKey("id", "pk_summary_calculations");
         $this->forge->addForeignKey(
             "frozen_period_id",
             "frozen_periods",
             "id",
             "CASCADE",
-            "CASCADE"
+            "CASCADE",
+            "summary_calculations_frozen_period_id_foreign"
         );
-        $this->forge->addForeignKey("account_id", "accounts", "id", "CASCADE", "CASCADE");
+        $this->forge->addForeignKey(
+            "account_id",
+            "accounts",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "summary_calculations_account_id_foreign"
+        );
         $this->forge->createTable("summary_calculations");
     }
 
