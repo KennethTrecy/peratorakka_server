@@ -22,7 +22,6 @@ class CreateAccountsTable extends Migration
             "name" => [
                 "type" => "VARCHAR",
                 "constraint" => "255",
-                "unique" => true,
             ],
             "description" => [
                 "type" => "TEXT",
@@ -45,8 +44,16 @@ class CreateAccountsTable extends Migration
                 "null" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id");
-        $this->forge->addForeignKey("currency_id", "currencies", "id", "CASCADE", "CASCADE");
+        $this->forge->addPrimaryKey("id", "pk_accounts");
+        $this->forge->addUniqueKey("name", "accounts_name_key");
+        $this->forge->addForeignKey(
+            "currency_id",
+            "currencies",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "accounts_currency_id_foreign"
+        );
         $this->forge->createTable("accounts");
     }
 
