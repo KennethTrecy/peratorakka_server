@@ -25,8 +25,15 @@ class CreateFrozenPeriodsTable extends Migration
                 "type" => "DATETIME",
             ]
         ]);
-        $this->forge->addPrimaryKey("id");
-        $this->forge->addForeignKey("user_id", "users", "id", "CASCADE", "CASCADE");
+        $this->forge->addPrimaryKey("id", "pk_frozen_periods");
+        $this->forge->addForeignKey(
+            "user_id",
+            "users",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "frozen_periods_user_id_foreign"
+        );
         $this->forge->createTable("frozen_periods");
     }
 
