@@ -15,7 +15,14 @@ class RenewModifierUniqueness extends Migration
         if ($database->DBDriver === "SQLite3") return;
 
         $this->forge->dropKey("modifiers", "modifiers_name_key", false);
-        $this->forge->addUniqueKey([ "debit_account_id", "credit_account_id", "name" ]);
+        $this->forge->addUniqueKey(
+            [
+                "debit_account_id",
+                "credit_account_id",
+                "name"
+            ],
+            "modifiers_debit_account_id_credit_account_id_name"
+        );
         $this->forge->processIndexes("modifiers");
     }
 

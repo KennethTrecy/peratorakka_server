@@ -26,7 +26,6 @@ class CreateModifiersTable extends Migration
             "name" => [
                 "type" => "VARCHAR",
                 "constraint" => "255",
-                "unique" => true,
             ],
             "description" => [
                 "type" => "TEXT",
@@ -49,9 +48,24 @@ class CreateModifiersTable extends Migration
                 "null" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id");
-        $this->forge->addForeignKey("debit_account_id", "accounts", "id", "CASCADE", "CASCADE");
-        $this->forge->addForeignKey("credit_account_id", "accounts", "id", "CASCADE", "CASCADE");
+        $this->forge->addPrimaryKey("id", "pk_modifiers");
+        $this->forge->addUniqueKey("name", "modifiers_name_key");
+        $this->forge->addForeignKey(
+            "debit_account_id",
+            "accounts",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "modifiers_debit_account_id_foreign"
+        );
+        $this->forge->addForeignKey(
+            "credit_account_id",
+            "accounts",
+            "id",
+            "CASCADE",
+            "CASCADE",
+            "modifiers_credit_account_id_foreign"
+        );
         $this->forge->createTable("modifiers");
     }
 
