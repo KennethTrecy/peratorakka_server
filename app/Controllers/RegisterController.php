@@ -18,6 +18,10 @@ class RegisterController extends BaseRegisterController {
 
     public function customRegisterAction(): ResponseInterface {
         $session = session();
+
+        // Remove the following keys to prevent registration errors
+        $session->remove("errors");
+
         $_POST = array_merge($_POST, $this->request->getJSON(true) ?? []);
         Services::resetSingle("request");
 
