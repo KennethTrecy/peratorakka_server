@@ -21,6 +21,9 @@ class LoginController extends BaseLoginController {
     public function customLoginAction(): ResponseInterface {
         $session = session();
 
+        // Remove the following keys to prevent log in errors
+        $session->remove("errors");
+
         $current_user_id = $session->get("user.id", null);
         if (!is_null($current_user_id)) {
             return $this->respondNoContent();
