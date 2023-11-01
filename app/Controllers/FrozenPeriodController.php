@@ -65,6 +65,16 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         $exchange_modifiers = model(ModifierModel::class)
             ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
+            ->whereIn(
+                "id",
+                model(FinancialEntryModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->where(
+                        "transacted_at <=",
+                        $initial_document[static::getIndividualName()]->finished_at
+                    )
+            )
             ->findAll();
 
         foreach ($exchange_modifiers as $modifier) {
@@ -73,7 +83,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             array_push($linked_accounts, $debit_account_id, $credit_account_id);
         }
 
-        // TODO: Find a way to preperly select entries by a date range.
+        // TODO: Find a way to properly select entries by a date range.
         $financial_entries = count($exchange_modifiers) > 0
             ? model(FinancialEntryModel::class)
                 ->whereIn("modifier_id", array_map(
@@ -82,7 +92,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     },
                     $exchange_modifiers
                 ))
-                ->groupBy("modifier_id")
                 ->orderBy("transacted_at", "DESC")
                 ->findAll()
             : [];
