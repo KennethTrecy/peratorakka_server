@@ -108,7 +108,39 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
         $enriched_document["accounts"] = $accounts;
 
-        $currencies = static::getRelatedCurrencies($accounts);
+        $currencies = static::getRelatedCurrencies(
+            $accounts,
+            function ($currency_builder) use ($initial_document) {
+                $financial_entry_subquery = model(FinancialEntryModel::class, false)
+                    ->builder()
+                    ->select("modifier_id")
+                    ->where(
+                        "transacted_at <=",
+                        $initial_document[static::getIndividualName()]->finished_at
+                    );
+                return $currency_builder
+                    ->whereIn(
+                        "id",
+                        model(AccountModel::class, false)
+                            ->builder()
+                            ->select("currency_id")
+                            ->whereIn(
+                                "id",
+                                model(ModifierModel::class, false)
+                                    ->builder()
+                                    ->select("debit_account_id")
+                                    ->whereIn("id", $financial_entry_subquery)
+                            )
+                            ->orWhereIn(
+                                "id",
+                                model(ModifierModel::class, false)
+                                    ->builder()
+                                    ->select("credit_account_id")
+                                    ->whereIn("id", $financial_entry_subquery)
+                            )
+
+                    );
+            });
         $enriched_document["currencies"] = $currencies;
 
         $raw_exchange_rates = count($grouped_financial_entries) > 0
@@ -760,7 +792,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $statements;
     }
 
-    private static function getRelatedCurrencies(array $accounts): array {
+    private static function getRelatedCurrencies(
+        array $accounts,
+        ?callable $currency_modifier = null
+    ): array {
         $linked_currencies = [];
         foreach ($accounts as $document) {
             $currency_id = $document->currency_id;
@@ -770,8 +805,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $currencies = [];
         if (count($linked_currencies) > 0) {
             $currencies = model(CurrencyModel::class)
-                ->whereIn("id", array_unique($linked_currencies))
-                ->findAll();
+                ->whereIn("id", array_unique($linked_currencies));
+
+            if (is_callable($currency_modifier)) {
+                $currencies = $currency_modifier($currencies);
+            }
+
+            return $currencies->findAll();
         }
 
         return $currencies;
