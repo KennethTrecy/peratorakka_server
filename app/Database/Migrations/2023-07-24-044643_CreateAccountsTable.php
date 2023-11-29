@@ -5,10 +5,14 @@ namespace App\Database\Migrations;
 use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\RawSql;
 
+use Config\Database;
+
 class CreateAccountsTable extends Migration
 {
     public function up()
     {
+        $database = Database::connect();
+
         $this->forge->addField([
             "id" => [
                 "type" => "BIGINT",
@@ -52,7 +56,9 @@ class CreateAccountsTable extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "accounts_currency_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "accounts_currency_id_foreign"
+                : null
         );
         $this->forge->createTable("accounts");
     }

@@ -4,10 +4,14 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
+use Config\Database;
+
 class CreateCurrencies extends Migration
 {
     public function up()
     {
+        $database = Database::connect();
+
         $this->forge->addField([
             "id" => [
                 "type" => "BIGINT",
@@ -36,7 +40,9 @@ class CreateCurrencies extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "currencies_user_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "currencies_user_id_foreign"
+                : null
         );
         $this->forge->createTable("currencies");
     }

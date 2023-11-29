@@ -5,10 +5,14 @@ namespace App\Database\Migrations;
 use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\RawSql;
 
+use Config\Database;
+
 class CreateSummaryCalculationsTable extends Migration
 {
     public function up()
     {
+        $database = Database::connect();
+
         $this->forge->addField([
             "id" => [
                 "type" => "BIGINT",
@@ -43,7 +47,9 @@ class CreateSummaryCalculationsTable extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "summary_calculations_frozen_period_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "summary_calculations_frozen_period_id_foreign"
+                : null
         );
         $this->forge->addForeignKey(
             "account_id",
@@ -51,7 +57,9 @@ class CreateSummaryCalculationsTable extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "summary_calculations_account_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "summary_calculations_account_id_foreign"
+                : null
         );
         $this->forge->createTable("summary_calculations");
     }

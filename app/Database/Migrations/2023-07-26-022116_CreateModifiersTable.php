@@ -5,10 +5,14 @@ namespace App\Database\Migrations;
 use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\RawSql;
 
+use Config\Database;
+
 class CreateModifiersTable extends Migration
 {
     public function up()
     {
+        $database = Database::connect();
+
         $this->forge->addField([
             "id" => [
                 "type" => "BIGINT",
@@ -56,7 +60,9 @@ class CreateModifiersTable extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "modifiers_debit_account_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "modifiers_debit_account_id_foreign"
+                : null
         );
         $this->forge->addForeignKey(
             "credit_account_id",
@@ -64,7 +70,9 @@ class CreateModifiersTable extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "modifiers_credit_account_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "modifiers_credit_account_id_foreign"
+                : null
         );
         $this->forge->createTable("modifiers");
     }

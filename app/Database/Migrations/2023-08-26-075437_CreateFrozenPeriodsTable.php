@@ -4,10 +4,14 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
+use Config\Database;
+
 class CreateFrozenPeriodsTable extends Migration
 {
     public function up()
     {
+        $database = Database::connect();
+
         $this->forge->addField([
             "id" => [
                 "type" => "BIGINT",
@@ -32,7 +36,9 @@ class CreateFrozenPeriodsTable extends Migration
             "id",
             "CASCADE",
             "CASCADE",
-            "frozen_periods_user_id_foreign"
+            $database->DBDriver === "SQLite3"
+                ? "frozen_periods_user_id_foreign"
+                : null
         );
         $this->forge->createTable("frozen_periods");
     }
