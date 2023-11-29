@@ -50,16 +50,16 @@ class CreateAccountsTable extends Migration
         ]);
         $this->forge->addPrimaryKey("id", "pk_accounts");
         $this->forge->addUniqueKey("name", "accounts_name_key");
-        $this->forge->addForeignKey(
-            "currency_id",
-            "currencies",
-            "id",
-            "CASCADE",
-            "CASCADE",
-            $database->DBDriver === "SQLite3"
-                ? "accounts_currency_id_foreign"
-                : null
-        );
+        if ($database->DBDriver !== "SQLite3") {
+            $this->forge->addForeignKey(
+                "currency_id",
+                "currencies",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "accounts_currency_id_foreign"
+            );
+        }
         $this->forge->createTable("accounts");
     }
 

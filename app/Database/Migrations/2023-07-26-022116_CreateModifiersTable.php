@@ -54,26 +54,24 @@ class CreateModifiersTable extends Migration
         ]);
         $this->forge->addPrimaryKey("id", "pk_modifiers");
         $this->forge->addUniqueKey("name", "modifiers_name_key");
-        $this->forge->addForeignKey(
-            "debit_account_id",
-            "accounts",
-            "id",
-            "CASCADE",
-            "CASCADE",
-            $database->DBDriver === "SQLite3"
-                ? "modifiers_debit_account_id_foreign"
-                : null
-        );
-        $this->forge->addForeignKey(
-            "credit_account_id",
-            "accounts",
-            "id",
-            "CASCADE",
-            "CASCADE",
-            $database->DBDriver === "SQLite3"
-                ? "modifiers_credit_account_id_foreign"
-                : null
-        );
+        if ($database->DBDriver !== "SQLite3") {
+            $this->forge->addForeignKey(
+                "debit_account_id",
+                "accounts",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "modifiers_debit_account_id_foreign"
+            );
+            $this->forge->addForeignKey(
+                "credit_account_id",
+                "accounts",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "modifiers_credit_account_id_foreign"
+            );
+        }
         $this->forge->createTable("modifiers");
     }
 

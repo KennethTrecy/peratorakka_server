@@ -34,16 +34,16 @@ class CreateCurrencies extends Migration
         $this->forge->addPrimaryKey("id", "pk_currencies");
         $this->forge->addUniqueKey("code", "currencies_code_key");
         $this->forge->addUniqueKey("name", "currencies_name_key");
-        $this->forge->addForeignKey(
-            "user_id",
-            "users",
-            "id",
-            "CASCADE",
-            "CASCADE",
-            $database->DBDriver === "SQLite3"
-                ? "currencies_user_id_foreign"
-                : null
-        );
+        if ($database->DBDriver !== "SQLite3") {
+            $this->forge->addForeignKey(
+                "user_id",
+                "users",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "currencies_user_id_foreign"
+            );
+        }
         $this->forge->createTable("currencies");
     }
 

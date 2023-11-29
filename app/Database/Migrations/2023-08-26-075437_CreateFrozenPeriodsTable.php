@@ -30,16 +30,16 @@ class CreateFrozenPeriodsTable extends Migration
             ]
         ]);
         $this->forge->addPrimaryKey("id", "pk_frozen_periods");
-        $this->forge->addForeignKey(
-            "user_id",
-            "users",
-            "id",
-            "CASCADE",
-            "CASCADE",
-            $database->DBDriver === "SQLite3"
-                ? "frozen_periods_user_id_foreign"
-                : null
-        );
+        if ($database->DBDriver !== "SQLite3") {
+            $this->forge->addForeignKey(
+                "user_id",
+                "users",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "frozen_periods_user_id_foreign"
+            );
+        }
         $this->forge->createTable("frozen_periods");
     }
 

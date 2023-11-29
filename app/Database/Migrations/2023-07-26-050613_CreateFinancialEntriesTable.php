@@ -52,16 +52,16 @@ class CreateFinancialEntriesTable extends Migration
             ]
         ]);
         $this->forge->addPrimaryKey("id", "pk_financial_entries");
-        $this->forge->addForeignKey(
-            "modifier_id",
-            "modifiers",
-            "id",
-            "CASCADE",
-            "CASCADE",
-            $database->DBDriver === "SQLite3"
-                ? "financial_entries_modifier_id_foreign"
-                : null
-        );
+        if ($database->DBDriver !== "SQLite3") {
+            $this->forge->addForeignKey(
+                "modifier_id",
+                "modifiers",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "financial_entries_modifier_id_foreign"
+            );
+        }
         $this->forge->createTable("financial_entries");
     }
 
