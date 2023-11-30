@@ -655,6 +655,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $statements = array_reduce(
             $currencies,
             function ($statements, $currency) use ($grouped_summaries) {
+                if (!isset($grouped_summaries[$currency->id])) {
+                    // Include currencies only used in statements
+                    return $statements;
+                }
+
                 $summaries = $grouped_summaries[$currency->id];
 
                 $unadjusted_total_income = array_reduce(
