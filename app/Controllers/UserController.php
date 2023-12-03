@@ -93,8 +93,8 @@ class UserController extends BaseRegisterController
         $validation->setRule($individual_name, "user", [
             "required"
         ]);
-        $validation->setRule("$individual_name.email", "email", $usernameRules);
-        $validation->setRule("$individual_name.username", "username", $emailRules);
+        $validation->setRule("$individual_name.email", "email", $emailRules);
+        $validation->setRule("$individual_name.username", "username", $usernameRules);
 
         return $validation;
     }
