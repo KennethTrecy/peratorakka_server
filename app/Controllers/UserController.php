@@ -56,7 +56,9 @@ class UserController extends BaseRegisterController
         if ($is_success) {
             $users = $this->getUserProvider();
 
-            $current_user->fill($request_document["user"]);
+            $current_user->fill([
+                "password" => $request_document["user"]["new_password"]
+            ]);
 
             try {
                 $users->save($current_user);
