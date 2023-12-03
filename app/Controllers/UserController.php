@@ -9,7 +9,7 @@ use CodeIgniter\Shield\Authentication\Passwords;
 use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
 use CodeIgniter\Validation\Validation;
 
-use App\Exceptions\UnauthorizedRequest;
+use App\Exceptions\InvalidRequest;
 
 class UserController extends BaseRegisterController
 {
@@ -21,7 +21,8 @@ class UserController extends BaseRegisterController
 
     public function update() {
         $current_user = auth()->user();
-        $validation = static::makeIdentityValidation($current_user->id, $this->tables);
+        $table_names = config("Auth")->tables;
+        $validation = static::makeIdentityValidation($current_user->id, $table_names);
 
         $request_document = $this->request->getJson(true);
         $is_success = $validation->run($request_document);
@@ -73,7 +74,7 @@ class UserController extends BaseRegisterController
 
     private static function makeIdentityValidation(
         int $current_user_id,
-        array $tables
+        array $table_names
     ): Validation {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
@@ -81,19 +82,19 @@ class UserController extends BaseRegisterController
         $usernameRules = array_merge(
             config("AuthSession")->usernameValidationRules,
             [sprintf("is_unique[%s.username,id,$current_user_id]",
-            $tables["users"])]
+            $table_names["users"])]
         );
         $emailRules = array_merge(
             config("AuthSession")->emailValidationRules,
             [sprintf("is_unique[%s.secret,id,$current_user_id]",
-            $tables["identities"])]
+            $table_names["identities"])]
         );
 
         $validation->setRule($individual_name, "user", [
             "required"
         ]);
-        $validation->setRule("$individual_name.email", "email", $registrationEmailRules);
-        $validation->setRule("$individual_name.username", "username", $registrationUsernameRules);
+        $validation->setRule("$individual_name.email", "email", $usernameRules);
+        $validation->setRule("$individual_name.username", "username", $emailRules);
 
         return $validation;
     }

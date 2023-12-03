@@ -7,9 +7,6 @@ use Throwable;
 use CodeIgniter\Test\Fabricator;
 use Faker\Factory;
 
-use App\Exceptions\InvalidRequest;
-use App\Exceptions\MissingResource;
-use App\Models\CurrencyModel;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
 class UserTest extends AuthenticatedHTTPTestCase
@@ -33,12 +30,12 @@ class UserTest extends AuthenticatedHTTPTestCase
             ]);
 
         $result->assertStatus(204);
-        $tableNames = config("Auth")->tables;
-        $this->seeInDatabase($tableNames["users"], [
+        $table_names = config("Auth")->tables;
+        $this->seeInDatabase($table_names["users"], [
             "id" => $authenticated_info->getUser()->id,
             "username" => $user_data["username"]
         ]);
-        $this->seeInDatabase($tableNames["identities"], [
+        $this->seeInDatabase($table_names["identities"], [
             "user_id" => $authenticated_info->getUser()->id,
             "secret" => $user_data["email"]
         ]);
