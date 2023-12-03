@@ -66,7 +66,7 @@ class UserController extends BaseRegisterController
                 return $this->respondNoContent();
             } catch (Exception $error) {
                 throw new ServerFailure(
-                    "There is an error on updating the user to the database server."
+                    "There is an error on updating the password of user to the database server."
                 );
             }
         }
