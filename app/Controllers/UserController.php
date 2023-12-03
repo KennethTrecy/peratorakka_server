@@ -30,7 +30,7 @@ class UserController extends BaseRegisterController
         if ($is_success) {
             $users = $this->getUserProvider();
 
-            $current_user->fill($request_document);
+            $current_user->fill($request_document["user"]);
 
             try {
                 $users->save($current_user);
@@ -56,7 +56,7 @@ class UserController extends BaseRegisterController
         if ($is_success) {
             $users = $this->getUserProvider();
 
-            $current_user->fill($request_document);
+            $current_user->fill($request_document["user"]);
 
             try {
                 $users->save($current_user);
@@ -81,13 +81,21 @@ class UserController extends BaseRegisterController
 
         $usernameRules = array_merge(
             config("AuthSession")->usernameValidationRules,
-            [sprintf("is_unique[%s.username,id,$current_user_id]",
-            $table_names["users"])]
+            [
+                sprintf(
+                    "is_unique[%s.username,id,$current_user_id]",
+                    $table_names["users"]
+                )
+            ]
         );
         $emailRules = array_merge(
             config("AuthSession")->emailValidationRules,
-            [sprintf("is_unique[%s.secret,id,$current_user_id]",
-            $table_names["identities"])]
+            [
+                sprintf(
+                    "is_unique[%s.secret,id,$current_user_id]",
+                    $table_names["identities"]
+                )
+            ]
         );
 
         $validation->setRule($individual_name, "user", [
