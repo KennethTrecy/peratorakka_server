@@ -46,11 +46,11 @@ class UserTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $faker = Factory::create();
-        $original_new_password = $faker->password();
+        $new_password = $faker->password();
         $password_data = [
             "old_password" => $authenticated_info->getPassword(),
-            "new_password" => $original_new_password,
-            "confirm_new_password" => $original_new_password
+            "new_password" => $new_password,
+            "confirm_new_password" => $new_password
         ];
 
         $result = $authenticated_info
@@ -63,10 +63,11 @@ class UserTest extends AuthenticatedHTTPTestCase
         $result->assertStatus(204);
         $users = model(setting("Auth.userProvider"));
         $found_user = $users->findByCredentials([
-            "email" => $authenticated_info->getUser()->email,
-            "password" => $original_new_password
+            "email" => $authenticated_info->getUser()->email
         ]);
         $this->assertNotNull($found_user);
         $this->assertSame($found_user->id, $authenticated_info->getUser()->id);
+        $password_service = service("passwords");
+        $this->assertTrue($password_service->verify($new_password, $found_user->password_hash));
     }
 }
