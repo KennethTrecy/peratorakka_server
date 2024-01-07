@@ -12,6 +12,7 @@ on:
       - master
     paths:
       - 'src/**'
+      - '.github/workflows/backend.yml'
 
 jobs:
   backend_tests:
