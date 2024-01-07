@@ -82,7 +82,7 @@ class UserController extends BaseRegisterController
         $individual_name = static::getIndividualName();
 
         $usernameRules = array_merge(
-            config("Auth")->usernameValidationRules,
+            config("Auth")->usernameValidationRules["rules"],
             [
                 sprintf(
                     "is_unique[%s.username,id,$current_user_id]",
@@ -91,7 +91,7 @@ class UserController extends BaseRegisterController
             ]
         );
         $emailRules = array_merge(
-            config("Auth")->emailValidationRules,
+            config("Auth")->emailValidationRules["rules"],
             [
                 sprintf(
                     "is_unique[%s.secret,id,$current_user_id]",
