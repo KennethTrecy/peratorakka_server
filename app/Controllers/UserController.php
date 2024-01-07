@@ -114,10 +114,10 @@ class UserController extends BaseRegisterController
         $individual_name = static::getIndividualName();
 
         $oldPasswordRules = "required|"
-            . Passwords::getMaxLenghtRule()
+            . Passwords::getMaxLengthRule()
             . "|must_be_same_as_password_of_current_user";
         $newPasswordRules = "required|"
-            . Passwords::getMaxLenghtRule()
+            . Passwords::getMaxLengthRule()
             . "|strong_password";
         $confirmNewPasswordRules = "required|matches[$individual_name.new_password]";
 
