@@ -84,12 +84,13 @@ class TimeRules {
             ->where("started_at >=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
             ->where("finished_at >=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
             ->countAllResults();
+        $is_not_frozen = $matched_frozen_entry_count === 0;
 
-        if ($matched_frozen_entry_count > 1) {
+        if ($is_not_frozen) {
             $error = "{field} must not be within a frozen period.";
         }
 
-        return $does_not_exceed;
+        return $is_not_frozen;
     }
 
     private function isValidDate($value): bool {
