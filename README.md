@@ -9,14 +9,16 @@
 A server for any Peratorakka client.
 
 Peratorakka is a software system aimed to manage and track the finances, personal or commercial. It
-is made up of a client and server. In this repository, it has an implementation of the server which
+is made up of a [client] and server. In this repository, it has an implementation of the server which
 process the data and stores them in any compatible database. The database may be an instance of
 PostgreSQL server, MySQL server, or others as long as it is supported by CodeIgniter framework (it
 is framework that Peratorakka server builds on).
 
 There is no public server available right now, but it may happen in the future when the author has
-enough time. Yet, I still outlined the instructions below in case someone want to host an instance
+enough time. Yet, I still outlined the instructions below in case someone wants to host an instance
 of Peratorakka server.
+
+For more information on the abilities of the system, please read the [author's post].
 
 ## Origin
 Some parts of the repository was based from [`filled_composer_json`] branch of [Web Template].
@@ -116,3 +118,5 @@ This personal project may contain references to trademarks, which are included i
 [pnpm]: https://pnpm.io/installation
 [Conventional Commits specification]: https://www.conventionalcommits.org/en/v1.0.0/
 [contributing guide]: ./CONTRIBUTING.md
+[client]: https://github.com/KennethTrecy/peratorakka_client
+[author's post]: https://www.linkedin.com/posts/kenneth-trecy-tobias_good-day-everyone-after-five-months-of-testing-activity-7134037085828616192-Xtvx
