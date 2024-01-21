@@ -5,6 +5,7 @@ namespace Tests\Feature\Resource;
 use Throwable;
 
 use CodeIgniter\Test\Fabricator;
+use CodeIgniter\I18n\Time;
 
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
@@ -370,6 +371,61 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
             "currencies" => [ $currency ],
             "financial_entries" => json_decode(json_encode(array_slice($financial_entries, 0, 5))),
+            "modifiers" => json_decode(json_encode([ $modifier ])),
+        ]);
+    }
+
+    public function testFilteredIndex()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id
+        ]);
+        $debit_account = $account_fabricator->create();
+        $credit_account = $account_fabricator->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $modifier_fabricator->setOverrides([
+            "debit_account_id" => $debit_account->id,
+            "credit_account_id" => $credit_account->id
+        ]);
+        $modifier = $modifier_fabricator->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id,
+            "transacted_at" => Time::today()->toDateTimeString()
+        ]);
+        $financial_entries_today = $financial_entry_fabricator->create(3);
+        $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $modifier->id,
+            "transacted_at" => Time::tomorrow()->toDateTimeString()
+        ]);
+        $financial_entry_fabricator->create(5);
+
+        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries", [
+            "filter" => [
+                "begin_date" => Time::yesterday()->toDateTimeString(),
+                "end_date" => Time::today()->toDateTimeString()
+            ],
+            "page" => [
+                "limit" => 5
+            ]
+        ]);
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 3
+            ],
+            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
+            "currencies" => [ $currency ],
+            "financial_entries" => json_decode(json_encode($financial_entries_today)),
             "modifiers" => json_decode(json_encode([ $modifier ])),
         ]);
     }
