@@ -4,6 +4,8 @@ namespace App\Validation;
 
 use CodeIgniter\I18n\Time;
 
+use App\Models\FrozenPeriodModel;
+
 class TimeRules {
     public function must_be_on_or_before_current_time(
         $value,
@@ -71,6 +73,24 @@ class TimeRules {
         }
 
         return $does_not_exceed;
+    }
+
+    public function must_be_thawed(
+        $value,
+        ?string &$error = null
+    ): bool {
+        $frozen_period_model = model(FrozenPeriodModel::class);
+        $matched_frozen_entry_count = $frozen_period_model
+            ->where("started_at >=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
+            ->where("finished_at >=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
+            ->countAllResults();
+        $is_not_frozen = $matched_frozen_entry_count === 0;
+
+        if ($is_not_frozen) {
+            $error = "{field} must not be within a frozen period.";
+        }
+
+        return $is_not_frozen;
     }
 
     private function isValidDate($value): bool {

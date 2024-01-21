@@ -144,7 +144,8 @@ class FinancialEntryController extends BaseOwnedResourceController
         ]);
         $validation->setRule("$individual_name.transacted_at", "transacted date", [
             "required",
-            "valid_date[".DATE_TIME_STRING_FORMAT."]"
+            "valid_date[".DATE_TIME_STRING_FORMAT."]",
+            "must_be_thawed"
         ]);
         $validation->setRule("$individual_name.remarks", "remarks", [
             "permit_empty",
