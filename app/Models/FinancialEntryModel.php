@@ -45,11 +45,11 @@ class FinancialEntryModel extends BaseResourceModel
         $query_builder = parent::filterList($query_builder, $options);
 
         $filter_account_id = $options["account_id"] ?? null;
+        $begin_date = $options["begin_date"] ?? null;
+        $end_date = $options["end_date"] ?? null;
 
-        if (is_null($filter_account_id)) {
-            return $query_builder;
-        } else {
-            return $query_builder
+        if (!is_null($filter_account_id)) {
+            $query_builder = $query_builder
                 ->whereIn(
                     "modifier_id",
                     model(ModifierModel::class, false)
@@ -59,6 +59,24 @@ class FinancialEntryModel extends BaseResourceModel
                         ->orWhere("credit_account_id", $filter_account_id)
                 );
         }
+
+        if (!is_null($begin_date)) {
+            $query_builder = $query_builder
+                ->where(
+                    "transacted_at >=",
+                    $begin_date
+                );
+        }
+
+        if (!is_null($end_date)) {
+            $query_builder = $query_builder
+                ->where(
+                    "transacted_at <=",
+                    $end_date
+                );
+        }
+
+        return $query_builder;
     }
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
