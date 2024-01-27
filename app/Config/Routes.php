@@ -77,6 +77,7 @@ if (!function_exists("make_owned_resource_routes")) {
 }
 
 use App\Controllers\AccountController;
+use App\Controllers\AccessTokenController;
 use App\Controllers\CurrencyController;
 use App\Controllers\FinancialEntryController;
 use App\Controllers\FrozenPeriodController;
@@ -92,6 +93,10 @@ make_owned_resource_routes($routes, FrozenPeriodController::class, [
     "show",
     "index",
     "create"
+]);
+make_owned_resource_routes($routes, AccessTokenController::class, [
+    "forceDelete",
+    "index"
 ]);
 $routes->post(
     "api/v1/".FrozenPeriodController::getInfo()->getCollectiveName()."/dry_run",
