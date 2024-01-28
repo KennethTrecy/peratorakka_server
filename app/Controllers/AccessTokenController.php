@@ -6,6 +6,8 @@ use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Shield\Models\TokenLoginModel;
 use CodeIgniter\Validation\Validation;
 
+use App\Models\AccessTokenModel;
+
 class AccessTokenController extends BaseOwnedResourceController
 {
     protected static function getIndividualName(): string {
@@ -17,7 +19,7 @@ class AccessTokenController extends BaseOwnedResourceController
     }
 
     protected static function getModelName(): string {
-        return TokenLoginModel::class;
+        return AccessTokenModel::class;
     }
 
     protected static function makeCreateValidation(User $owner): Validation {
