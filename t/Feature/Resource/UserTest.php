@@ -46,7 +46,7 @@ class UserTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         $faker = Factory::create();
-        $new_password = $faker->password();
+        $new_password = "qa09uj65";
         $password_data = [
             "old_password" => $authenticated_info->getPassword(),
             "new_password" => $new_password,
