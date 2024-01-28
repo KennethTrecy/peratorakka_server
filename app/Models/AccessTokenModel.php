@@ -28,14 +28,14 @@ class AccessTokenModel extends TokenLoginModel implements OwnedResource
         return !is_null($match);
     }
 
+    public function limitSearchToUser(OwnedResource $query_builder, User $user) {
+        return $query_builder->where("user_id", $user->id);
+    }
+
     private function getSearchQuery(string $search_mode) {
         if ($search_mode === SEARCH_WITH_DELETED) return $this->withDeleted();
         else if ($search_mode === SEARCH_ONLY_DELETED) return $this->onlyDeleted();
 
         return $this;
-    }
-
-    public function limitSearchToUser(OwnedResource $query_builder, User $user) {
-        return $query_builder->where("user_id", $user->id);
     }
 }
