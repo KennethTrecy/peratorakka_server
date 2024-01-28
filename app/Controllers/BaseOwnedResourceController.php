@@ -14,7 +14,7 @@ use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Exceptions\UnauthorizedRequest;
 use App\Exceptions\ServerFailure;
-use App\Model\BaseResourceModel;
+use App\Models\BaseResourceModel;
 use Config\Database;
 
 abstract class BaseOwnedResourceController extends BaseController
