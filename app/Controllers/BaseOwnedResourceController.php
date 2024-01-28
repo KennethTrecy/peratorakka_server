@@ -14,6 +14,7 @@ use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Exceptions\UnauthorizedRequest;
 use App\Exceptions\ServerFailure;
+use App\Models\BaseResourceModel;
 use Config\Database;
 
 abstract class BaseOwnedResourceController extends BaseController
@@ -79,29 +80,31 @@ abstract class BaseOwnedResourceController extends BaseController
         $current_user = auth()->user();
         $request = $this->request;
 
-        $model = static::getModel();
-        $scoped_model = $model->limitSearchToUser($model, $current_user);
-
+        $scoped_model = static::getModel();
         $filter = $request->getVar("filter") ?? [];
-        $scoped_model = $scoped_model->filterList($scoped_model, $filter);
-
         $sort = $request->getVar("sort") ?? [];
-        $scoped_model = $scoped_model->sortList($scoped_model, $sort);
-
         $page = $request->getVar("page") ?? [];
         $offset = $page["offset"] ?? 0;
         $limit = min($page["limit"] ?? 100, 100);
-        $scoped_model = $scoped_model->paginateList($scoped_model, $page);
+
+        if ($scoped_model instanceof BaseResourceModel) {
+            $scoped_model = $scoped_model->limitSearchToUser($scoped_model, $current_user);
+            $scoped_model = $scoped_model->filterList($scoped_model, $filter);
+            $scoped_model = $scoped_model->sortList($scoped_model, $sort);
+            $scoped_model = $scoped_model->paginateList($scoped_model, $page);
+        }
 
         $overall_filtered_count = model(static::getModelName(), false);
-        $overall_filtered_count = $overall_filtered_count->limitSearchToUser(
-            $overall_filtered_count,
-            $current_user
-        );
-        $overall_filtered_count = $overall_filtered_count->filterList(
-            $overall_filtered_count,
-            $filter
-        );
+        if ($overall_filtered_count instanceof BaseResourceModel) {
+            $overall_filtered_count = $overall_filtered_count->limitSearchToUser(
+                $overall_filtered_count,
+                $current_user
+            );
+            $overall_filtered_count = $overall_filtered_count->filterList(
+                $overall_filtered_count,
+                $filter
+            );
+        }
         $overall_filtered_count = $overall_filtered_count->countAllResults();
 
         $response_document = [
