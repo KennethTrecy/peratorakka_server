@@ -67,6 +67,38 @@ digraph {
 			</table>
 			>
 		]
+		cash_flow_activities [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Cash Flow Activities
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+					</td>
+					<td align="left">
+						varchar(255)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 		accounts [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -495,7 +527,9 @@ digraph {
 		]
 
 		users -> currencies
+		users -> cash_flow_activities
 		currencies -> accounts
+		cash_flow_activities -> accounts
 		users -> events
 		accounts -> modifiers
 		accounts -> modifiers
@@ -536,6 +570,7 @@ digraph {
 	{
 		rank = same;
 		events
+		cash_flow_activities
 		frozen_periods
 	}
 
