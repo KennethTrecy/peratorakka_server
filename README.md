@@ -23,7 +23,7 @@ For more information on the abilities of the system, please read the [author's p
 ## Origin
 Some parts of the repository was based from [`filled_composer_json`] branch of [Web Template].
 
-The template has been specialized for backend development.
+The template has been specialized for back-end development.
 
 Other parts were auto-generated using the command `composer create-project codeigniter4/appstarter`.
 Therefore, any changes in [composer-installable app starter development repository] should be updated if
