@@ -96,7 +96,7 @@ digraph {
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
-						enum(unknown,liquid,consumer,depreciation)<br align="left"/>
+						enum(unknown,liquid,illiquid)<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
 				</tr>
@@ -162,7 +162,7 @@ digraph {
 				<tr>
 					<td>FK</td>
 					<td align="left">cash_flow_group_id</td>
-					<td align="left">nullable bigint</td>
+					<td align="left">bigint</td>
 				</tr>
 			</table>
 			>
@@ -520,12 +520,16 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
+						opened_debit_amount<br align="left"/>
+						opened_credit_amount<br align="left"/>
 						unadjusted_debit_amount<br align="left"/>
 						unadjusted_credit_amount<br align="left"/>
-						adjusted_debit_amount<br align="left"/>
-						adjusted_credit_amount<br align="left"/>
+						closed_debit_amount<br align="left"/>
+						closed_credit_amount<br align="left"/>
 					</td>
 					<td align="left">
+						string<br align="left"/>
+						string<br align="left"/>
 						string<br align="left"/>
 						string<br align="left"/>
 						string<br align="left"/>
