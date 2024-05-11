@@ -7,7 +7,7 @@ use CodeIgniter\Database\RawSql;
 
 use Config\Database;
 
-class CreateCashFlowGroups extends Migration
+class CreateCashFlowGroupsTable extends Migration
 {
     public function up()
     {
