@@ -57,7 +57,7 @@ class AccountController extends BaseOwnedResourceController
                 ])
             ])."]"
         ]);
-        $validation->setRule("$individual_name.kind", "description", [
+        $validation->setRule("$individual_name.kind", "kind", [
             "required",
             "min_length[3]",
             "max_length[255]",
