@@ -535,49 +535,6 @@ digraph {
 			</table>
 			>
 		]
-		consolidated_activity_trail [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Consolidated Activity Trail
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">frozen_period_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">activity_account_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						initial_debit_amount<br align="left"/>
-						initial_credit_amount<br align="left"/>
-						final_debit_amount<br align="left"/>
-						final_credit_amount<br align="left"/>
-					</td>
-					<td align="left">
-						string<br align="left"/>
-						string<br align="left"/>
-						string<br align="left"/>
-						string<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
 	}
 
 	edge [ dir = "both" ]
@@ -614,8 +571,6 @@ digraph {
 		modifiers -> financial_entries
 		users -> frozen_periods
 		accounts -> summary_calculations
-		frozen_periods -> consolidated_activity_trail
-		activity_accounts -> consolidated_activity_trail
 	}
 
 	{
@@ -657,13 +612,12 @@ digraph {
 		currencies
 		reactive_modifiers
 		summary_calculations
-		consolidated_activity_trail
+		activity_accounts
 	}
 
 	{
 		rank = same;
 		accounts
-		activity_accounts
 	}
 
 	{
