@@ -91,13 +91,13 @@ digraph {
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
-						flow<br align="left"/>
 						description<br align="left"/>
+						kind<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
-						enum(unknown,liquid,illiquid)<br align="left"/>
 						nullable text<br align="left"/>
+						enum(unknown,liquid,illiquid)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -124,6 +124,11 @@ digraph {
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
+					<td>FK</td>
+					<td align="left">cash_flow_group_id</td>
+					<td align="left">nullable bigint</td>
+				</tr>
+				<tr>
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
@@ -135,34 +140,6 @@ digraph {
 						nullable text<br align="left"/>
 						enum(unknown,asset,liability,equity,expense,income)<br align="left"/>
 					</td>
-				</tr>
-			</table>
-			>
-		]
-		activity_accounts [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Activity Accounts
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">account_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">cash_flow_group_id</td>
-					<td align="left">bigint</td>
 				</tr>
 			</table>
 			>
@@ -553,7 +530,6 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
-		accounts -> activity_accounts
 	}
 
 	{
@@ -566,7 +542,6 @@ digraph {
 		users -> currencies
 		users -> cash_flow_groups
 		currencies -> accounts
-		cash_flow_groups -> activity_accounts
 		users -> events
 		accounts -> modifiers
 		accounts -> modifiers
@@ -585,6 +560,7 @@ digraph {
 		]
 
 		modifiers -> modifiers
+		cash_flow_groups -> accounts
 	}
 
 	{
@@ -616,7 +592,6 @@ digraph {
 		currencies
 		reactive_modifiers
 		summary_calculations
-		activity_accounts
 	}
 
 	{
