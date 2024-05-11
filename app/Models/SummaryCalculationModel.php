@@ -18,8 +18,8 @@ class SummaryCalculationModel extends BaseResourceModel
         "account_id",
         "unadjusted_debit_amount",
         "unadjusted_credit_amount",
-        "adjusted_debit_amount",
-        "adjusted_credit_amount"
+        "closed_debit_amount",
+        "closed_credit_amount"
     ];
     protected $useTimestamps = false;
     protected $useSoftDeletes = false;
@@ -30,8 +30,8 @@ class SummaryCalculationModel extends BaseResourceModel
         return [
             "unadjusted_debit_amount"  => $amount,
             "unadjusted_credit_amount"  => $amount,
-            "adjusted_debit_amount"  => $amount,
-            "adjusted_credit_amount"  => $amount,
+            "closed_debit_amount"  => $amount,
+            "closed_credit_amount"  => $amount,
         ];
     }
 

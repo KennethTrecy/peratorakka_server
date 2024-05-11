@@ -206,8 +206,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $raw_calculation = $keyed_calculations[$account->id];
                     if (
                         !(
-                            $raw_calculation->adjusted_debit_amount->getSign() === 0
-                            && $raw_calculation->adjusted_debit_amount->getSign() === 0
+                            $raw_calculation->closed_debit_amount->getSign() === 0
+                            && $raw_calculation->closed_debit_amount->getSign() === 0
                         )
                     ) {
                         throw new UnprocessableRequest(
@@ -325,8 +325,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "account_id" => $account_id,
                     "unadjusted_debit_amount" => BigRational::zero(),
                     "unadjusted_credit_amount" => BigRational::zero(),
-                    "adjusted_debit_amount" => BigRational::zero(),
-                    "adjusted_credit_amount" => BigRational::zero()
+                    "closed_debit_amount" => BigRational::zero(),
+                    "closed_credit_amount" => BigRational::zero()
                 ];
 
                 return $raw_calculations;
@@ -362,28 +362,28 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 if (isset($raw_summary_calculations[$account_id])) {
                     $raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
                         = $raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
-                            ->plus($previous_summary_calculation->adjusted_debit_amount);
+                            ->plus($previous_summary_calculation->closed_debit_amount);
                     $raw_summary_calculations[$account_id]["unadjusted_credit_amount"]
                         = $raw_summary_calculations[$account_id]["unadjusted_credit_amount"]
-                            ->plus($previous_summary_calculation->adjusted_credit_amount);
+                            ->plus($previous_summary_calculation->closed_credit_amount);
 
-                    $raw_summary_calculations[$account_id]["adjusted_debit_amount"]
-                        = $raw_summary_calculations[$account_id]["adjusted_debit_amount"]
-                            ->plus($previous_summary_calculation->adjusted_debit_amount);
-                    $raw_summary_calculations[$account_id]["adjusted_credit_amount"]
-                        = $raw_summary_calculations[$account_id]["adjusted_credit_amount"]
-                            ->plus($previous_summary_calculation->adjusted_credit_amount);
+                    $raw_summary_calculations[$account_id]["closed_debit_amount"]
+                        = $raw_summary_calculations[$account_id]["closed_debit_amount"]
+                            ->plus($previous_summary_calculation->closed_debit_amount);
+                    $raw_summary_calculations[$account_id]["closed_credit_amount"]
+                        = $raw_summary_calculations[$account_id]["closed_credit_amount"]
+                            ->plus($previous_summary_calculation->closed_credit_amount);
                 } else {
                     $raw_summary_calculations[$account_id] = [
                         "account_id" => $account_id,
                         "unadjusted_debit_amount"
-                            => $previous_summary_calculation->adjusted_debit_amount,
+                            => $previous_summary_calculation->closed_debit_amount,
                         "unadjusted_credit_amount"
-                            => $previous_summary_calculation->adjusted_credit_amount,
-                        "adjusted_debit_amount"
-                            => $previous_summary_calculation->adjusted_debit_amount,
-                        "adjusted_credit_amount"
-                            => $previous_summary_calculation->adjusted_credit_amount
+                            => $previous_summary_calculation->closed_credit_amount,
+                        "closed_debit_amount"
+                            => $previous_summary_calculation->closed_debit_amount,
+                        "closed_credit_amount"
+                            => $previous_summary_calculation->closed_credit_amount
                     ];
 
                     array_push($linked_accounts, $account_id);
@@ -421,11 +421,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 ->plus($credit_amount);
                     }
 
-                    $raw_calculations[$debit_account_id]["adjusted_debit_amount"]
-                    = $raw_calculations[$debit_account_id]["adjusted_debit_amount"]
+                    $raw_calculations[$debit_account_id]["closed_debit_amount"]
+                    = $raw_calculations[$debit_account_id]["closed_debit_amount"]
                         ->plus($debit_amount);
-                    $raw_calculations[$credit_account_id]["adjusted_credit_amount"]
-                        = $raw_calculations[$credit_account_id]["adjusted_credit_amount"]
+                    $raw_calculations[$credit_account_id]["closed_credit_amount"]
+                        = $raw_calculations[$credit_account_id]["closed_credit_amount"]
                             ->plus($credit_amount);
                 }
 
@@ -437,14 +437,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
             function ($raw_calculation) {
                 $unadjusted_debit_amount = $raw_calculation["unadjusted_debit_amount"];
                 $unadjusted_credit_amount = $raw_calculation["unadjusted_credit_amount"];
-                $adjusted_debit_amount = $raw_calculation["adjusted_debit_amount"];
-                $adjusted_credit_amount = $raw_calculation["adjusted_credit_amount"];
+                $closed_debit_amount = $raw_calculation["closed_debit_amount"];
+                $closed_credit_amount = $raw_calculation["closed_credit_amount"];
 
                 $unadjusted_balance = $unadjusted_debit_amount
                     ->minus($unadjusted_credit_amount)
                     ->simplified();
-                $adjusted_balance = $adjusted_debit_amount
-                    ->minus($adjusted_credit_amount)
+                $adjusted_balance = $closed_debit_amount
+                    ->minus($closed_credit_amount)
                     ->simplified();
 
                 $is_unadjusted_balance_positive = $unadjusted_balance->getSign() > 0;
@@ -458,10 +458,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $raw_calculation["unadjusted_credit_amount"] = $is_unadjusted_balance_negative
                     ? $unadjusted_balance->negated()
                     : BigRational::zero();
-                $raw_calculation["adjusted_debit_amount"] = $is_adjusted_balance_positive
+                $raw_calculation["closed_debit_amount"] = $is_adjusted_balance_positive
                     ? $adjusted_balance
                     : BigRational::zero();
-                $raw_calculation["adjusted_credit_amount"] = $is_adjusted_balance_negative
+                $raw_calculation["closed_credit_amount"] = $is_adjusted_balance_negative
                     ? $adjusted_balance->negated()
                     : BigRational::zero();
                 $raw_calculation = (new SummaryCalculation())->fill($raw_calculation);
@@ -476,8 +476,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
             function ($raw_summary_calculation) {
                 return $raw_summary_calculation->unadjusted_debit_amount->getSign() !== 0
                     || $raw_summary_calculation->unadjusted_credit_amount->getSign() !== 0
-                    || $raw_summary_calculation->adjusted_debit_amount->getSign() !== 0
-                    || $raw_summary_calculation->adjusted_credit_amount->getSign() !== 0;
+                    || $raw_summary_calculation->closed_debit_amount->getSign() !== 0
+                    || $raw_summary_calculation->closed_credit_amount->getSign() !== 0;
             }
         );
         $retained_accounts_on_summary_calculations = array_map(
@@ -712,8 +712,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[INCOME_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary->adjusted_credit_amount)
-                            ->minus($summary->adjusted_debit_amount);
+                            ->plus($summary->closed_credit_amount)
+                            ->minus($summary->closed_debit_amount);
                     },
                     BigRational::zero()
                 );
@@ -721,8 +721,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[EXPENSE_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary->adjusted_debit_amount)
-                            ->minus($summary->adjusted_credit_amount);
+                            ->plus($summary->closed_debit_amount)
+                            ->minus($summary->closed_credit_amount);
                     },
                     BigRational::zero()
                 );
@@ -730,8 +730,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[ASSET_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary->adjusted_debit_amount)
-                            ->minus($summary->adjusted_credit_amount);
+                            ->plus($summary->closed_debit_amount)
+                            ->minus($summary->closed_credit_amount);
                     },
                     BigRational::zero()
                 );
@@ -739,8 +739,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[LIABILITY_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary->adjusted_credit_amount)
-                            ->minus($summary->adjusted_debit_amount);
+                            ->plus($summary->closed_credit_amount)
+                            ->minus($summary->closed_debit_amount);
                     },
                     BigRational::zero()
                 );
@@ -748,8 +748,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $summaries[EQUITY_ACCOUNT_KIND],
                     function ($previous_total, $summary) {
                         return $previous_total
-                            ->plus($summary->adjusted_credit_amount)
-                            ->minus($summary->adjusted_debit_amount);
+                            ->plus($summary->closed_credit_amount)
+                            ->minus($summary->closed_debit_amount);
                     },
                     BigRational::zero()
                 );
