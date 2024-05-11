@@ -8,6 +8,7 @@ use CodeIgniter\Validation\Validation;
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
+use App\Models\CashFlowCategoryModel;
 
 class AccountController extends BaseOwnedResourceController
 {
@@ -40,7 +41,7 @@ class AccountController extends BaseOwnedResourceController
             "permit_empty",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
-                // TODO: Make Cash flow group ID
+                CashFlowCategoryModel::class,
                 SEARCH_NORMALLY
             ])."]"
         ]);
