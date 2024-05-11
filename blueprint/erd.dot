@@ -67,13 +67,13 @@ digraph {
 			</table>
 			>
 		]
-		cash_flow_groups [
+		cash_flow_categories [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Cash Flow Groups
+							Cash Flow Categories
 						</font>
 					</td>
 				</tr>
@@ -125,7 +125,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">cash_flow_group_id</td>
+					<td align="left">cash_flow_category_id</td>
 					<td align="left">nullable bigint</td>
 				</tr>
 				<tr>
@@ -540,7 +540,7 @@ digraph {
 		]
 
 		users -> currencies
-		users -> cash_flow_groups
+		users -> cash_flow_categories
 		currencies -> accounts
 		users -> events
 		accounts -> modifiers
@@ -560,7 +560,7 @@ digraph {
 		]
 
 		modifiers -> modifiers
-		cash_flow_groups -> accounts
+		cash_flow_categories -> accounts
 	}
 
 	{
@@ -584,7 +584,7 @@ digraph {
 		rank = same;
 		events
 		frozen_periods
-		cash_flow_groups
+		cash_flow_categories
 	}
 
 	{
