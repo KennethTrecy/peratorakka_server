@@ -16,6 +16,8 @@ class SummaryCalculationModel extends BaseResourceModel
     protected $allowedFields = [
         "frozen_period_id",
         "account_id",
+        "opened_debit_amount",
+        "opened_credit_amount",
         "unadjusted_debit_amount",
         "unadjusted_credit_amount",
         "closed_debit_amount",
@@ -28,6 +30,8 @@ class SummaryCalculationModel extends BaseResourceModel
     {
         $amount = $faker->regexify("\d{5}\.\d{3}");
         return [
+            "opened_debit_amount"  => $amount,
+            "opened_credit_amount"  => $amount,
             "unadjusted_debit_amount"  => $amount,
             "unadjusted_credit_amount"  => $amount,
             "closed_debit_amount"  => $amount,
