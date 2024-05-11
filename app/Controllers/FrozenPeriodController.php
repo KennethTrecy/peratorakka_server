@@ -323,6 +323,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
             function ($raw_calculations, $account_id) {
                 $raw_calculations[$account_id] = [
                     "account_id" => $account_id,
+                    "opened_debit_amount" => BigRational::zero(),
+                    "opened_credit_amount" => BigRational::zero(),
                     "unadjusted_debit_amount" => BigRational::zero(),
                     "unadjusted_credit_amount" => BigRational::zero(),
                     "closed_debit_amount" => BigRational::zero(),
@@ -360,6 +362,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $account_id = $previous_summary_calculation->account_id;
 
                 if (isset($raw_summary_calculations[$account_id])) {
+                    $raw_summary_calculations[$account_id]["opened_debit_amount"]
+                        = $raw_summary_calculations[$account_id]["opened_debit_amount"]
+                            ->plus($previous_summary_calculation->closed_debit_amount);
+                    $raw_summary_calculations[$account_id]["opened_credit_amount"]
+                        = $raw_summary_calculations[$account_id]["opened_credit_amount"]
+                            ->plus($previous_summary_calculation->closed_credit_amount);
+
                     $raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
                         = $raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
                             ->plus($previous_summary_calculation->closed_debit_amount);
@@ -376,6 +385,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 } else {
                     $raw_summary_calculations[$account_id] = [
                         "account_id" => $account_id,
+                        "opened_debit_amount"
+                            => $previous_summary_calculation->closed_debit_amount,
+                        "opened_credit_amount"
+                            => $previous_summary_calculation->closed_credit_amount,
                         "unadjusted_debit_amount"
                             => $previous_summary_calculation->closed_debit_amount,
                         "unadjusted_credit_amount"
