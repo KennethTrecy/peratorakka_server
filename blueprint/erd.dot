@@ -67,13 +67,13 @@ digraph {
 			</table>
 			>
 		]
-		cash_flow_activities [
+		cash_flow_groups [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Cash Flow Activities
+							Cash Flow Groups
 						</font>
 					</td>
 				</tr>
@@ -91,9 +91,13 @@ digraph {
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
+						flow<br align="left"/>
+						description<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
+						enum(unknown,liquid,consumer,depreciation)<br align="left"/>
+						nullable text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -131,6 +135,34 @@ digraph {
 						nullable text<br align="left"/>
 						enum(unknown,asset,liability,equity,expense,income)<br align="left"/>
 					</td>
+				</tr>
+			</table>
+			>
+		]
+		activity_accounts [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Activity Accounts
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">cash_flow_group_id</td>
+					<td align="left">nullable bigint</td>
 				</tr>
 			</table>
 			>
@@ -503,6 +535,49 @@ digraph {
 			</table>
 			>
 		]
+		consolidated_activity_trail [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Consolidated Activity Trail
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_period_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">activity_account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						initial_debit_amount<br align="left"/>
+						initial_credit_amount<br align="left"/>
+						final_debit_amount<br align="left"/>
+						final_credit_amount<br align="left"/>
+					</td>
+					<td align="left">
+						string<br align="left"/>
+						string<br align="left"/>
+						string<br align="left"/>
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" ]
@@ -517,6 +592,7 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
+		accounts -> activity_accounts
 	}
 
 	{
@@ -527,9 +603,9 @@ digraph {
 		]
 
 		users -> currencies
-		users -> cash_flow_activities
+		users -> cash_flow_groups
 		currencies -> accounts
-		cash_flow_activities -> accounts
+		cash_flow_groups -> activity_accounts
 		users -> events
 		accounts -> modifiers
 		accounts -> modifiers
@@ -538,6 +614,8 @@ digraph {
 		modifiers -> financial_entries
 		users -> frozen_periods
 		accounts -> summary_calculations
+		frozen_periods -> consolidated_activity_trail
+		activity_accounts -> consolidated_activity_trail
 	}
 
 	{
@@ -570,8 +648,8 @@ digraph {
 	{
 		rank = same;
 		events
-		cash_flow_activities
 		frozen_periods
+		cash_flow_groups
 	}
 
 	{
@@ -579,11 +657,13 @@ digraph {
 		currencies
 		reactive_modifiers
 		summary_calculations
+		consolidated_activity_trail
 	}
 
 	{
 		rank = same;
 		accounts
+		activity_accounts
 	}
 
 	{
