@@ -7,7 +7,7 @@ use CodeIgniter\Database\Exceptions\DatabaseException;
 
 use Config\Database;
 
-class LinkAccountsToCashFlowGroups extends Migration
+class LinkAccountsToCashFlowCategories extends Migration
 {
     public function up()
     {
@@ -16,7 +16,7 @@ class LinkAccountsToCashFlowGroups extends Migration
         $hasAddedForeignKey = false;
         try {
             $new_fields = [
-                "cash_flow_group_id" => [
+                "cash_flow_category_id" => [
                     "type" => "BIGINT",
                     "unsigned" => true,
                     "null" => true,
@@ -27,12 +27,12 @@ class LinkAccountsToCashFlowGroups extends Migration
 
             if ($database->DBDriver !== "SQLite3") {
                 $this->forge->addForeignKey(
-                    "cash_flow_group_id",
-                    "cash_flow_groups",
+                    "cash_flow_category_id",
+                    "cash_flow_categories",
                     "id",
                     "CASCADE",
                     "CASCADE",
-                    "accounts_cash_flow_group_id_foreign"
+                    "accounts_cash_flow_category_id_foreign"
                 );
                 $this->forge->processIndexes("accounts");
                 $hasAddedForeignKey = true;
@@ -58,10 +58,10 @@ class LinkAccountsToCashFlowGroups extends Migration
         $database = Database::connect();
 
         if ($mustRemoveForeign && $database->DBDriver !== "SQLite3") {
-            $this->forge->dropKey("accounts", "accounts_cash_flow_group_id_foreign", false);
+            $this->forge->dropKey("accounts", "accounts_cash_flow_category_id_foreign", false);
             $this->forge->processIndexes("accounts");
         }
 
-        $this->forge->dropColumn("accounts", "cash_flow_group_id");
+        $this->forge->dropColumn("accounts", "cash_flow_category_id");
     }
 }

@@ -13,7 +13,7 @@ class AccountModel extends BaseResourceModel
     protected $returnType = Account::class;
     protected $allowedFields = [
         "currency_id",
-        "cash_flow_group_id",
+        "cash_flow_category_id",
         "name",
         "description",
         "kind",

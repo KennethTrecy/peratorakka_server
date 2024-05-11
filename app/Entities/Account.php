@@ -11,7 +11,7 @@ class Account extends BaseResourceEntity
     protected $casts = [
         "id" => "integer",
         "currency_id" => "integer",
-        "cash_flow_group_id" => "?integer",
+        "cash_flow_category_id" => "?integer",
         "name" => "string",
         "description" => "?string",
         "kind" => "account_kind"

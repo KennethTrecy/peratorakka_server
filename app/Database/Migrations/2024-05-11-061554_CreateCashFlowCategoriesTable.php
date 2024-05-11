@@ -7,7 +7,7 @@ use CodeIgniter\Database\RawSql;
 
 use Config\Database;
 
-class CreateCashFlowGroupsTable extends Migration
+class CreateCashFlowCategoriesTable extends Migration
 {
     public function up()
     {
@@ -48,23 +48,23 @@ class CreateCashFlowGroupsTable extends Migration
                 "null" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id", "pk_cash_flow_groups");
+        $this->forge->addPrimaryKey("id", "pk_cash_flow_categories");
         if ($database->DBDriver !== "SQLite3") {
-            $this->forge->addUniqueKey([ "user_id", "name" ], "cash_flow_groups_user_id_name");
+            $this->forge->addUniqueKey([ "user_id", "name" ], "cash_flow_categories_user_id_name");
             $this->forge->addForeignKey(
                 "user_id",
                 "users",
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "cash_flow_groups_user_id_foreign"
+                "cash_flow_categories_user_id_foreign"
             );
         }
-        $this->forge->createTable("cash_flow_groups");
+        $this->forge->createTable("cash_flow_categories");
     }
 
     public function down()
     {
-        $this->forge->dropTable("cash_flow_groups");
+        $this->forge->dropTable("cash_flow_categories");
     }
 }

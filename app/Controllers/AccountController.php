@@ -36,7 +36,7 @@ class AccountController extends BaseOwnedResourceController
                 SEARCH_NORMALLY
             ])."]"
         ]);
-        $validation->setRule("$individual_name.cash_flow_group_id", "cash flow group", [
+        $validation->setRule("$individual_name.cash_flow_category_id", "cash flow category", [
             "permit_empty",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
