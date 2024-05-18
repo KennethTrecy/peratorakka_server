@@ -66,7 +66,6 @@ class CashFlowCategoryController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "code->$individual_name.code",
                     "user_id=$user_id"
                 ]),
                 "id=$resource_id"
