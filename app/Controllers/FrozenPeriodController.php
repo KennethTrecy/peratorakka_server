@@ -872,60 +872,54 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 // Compute for cash flow statement
                 if (isset($categorized_summaries[$currency->id])) {
                     $summaries = $categorized_summaries[$currency->id];
+                    $liquid_cash_flow_category_subtotals = array_map(
+                        function ($summary) {
+                            return $summary->opened_debit_amount
+                                ->minus($summary->opened_credit_amount);
+                        },
+                        $summaries[LIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND]
+                    );
 
-                    $opened_liquid_amount = $opened_liquid_amount
-                        ->plus(
-                            array_reduce(
-                                $summaries[LIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->opened_debit_amount)
-                                        ->minus($summary->opened_credit_amount);
-                                },
-                                BigRational::zero()
-                            )
-                        );
+                    $opened_liquid_amount = array_reduce(
+                        $liquid_cash_flow_category_subtotals,
+                        function ($previous_total, $calculation) {
+                            return $previous_total->plus($calculation);
+                        },
+                        $opened_liquid_amount
+                    );
 
-                    $closed_liquid_amount = $opened_liquid_amount
-                        ->plus($income_statement_total)
-                        ->plus(
-                            array_reduce(
-                                $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->opened_debit_amount)
-                                        ->minus($summary->closed_debit_amount)
-                                        ->plus($summary->closed_credit_amount)
-                                        ->minus($summary->opened_credit_amount);
-                                },
-                                BigRational::zero()
+                    $illiquid_summaries = $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND];
+                    $illiquid_cash_flow_category_subtotals = array_merge(
+                        array_map(
+                            function ($summary) {
+                                return $summary->opened_debit_amount
+                                    ->minus($summary->closed_debit_amount)
+                                    ->plus($summary->closed_credit_amount)
+                                    ->minus($summary->opened_credit_amount);
+                            },
+                            array_merge(
+                                $illiquid_summaries[ASSET_ACCOUNT_KIND],
+                                $illiquid_summaries[LIABILITY_ACCOUNT_KIND]
                             )
-                        )->plus(
-                            array_reduce(
-                                $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND]
-                                    [LIABILITY_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->opened_debit_amount)
-                                        ->minus($summary->closed_debit_amount)
-                                        ->plus($summary->closed_credit_amount)
-                                        ->minus($summary->opened_credit_amount);
-                                },
-                                BigRational::zero()
-                            )
-                        )->plus(
-                            array_reduce(
-                                $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND][EQUITY_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->unadjusted_credit_amount)
-                                        ->minus($summary->opened_credit_amount)
-                                        ->minus($summary->unadjusted_debit_amount)
-                                        ->plus($summary->opened_debit_amount);
-                                },
-                                BigRational::zero()
-                            )
-                        );
+                        ),
+                        array_map(
+                            function ($summary) {
+                                return $summary->unadjusted_credit_amount
+                                    ->minus($summary->opened_credit_amount)
+                                    ->minus($summary->unadjusted_debit_amount)
+                                    ->plus($summary->opened_debit_amount);
+                            },
+                            $illiquid_summaries[EQUITY_ACCOUNT_KIND]
+                        )
+                    );
+
+                    $closed_liquid_amount = array_reduce(
+                        $illiquid_cash_flow_category_subtotals,
+                        function ($previous_total, $calculation) {
+                            return $previous_total->plus($calculation);
+                        },
+                        $opened_liquid_amount->plus($income_statement_total)
+                    );
                 }
 
                 array_push($statements, [
