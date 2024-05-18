@@ -923,6 +923,18 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 },
                                 BigRational::zero()
                             )
+                        )->plus(
+                            array_reduce(
+                                $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND][EQUITY_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->minus($summary->unadjusted_debit_amount)
+                                        ->plus($summary->opened_debit_amount)
+                                        ->plus($summary->unadjusted_credit_amount)
+                                        ->minus($summary->opened_credit_amount);
+                                },
+                                BigRational::zero()
+                            )
                         );
                 }
 
