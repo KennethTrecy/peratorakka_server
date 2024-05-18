@@ -723,7 +723,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
         $categorized_summaries = array_reduce(
             $accounts,
-            function ($categories, $account) use ($keyed_categories) {
+            function ($categories, $account) use ($keyed_categories, $keyed_calculations) {
                 $currency_id = $account->currency_id;
                 if (is_null($account->cash_flow_category_id)) return $categories;
 
@@ -879,8 +879,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 $summaries[LIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
                                 function ($previous_total, $summary) {
                                     return $previous_total
-                                        ->plus($summary->opening_debit_amount)
-                                        ->minus($summary->opening_credit_amount);
+                                        ->plus($summary->opened_debit_amount)
+                                        ->minus($summary->opened_credit_amount);
                                 },
                                 BigRational::zero()
                             )
@@ -903,10 +903,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
                                 function ($previous_total, $summary) {
                                     return $previous_total
-                                        ->minus($summary->closing_debit_amount)
-                                        ->plus($summary->opening_debit_amount)
-                                        ->plus($summary->closing_credit_amount)
-                                        ->minus($summary->opening_credit_amount);
+                                        ->minus($summary->closed_debit_amount)
+                                        ->plus($summary->opened_debit_amount)
+                                        ->plus($summary->closed_credit_amount)
+                                        ->minus($summary->opened_credit_amount);
                                 },
                                 BigRational::zero()
                             )
@@ -916,10 +916,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                     [LIABILITY_ACCOUNT_KIND],
                                 function ($previous_total, $summary) {
                                     return $previous_total
-                                        ->plus($summary->closing_debit_amount)
-                                        ->minus($summary->opening_debit_amount)
-                                        ->minus($summary->closing_credit_amount)
-                                        ->plus($summary->opening_credit_amount);
+                                        ->plus($summary->closed_debit_amount)
+                                        ->minus($summary->opened_debit_amount)
+                                        ->minus($summary->closed_credit_amount)
+                                        ->plus($summary->opened_credit_amount);
                                 },
                                 BigRational::zero()
                             )
