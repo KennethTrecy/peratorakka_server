@@ -94,6 +94,40 @@ class AccountTest extends AuthenticatedHTTPTestCase
         ]);
     }
 
+    public function testCategorizedCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "cash_flow_category_id" => $cash_flow_category->id
+        ]);
+        $account = $account_fabricator->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v1/accounts", [
+                "account" => $account->toArray()
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "account" => $account->toArray()
+        ]);
+    }
+
     public function testDefaultUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
