@@ -144,6 +144,22 @@ class FrozenPeriodController extends BaseOwnedResourceController
             });
         $enriched_document["currencies"] = $currencies;
 
+        $linked_cash_flow_categories = [];
+        foreach ($accounts as $account) {
+            $cash_flow_group_id = $account->cash_flow_group_id;
+            if (!is_null($cash_flow_group_id)) {
+                array_push($linked_cash_flow_categories, $cash_flow_group_id);
+            }
+        }
+
+        $cash_flow_categories = [];
+        if (count($linked_cash_flow_categories) > 0) {
+            $cash_flow_categories = model(CashFlowCategoryModel::class)
+                ->whereIn("id", array_unique($linked_cash_flow_categories))
+                ->findAll();
+        }
+        $enriched_document["cash_flow_categories"] = $cash_flow_categories;
+
         $raw_exchange_rates = count($grouped_financial_entries) > 0
             ? static::makeExchangeRates(
                 $exchange_modifiers,
@@ -152,7 +168,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ) : [];
 
         $enriched_document["@meta"] = [
-            "statements" => static::makeStatements($currencies, $accounts, $summary_calculations),
+            "statements" => static::makeStatements(
+                $currencies,
+                $cash_flow_categories,
+                $accounts,
+                $summary_calculations
+            ),
             "exchange_rates" => $raw_exchange_rates
         ];
 
@@ -245,9 +266,26 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $info,
                         false
                     );
+
+                    $linked_cash_flow_categories = [];
+                    foreach ($accounts as $account) {
+                        $cash_flow_group_id = $account->cash_flow_group_id;
+                        if (!is_null($cash_flow_group_id)) {
+                            array_push($linked_cash_flow_categories, $cash_flow_group_id);
+                        }
+                    }
+
+                    $cash_flow_categories = [];
+                    if (count($linked_cash_flow_categories) > 0) {
+                        $cash_flow_categories = model(CashFlowCategoryModel::class)
+                            ->whereIn("id", array_unique($linked_cash_flow_categories))
+                            ->findAll();
+                    }
+
                     $currencies = static::getRelatedCurrencies($accounts);
                     $statements = static::makeStatements(
                         $currencies,
+                        $cash_flow_categories,
                         $accounts,
                         $raw_summary_calculations
                     );
@@ -260,7 +298,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         static::getIndividualName() => $info,
                         "summary_calculations" => $raw_summary_calculations,
                         "accounts" => $accounts,
-                        "currencies" => $currencies
+                        "currencies" => $currencies,
+                        "cash_flow_categories" => $cash_flow_categories
                     ];
 
                     return $controller->response->setJSON($response_document);
@@ -639,7 +678,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $raw_exchange_rates;
     }
 
-    private static function makeStatements($currencies, $accounts, $summary_calculations): array {
+    private static function makeStatements(
+        $currencies,
+        $cash_flow_categories,
+        $accounts,
+        $summary_calculations
+    ): array {
         $keyed_calculations = static::keySummaryCalculationsWithAccounts($summary_calculations);
         $accounts = array_filter(
             $accounts,
@@ -647,19 +691,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 return isset($keyed_calculations[$account->id]);
             }
         );
-
-        $linked_cash_flow_categories = [];
-        foreach ($accounts as $account) {
-            $cash_flow_group_id = $account->cash_flow_group_id;
-            array_push($linked_cash_flow_categories, $cash_flow_group_id);
-        }
-
-        $cash_flow_categories = [];
-        if (count($linked_cash_flow_categories) > 0) {
-            $cash_flow_categories = model(CashFlowCategoryModel::class)
-                ->whereIn("id", array_unique($linked_cash_flow_categories))
-                ->findAll();
-        }
 
         $grouped_summaries = array_reduce(
             $accounts,
