@@ -14,6 +14,7 @@ use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
+use App\Models\CashFlowCategoryModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
 use App\Models\FrozenPeriodModel;
@@ -184,6 +185,167 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                         "cash_flow_statement" => [
                             "opening_liquid_amount" => "0",
                             "closing_liquid_amount" => "0"
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => $recorded_normal_financial_entry
+                                ->debit_amount
+                                ->minus($recorded_expense_financial_entry->credit_amount),
+                            "credit_total" => $recorded_normal_financial_entry
+                                ->credit_amount
+                                ->minus($closed_financial_entry->debit_amount)
+                        ]
+                    ]
+                ],
+                "exchange_rates" => []
+            ],
+            "accounts" => json_decode(json_encode([
+                $equity_account,
+                $asset_account,
+                $expense_account
+            ])),
+            "currencies" => [ $currency ],
+            "frozen_period" => json_decode(json_encode($frozen_period)),
+            "cash_flow_categories" => [],
+            "summary_calculations" => json_decode(json_encode([
+                $equity_summary_calculation,
+                $asset_summary_calculation,
+                $expense_summary_calculation
+            ])),
+        ]);
+    }
+
+    public function testFlowedShow()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency = $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $liquid_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "kind" => LIQUID_CASH_FLOW_CATEGORY_KIND
+        ])->create();
+        $illiquid_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "kind" => ILLIQUID_CASH_FLOW_CATEGORY_KIND
+        ])->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "cash_flow_category_id" => $illiquid_category->id,
+            "kind" => EQUITY_ACCOUNT_KIND
+        ])->create();
+        $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "cash_flow_category_id" => $liquid_category->id,
+            "kind" => ASSET_ACCOUNT_KIND
+        ])->create();
+        $expense_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => EXPENSE_ACCOUNT_KIND
+        ])->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $normal_record_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $expense_record_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $expense_account->id,
+            "credit_account_id" => $asset_account->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $close_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $equity_account->id,
+            "credit_account_id" => $expense_account->id,
+            "action" => CLOSE_MODIFIER_ACTION
+        ])->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $normal_record_modifier->id,
+            "debit_amount" => "1000",
+            "credit_amount" => "1000"
+        ])->create();
+        $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $expense_record_modifier->id,
+            "debit_amount" => "250",
+            "credit_amount" => "250"
+        ])->create();
+        $closed_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $close_modifier->id,
+            "debit_amount" => $recorded_expense_financial_entry->credit_amount,
+            "credit_amount" => $recorded_expense_financial_entry->debit_amount
+        ])->create();
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
+        $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id
+        ]);
+        $equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $equity_account->id,
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => $recorded_normal_financial_entry
+                ->credit_amount
+                ->minus($closed_financial_entry->debit_amount)
+        ])->create();
+        $asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $asset_account->id,
+            "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
+            "closed_debit_amount" => $recorded_normal_financial_entry->debit_amount,
+            "closed_credit_amount" => $recorded_expense_financial_entry->credit_amount
+        ])->create();
+        $expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $expense_account->id,
+            "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => "0",
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => "0"
+        ])->create();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->get("/api/v1/frozen_periods/$frozen_period->id");
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => $recorded_normal_financial_entry->debit_amount,
+                            "credit_total" => $recorded_normal_financial_entry->credit_amount
+                        ],
+                        "income_statement" => [
+                            "net_total" => $recorded_expense_financial_entry
+                                ->debit_amount
+                                ->negated()
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => $recorded_normal_financial_entry
+                                ->debit_amount
+                                ->minus($recorded_expense_financial_entry->credit_amount),
+                            "total_liabilities" => "0",
+                            "total_equities" => $recorded_normal_financial_entry
+                                ->credit_amount
+                                ->minus($closed_financial_entry->debit_amount)
+                        ],
+                        "cash_flow_statement" => [
+                            "opening_liquid_amount" => "0",
+                            "closing_liquid_amount" => $recorded_normal_financial_entry
+                                ->credit_amount
+                                ->minus($closed_financial_entry->debit_amount)
                         ],
                         "adjusted_trial_balance" => [
                             "debit_total" => $recorded_normal_financial_entry
