@@ -366,7 +366,10 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             ])),
             "currencies" => [ $currency ],
             "frozen_period" => json_decode(json_encode($frozen_period)),
-            "cash_flow_categories" => [],
+            "cash_flow_categories" => [
+                $liquid_category,
+                $illiquid_category
+            ],
             "summary_calculations" => json_decode(json_encode([
                 $equity_summary_calculation,
                 $asset_summary_calculation,
