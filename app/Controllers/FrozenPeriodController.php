@@ -12,6 +12,7 @@ use App\Contracts\OwnedResource;
 use App\Entities\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
+use App\Models\CashFlowCategoryModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
 use App\Models\FrozenPeriodModel;
@@ -646,6 +647,20 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 return isset($keyed_calculations[$account->id]);
             }
         );
+
+        $linked_cash_flow_categories = [];
+        foreach ($accounts as $account) {
+            $cash_flow_group_id = $account->cash_flow_group_id;
+            array_push($linked_cash_flow_categories, $cash_flow_group_id);
+        }
+
+        $cash_flow_categories = [];
+        if (count($linked_cash_flow_categories) > 0) {
+            $cash_flow_categories = model(CashFlowCategoryModel::class)
+                ->whereIn("id", array_unique($linked_cash_flow_categories))
+                ->findAll();
+        }
+
         $grouped_summaries = array_reduce(
             $accounts,
             function ($groups, $account) use ($keyed_calculations) {
