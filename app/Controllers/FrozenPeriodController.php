@@ -712,11 +712,62 @@ class FrozenPeriodController extends BaseOwnedResourceController
             []
         );
 
-        $categorized_summaries = array_reduce(
+        $liquid_categories = array_map(
+            function ($category) {
+                return $category->id;
+            },
+            array_filter($cash_flow_categories, function($category) {
+                return $category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND;
+            })
+        );
+        $illiquid_categories = array_map(
+            function ($category) {
+                return $category->id;
+            },
+            array_filter($cash_flow_categories, function($category) {
+                return $category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND;
+            })
+        );
+
+        $categorized_liquid_summaries = array_reduce(
             $accounts,
-            function ($categories, $account) {
+            function ($categories, $account) use ($liquid_categories) {
                 $cash_flow_category_id = $account->cash_flow_category_id;
-                if (is_null($cash_flow_category_id)) return $categories;
+                if (
+                    is_null($cash_flow_category_id)
+                    && !in_array($cash_flow_category_id, $liquid_categories)
+                ) return $categories;
+
+                if (!isset($categories[$account->currency_id])) {
+                    $categories[$account->currency_id] = [];
+                }
+
+                if (!isset($categories[$account->currency_id][$cash_flow_category_id])) {
+                    $categories[$account->currency_id][$cash_flow_category_id]
+                        = array_fill_keys(
+                            [ ...ACCEPTABLE_ACCOUNT_KINDS ],
+                            []
+                        );
+                }
+
+                array_push(
+                    $categories[$account->currency_id][$cash_flow_category_id][$account->kind],
+                    $keyed_calculations[$account->id]
+                );
+
+                return $categories;
+            },
+            []
+        );
+
+        $categorized_illiquid_summaries = array_reduce(
+            $accounts,
+            function ($categories, $account) use ($illiquid_categories) {
+                $cash_flow_category_id = $account->cash_flow_category_id;
+                if (
+                    is_null($cash_flow_category_id)
+                    && !in_array($cash_flow_category_id, $illiquid_categories)
+                ) return $categories;
 
                 if (!isset($categories[$account->currency_id])) {
                     $categories[$account->currency_id] = [];
