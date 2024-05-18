@@ -712,30 +712,36 @@ class FrozenPeriodController extends BaseOwnedResourceController
             []
         );
 
+        $keyed_categories = array_reduce(
+            $cash_flow_categories,
+            function ($groups, $category) {
+                $groups[$category->id] = $category;
+
+                return $groups;
+            },
+            []
+        );
         $categorized_summaries = array_reduce(
             $accounts,
-            function ($categories, $account) {
+            function ($categories, $account) use ($keyed_categories) {
                 $currency_id = $account->currency_id;
-                $cash_flow_category_id = $account->cash_flow_category_id;
-                if (is_null($cash_flow_category_id)) return $categories;
+                if (is_null($account->cash_flow_category_id)) return $categories;
 
                 if (!isset($categories[$currency_id])) {
                     $categories[$currency_id] = [];
                 }
 
-                if (!isset($categories[$currency_id][$cash_flow_category_id])) {
-                    $categories[$currency_id][$cash_flow_category_id]
-                        = [
-                            "kind" => $category->kind,
-                            "summaries" => array_fill_keys(
-                                [ ...ACCEPTABLE_ACCOUNT_KINDS ],
-                                []
-                            )
-                        ];
+                $category = $keyed_categories[$account->cash_flow_category_id];
+
+                if (!isset($categories[$currency_id][$category->kind])) {
+                    $categories[$currency_id][$category->kind]= array_fill_keys(
+                        [ ...ACCEPTABLE_ACCOUNT_KINDS ],
+                        []
+                    );
                 }
 
                 array_push(
-                    $categories[$currency_id][$cash_flow_category_id]["summaries"][$account->kind],
+                    $categories[$currency_id][$category->kind][$account->kind],
                     $keyed_calculations[$account->id]
                 );
 
