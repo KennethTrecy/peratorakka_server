@@ -181,6 +181,10 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                                 ->credit_amount
                                 ->minus($closed_financial_entry->debit_amount)
                         ],
+                        "cash_flow_statement" => [
+                            "opening_liquid_amount" => "0",
+                            "closing_liquid_amount" => "0"
+                        ],
                         "adjusted_trial_balance" => [
                             "debit_total" => $recorded_normal_financial_entry
                                 ->debit_amount
@@ -200,6 +204,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             ])),
             "currencies" => [ $currency ],
             "frozen_period" => json_decode(json_encode($frozen_period)),
+            "cash_flow_categories" => [],
             "summary_calculations" => json_decode(json_encode([
                 $equity_summary_calculation,
                 $asset_summary_calculation,
