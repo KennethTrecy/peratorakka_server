@@ -752,12 +752,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         $statements = array_reduce(
             $currencies,
-            function ($statements, $currency) use ($grouped_summaries) {
+            function ($statements, $currency) use ($grouped_summaries, $categorized_summaries) {
                 if (!isset($grouped_summaries[$currency->id])) {
                     // Include currencies only used in statements
                     return $statements;
                 }
 
+                // Compute for income statement and balance sheet
                 $summaries = $grouped_summaries[$currency->id];
 
                 $unadjusted_total_income = array_reduce(
@@ -865,6 +866,66 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     ->plus($adjusted_total_liabilities)
                     ->plus($adjusted_total_income);
 
+                $opening_liquid_amount = BigRational::zero();
+                $closing_liquid_amount = BigRational::zero();
+
+                // Compute for cash flow statement
+                if (isset($categorized_summaries[$currency->id])) {
+                    $summaries = $categorized_summaries[$currency->id];
+
+                    $opening_liquid_amount = $opening_liquid_amount
+                        ->plus(
+                            array_reduce(
+                                $summaries[LIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->plus($summary->opening_debit_amount)
+                                        ->minus($summary->opening_credit_amount);
+                                },
+                                BigRational::zero()
+                            )
+                        )->plus(
+                            array_reduce(
+                                $summaries[LIQUID_CASH_FLOW_CATEGORY_KIND][EXPENSE_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->plus($summary->unadjusted_debit_amount)
+                                        ->minus($summary->unadjusted_credit_amount);
+                                },
+                                BigRational::zero()
+                            )
+                        );
+
+                    $closing_liquid_amount = $opening_liquid_amount
+                        ->plus($income_statement_total)
+                        ->plus(
+                            array_reduce(
+                                $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->minus($summary->closing_debit_amount)
+                                        ->plus($summary->opening_debit_amount)
+                                        ->plus($summary->closing_credit_amount)
+                                        ->minus($summary->opening_credit_amount);
+                                },
+                                BigRational::zero()
+                            )
+                        )->plus(
+                            array_reduce(
+                                $summaries[ILLIQUID_CASH_FLOW_CATEGORY_KIND]
+                                    [LIABILITY_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->plus($summary->closing_debit_amount)
+                                        ->minus($summary->opening_debit_amount)
+                                        ->minus($summary->closing_credit_amount)
+                                        ->plus($summary->opening_credit_amount);
+                                },
+                                BigRational::zero()
+                            )
+                        );
+                }
+
                 array_push($statements, [
                     "currency_id" => $currency->id,
                     "unadjusted_trial_balance" => [
@@ -880,6 +941,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         "total_equities" => $unadjusted_total_equities
                             ->plus($income_statement_total)
                             ->simplified()
+                    ],
+                    "cash_flow_statement" => [
+                        "opening_liquid_amount" => $opening_liquid_amount->simplified(),
+                        "closing_liquid_amount" => $closing_liquid_amount->simplified()
                     ],
                     "adjusted_trial_balance" => [
                         "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
