@@ -680,6 +680,35 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             []
         );
+
+        $categorized_summaries = array_reduce(
+            $accounts,
+            function ($categories, $account) {
+                $cash_flow_category_id = $account->cash_flow_category_id;
+                if (is_null($cash_flow_category_id)) return $categories;
+
+                if (!isset($categories[$account->currency_id])) {
+                    $categories[$account->currency_id] = [];
+                }
+
+                if (!isset($categories[$account->currency_id][$cash_flow_category_id])) {
+                    $categories[$account->currency_id][$cash_flow_category_id]
+                        = array_fill_keys(
+                            [ ...ACCEPTABLE_ACCOUNT_KINDS ],
+                            []
+                        );
+                }
+
+                array_push(
+                    $categories[$account->currency_id][$cash_flow_category_id][$account->kind],
+                    $keyed_calculations[$account->id]
+                );
+
+                return $categories;
+            },
+            []
+        );
+
         $statements = array_reduce(
             $currencies,
             function ($statements, $currency) use ($grouped_summaries) {
