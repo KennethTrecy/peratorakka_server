@@ -866,14 +866,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     ->plus($adjusted_total_liabilities)
                     ->plus($adjusted_total_income);
 
-                $opening_liquid_amount = BigRational::zero();
-                $closing_liquid_amount = BigRational::zero();
+                $opened_liquid_amount = BigRational::zero();
+                $closed_liquid_amount = BigRational::zero();
 
                 // Compute for cash flow statement
                 if (isset($categorized_summaries[$currency->id])) {
                     $summaries = $categorized_summaries[$currency->id];
 
-                    $opening_liquid_amount = $opening_liquid_amount
+                    $opened_liquid_amount = $opened_liquid_amount
                         ->plus(
                             array_reduce(
                                 $summaries[LIQUID_CASH_FLOW_CATEGORY_KIND][ASSET_ACCOUNT_KIND],
@@ -896,7 +896,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             )
                         );
 
-                    $closing_liquid_amount = $opening_liquid_amount
+                    $closed_liquid_amount = $opened_liquid_amount
                         ->plus($income_statement_total)
                         ->plus(
                             array_reduce(
@@ -955,8 +955,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             ->simplified()
                     ],
                     "cash_flow_statement" => [
-                        "opening_liquid_amount" => $opening_liquid_amount->simplified(),
-                        "closing_liquid_amount" => $closing_liquid_amount->simplified()
+                        "opened_liquid_amount" => $opened_liquid_amount->simplified(),
+                        "closed_liquid_amount" => $closed_liquid_amount->simplified()
                     ],
                     "adjusted_trial_balance" => [
                         "debit_total" => $adjusted_trial_balance_debit_total->simplified(),

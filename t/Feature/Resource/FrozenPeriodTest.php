@@ -183,8 +183,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                                 ->minus($closed_financial_entry->debit_amount)
                         ],
                         "cash_flow_statement" => [
-                            "opening_liquid_amount" => "0",
-                            "closing_liquid_amount" => "0"
+                            "opened_liquid_amount" => "0",
+                            "closed_liquid_amount" => "0"
                         ],
                         "adjusted_trial_balance" => [
                             "debit_total" => $recorded_normal_financial_entry
@@ -342,8 +342,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                                 ->minus($closed_financial_entry->debit_amount)
                         ],
                         "cash_flow_statement" => [
-                            "opening_liquid_amount" => "0",
-                            "closing_liquid_amount" => $recorded_normal_financial_entry
+                            "opened_liquid_amount" => "0",
+                            "closed_liquid_amount" => $recorded_normal_financial_entry
                                 ->credit_amount
                                 ->minus($closed_financial_entry->debit_amount)
                         ],
