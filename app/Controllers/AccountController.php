@@ -37,14 +37,6 @@ class AccountController extends BaseOwnedResourceController
                 SEARCH_NORMALLY
             ])."]"
         ]);
-        $validation->setRule("$individual_name.cash_flow_category_id", "cash flow category", [
-            "permit_empty",
-            "is_natural_no_zero",
-            "ensure_ownership[".implode(",", [
-                CashFlowCategoryModel::class,
-                SEARCH_NORMALLY
-            ])."]"
-        ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[3]",
@@ -118,6 +110,14 @@ class AccountController extends BaseOwnedResourceController
 
         $validation->setRule($individual_name, "account info", [
             "required"
+        ]);
+        $validation->setRule("$individual_name.cash_flow_category_id", "cash flow category", [
+            "permit_empty",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                CashFlowCategoryModel::class,
+                SEARCH_NORMALLY
+            ])."]"
         ]);
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
