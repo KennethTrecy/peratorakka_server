@@ -146,9 +146,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         $linked_cash_flow_categories = [];
         foreach ($accounts as $account) {
-            $cash_flow_group_id = $account->cash_flow_group_id;
-            if (!is_null($cash_flow_group_id)) {
-                array_push($linked_cash_flow_categories, $cash_flow_group_id);
+            $cash_flow_category_id = $account->cash_flow_category_id;
+            if (!is_null($cash_flow_category_id)) {
+                array_push($linked_cash_flow_categories, $cash_flow_category_id);
             }
         }
 
@@ -269,9 +269,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     $linked_cash_flow_categories = [];
                     foreach ($accounts as $account) {
-                        $cash_flow_group_id = $account->cash_flow_group_id;
-                        if (!is_null($cash_flow_group_id)) {
-                            array_push($linked_cash_flow_categories, $cash_flow_group_id);
+                        $cash_flow_category_id = $account->cash_flow_category_id;
+                        if (!is_null($cash_flow_category_id)) {
+                            array_push($linked_cash_flow_categories, $cash_flow_category_id);
                         }
                     }
 
