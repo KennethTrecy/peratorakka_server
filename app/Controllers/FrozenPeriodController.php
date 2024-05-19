@@ -146,9 +146,20 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         $linked_cash_flow_categories = [];
         foreach ($accounts as $account) {
-            $cash_flow_category_id = $account->cash_flow_category_id;
-            if (!is_null($cash_flow_category_id)) {
-                array_push($linked_cash_flow_categories, $cash_flow_category_id);
+            $increase_cash_flow_category_id = $account->increase_cash_flow_category_id;
+            if (!is_null($increase_cash_flow_category_id)) {
+                array_push(
+                    $linked_cash_flow_categories,
+                    $increase_cash_flow_category_id
+                );
+            }
+
+            $decrease_cash_flow_category_id = $account->decrease_cash_flow_category_id;
+            if (!is_null($decrease_cash_flow_category_id)) {
+                array_push(
+                    $linked_cash_flow_categories,
+                    $decrease_cash_flow_category_id
+                );
             }
         }
 
@@ -269,9 +280,20 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     $linked_cash_flow_categories = [];
                     foreach ($accounts as $account) {
-                        $cash_flow_category_id = $account->cash_flow_category_id;
-                        if (!is_null($cash_flow_category_id)) {
-                            array_push($linked_cash_flow_categories, $cash_flow_category_id);
+                        $increase_cash_flow_category_id = $account->increase_cash_flow_category_id;
+                        if (!is_null($increase_cash_flow_category_id)) {
+                            array_push(
+                                $linked_cash_flow_categories,
+                                $increase_cash_flow_category_id
+                            );
+                        }
+
+                        $decrease_cash_flow_category_id = $account->decrease_cash_flow_category_id;
+                        if (!is_null($decrease_cash_flow_category_id)) {
+                            array_push(
+                                $linked_cash_flow_categories,
+                                $decrease_cash_flow_category_id
+                            );
                         }
                     }
 
@@ -850,19 +872,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $account = $keyed_accounts[$summary->account_id];
                     $increase_category_id = $account->increase_cash_flow_category_id;
                     $decrease_category_id = $account->decrease_cash_flow_category_id;
+
                     if (
                         $account->kind === ASSET_ACCOUNT_KIND
                         && $increase_category_id === null
                         && $decrease_category_id === null
                     ) {
-                        $asset_subtotal = $summary->opened_debit_amount
-                            ->minus($summary->opened_credit_amount);
-                        $opened_liquid_amount = $opened_liquid_amount->plus($asset_subtotal);
-                        $closed_liquid_amount = $closed_liquid_amount->plus($asset_subtotal);
+                        $opened_liquid_amount = $opened_liquid_amount
+                            ->plus($summary->opened_debit_amount);
+                        $closed_liquid_amount = $closed_liquid_amount
+                            ->plus($summary->opened_debit_amount);
+
                         continue;
                     }
-
-                    continue;
 
                     $debit_change = $summary->unadjusted_debit_amount
                         ->minus($summary->opened_debit_amount);
@@ -874,18 +896,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     switch ($account->kind) {
                         case ASSET_ACCOUNT_KIND:
-                        case EXPENSE_ACCOUNT_KIND:
                             $increase_change = $debit_change;
                             $decrease_change = $credit_change;
                             break;
+                        case EXPENSE_ACCOUNT_KIND:
                         case LIABILITY_ACCOUNT_KIND:
                         case EQUITY_ACCOUNT_KIND:
                         case INCOME_ACCOUNT_KIND:
                             $increase_change = $credit_change;
                             $decrease_change = $debit_change;
-                            break;
-
-                        default:
                             break;
                     }
 
@@ -943,11 +962,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 $illiquid_cash_flow_category_subtotals = array_map(
                     function ($subtotal_info) {
-                        return [
-                            "cash_flow_category_id" => $subtotal_info["cash_flow_category_id"],
+                        return array_merge($subtotal_info, [
                             "net_income" => $subtotal_info["net_income"]->simplified(),
                             "subtotal" => $subtotal_info["subtotal"]->simplified()
-                        ];
+                        ]);
                     },
                     array_filter(
                         array_values($keyed_flow_category_subtotals),
