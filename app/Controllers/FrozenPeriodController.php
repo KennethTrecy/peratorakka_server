@@ -488,29 +488,16 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
         $raw_summary_calculations = array_map(
             function ($raw_calculation) {
-                $unadjusted_debit_amount = $raw_calculation["unadjusted_debit_amount"];
-                $unadjusted_credit_amount = $raw_calculation["unadjusted_credit_amount"];
                 $closed_debit_amount = $raw_calculation["closed_debit_amount"];
                 $closed_credit_amount = $raw_calculation["closed_credit_amount"];
 
-                $unadjusted_balance = $unadjusted_debit_amount
-                    ->minus($unadjusted_credit_amount)
-                    ->simplified();
                 $adjusted_balance = $closed_debit_amount
                     ->minus($closed_credit_amount)
                     ->simplified();
 
-                $is_unadjusted_balance_positive = $unadjusted_balance->getSign() > 0;
                 $is_adjusted_balance_positive = $adjusted_balance->getSign() > 0;
-                $is_unadjusted_balance_negative = $unadjusted_balance->getSign() < 0;
                 $is_adjusted_balance_negative = $adjusted_balance->getSign() < 0;
 
-                $raw_calculation["unadjusted_debit_amount"] = $is_unadjusted_balance_positive
-                    ? $unadjusted_balance
-                    : BigRational::zero();
-                $raw_calculation["unadjusted_credit_amount"] = $is_unadjusted_balance_negative
-                    ? $unadjusted_balance->negated()
-                    : BigRational::zero();
                 $raw_calculation["closed_debit_amount"] = $is_adjusted_balance_positive
                     ? $adjusted_balance
                     : BigRational::zero();
@@ -527,9 +514,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $raw_summary_calculations = array_filter(
             $raw_summary_calculations,
             function ($raw_summary_calculation) {
-                return $raw_summary_calculation->unadjusted_debit_amount->getSign() !== 0
-                    || $raw_summary_calculation->unadjusted_credit_amount->getSign() !== 0
-                    || $raw_summary_calculation->closed_debit_amount->getSign() !== 0
+                return $raw_summary_calculation->closed_debit_amount->getSign() !== 0
                     || $raw_summary_calculation->closed_credit_amount->getSign() !== 0;
             }
         );
