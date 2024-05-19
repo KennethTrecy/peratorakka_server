@@ -15,7 +15,6 @@ class CashFlowCategoryModel extends BaseResourceModel
         "user_id",
         "name",
         "description",
-        "kind",
         "deleted_at"
     ];
 
@@ -30,8 +29,7 @@ class CashFlowCategoryModel extends BaseResourceModel
     {
         return [
             "name"  => $faker->unique()->firstName(),
-            "description"  => $faker->paragraph(),
-            "kind"  => $faker->randomElement(ACCEPTABLE_CASH_FLOW_CATEGORY_KINDS),
+            "description"  => $faker->paragraph()
         ];
     }
 

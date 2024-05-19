@@ -41,12 +41,6 @@ class CashFlowCategoryController extends BaseOwnedResourceController
                 ])
             ])."]"
         ]);
-        $validation->setRule("$individual_name.kind", "kind", [
-            "required",
-            "min_length[3]",
-            "max_length[255]",
-            "in_list[".implode(",", ACCEPTABLE_CASH_FLOW_CATEGORY_KINDS)."]"
-        ]);
 
         return $validation;
     }
@@ -70,12 +64,6 @@ class CashFlowCategoryController extends BaseOwnedResourceController
                 ]),
                 "id=$resource_id"
             ])."]"
-        ]);
-        $validation->setRule("$individual_name.kind", "kind", [
-            "required",
-            "min_length[3]",
-            "max_length[255]",
-            "in_list[".implode(",", ACCEPTABLE_CASH_FLOW_CATEGORY_KINDS)."]"
         ]);
 
         return $validation;
