@@ -178,7 +178,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $account = $account_fabricator->create();
         $new_cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator->setOverrides([
-            "cash_flow_category_id" => $new_cash_flow_category->id
+            "increase_cash_flow_category_id" => $new_cash_flow_category->id
         ]);
         $new_details = $account_fabricator->make();
 
@@ -213,11 +213,11 @@ class AccountTest extends AuthenticatedHTTPTestCase
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "cash_flow_category_id" => $cash_flow_category->id
+            "decrease_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $account = $account_fabricator->create();
         $account_fabricator->setOverrides([
-            "cash_flow_category_id" => null
+            "decrease_cash_flow_category_id" => null
         ]);
         $new_details = $account_fabricator->make();
 
