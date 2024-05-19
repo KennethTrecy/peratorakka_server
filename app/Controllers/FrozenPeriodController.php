@@ -981,7 +981,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         function ($previous_total, $calculation) {
                             return $previous_total->plus($calculation["subtotal"]);
                         },
-                        $opened_liquid_amount->plus($income_statement_total)
+                        $opened_liquid_amount
                     );
                 }
 
