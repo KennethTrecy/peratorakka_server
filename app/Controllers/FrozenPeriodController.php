@@ -847,6 +847,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         continue;
                     }
 
+                    continue;
+
                     $debit_change = $summary->unadjusted_debit_amount
                         ->minus($summary->opened_debit_amount);
                     $credit_change = $summary->unadjusted_credit_amount
@@ -891,7 +893,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $closed_liquid_amount = $closed_liquid_amount->plus($increase_change);
                     }
 
-                    if ($account->kind === INCOME_ACCOUNT_KIND) {
+                    if ($increase_category_id !== null && $account->kind === INCOME_ACCOUNT_KIND) {
                         $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
                             = $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
                                 ->plus($increase_change);
@@ -917,9 +919,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     }
 
 
-                    if ($account->kind === EXPENSE_ACCOUNT_KIND) {
-                        $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
-                            = $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
+                    if ($decrease_category_id !== null && $account->kind === EXPENSE_ACCOUNT_KIND) {
+                        $keyed_flow_category_subtotals[$decrease_category_id]["net_income"]
+                            = $keyed_flow_category_subtotals[$decrease_category_id]["net_income"]
                                 ->minus($decrease_change);
                     }
                 }
@@ -959,7 +961,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "cash_flow_statement" => [
                         "opened_liquid_amount" => $opened_liquid_amount->simplified(),
                         "closed_liquid_amount" => $closed_liquid_amount->simplified(),
-                        "illiquid_subtotals" => $illiquid_cash_flow_category_subtotals
+                        "subtotals" => $illiquid_cash_flow_category_subtotals
                     ],
                     "adjusted_trial_balance" => [
                         "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
