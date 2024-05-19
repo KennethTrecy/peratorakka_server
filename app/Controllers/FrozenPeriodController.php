@@ -676,6 +676,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 return isset($keyed_calculations[$account->id]);
             }
         );
+        $keyed_accounts = array_reduce(
+            $accounts,
+            function ($keyed_items, $account) {
+                $keyed_items[$account->id] = $account;
+
+                return $keyed_items;
+            },
+            []
+        );
 
         $grouped_summaries = array_reduce(
             $accounts,
@@ -697,50 +706,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
             []
         );
 
-        $keyed_categories = array_reduce(
-            $cash_flow_categories,
-            function ($groups, $category) {
-                $groups[$category->id] = $category;
-
-                return $groups;
-            },
-            []
-        );
-        $categorized_summaries = array_reduce(
-            $accounts,
-            function ($categories, $account) use ($keyed_categories, $keyed_calculations) {
-                $currency_id = $account->currency_id;
-                if (is_null($account->cash_flow_category_id)) return $categories;
-
-                if (!isset($categories[$currency_id])) {
-                    $categories[$currency_id] = [];
-                }
-
-                $category = $keyed_categories[$account->cash_flow_category_id];
-
-                if (!isset($categories[$currency_id][$account->cash_flow_category_id])) {
-                    $categories[$currency_id][$account->cash_flow_category_id]= array_fill_keys(
-                        [ ...ACCEPTABLE_ACCOUNT_KINDS ],
-                        []
-                    );
-                }
-
-                array_push(
-                    $categories[$currency_id][$account->cash_flow_category_id][$account->kind],
-                    $keyed_calculations[$account->id]
-                );
-
-                return $categories;
-            },
-            []
-        );
-
         $statements = array_reduce(
             $currencies,
             function ($statements, $currency) use (
-                $keyed_categories,
-                $grouped_summaries,
-                $categorized_summaries
+                $keyed_accounts,
+                $grouped_summaries
             ) {
                 if (!isset($grouped_summaries[$currency->id])) {
                     // Include currencies only used in statements
@@ -857,116 +827,118 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 $opened_liquid_amount = BigRational::zero();
                 $closed_liquid_amount = BigRational::zero();
-                $liquid_cash_flow_category_subtotals = [];
-                $illiquid_cash_flow_category_subtotals = [];
+                $keyed_flow_category_subtotals = [];
 
                 // Compute for cash flow statement
-                if (isset($categorized_summaries[$currency->id])) {
-                    $summaries = $categorized_summaries[$currency->id];
-
-                    foreach ($summaries as $cash_flow_category_id => $account_summaries) {
-                        $cash_flow_category = $keyed_categories[$cash_flow_category_id];
-                        if ($cash_flow_category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND) {
-                            $asset_flow_subtotal = array_reduce(
-                                $account_summaries[ASSET_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->opened_debit_amount)
-                                        ->minus($summary->opened_credit_amount);
-                                },
-                                BigRational::zero()
-                            );
-
-                            array_push($liquid_cash_flow_category_subtotals, [
-                                "cash_flow_category_id" => $cash_flow_category_id,
-                                "subtotal" => $asset_flow_subtotal->simplified()
-                            ]);
-                        } else if ($cash_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
-                            $asset_and_liability_subtotals = array_map(
-                                function ($summary) {
-                                    return $summary->opened_debit_amount
-                                        ->minus($summary->closed_debit_amount)
-                                        ->plus($summary->closed_credit_amount)
-                                        ->minus($summary->opened_credit_amount);
-                                },
-                                array_merge(
-                                    $account_summaries[ASSET_ACCOUNT_KIND],
-                                    $account_summaries[LIABILITY_ACCOUNT_KIND]
-                                )
-                            );
-                            $equity_subtotals = array_map(
-                                function ($summary) {
-                                    return $summary->unadjusted_credit_amount
-                                        ->minus($summary->opened_credit_amount)
-                                        ->minus($summary->unadjusted_debit_amount)
-                                        ->plus($summary->opened_debit_amount);
-                                },
-                                $account_summaries[EQUITY_ACCOUNT_KIND]
-                            );
-                            $expense_flow_subtotal = array_reduce(
-                                $account_summaries[EXPENSE_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total->plus($summary->unadjusted_debit_amount);
-                                },
-                                BigRational::zero()
-                            );
-                            $income_flow_subtotal = array_reduce(
-                                $account_summaries[INCOME_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->unadjusted_credit_amount);
-                                },
-                                BigRational::zero()
-                            );
-
-                            $illiquid_raw_total = array_reduce(
-                                array_merge($asset_and_liability_subtotals, $equity_subtotals),
-                                function ($previous_total, $calculation) {
-                                    return $previous_total->plus($calculation);
-                                },
-                                BigRational::zero()
-                            );
-                            $net_income_subtotal = $income_flow_subtotal
-                                ->minus($expense_flow_subtotal);
-                            array_push($illiquid_cash_flow_category_subtotals, [
-                                "cash_flow_category_id" => $cash_flow_category_id,
-                                "net_income" => $net_income_subtotal->simplified(),
-                                "subtotal" => $illiquid_raw_total
-                                    ->plus($net_income_subtotal)
-                                    ->simplified()
-                            ]);
-                        }
+                $all_summaries = array_merge(...array_values($summaries));
+                foreach ($all_summaries as $summary) {
+                    $account = $keyed_accounts[$summary->account_id];
+                    $increase_category_id = $account->increase_cash_flow_category_id;
+                    $decrease_category_id = $account->decrease_cash_flow_category_id;
+                    if (
+                        $account->kind === ASSET_ACCOUNT_KIND
+                        && $increase_category_id === null
+                        && $decrease_category_id === null
+                    ) {
+                        $asset_subtotal = $summary->opened_debit_amount
+                            ->minus($summary->opened_credit_amount);
+                        $opened_liquid_amount = $opened_liquid_amount->plus($asset_subtotal);
+                        $closed_liquid_amount = $closed_liquid_amount->plus($asset_subtotal);
+                        continue;
                     }
 
-                    $liquid_cash_flow_category_subtotals = array_filter(
-                        $liquid_cash_flow_category_subtotals,
-                        function($cash_flow_category_subtotal) {
-                            return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
-                        }
-                    );
-                    $illiquid_cash_flow_category_subtotals = array_filter(
-                        $illiquid_cash_flow_category_subtotals,
-                        function($cash_flow_category_subtotal) {
-                            return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
-                        }
-                    );
+                    $debit_change = $summary->unadjusted_debit_amount
+                        ->minus($summary->opened_debit_amount);
+                    $credit_change = $summary->unadjusted_credit_amount
+                        ->minus($summary->opened_credit_amount);
 
-                    $opened_liquid_amount = array_reduce(
-                        $liquid_cash_flow_category_subtotals,
-                        function ($previous_total, $calculation) {
-                            return $previous_total->plus($calculation["subtotal"]);
-                        },
-                        $opened_liquid_amount
-                    );
+                    $increase_change = BigRational::zero();
+                    $decrease_change = BigRational::zero();
 
-                    $closed_liquid_amount = array_reduce(
-                        $illiquid_cash_flow_category_subtotals,
-                        function ($previous_total, $calculation) {
-                            return $previous_total->plus($calculation["subtotal"]);
-                        },
-                        $opened_liquid_amount
-                    );
+                    switch ($account->kind) {
+                        case ASSET_ACCOUNT_KIND:
+                        case EXPENSE_ACCOUNT_KIND:
+                            $increase_change = $debit_change;
+                            $decrease_change = $credit_change;
+                            break;
+                        case LIABILITY_ACCOUNT_KIND:
+                        case EQUITY_ACCOUNT_KIND:
+                        case INCOME_ACCOUNT_KIND:
+                            $increase_change = $credit_change;
+                            $decrease_change = $debit_change;
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    if ($increase_category_id !== null) {
+                        if (!isset(
+                            $keyed_flow_category_subtotals[$increase_category_id]
+                        )) {
+                            $keyed_flow_category_subtotals[$increase_category_id]
+                                = [
+                                    "cash_flow_category_id" => $increase_category_id,
+                                    "net_income" => BigRational::zero(),
+                                    "subtotal" => BigRational::zero()
+                                ];
+                        }
+
+                        $keyed_flow_category_subtotals[$increase_category_id]["subtotal"]
+                            = $keyed_flow_category_subtotals[$increase_category_id]["subtotal"]
+                                ->plus($increase_change);
+
+                        $closed_liquid_amount = $closed_liquid_amount->plus($increase_change);
+                    }
+
+                    if ($account->kind === INCOME_ACCOUNT_KIND) {
+                        $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
+                            = $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
+                                ->plus($increase_change);
+                    }
+
+                    if ($decrease_category_id !== null) {
+                        if (!isset(
+                            $keyed_flow_category_subtotals[$decrease_category_id]
+                        )) {
+                            $keyed_flow_category_subtotals[$decrease_category_id]
+                                = [
+                                    "cash_flow_category_id" => $decrease_category_id,
+                                    "net_income" => BigRational::zero(),
+                                    "subtotal" => BigRational::zero()
+                                ];
+                        }
+
+                        $keyed_flow_category_subtotals[$decrease_category_id]["subtotal"]
+                            = $keyed_flow_category_subtotals[$decrease_category_id]["subtotal"]
+                                ->minus($decrease_change);
+
+                        $closed_liquid_amount = $closed_liquid_amount->minus($decrease_change);
+                    }
+
+
+                    if ($account->kind === EXPENSE_ACCOUNT_KIND) {
+                        $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
+                            = $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
+                                ->minus($decrease_change);
+                    }
                 }
+
+                $illiquid_cash_flow_category_subtotals = array_map(
+                    function ($subtotal_info) {
+                        return [
+                            "cash_flow_category_id" => $subtotal_info["cash_flow_category_id"],
+                            "net_income" => $subtotal_info["net_income"]->simplified(),
+                            "subtotal" => $subtotal_info["subtotal"]->simplified()
+                        ];
+                    },
+                    array_filter(
+                        array_values($keyed_flow_category_subtotals),
+                        function($cash_flow_category_subtotal) {
+                            return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
+                        }
+                    )
+                );
 
                 array_push($statements, [
                     "currency_id" => $currency->id,
@@ -987,7 +959,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "cash_flow_statement" => [
                         "opened_liquid_amount" => $opened_liquid_amount->simplified(),
                         "closed_liquid_amount" => $closed_liquid_amount->simplified(),
-                        "liquid_subtotals" => $liquid_cash_flow_category_subtotals,
                         "illiquid_subtotals" => $illiquid_cash_flow_category_subtotals
                     ],
                     "adjusted_trial_balance" => [
