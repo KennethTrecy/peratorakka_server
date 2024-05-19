@@ -892,8 +892,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 BigRational::zero()
                             );
 
-                            $net_income_subtotal = $income_flow_subtotal
-                                ->minus($expense_flow_subtotal);
                             array_push($liquid_cash_flow_category_subtotals, [
                                 "cash_flow_category_id" => $cash_flow_category_id,
                                 "subtotal" => $asset_flow_subtotal->simplified()
