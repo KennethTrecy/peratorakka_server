@@ -125,7 +125,12 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">cash_flow_category_id</td>
+					<td align="left">increase_cash_flow_category_id</td>
+					<td align="left">nullable bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">decrease_cash_flow_category_id</td>
 					<td align="left">nullable bigint</td>
 				</tr>
 				<tr>
