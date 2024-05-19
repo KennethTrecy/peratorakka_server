@@ -872,12 +872,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 $opened_liquid_amount = BigRational::zero();
                 $closed_liquid_amount = BigRational::zero();
+                $liquid_cash_flow_category_subtotals = [];
+                $illiquid_cash_flow_category_subtotals = [];
 
                 // Compute for cash flow statement
                 if (isset($categorized_summaries[$currency->id])) {
                     $summaries = $categorized_summaries[$currency->id];
-                    $liquid_cash_flow_category_subtotals = [];
-                    $illiquid_cash_flow_category_subtotals = [];
 
                     foreach ($summaries as $cash_flow_category_id => $account_summaries) {
                         $cash_flow_category = $keyed_categories[$cash_flow_category_id];
@@ -954,6 +954,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             ]);
                         }
                     }
+
+                    $liquid_cash_flow_category_subtotals = array_filter(
+                        $liquid_cash_flow_category_subtotals,
+                        function($cash_flow_category_subtotal) {
+                            return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
+                        }
+                    );
+                    $illiquid_cash_flow_category_subtotals = array_filter(
+                        $illiquid_cash_flow_category_subtotals,
+                        function($cash_flow_category_subtotal) {
+                            return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
+                        }
+                    );
 
                     $opened_liquid_amount = array_reduce(
                         $liquid_cash_flow_category_subtotals,
