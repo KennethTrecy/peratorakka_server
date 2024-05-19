@@ -319,10 +319,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "account_id" => $asset_account->id,
             "opened_debit_amount" => "0",
             "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => $recorded_normal_financial_entry
-                ->debit_amount
-                ->minus($recorded_expense_financial_entry->credit_amount),
-            "unadjusted_credit_amount" => "0",
+            "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
             "closed_debit_amount" => $recorded_normal_financial_entry
                 ->debit_amount
                 ->minus($recorded_expense_financial_entry->credit_amount),
