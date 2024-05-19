@@ -356,7 +356,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                                     "net_income" => $recorded_expense_financial_entry
                                         ->debit_amount
                                         ->negated(),
-                                    "subtotal" => $recorded_normal_financial_entry->credit_amount
+                                    "subtotal" => $recorded_normal_financial_entry
+                                        ->credit_amount
+                                        ->minus($closed_financial_entry->debit_amount)
                                 ]
                             ]
                         ],
