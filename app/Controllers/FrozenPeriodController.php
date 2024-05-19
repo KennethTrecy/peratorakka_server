@@ -882,21 +882,38 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     foreach ($summaries as $cash_flow_category_id => $account_summaries) {
                         $cash_flow_category = $keyed_categories[$cash_flow_category_id];
                         if ($cash_flow_category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND) {
+                            $asset_flow_subtotal = array_reduce(
+                                $account_summaries[ASSET_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->plus($summary->opened_debit_amount)
+                                        ->minus($summary->opened_credit_amount);
+                                },
+                                BigRational::zero()
+                            );
+                            $expense_flow_subtotal = array_reduce(
+                                $account_summaries[EXPENSE_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total->plus($summary->unadjusted_debit_amount);
+                                },
+                                BigRational::zero()
+                            );
+                            $income_flow_subtotal = array_reduce(
+                                $account_summaries[INCOME_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->plus($summary->unadjusted_credit_amount);
+                                },
+                                BigRational::zero()
+                            );
+
+                            $net_income_subtotal = $income_flow_subtotal
+                                ->minus($expense_flow_subtotal);
                             array_push($liquid_cash_flow_category_subtotals, [
                                 "cash_flow_category_id" => $cash_flow_category_id,
-                                "subtotal" => array_reduce(
-                                    array_map(
-                                        function ($summary) {
-                                            return $summary->opened_debit_amount
-                                                ->minus($summary->opened_credit_amount);
-                                        },
-                                        $account_summaries[ASSET_ACCOUNT_KIND]
-                                    ),
-                                    function ($previous_total, $calculation) {
-                                        return $previous_total->plus($calculation);
-                                    },
-                                    BigRational::zero()
-                                )
+                                "net_income" => $net_income_subtotal,
+                                "subtotal" => $asset_flow_subtotal
+                                    ->plus($net_income_subtotal)
                             ]);
                         } else if ($cash_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
                             $asset_and_liability_subtotals = array_map(
@@ -920,15 +937,36 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 },
                                 $account_summaries[EQUITY_ACCOUNT_KIND]
                             );
+                            $expense_flow_subtotal = array_reduce(
+                                $account_summaries[EXPENSE_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total->plus($summary->unadjusted_debit_amount);
+                                },
+                                BigRational::zero()
+                            );
+                            $income_flow_subtotal = array_reduce(
+                                $account_summaries[INCOME_ACCOUNT_KIND],
+                                function ($previous_total, $summary) {
+                                    return $previous_total
+                                        ->plus($summary->unadjusted_credit_amount);
+                                },
+                                BigRational::zero()
+                            );
+
+                            $illiquid_raw_total = array_reduce(
+                                array_merge($asset_and_liability_subtotals, $equity_subtotals),
+                                function ($previous_total, $calculation) {
+                                    return $previous_total->plus($calculation);
+                                },
+                                BigRational::zero()
+                            );
+                            $net_income_subtotal = $income_flow_subtotal
+                                ->minus($expense_flow_subtotal);
                             array_push($illiquid_cash_flow_category_subtotals, [
                                 "cash_flow_category_id" => $cash_flow_category_id,
-                                "subtotal" => array_reduce(
-                                    array_merge($asset_and_liability_subtotals, $equity_subtotals),
-                                    function ($previous_total, $calculation) {
-                                        return $previous_total->plus($calculation);
-                                    },
-                                    BigRational::zero()
-                                )
+                                "net_income" => $net_income_subtotal,
+                                "subtotal" => $illiquid_raw_total
+                                    ->plus($net_income_subtotal)
                             ]);
                         }
                     }
