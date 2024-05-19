@@ -891,29 +891,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 },
                                 BigRational::zero()
                             );
-                            $expense_flow_subtotal = array_reduce(
-                                $account_summaries[EXPENSE_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total->plus($summary->unadjusted_debit_amount);
-                                },
-                                BigRational::zero()
-                            );
-                            $income_flow_subtotal = array_reduce(
-                                $account_summaries[INCOME_ACCOUNT_KIND],
-                                function ($previous_total, $summary) {
-                                    return $previous_total
-                                        ->plus($summary->unadjusted_credit_amount);
-                                },
-                                BigRational::zero()
-                            );
 
                             $net_income_subtotal = $income_flow_subtotal
                                 ->minus($expense_flow_subtotal);
                             array_push($liquid_cash_flow_category_subtotals, [
                                 "cash_flow_category_id" => $cash_flow_category_id,
-                                "net_income" => $net_income_subtotal,
-                                "subtotal" => $asset_flow_subtotal
-                                    ->plus($net_income_subtotal)
+                                "subtotal" => $asset_flow_subtotal->simplified()
                             ]);
                         } else if ($cash_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
                             $asset_and_liability_subtotals = array_map(
@@ -964,9 +947,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                                 ->minus($expense_flow_subtotal);
                             array_push($illiquid_cash_flow_category_subtotals, [
                                 "cash_flow_category_id" => $cash_flow_category_id,
-                                "net_income" => $net_income_subtotal,
+                                "net_income" => $net_income_subtotal->simplified(),
                                 "subtotal" => $illiquid_raw_total
                                     ->plus($net_income_subtotal)
+                                    ->simplified()
                             ]);
                         }
                     }
@@ -1007,10 +991,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "cash_flow_statement" => [
                         "opened_liquid_amount" => $opened_liquid_amount->simplified(),
                         "closed_liquid_amount" => $closed_liquid_amount->simplified(),
-                        "liquid_cash_flow_category_subtotals"
-                            => $liquid_cash_flow_category_subtotals,
-                        "illiquid_cash_flow_category_subtotals"
-                            => $illiquid_cash_flow_category_subtotals
+                        "liquid_subtotals" => $liquid_cash_flow_category_subtotals,
+                        "illiquid_subtotals" => $illiquid_cash_flow_category_subtotals
                     ],
                     "adjusted_trial_balance" => [
                         "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
