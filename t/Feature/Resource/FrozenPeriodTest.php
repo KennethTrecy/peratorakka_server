@@ -185,8 +185,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                         "cash_flow_statement" => [
                             "opened_liquid_amount" => "0",
                             "closed_liquid_amount" => "0",
-                            "liquid_subtotals" => [],
-                            "illiquid_subtotals" => []
+                            "subtotals" => []
                         ],
                         "adjusted_trial_balance" => [
                             "debit_total" => $recorded_normal_financial_entry
@@ -225,28 +224,22 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ])->create();
         $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
-        $liquid_category = $cash_flow_category_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "kind" => LIQUID_CASH_FLOW_CATEGORY_KIND
-        ])->create();
-        $illiquid_category = $cash_flow_category_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "kind" => ILLIQUID_CASH_FLOW_CATEGORY_KIND
+        $cash_flow_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
         ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $equity_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "cash_flow_category_id" => $illiquid_category->id,
+            "cash_flow_category_id" => $cash_flow_category->id,
             "kind" => EQUITY_ACCOUNT_KIND
         ])->create();
         $asset_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "cash_flow_category_id" => $liquid_category->id,
             "kind" => ASSET_ACCOUNT_KIND
         ])->create();
         $expense_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "cash_flow_category_id" => $illiquid_category->id,
+            "cash_flow_category_id" => $cash_flow_category->id,
             "kind" => EXPENSE_ACCOUNT_KIND
         ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
@@ -349,10 +342,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                             "closed_liquid_amount" => $recorded_normal_financial_entry
                                 ->credit_amount
                                 ->minus($closed_financial_entry->debit_amount),
-                            "liquid_subtotals" => [],
-                            "illiquid_subtotals" => [
+                            "subtotals" => [
                                 [
-                                    "cash_flow_category_id" => $illiquid_category->id,
+                                    "cash_flow_category_id" => $cash_flow_category->id,
                                     "net_income" => $recorded_expense_financial_entry
                                         ->debit_amount
                                         ->negated(),
@@ -382,8 +374,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "currencies" => [ $currency ],
             "frozen_period" => json_decode(json_encode($frozen_period)),
             "cash_flow_categories" => [
-                $liquid_category,
-                $illiquid_category
+                $cash_flow_category
             ],
             "summary_calculations" => json_decode(json_encode([
                 $equity_summary_calculation,
