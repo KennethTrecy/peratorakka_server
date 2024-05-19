@@ -77,14 +77,20 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $account_fabricator = new Fabricator(AccountModel::class);
         $equity_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "increase_cash_flow_category_id"=> null,
+            "decrease_cash_flow_category_id"=> null,
             "kind" => EQUITY_ACCOUNT_KIND
         ])->create();
         $asset_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "increase_cash_flow_category_id"=> null,
+            "decrease_cash_flow_category_id"=> null,
             "kind" => ASSET_ACCOUNT_KIND
         ])->create();
         $expense_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "increase_cash_flow_category_id"=> null,
+            "decrease_cash_flow_category_id"=> null,
             "kind" => EXPENSE_ACCOUNT_KIND
         ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
@@ -130,6 +136,8 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
             "account_id" => $equity_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
             "unadjusted_debit_amount" => "0",
             "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
             "closed_debit_amount" => "0",
@@ -140,14 +148,22 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
             "account_id" => $asset_account->id,
-            "unadjusted_debit_amount" => $recorded_normal_financial_entry->debit_amount,
-            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
-            "closed_debit_amount" => $recorded_normal_financial_entry->debit_amount,
-            "closed_credit_amount" => $recorded_expense_financial_entry->credit_amount
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => $recorded_normal_financial_entry
+                ->debit_amount
+                ->minus($recorded_expense_financial_entry->credit_amount),
+            "unadjusted_credit_amount" => "0",
+            "closed_debit_amount" => $recorded_normal_financial_entry
+                ->debit_amount
+                ->minus($recorded_expense_financial_entry->credit_amount),
+            "closed_credit_amount" => "0"
         ])->create();
         $expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
             "account_id" => $expense_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
             "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
             "unadjusted_credit_amount" => "0",
             "closed_debit_amount" => "0",
