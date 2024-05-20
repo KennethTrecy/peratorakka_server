@@ -14,6 +14,8 @@ class ModifierModel extends BaseResourceModel
     protected $allowedFields = [
         "debit_account_id",
         "credit_account_id",
+        "debit_cash_flow_category_id",
+        "credit_cash_flow_category_id",
         "name",
         "description",
         "action",
@@ -52,9 +54,47 @@ class ModifierModel extends BaseResourceModel
                     ->select("id")
                     ->where("user_id", $user->id)
             );
+        $cash_flow_category_subquery = model(CashFlowCategory::class)
+            ->builder()
+            ->select("id")
+            ->whereIn(
+                "cash_flow_category_id",
+                model(CashFlowCategoryModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->where("user_id", $user->id)
+            )
+            ->whereIn(
+                "summary_calculation_id",
+                model(SummaryCalculationModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->whereIn(
+                        "frozen_period_id",
+                        model(FrozenPeriodModel::class, false)
+                            ->builder()
+                            ->select("id")
+                            ->where("user_id", $user->id)
+                    )
+                    ->whereIn(
+                        "account_id",
+                        model(AccountModel::class, false)
+                            ->builder()
+                            ->select("id")
+                            ->whereIn(
+                                "currency_id",
+                                model(CurrencyModel::class, false)
+                                    ->builder()
+                                    ->select("id")
+                                    ->where("user_id", $user->id)
+                            )
+                    )
+            );
 
         return $query_builder
             ->whereIn("debit_account_id", $account_subquery)
-            ->whereIn("credit_account_id", $account_subquery);
+            ->whereIn("credit_account_id", $account_subquery)
+            ->whereIn("debit_cash_flow_category_id", $cash_flow_category_subquery)
+            ->whereIn("credit_cash_flow_category_id", $cash_flow_category_subquery);
     }
 }
