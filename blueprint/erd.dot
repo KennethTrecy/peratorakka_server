@@ -124,16 +124,6 @@ digraph {
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
-					<td>FK</td>
-					<td align="left">increase_cash_flow_category_id</td>
-					<td align="left">nullable bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">decrease_cash_flow_category_id</td>
-					<td align="left">nullable bigint</td>
-				</tr>
-				<tr>
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
@@ -304,6 +294,16 @@ digraph {
 				<tr>
 					<td>FK</td>
 					<td align="left">credit_account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">debit_cash_flow_category_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">credit_cash_flow_category_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -565,7 +565,7 @@ digraph {
 		]
 
 		modifiers -> modifiers
-		cash_flow_categories -> accounts
+		cash_flow_categories -> modifiers
 	}
 
 	{
