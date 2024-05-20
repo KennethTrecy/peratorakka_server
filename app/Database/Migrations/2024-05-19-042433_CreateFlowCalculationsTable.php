@@ -18,11 +18,11 @@ class CreateFlowCalculationsTable extends Migration
                 "unsigned" => true,
                 "auto_increment" => true,
             ],
-            "summary_calculation_id" => [
+            "cash_flow_category_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
-            "cash_flow_category_id" => [
+            "summary_calculation_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
