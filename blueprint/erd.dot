@@ -92,10 +92,12 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
+						kind<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
+						enum(unknown,liquid,illiquid)<br align="left"/>
 					</td>
 				</tr>
 			</table>
