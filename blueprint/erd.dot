@@ -594,6 +594,7 @@ digraph {
 		users -> frozen_periods
 		accounts -> summary_calculations
 		cash_flow_categories -> modifiers
+		cash_flow_categories -> modifiers
 		summary_calculations -> flow_calculations
 	}
 
