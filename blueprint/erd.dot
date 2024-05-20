@@ -549,7 +549,7 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
-						amount<br align="left"/>
+						net_amount<br align="left"/>
 					</td>
 					<td align="left">
 						string<br align="left"/>
