@@ -521,6 +521,43 @@ digraph {
 			</table>
 			>
 		]
+		flow_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Flow Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">summary_calculation_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">cash_flow_category_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						amount<br align="left"/>
+					</td>
+					<td align="left">
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" ]
@@ -546,6 +583,7 @@ digraph {
 
 		users -> currencies
 		users -> cash_flow_categories
+		cash_flow_categories -> flow_calculations
 		currencies -> accounts
 		users -> events
 		accounts -> modifiers
@@ -555,6 +593,8 @@ digraph {
 		modifiers -> financial_entries
 		users -> frozen_periods
 		accounts -> summary_calculations
+		cash_flow_categories -> modifiers
+		summary_calculations -> flow_calculations
 	}
 
 	{
@@ -563,9 +603,6 @@ digraph {
 			arrowhead = nonecrowodot
 			arrowtail = noneteeodot
 		]
-
-		modifiers -> modifiers
-		cash_flow_categories -> modifiers
 	}
 
 	{
@@ -580,39 +617,41 @@ digraph {
 
 	{
 		rank = source;
-		timeout_events
-		interval_events
-		users
-	}
-
-	{
-		rank = same;
 		events
 		frozen_periods
-		cash_flow_categories
+		event_started_times
 	}
 
 	{
 		rank = same;
-		currencies
-		reactive_modifiers
+		users
+		interval_events
+		timeout_events
 		summary_calculations
 	}
 
 	{
 		rank = same;
+		currencies
+		flow_calculations
+		reactive_modifiers
+	}
+
+	{
+		rank = same;
 		accounts
+		cash_flow_categories
+		dependent_modifiers
 	}
 
 	{
 		rank = same;
 		modifiers
-		event_started_times
+
+		financial_entries
 	}
 
 	{
 		rank = sink;
-		dependent_modifiers
-		financial_entries
 	}
 }
