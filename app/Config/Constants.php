@@ -112,6 +112,38 @@ define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
 
 /*
  | --------------------------------------------------------------------------
+ | Cash Flow Group Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different cash flow category kinds that the system can handle.
+ | - UNKNOWN_CASH_FLOW_CATEGORY_KIND. Cash flow category that may represent other kinds not
+ |   supported by the system at the current version. This case may happen when the system
+ |   downgraded.
+ | - LIQUID_CASH_FLOW_CATEGORY_KIND. Cash flow category kind that may hold cash and other
+ |   cash-equivalent accounts.
+ | - ILLIQUID_CASH_FLOW_CATEGORY_KIND. Cash flow category kind that may hold that are hard to
+ |   convert back into cash.
+ |
+ | When the user creates a cash flow category, certain kinds can be accepted by the server.
+ | When the server finds a cash flow category kind not existing in the current version,
+ | it will be labeled as unknown.
+ */
+define("UNKNOWN_CASH_FLOW_CATEGORY_KIND", "unknown");
+define("LIQUID_CASH_FLOW_CATEGORY_KIND", "liquid");
+define("ILLIQUID_CASH_FLOW_CATEGORY_KIND", "illiquid");
+
+define("ACCEPTABLE_CASH_FLOW_CATEGORY_KINDS", [
+    LIQUID_CASH_FLOW_CATEGORY_KIND,
+    ILLIQUID_CASH_FLOW_CATEGORY_KIND,
+]);
+
+define("CASH_FLOW_CATEGORY_KINDS", [
+    UNKNOWN_CASH_FLOW_CATEGORY_KIND,
+    ...ACCEPTABLE_CASH_FLOW_CATEGORY_KINDS
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Account Kinds
  | --------------------------------------------------------------------------
  |
