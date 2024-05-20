@@ -2,6 +2,8 @@
 
 namespace App\Entities;
 
+use App\Casts\CashFlowCategoryKind;
+
 class CashFlowCategory extends BaseResourceEntity
 {
     protected $datamap = [];
@@ -10,6 +12,11 @@ class CashFlowCategory extends BaseResourceEntity
         "id" => "integer",
         "user_id" => "integer",
         "name" => "string",
-        "description" => "?string"
+        "description" => "?string",
+        "kind" => "cash_flow_category_kind"
+    ];
+
+    protected $castHandlers = [
+        "cash_flow_category_kind" => CashFlowCategoryKind::class,
     ];
 }
