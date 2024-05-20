@@ -42,6 +42,7 @@ class FlowCalculationModel extends BaseResourceModel
                 "summary_calculation_id",
                 model(SummaryCalculationModel::class, false)
                     ->builder()
+                    ->select("id")
                     ->whereIn(
                         "frozen_period_id",
                         model(FrozenPeriodModel::class, false)
