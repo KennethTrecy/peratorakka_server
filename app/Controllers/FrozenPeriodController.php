@@ -152,22 +152,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $enriched_document["currencies"] = $currencies;
 
         $linked_cash_flow_categories = [];
-        foreach ($accounts as $account) {
-            $increase_cash_flow_category_id = $account->increase_cash_flow_category_id;
-            if (!is_null($increase_cash_flow_category_id)) {
-                array_push(
-                    $linked_cash_flow_categories,
-                    $increase_cash_flow_category_id
-                );
-            }
-
-            $decrease_cash_flow_category_id = $account->decrease_cash_flow_category_id;
-            if (!is_null($decrease_cash_flow_category_id)) {
-                array_push(
-                    $linked_cash_flow_categories,
-                    $decrease_cash_flow_category_id
-                );
-            }
+        foreach ($flow_calculations as $document) {
+            $cash_flow_category_id = $document->cash_flow_category_id;
+            array_push($linked_cash_flow_categories, $cash_flow_category_id);
         }
 
         $cash_flow_categories = [];
@@ -882,17 +869,17 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $accounts,
             function ($groups, $account) use ($keyed_flow_calculations) {
                 if (!isset($groups[$account->currency_id])) {
-                    $groups[$account->currency_id] = array_fill_keys(
-                        [ ...ACCEPTABLE_ACCOUNT_KINDS ],
-                        []
-                    );
+                    $groups[$account->currency_id] = [];
                 }
 
-                // User must regenerate the previos
-                array_push(
-                    $groups[$account->currency_id][$account->kind],
-                    $keyed_flow_calculations[$account->id]
-                );
+                // For old records before v0.4.0, flow calculations were not yet created.
+                // User must regenerate the previous frozen periods.
+                if (isset($keyed_flow_calculations[$account->id])) {
+                    array_push(
+                        $groups[$account->currency_id],
+                        $keyed_flow_calculations[$account->id]
+                    );
+                }
 
                 return $groups;
             },
