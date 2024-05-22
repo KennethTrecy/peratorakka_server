@@ -10,6 +10,7 @@ use CodeIgniter\I18n\Time;
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
+use App\Models\CashFlowCategoryModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
@@ -27,6 +28,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -36,7 +42,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -68,6 +76,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -77,7 +90,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -108,6 +123,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -117,7 +137,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -156,6 +178,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -165,7 +192,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -206,6 +235,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -215,7 +249,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -247,6 +283,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -256,7 +297,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -286,6 +329,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -295,7 +343,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -340,6 +390,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -349,7 +404,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -385,6 +442,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -394,7 +456,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -440,6 +504,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -449,7 +518,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -475,6 +546,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -485,6 +562,8 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
             "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -514,6 +593,12 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
         $currencyA = $currency_fabricator->create();
         $currencyB = $currency_fabricator->create();
+        $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
@@ -526,7 +611,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -567,6 +654,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         ]);
         $currencyA = $currency_fabricator->create();
         $currencyB = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
@@ -579,7 +671,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -618,6 +712,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currencyB = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
@@ -630,7 +729,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -658,6 +759,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -667,7 +773,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -697,6 +805,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -706,7 +819,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
@@ -741,6 +856,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -750,7 +870,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -791,6 +913,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -800,7 +927,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -842,6 +971,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -851,7 +985,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -887,6 +1023,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -896,7 +1037,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -922,6 +1065,11 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_category = $cash_flow_category_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -931,7 +1079,9 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_category_id" => $cash_flow_category->id,
+            "credit_cash_flow_category_id" => $cash_flow_category->id
         ]);
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
