@@ -888,6 +888,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     );
                 }
 
+                // User must regenerate the previos
                 array_push(
                     $groups[$account->currency_id][$account->kind],
                     $keyed_flow_calculations[$account->id]
