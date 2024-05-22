@@ -10,8 +10,9 @@ class FlowCalculation extends BaseResourceEntity
 
     protected $casts = [
         "id" => "integer",
+        "frozen_period_id" => "integer",
         "cash_flow_category_id" => "integer",
-        "summary_calculation_id" => "integer",
+        "account_id" => "integer",
         "net_amount" => "rational_number"
     ];
 

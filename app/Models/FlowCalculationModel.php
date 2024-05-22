@@ -14,8 +14,9 @@ class FlowCalculationModel extends BaseResourceModel
     protected $table = "flow_calculations";
     protected $returnType = FlowCalculation::class;
     protected $allowedFields = [
+        "frozen_period_id",
         "cash_flow_category_id",
-        "summary_calculation_id",
+        "account_id",
         "net_amount"
     ];
     protected $useTimestamps = false;
@@ -39,29 +40,23 @@ class FlowCalculationModel extends BaseResourceModel
                     ->where("user_id", $user->id)
             )
             ->whereIn(
-                "summary_calculation_id",
-                model(SummaryCalculationModel::class, false)
+                "frozen_period_id",
+                model(FrozenPeriodModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->where("user_id", $user->id)
+            )
+            ->whereIn(
+                "account_id",
+                model(AccountModel::class, false)
                     ->builder()
                     ->select("id")
                     ->whereIn(
-                        "frozen_period_id",
-                        model(FrozenPeriodModel::class, false)
+                        "currency_id",
+                        model(CurrencyModel::class, false)
                             ->builder()
                             ->select("id")
                             ->where("user_id", $user->id)
-                    )
-                    ->whereIn(
-                        "account_id",
-                        model(AccountModel::class, false)
-                            ->builder()
-                            ->select("id")
-                            ->whereIn(
-                                "currency_id",
-                                model(CurrencyModel::class, false)
-                                    ->builder()
-                                    ->select("id")
-                                    ->where("user_id", $user->id)
-                            )
                     )
             );
     }
