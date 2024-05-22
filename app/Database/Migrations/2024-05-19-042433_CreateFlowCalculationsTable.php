@@ -18,11 +18,15 @@ class CreateFlowCalculationsTable extends Migration
                 "unsigned" => true,
                 "auto_increment" => true,
             ],
+            "frozen_period_id" => [
+                "type" => "BIGINT",
+                "unsigned" => true,
+            ],
             "cash_flow_category_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
-            "summary_calculation_id" => [
+            "account_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
@@ -33,12 +37,12 @@ class CreateFlowCalculationsTable extends Migration
         $this->forge->addPrimaryKey("id", "pk_flow_calculations");
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
-                "summary_calculation_id",
-                "summary_calculations",
+                "frozen_period_id",
+                "frozen_periods",
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "flow_calculations_summary_calculation_id_foreign"
+                "flow_calculations_frozen_period_id_foreign"
             );
             $this->forge->addForeignKey(
                 "cash_flow_category_id",
@@ -47,6 +51,14 @@ class CreateFlowCalculationsTable extends Migration
                 "CASCADE",
                 "CASCADE",
                 "flow_calculations_cash_flow_category_id_foreign"
+            );
+            $this->forge->addForeignKey(
+                "account_id",
+                "accounts",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "flow_calculations_account_id_foreign"
             );
         }
         $this->forge->createTable("flow_calculations");
