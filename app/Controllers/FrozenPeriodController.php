@@ -9,12 +9,14 @@ use CodeIgniter\Validation\Validation;
 
 use App\Casts\ModifierAction;
 use App\Contracts\OwnedResource;
+use App\Entities\FlowCalculation;
 use App\Entities\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
 use App\Models\CashFlowCategoryModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
+use App\Models\FlowCalculationModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
 use App\Models\SummaryCalculationModel;
@@ -57,6 +59,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ->where("frozen_period_id", $initial_document[static::getIndividualName()]->id)
             ->findAll();
         $enriched_document["summary_calculations"] = $summary_calculations;
+
+        $flow_calculations = model(FlowCalculationModel::class)
+            ->where("frozen_period_id", $initial_document[static::getIndividualName()]->id)
+            ->findAll();
+        $enriched_document["flow_calculations"] = $flow_calculations;
 
         $linked_accounts = [];
         foreach ($summary_calculations as $document) {
@@ -183,7 +190,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $currencies,
                 $cash_flow_categories,
                 $accounts,
-                $summary_calculations
+                $summary_calculations,
+                $flow_calculations
             ),
             "exchange_rates" => $raw_exchange_rates
         ];
@@ -224,11 +232,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ->findAll();
 
         [
+            $cash_flow_categories,
             $accounts,
             $raw_summary_calculations,
+            $raw_flow_calculations,
             $raw_exchange_rates
-        ] = static::makeRawSummaryCalculations($financial_entries);
-        $keyed_calculations = static::keySummaryCalculationsWithAccounts($raw_summary_calculations);
+        ] = static::makeRawCalculations($financial_entries);
+        $keyed_calculations = static::keyCalculationsWithAccounts($raw_summary_calculations);
 
         if ($must_be_strict) {
             foreach ($accounts as $account) {
@@ -252,8 +262,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
 
         return [
+            $cash_flow_categories,
             $accounts,
             $raw_summary_calculations,
+            $raw_flow_calculations,
             $raw_exchange_rates
         ];
     }
@@ -270,46 +282,22 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
                     [
+                        $cash_flow_categories,
                         $accounts,
                         $raw_summary_calculations,
-                        $raw_exchange_rates
+                        $raw_flow_calculations
                     ] = static::calculateValidSummaryCalculations(
                         $info,
                         false
                     );
-
-                    $linked_cash_flow_categories = [];
-                    foreach ($accounts as $account) {
-                        $increase_cash_flow_category_id = $account->increase_cash_flow_category_id;
-                        if (!is_null($increase_cash_flow_category_id)) {
-                            array_push(
-                                $linked_cash_flow_categories,
-                                $increase_cash_flow_category_id
-                            );
-                        }
-
-                        $decrease_cash_flow_category_id = $account->decrease_cash_flow_category_id;
-                        if (!is_null($decrease_cash_flow_category_id)) {
-                            array_push(
-                                $linked_cash_flow_categories,
-                                $decrease_cash_flow_category_id
-                            );
-                        }
-                    }
-
-                    $cash_flow_categories = [];
-                    if (count($linked_cash_flow_categories) > 0) {
-                        $cash_flow_categories = model(CashFlowCategoryModel::class)
-                            ->whereIn("id", array_unique($linked_cash_flow_categories))
-                            ->findAll();
-                    }
 
                     $currencies = static::getRelatedCurrencies($accounts);
                     $statements = static::makeStatements(
                         $currencies,
                         $cash_flow_categories,
                         $accounts,
-                        $raw_summary_calculations
+                        $raw_summary_calculations,
+                        $raw_flow_calculations
                     );
 
                     $response_document = [
@@ -359,7 +347,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $validation;
     }
 
-    private static function makeRawSummaryCalculations(array $financial_entries): array {
+    private static function makeRawCalculations(array $financial_entries): array {
         $linked_modifiers = [];
         foreach ($financial_entries as $document) {
             $modifier_id = $document->modifier_id;
@@ -392,6 +380,51 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "closed_debit_amount" => BigRational::zero(),
                     "closed_credit_amount" => BigRational::zero()
                 ];
+
+                return $raw_calculations;
+            },
+            []
+        );
+
+        $linked_cash_flow_categories = [];
+        foreach ($modifiers as $document) {
+            $debit_cash_flow_category_id = $document->debit_cash_flow_category_id;
+            $credit_cash_flow_category_id = $document->credit_cash_flow_category_id;
+            array_push(
+                $linked_cash_flow_categories,
+                $debit_cash_flow_category_id,
+                $credit_cash_flow_category_id
+            );
+        }
+
+        $cash_flow_categories = [];
+        if (count($linked_cash_flow_categories) > 0) {
+            $cash_flow_categories = model(CashFlowCategoryModel::class)
+                ->whereIn("id", array_unique($linked_cash_flow_categories))
+                ->findAll();
+        }
+        $keyed_cash_flow_categories = array_reduce(
+            $cash_flow_categories,
+            function ($keyed_items, $cash_flow_category) {
+                $keyed_items[$cash_flow_category->id] = $cash_flow_category;
+
+                return $keyed_items;
+            },
+            []
+        );
+
+        $raw_flow_calculations = array_reduce(
+            $linked_cash_flow_categories,
+            function ($raw_calculations, $category_id) use ($linked_accounts) {
+                $raw_calculations[$category_id] = [];
+
+                foreach ($linked_accounts as $account_id) {
+                    $raw_calculations[$category_id][$account_id] = [
+                        "cash_category_flow_id" => $category_id,
+                        "account_id" => $account_id,
+                        "net_amount" => BigRational::zero()
+                    ];
+                }
 
                 return $raw_calculations;
             },
@@ -472,6 +505,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 ->whereIn("id", array_unique($linked_accounts))
                 ->findAll();
         }
+        $keyed_accounts = array_reduce(
+            $accounts,
+            function ($keyed_items, $account) {
+                $keyed_items[$account->id] = $account;
+
+                return $keyed_items;
+            },
+            []
+        );
 
         $grouped_financial_entries = static::groupFinancialEntriesByModifier($financial_entries);
 
@@ -508,6 +550,74 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             $raw_summary_calculations
         );
+        $raw_flow_calculations = array_reduce(
+            $modifiers,
+            function ($raw_calculations, $modifier) use (
+                $keyed_cash_flow_categories,
+                $keyed_accounts,
+                $grouped_financial_entries
+            ) {
+                $financial_entries = $grouped_financial_entries[$modifier->id];
+
+                foreach ($financial_entries as $financial_entry) {
+                    $debit_account_id = $modifier->debit_account_id;
+                    $debit_category_id = $modifier->debit_cash_flow_category_id;
+                    $debit_amount = $financial_entry->debit_amount;
+
+                    $credit_category_id = $modifier->credit_cash_flow_category_id;
+                    $credit_account_id = $modifier->credit_account_id;
+                    $credit_amount = $financial_entry->credit_amount;
+
+                    if ($modifier->action === CLOSE_MODIFIER_ACTION) continue;
+
+                    $debit_flow_category = $keyed_cash_flow_categories[$debit_category_id];
+                    $credit_flow_category = $keyed_cash_flow_categories[$credit_category_id];
+
+                    if ($debit_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
+                        $debit_account = $keyed_accounts[$debit_account_id];
+
+                        switch($debit_account->kind) {
+                            case ASSET_ACCOUNT_KIND:
+                            case EXPENSE_ACCOUNT_KIND:
+                                $raw_calculations[$debit_category_id][$debit_account_id]
+                                    = $raw_calculations[$debit_category_id][$debit_account_id]
+                                        ->minus($debit_amount);
+                                break;
+                            case LIABILITY_ACCOUNT_KIND:
+                            case EQUITY_ACCOUNT_KIND:
+                            case INCOME_ACCOUNT_KIND:
+                                $raw_calculations[$debit_category_id][$debit_account_id]
+                                    = $raw_calculations[$debit_category_id][$debit_account_id]
+                                        ->plus($debit_amount);
+                                break;
+                        }
+                    }
+
+                    if ($credit_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
+                        $credit_account = $keyed_accounts[$credit_account_id];
+
+                        switch($credit_account->kind) {
+                            case ASSET_ACCOUNT_KIND:
+                            case EXPENSE_ACCOUNT_KIND:
+                                $raw_calculations[$credit_category_id][$credit_account_id]
+                                    = $raw_calculations[$credit_category_id][$credit_account_id]
+                                        ->plus($credit_amount);
+                                break;
+                            case LIABILITY_ACCOUNT_KIND:
+                            case EQUITY_ACCOUNT_KIND:
+                            case INCOME_ACCOUNT_KIND:
+                                $raw_calculations[$credit_category_id][$credit_account_id]
+                                    = $raw_calculations[$credit_category_id][$credit_account_id]
+                                        ->minus($credit_amount);
+                                break;
+                        }
+                    }
+                }
+
+                return $raw_calculations;
+            },
+            $raw_flow_calculations
+        );
         $raw_summary_calculations = array_map(
             function ($raw_calculation) {
                 $closed_debit_amount = $raw_calculation["closed_debit_amount"];
@@ -532,6 +642,21 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             array_values($raw_summary_calculations)
         );
+        $raw_flow_calculations = array_merge(
+            ...array_map(
+                function ($raw_calculations_per_account) {
+                    return array_map(
+                        array_values($raw_calculations_per_account),
+                        function ($raw_flow_calculation) {
+                            $raw_calculation["net_amount"] = $raw_calculation["net_amount"]
+                                ->simplified();
+                            return (new FlowCalculation())->fill($raw_calculation);
+                        }
+                    );
+                },
+                array_values($raw_flow_calculations)
+            )
+        );
 
         $raw_summary_calculations = array_filter(
             $raw_summary_calculations,
@@ -549,6 +674,23 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $raw_summary_calculations
         );
 
+        $raw_flow_calculations = array_map(
+            function ($raw_flow_calculation) {
+                return $raw_flow_calculation->net_amount->getSign() !== 0;
+            },
+            $raw_flow_calculations
+        );
+        $retained_accounts_on_flow_calculations = array_map(
+            function ($raw_flow_calculation) {
+                return $raw_flow_calculation->account_id;
+            },
+            $raw_flow_calculations
+        );
+        $retained_accounts_on_calculations = array_unique(array_merge(
+            $retained_accounts_on_summary_calculations,
+            $retained_accounts_on_flow_calculations
+        ));
+
         $exchange_modifiers = array_filter(
             $modifiers,
             function ($modifier) {
@@ -563,14 +705,16 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         $accounts = array_filter(
             $accounts,
-            function ($account) use ($retained_accounts_on_summary_calculations) {
-                return in_array($account->id, $retained_accounts_on_summary_calculations);
+            function ($account) use ($retained_accounts_on_calculations) {
+                return in_array($account->id, $retained_accounts_on_calculations);
             }
         );
 
         return [
+            array_values($cash_flow_categories),
             array_values($accounts),
             array_values($raw_summary_calculations),
+            array_values($raw_flow_calculations),
             $raw_exchange_rates
         ];
     }
@@ -691,15 +835,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $currencies,
         $cash_flow_categories,
         $accounts,
-        $summary_calculations
+        $summary_calculations,
+        $flow_calculations
     ): array {
-        $keyed_calculations = static::keySummaryCalculationsWithAccounts($summary_calculations);
-        $accounts = array_filter(
-            $accounts,
-            function ($account) use ($keyed_calculations) {
-                return isset($keyed_calculations[$account->id]);
-            }
-        );
+        $keyed_summary_calculations = static::keyCalculationsWithAccounts($summary_calculations);
+        $keyed_flow_calculations = static::keyCalculationsWithAccounts($flow_calculations);
         $keyed_accounts = array_reduce(
             $accounts,
             function ($keyed_items, $account) {
@@ -709,10 +849,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
             },
             []
         );
+        $keyed_cash_flow_categories = array_reduce(
+            $cash_flow_categories,
+            function ($keyed_items, $cash_flow_category) {
+                $keyed_items[$cash_flow_category->id] = $cash_flow_category;
 
-        $grouped_summaries = array_reduce(
+                return $keyed_items;
+            },
+            []
+        );
+
+        $grouped_summary_calculation = array_reduce(
             $accounts,
-            function ($groups, $account) use ($keyed_calculations) {
+            function ($groups, $account) use ($keyed_summary_calculations) {
                 if (!isset($groups[$account->currency_id])) {
                     $groups[$account->currency_id] = array_fill_keys(
                         [ ...ACCEPTABLE_ACCOUNT_KINDS ],
@@ -722,7 +871,26 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 array_push(
                     $groups[$account->currency_id][$account->kind],
-                    $keyed_calculations[$account->id]
+                    $keyed_summary_calculations[$account->id]
+                );
+
+                return $groups;
+            },
+            []
+        );
+        $grouped_flow_calculation = array_reduce(
+            $accounts,
+            function ($groups, $account) use ($keyed_flow_calculations) {
+                if (!isset($groups[$account->currency_id])) {
+                    $groups[$account->currency_id] = array_fill_keys(
+                        [ ...ACCEPTABLE_ACCOUNT_KINDS ],
+                        []
+                    );
+                }
+
+                array_push(
+                    $groups[$account->currency_id][$account->kind],
+                    $keyed_flow_calculations[$account->id]
                 );
 
                 return $groups;
@@ -733,16 +901,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $statements = array_reduce(
             $currencies,
             function ($statements, $currency) use (
+                $keyed_cash_flow_categories,
                 $keyed_accounts,
-                $grouped_summaries
+                $keyed_summary_calculations,
+                $grouped_summary_calculation,
+                $grouped_flow_calculation,
             ) {
-                if (!isset($grouped_summaries[$currency->id])) {
+                if (!isset($grouped_summary_calculation[$currency->id])) {
                     // Include currencies only used in statements
                     return $statements;
                 }
 
                 // Compute for income statement and balance sheet
-                $summaries = $grouped_summaries[$currency->id];
+                $summaries = $grouped_summary_calculation[$currency->id];
 
                 $unadjusted_total_income = array_reduce(
                     $summaries[INCOME_ACCOUNT_KIND],
@@ -849,118 +1020,74 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     ->plus($adjusted_total_liabilities)
                     ->plus($adjusted_total_income);
 
+                // Compute for cash flow statement
                 $opened_liquid_amount = BigRational::zero();
                 $closed_liquid_amount = BigRational::zero();
-                $keyed_flow_category_subtotals = [];
+                $illiquid_cash_flow_category_subtotals = [];
 
-                // Compute for cash flow statement
-                $all_summaries = array_merge(...array_values($summaries));
-                foreach ($all_summaries as $summary) {
-                    $account = $keyed_accounts[$summary->account_id];
-                    $increase_category_id = $account->increase_cash_flow_category_id;
-                    $decrease_category_id = $account->decrease_cash_flow_category_id;
+                if (isset($grouped_flow_calculation[$currency->id])) {
+                    $keyed_flow_category_subtotals = [];
+                    $flows = $grouped_flow_calculation[$currency->id];
 
-                    if (
-                        $account->kind === ASSET_ACCOUNT_KIND
-                        && $increase_category_id === null
-                        && $decrease_category_id === null
-                    ) {
-                        $opened_liquid_amount = $opened_liquid_amount
-                            ->plus($summary->opened_debit_amount);
-                        $closed_liquid_amount = $closed_liquid_amount
-                            ->plus($summary->opened_debit_amount);
+                    foreach ($flows as $flow_info) {
+                        $account = $keyed_accounts[$flow_info->account_id];
+                        $category = $keyed_cash_flow_categories[$flow_info->$cash_flow_category_id];
 
-                        continue;
-                    }
-
-                    $debit_change = $summary->unadjusted_debit_amount
-                        ->minus($summary->opened_debit_amount);
-                    $credit_change = $summary->unadjusted_credit_amount
-                        ->minus($summary->opened_credit_amount);
-
-                    $increase_change = BigRational::zero();
-                    $decrease_change = BigRational::zero();
-
-                    switch ($account->kind) {
-                        case ASSET_ACCOUNT_KIND:
-                            $increase_change = $debit_change;
-                            $decrease_change = $credit_change;
-                            break;
-                        case EXPENSE_ACCOUNT_KIND:
-                        case LIABILITY_ACCOUNT_KIND:
-                        case EQUITY_ACCOUNT_KIND:
-                        case INCOME_ACCOUNT_KIND:
-                            $increase_change = $credit_change;
-                            $decrease_change = $debit_change;
-                            break;
-                    }
-
-                    if ($increase_category_id !== null) {
-                        if (!isset(
-                            $keyed_flow_category_subtotals[$increase_category_id]
-                        )) {
-                            $keyed_flow_category_subtotals[$increase_category_id]
-                                = [
-                                    "cash_flow_category_id" => $increase_category_id,
-                                    "net_income" => BigRational::zero(),
-                                    "subtotal" => BigRational::zero()
-                                ];
+                        if (
+                            $account->kind === ASSET_ACCOUNT_KIND
+                            && $category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND
+                        ) {
+                            $summary_calculation = $keyed_summary_calculations[$account->id]
+                                ->opened_debit_amount;
+                            $opened_liquid_amount = $opened_liquid_amount
+                                ->plus($summary_calculation->opened_debit_amount)
+                                ->minus($summary_calculation->opened_credit_amount);
+                            $closed_liquid_amount = $closed_liquid_amount
+                                ->plus($summary_calculation->opened_debit_amount)
+                                ->minus($summary_calculation->opened_credit_amount);
+                            continue;
                         }
 
-                        $keyed_flow_category_subtotals[$increase_category_id]["subtotal"]
-                            = $keyed_flow_category_subtotals[$increase_category_id]["subtotal"]
-                                ->plus($increase_change);
+                        $closed_liquid_amount = $closed_liquid_amount->plus($flow_info->net_amount);
 
-                        $closed_liquid_amount = $closed_liquid_amount->plus($increase_change);
-                    }
-
-                    if ($increase_category_id !== null && $account->kind === INCOME_ACCOUNT_KIND) {
-                        $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
-                            = $keyed_flow_category_subtotals[$increase_category_id]["net_income"]
-                                ->plus($increase_change);
-                    }
-
-                    if ($decrease_category_id !== null) {
-                        if (!isset(
-                            $keyed_flow_category_subtotals[$decrease_category_id]
-                        )) {
-                            $keyed_flow_category_subtotals[$decrease_category_id]
-                                = [
-                                    "cash_flow_category_id" => $decrease_category_id,
-                                    "net_income" => BigRational::zero(),
-                                    "subtotal" => BigRational::zero()
-                                ];
+                        if (!isset($illiquid_cash_flow_category_subtotals[$category->id])) {
+                            $illiquid_cash_flow_category_subtotals[$category->id] = [
+                                "net_income" => BigRational::zero(),
+                                "subtotal" => BigRational::zero()
+                            ];
                         }
 
-                        $keyed_flow_category_subtotals[$decrease_category_id]["subtotal"]
-                            = $keyed_flow_category_subtotals[$decrease_category_id]["subtotal"]
-                                ->minus($decrease_change);
+                        $illiquid_cash_flow_category_subtotals[$category->id]["sub_total"]
+                            = $illiquid_cash_flow_category_subtotals[$category->id]["sub_total"]
+                                ->plus($flow_info->net_amount);
 
-                        $closed_liquid_amount = $closed_liquid_amount->minus($decrease_change);
+                        if (
+                            !(
+                                $account->kind === EXPENSE_ACCOUNT_KIND
+                                || $account->kind === INCOME_ACCOUNT_KIND
+                            )
+                        ) continue;
+
+                        $illiquid_cash_flow_category_subtotals[$category->id]["net_income"]
+                            = $illiquid_cash_flow_category_subtotals[$category->id]["net_income"]
+                                ->plus($flow_info->net_amount);
                     }
 
-
-                    if ($decrease_category_id !== null && $account->kind === EXPENSE_ACCOUNT_KIND) {
-                        $keyed_flow_category_subtotals[$decrease_category_id]["net_income"]
-                            = $keyed_flow_category_subtotals[$decrease_category_id]["net_income"]
-                                ->minus($decrease_change);
-                    }
+                    $illiquid_cash_flow_category_subtotals = array_map(
+                        function ($subtotal_info) {
+                            return array_merge($subtotal_info, [
+                                "net_income" => $subtotal_info["net_income"]->simplified(),
+                                "subtotal" => $subtotal_info["subtotal"]->simplified()
+                            ]);
+                        },
+                        array_filter(
+                            array_values($keyed_flow_category_subtotals),
+                            function($cash_flow_category_subtotal) {
+                                return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
+                            }
+                        )
+                    );
                 }
-
-                $illiquid_cash_flow_category_subtotals = array_map(
-                    function ($subtotal_info) {
-                        return array_merge($subtotal_info, [
-                            "net_income" => $subtotal_info["net_income"]->simplified(),
-                            "subtotal" => $subtotal_info["subtotal"]->simplified()
-                        ]);
-                    },
-                    array_filter(
-                        array_values($keyed_flow_category_subtotals),
-                        function($cash_flow_category_subtotal) {
-                            return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
-                        }
-                    )
-                );
 
                 array_push($statements, [
                     "currency_id" => $currency->id,
@@ -1040,11 +1167,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $grouped_financial_entries;
     }
 
-    private static function keySummaryCalculationsWithAccounts(array $summary_calculations): array {
+    private static function keyCalculationsWithAccounts(array $calculations): array {
         $keyed_calculations = array_reduce(
-            $summary_calculations,
-            function ($keyed_collection, $summary) {
-                $keyed_collection[$summary->account_id] = $summary;
+            $calculations,
+            function ($keyed_collection, $calculation) {
+                $keyed_collection[$calculation->account_id] = $calculation;
 
                 return $keyed_collection;
             },
