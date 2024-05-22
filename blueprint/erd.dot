@@ -538,12 +538,17 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">summary_calculation_id</td>
+					<td align="left">frozen_period_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
 					<td>FK</td>
 					<td align="left">cash_flow_category_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -595,7 +600,8 @@ digraph {
 		accounts -> summary_calculations
 		cash_flow_categories -> modifiers
 		cash_flow_categories -> modifiers
-		summary_calculations -> flow_calculations
+		frozen_periods -> flow_calculations
+		accounts -> flow_calculations
 	}
 
 	{
@@ -621,20 +627,20 @@ digraph {
 		events
 		frozen_periods
 		event_started_times
-	}
-
-	{
-		rank = same;
-		users
-		interval_events
-		timeout_events
 		summary_calculations
 	}
 
 	{
 		rank = same;
-		currencies
+		users
 		flow_calculations
+		interval_events
+		timeout_events
+	}
+
+	{
+		rank = same;
+		currencies
 		reactive_modifiers
 	}
 
@@ -643,6 +649,10 @@ digraph {
 		accounts
 		cash_flow_categories
 		dependent_modifiers
+	}
+
+	{
+		rank = same;
 	}
 
 	{
