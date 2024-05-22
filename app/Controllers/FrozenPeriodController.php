@@ -1045,8 +1045,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             ];
                         }
 
-                        $illiquid_cash_flow_category_subtotals[$category->id]["sub_total"]
-                            = $illiquid_cash_flow_category_subtotals[$category->id]["sub_total"]
+                        $illiquid_cash_flow_category_subtotals[$category->id]["subtotal"]
+                            = $illiquid_cash_flow_category_subtotals[$category->id]["subtotal"]
                                 ->plus($flow_info->net_amount);
 
                         if (
@@ -1069,7 +1069,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             ]);
                         },
                         array_filter(
-                            array_values($keyed_flow_category_subtotals),
+                            array_values($illiquid_cash_flow_category_subtotals),
                             function($cash_flow_category_subtotal) {
                                 return $cash_flow_category_subtotal["subtotal"]->getSign() !== 0;
                             }
