@@ -1019,14 +1019,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     foreach ($flows as $flow_info) {
                         $account = $keyed_accounts[$flow_info->account_id];
-                        $category = $keyed_cash_flow_categories[$flow_info->$cash_flow_category_id];
+                        $category = $keyed_cash_flow_categories[$flow_info->cash_flow_category_id];
 
                         if (
                             $account->kind === ASSET_ACCOUNT_KIND
                             && $category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND
                         ) {
-                            $summary_calculation = $keyed_summary_calculations[$account->id]
-                                ->opened_debit_amount;
+                            $summary_calculation = $keyed_summary_calculations[$account->id];
                             $opened_liquid_amount = $opened_liquid_amount
                                 ->plus($summary_calculation->opened_debit_amount)
                                 ->minus($summary_calculation->opened_credit_amount);
@@ -1040,6 +1039,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                         if (!isset($illiquid_cash_flow_category_subtotals[$category->id])) {
                             $illiquid_cash_flow_category_subtotals[$category->id] = [
+                                "cash_flow_category_id" => $category->id,
                                 "net_income" => BigRational::zero(),
                                 "subtotal" => BigRational::zero()
                             ];
