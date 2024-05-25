@@ -6,20 +6,20 @@ use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
-use App\Models\CashFlowCategoryModel;
+use App\Models\CashFlowActivityModel;
 
-class CashFlowCategoryController extends BaseOwnedResourceController
+class CashFlowActivityController extends BaseOwnedResourceController
 {
     protected static function getIndividualName(): string {
-        return "cash_flow_category";
+        return "cash_flow_activity";
     }
 
     protected static function getCollectiveName(): string {
-        return "cash_flow_categories";
+        return "cash_flow_activities";
     }
 
     protected static function getModelName(): string {
-        return CashFlowCategoryModel::class;
+        return CashFlowActivityModel::class;
     }
 
     protected static function makeCreateValidation(User $owner): Validation {
@@ -82,7 +82,7 @@ class CashFlowCategoryController extends BaseOwnedResourceController
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
-        $validation->setRule($individual_name, "cash flow category info", [
+        $validation->setRule($individual_name, "cash flow activity info", [
             "required"
         ]);
         $validation->setRule("$individual_name.description", "description", [
