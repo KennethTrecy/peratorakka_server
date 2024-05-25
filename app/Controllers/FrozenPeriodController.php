@@ -421,7 +421,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 foreach ($linked_accounts as $account_id) {
                     $raw_calculations[$category_id][$account_id] = [
-                        "cash_category_flow_id" => $category_id,
+                        "cash_flow_category_id" => $category_id,
                         "account_id" => $account_id,
                         "net_amount" => BigRational::zero()
                     ];
