@@ -92,12 +92,10 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
-						kind<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,liquid,illiquid)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -133,7 +131,7 @@ digraph {
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,asset,liability,equity,expense,income)<br align="left"/>
+						enum(unknown,general_asset,liability,equity,<br align="left"/>expense,income,depreciative_asset,liquid_asset)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -299,12 +297,12 @@ digraph {
 				<tr>
 					<td>FK</td>
 					<td align="left">debit_cash_flow_category_id</td>
-					<td align="left">bigint</td>
+					<td align="left">nullable bigint</td>
 				</tr>
 				<tr>
 					<td>FK</td>
 					<td align="left">credit_cash_flow_category_id</td>
-					<td align="left">bigint</td>
+					<td align="left">nullable bigint</td>
 				</tr>
 				<tr>
 					<td></td>
