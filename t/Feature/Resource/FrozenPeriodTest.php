@@ -733,42 +733,47 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ])->create();
         $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
-        $cash_flow_category = $cash_flow_category_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        $liquid_cash_flow_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "kind" => LIQUID_CASH_FLOW_CATEGORY_KIND
+        ])->create();
+        $illiquid_cash_flow_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "kind" => ILLIQUID_CASH_FLOW_CATEGORY_KIND
         ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $equity_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "increase_cash_flow_category_id" => $cash_flow_category->id,
-            "decrease_cash_flow_category_id" => $cash_flow_category->id,
             "kind" => EQUITY_ACCOUNT_KIND
         ])->create();
         $asset_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "increase_cash_flow_category_id" => null,
-            "decrease_cash_flow_category_id" => null,
             "kind" => ASSET_ACCOUNT_KIND
         ])->create();
         $expense_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
-            "increase_cash_flow_category_id" => $cash_flow_category->id,
-            "decrease_cash_flow_category_id" => $cash_flow_category->id,
             "kind" => EXPENSE_ACCOUNT_KIND
         ])->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $normal_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id,
+            "debit_cash_flow_category_id" => $liquid_cash_flow_category->id,
+            "credit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
         $expense_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $expense_account->id,
             "credit_account_id" => $asset_account->id,
+            "debit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "credit_cash_flow_category_id" => $liquid_cash_flow_category->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
         $close_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $equity_account->id,
             "credit_account_id" => $expense_account->id,
+            "debit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "credit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
             "action" => CLOSE_MODIFIER_ACTION
         ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -827,6 +832,19 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "closed_debit_amount" => "0",
             "closed_credit_amount" => "0"
         ])->create();
+        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
+        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "account_id" => $equity_account->id,
+            "net_amount" => "0"
+        ])->create();
+        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "account_id" => $expense_account->id,
+            "net_amount" => "0"
+        ])->create();
         $second_frozen_period = $frozen_period_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id,
             "started_at" => Time::yesterday()->toDateTimeString(),
@@ -857,6 +875,17 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                             "total_assets" => "2750",
                             "total_liabilities" => "0",
                             "total_equities" => "2750"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_liquid_amount" => "2000",
+                            "closed_liquid_amount" => "2750",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_category_id" => $illiquid_cash_flow_category->id,
+                                    "net_income" => "-250",
+                                    "subtotal" => "750"
+                                ]
+                            ]
                         ],
                         "adjusted_trial_balance" => [
                             "debit_total" => "2750",
@@ -895,11 +924,24 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     "closed_credit_amount" => "0"
                 ]
             ],
+            "flow_calculations" => [
+                [
+                    "cash_flow_category_id" => $illiquid_cash_flow_category,
+                    "account_id" => $equity_account->id,
+                    "net_amount" => "2750"
+                ],
+                [
+                    "cash_flow_category_id" => $illiquid_cash_flow_category,
+                    "account_id" => $expense_account->id,
+                    "net_amount" => "-250"
+                ]
+            ],
             "accounts" => [],
             "currencies" => []
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "summary_calculations", []);
+        $this->seeNumRecords(2, "flow_calculations", []);
     }
 
     public function testEmptyIndex()
