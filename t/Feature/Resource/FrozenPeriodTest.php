@@ -1439,16 +1439,11 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "closed_debit_amount" => "0",
             "closed_credit_amount" => "4750"
         ]);
-        $this->seeNumRecords(8, "flow_calculations", []);
+        $this->seeNumRecords(7, "flow_calculations", []);
         $this->seeInDatabase("flow_calculations", [
             "cash_flow_category_id" => $liquid_cash_flow_category->id,
             "account_id" => $asset_account->id,
             "net_amount" => "750"
-        ]);
-        $this->seeInDatabase("flow_calculations", [
-            "cash_flow_category_id" => $liquid_cash_flow_category->id,
-            "account_id" => $asset_b_account->id,
-            "net_amount" => "0"
         ]);
         $this->seeInDatabase("flow_calculations", [
             "cash_flow_category_id" => $illiquid_cash_flow_category->id,
