@@ -417,11 +417,31 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
 
         $raw_flow_calculations = array_reduce(
-            $linked_cash_flow_categories,
-            function ($raw_calculations, $category_id) use ($linked_accounts) {
-                $raw_calculations[$category_id] = [];
+            $modifiers,
+            function ($raw_calculations, $modifier) {
+                if ($modifier->debit_cash_flow_category_id !== null) {
+                    $category_id = $modifier->debit_cash_flow_category_id;
+                    $account_id = $modifier->debit_account_id;
 
-                foreach ($linked_accounts as $account_id) {
+                    if (!isset($raw_calculations[$category_id])) {
+                        $raw_calculations[$category_id] = [];
+                    }
+
+                    $raw_calculations[$category_id][$account_id] = [
+                        "cash_flow_category_id" => $category_id,
+                        "account_id" => $account_id,
+                        "net_amount" => BigRational::zero()
+                    ];
+                }
+
+                if ($modifier->credit_cash_flow_category_id !== null) {
+                    $category_id = $modifier->credit_cash_flow_category_id;
+                    $account_id = $modifier->credit_account_id;
+
+                    if (!isset($raw_calculations[$category_id])) {
+                        $raw_calculations[$category_id] = [];
+                    }
+
                     $raw_calculations[$category_id][$account_id] = [
                         "cash_flow_category_id" => $category_id,
                         "account_id" => $account_id,
@@ -663,12 +683,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $raw_summary_calculations
         );
 
-        $raw_flow_calculations = array_filter(
-            $raw_flow_calculations,
-            function ($raw_flow_calculation) {
-                return $raw_flow_calculation->net_amount->getSign() !== 0;
-            }
-        );
         $retained_accounts_on_flow_calculations = array_map(
             function ($raw_flow_calculation) {
                 return $raw_flow_calculation->account_id;
