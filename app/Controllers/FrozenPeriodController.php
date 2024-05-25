@@ -591,22 +591,23 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $credit_account_id = $modifier->credit_account_id;
                     $credit_amount = $financial_entry->credit_amount;
 
-                    if (
-                        $debit_activity_id === ""
-                        || $credit_activity_id === ""
-                        || $modifier->action === CLOSE_MODIFIER_ACTION
-                    ) continue;
+                    if ($modifier->action === CLOSE_MODIFIER_ACTION) continue;
 
-                    $debit_flow_activity = $keyed_cash_flow_activities[$debit_activity_id];
-                    $credit_flow_activity = $keyed_cash_flow_activities[$credit_activity_id];
+                    if ($debit_activity_id !== null) {
+                        $debit_flow_activity = $keyed_cash_flow_activities[$debit_activity_id];
 
-                    $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                        = $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                            ->minus($debit_amount);
+                        $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
+                            = $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
+                                ->minus($debit_amount);
+                    }
 
-                    $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
-                        = $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
-                            ->plus($credit_amount);
+                    if ($credit_activity_id !== null) {
+                        $credit_flow_activity = $keyed_cash_flow_activities[$credit_activity_id];
+                        $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
+                            = $raw_calculations
+                                [$credit_activity_id][$credit_account_id]["net_amount"]
+                                ->plus($credit_amount);
+                    }
                 }
 
                 return $raw_calculations;
@@ -765,8 +766,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $financial_entry = $raw_exchange_entries[$modifier["id"]];
                 $debit_account = $modifier["debit_account"];
                 $credit_account = $modifier["credit_account"];
-                $may_use_debit_account_as_destination = $debit_account->kind === GENERAL_ASSET_ACCOUNT_KIND
-                    || $debit_account->kind === EXPENSE_ACCOUNT_KIND;
+                $may_use_debit_account_as_destination
+                    = $debit_account->kind === GENERAL_ASSET_ACCOUNT_KIND
+                        || $debit_account->kind === LIQUID_ASSET_ACCOUNT_KIND
+                        || $debit_account->kind === DEPRECIATIVE_ASSET_ACCOUNT_KIND
+                        || $debit_account->kind === EXPENSE_ACCOUNT_KIND;
                 $debit_currency_id = $debit_account->currency_id;
                 $credit_currency_id = $credit_account->currency_id;
                 $debit_value = $financial_entry->debit_amount;
