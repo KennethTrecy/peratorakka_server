@@ -548,7 +548,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "summary_calculations", []);
-        $this->seeNumRecords(2, "flow_calculations", []);
+        $this->seeNumRecords(3, "flow_calculations", []);
     }
 
     public function testDefaultUpdate()
@@ -833,6 +833,12 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "closed_credit_amount" => "0"
         ])->create();
         $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
+        $first_asset_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "cash_flow_category_id" => $liquid_cash_flow_category->id,
+            "account_id" => $asset_account->id,
+            "net_amount" => "2500"
+        ])->create();
         $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
             "frozen_period_id" => $first_frozen_period->id,
             "cash_flow_category_id" => $illiquid_cash_flow_category->id,
@@ -926,12 +932,17 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             ],
             "flow_calculations" => [
                 [
-                    "cash_flow_category_id" => $illiquid_cash_flow_category,
-                    "account_id" => $equity_account->id,
-                    "net_amount" => "2750"
+                    "cash_flow_category_id" => $liquid_cash_flow_category->id,
+                    "account_id" => $asset_account->id,
+                    "net_amount" => "750"
                 ],
                 [
-                    "cash_flow_category_id" => $illiquid_cash_flow_category,
+                    "cash_flow_category_id" => $illiquid_cash_flow_category->id,
+                    "account_id" => $equity_account->id,
+                    "net_amount" => "1000"
+                ],
+                [
+                    "cash_flow_category_id" => $illiquid_cash_flow_category->id,
                     "account_id" => $expense_account->id,
                     "net_amount" => "-250"
                 ]
@@ -941,7 +952,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "summary_calculations", []);
-        $this->seeNumRecords(2, "flow_calculations", []);
+        $this->seeNumRecords(3, "flow_calculations", []);
     }
 
     public function testEmptyIndex()
