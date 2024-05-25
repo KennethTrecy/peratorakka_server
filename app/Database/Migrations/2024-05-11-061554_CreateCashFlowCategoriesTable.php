@@ -31,10 +31,6 @@ class CreateCashFlowCategoriesTable extends Migration
                 "type" => "TEXT",
                 "null" => true,
             ],
-            "kind" => [
-                "type" => "INT",
-                "unsigned" => true,
-            ],
             "created_at" => [
                 "type" => "DATETIME",
                 "default" => new RawSql("CURRENT_TIMESTAMP"),
