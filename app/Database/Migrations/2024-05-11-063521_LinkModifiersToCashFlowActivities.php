@@ -7,7 +7,7 @@ use CodeIgniter\Database\Exceptions\DatabaseException;
 
 use Config\Database;
 
-class LinkModifiersToCashFlowCategories extends Migration
+class LinkModifiersToCashFlowActivities extends Migration
 {
     public function up()
     {
@@ -16,12 +16,12 @@ class LinkModifiersToCashFlowCategories extends Migration
         $hasAddedForeignKey = false;
         try {
             $new_fields = [
-                "debit_cash_flow_category_id" => [
+                "debit_cash_flow_activity_id" => [
                     "type" => "BIGINT",
                     "unsigned" => true,
                     "default" => null
                 ],
-                "credit_cash_flow_category_id" => [
+                "credit_cash_flow_activity_id" => [
                     "type" => "BIGINT",
                     "unsigned" => true,
                     "default" => null
@@ -31,20 +31,20 @@ class LinkModifiersToCashFlowCategories extends Migration
 
             if ($database->DBDriver !== "SQLite3") {
                 $this->forge->addForeignKey(
-                    "debit_cash_flow_category_id",
-                    "cash_flow_categories",
+                    "debit_cash_flow_activity_id",
+                    "cash_flow_activities",
                     "id",
                     "CASCADE",
                     "CASCADE",
-                    "modifiers_debit_cash_flow_category_id_foreign"
+                    "modifiers_debit_cash_flow_activity_id_foreign"
                 );
                 $this->forge->addForeignKey(
-                    "credit_cash_flow_category_id",
-                    "cash_flow_categories",
+                    "credit_cash_flow_activity_id",
+                    "cash_flow_activities",
                     "id",
                     "CASCADE",
                     "CASCADE",
-                    "modifiers_credit_cash_flow_category_id_foreign"
+                    "modifiers_credit_cash_flow_activity_id_foreign"
                 );
                 $this->forge->processIndexes("modifiers");
                 $hasAddedForeignKey = true;
@@ -72,18 +72,18 @@ class LinkModifiersToCashFlowCategories extends Migration
         if ($mustRemoveForeign && $database->DBDriver !== "SQLite3") {
             $this->forge->dropKey(
                 "modifiers",
-                "modifiers_debit_cash_flow_category_id_foreign",
+                "modifiers_debit_cash_flow_activity_id_foreign",
                 false
             );
             $this->forge->dropKey(
                 "modifiers",
-                "modifiers_credit_cash_flow_category_id_foreign",
+                "modifiers_credit_cash_flow_activity_id_foreign",
                 false
             );
             $this->forge->processIndexes("modifiers");
         }
 
-        $this->forge->dropColumn("modifiers", "debit_cash_flow_category_id");
-        $this->forge->dropColumn("modifiers", "credit_cash_flow_category_id");
+        $this->forge->dropColumn("modifiers", "debit_cash_flow_activity_id");
+        $this->forge->dropColumn("modifiers", "credit_cash_flow_activity_id");
     }
 }

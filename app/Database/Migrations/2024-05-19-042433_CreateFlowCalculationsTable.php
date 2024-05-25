@@ -22,7 +22,7 @@ class CreateFlowCalculationsTable extends Migration
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
-            "cash_flow_category_id" => [
+            "cash_flow_activity_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
@@ -45,12 +45,12 @@ class CreateFlowCalculationsTable extends Migration
                 "flow_calculations_frozen_period_id_foreign"
             );
             $this->forge->addForeignKey(
-                "cash_flow_category_id",
-                "cash_flow_categories",
+                "cash_flow_activity_id",
+                "cash_flow_activities",
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "flow_calculations_cash_flow_category_id_foreign"
+                "flow_calculations_cash_flow_activity_id_foreign"
             );
             $this->forge->addForeignKey(
                 "account_id",
