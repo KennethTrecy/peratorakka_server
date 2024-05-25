@@ -190,8 +190,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $main_document = $created_document[static::getIndividualName()];
 
         [
+            $cash_flow_categories,
             $accounts,
-            $raw_summary_calculations
+            $raw_summary_calculations,
+            $raw_flow_calculations
         ] = static::calculateValidSummaryCalculations($main_document, true);
 
         $raw_summary_calculations = array_map(
@@ -205,6 +207,18 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
 
         model(SummaryCalculationModel::class)->insertBatch($raw_summary_calculations);
+
+        $raw_flow_calculations = array_map(
+            function ($raw_flow_calculation) use ($main_document) {
+                return array_merge(
+                    [ "frozen_period_id" => $main_document["id"] ],
+                    $raw_flow_calculation->toArray()
+                );
+            },
+            $raw_flow_calculations
+        );
+
+        model(FlowCalculationModel::class)->insertBatch($raw_flow_calculations);
 
         return $created_document;
     }
@@ -555,7 +569,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $credit_account_id = $modifier->credit_account_id;
                     $credit_amount = $financial_entry->credit_amount;
 
-                    if ($modifier->action === CLOSE_MODIFIER_ACTION) continue;
+                    if (
+                        $debit_category_id === ""
+                        || $credit_category_id === ""
+                        || $modifier->action === CLOSE_MODIFIER_ACTION
+                    ) continue;
 
                     $debit_flow_category = $keyed_cash_flow_categories[$debit_category_id];
                     $credit_flow_category = $keyed_cash_flow_categories[$credit_category_id];
@@ -566,15 +584,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         switch($debit_account->kind) {
                             case ASSET_ACCOUNT_KIND:
                             case EXPENSE_ACCOUNT_KIND:
-                                $raw_calculations[$debit_category_id][$debit_account_id]
-                                    = $raw_calculations[$debit_category_id][$debit_account_id]
+                                $raw_calculations
+                                    [$debit_category_id][$debit_account_id]["net_amount"]
+                                    = $raw_calculations
+                                        [$debit_category_id][$debit_account_id]["net_amount"]
                                         ->minus($debit_amount);
                                 break;
                             case LIABILITY_ACCOUNT_KIND:
                             case EQUITY_ACCOUNT_KIND:
                             case INCOME_ACCOUNT_KIND:
-                                $raw_calculations[$debit_category_id][$debit_account_id]
-                                    = $raw_calculations[$debit_category_id][$debit_account_id]
+                                $raw_calculations
+                                    [$debit_category_id][$debit_account_id]["net_amount"]
+                                    = $raw_calculations
+                                        [$debit_category_id][$debit_account_id]["net_amount"]
                                         ->plus($debit_amount);
                                 break;
                         }
@@ -586,15 +608,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         switch($credit_account->kind) {
                             case ASSET_ACCOUNT_KIND:
                             case EXPENSE_ACCOUNT_KIND:
-                                $raw_calculations[$credit_category_id][$credit_account_id]
-                                    = $raw_calculations[$credit_category_id][$credit_account_id]
+                                $raw_calculations
+                                    [$credit_category_id][$credit_account_id]["net_amount"]
+                                    = $raw_calculations
+                                        [$credit_category_id][$credit_account_id]["net_amount"]
                                         ->plus($credit_amount);
                                 break;
                             case LIABILITY_ACCOUNT_KIND:
                             case EQUITY_ACCOUNT_KIND:
                             case INCOME_ACCOUNT_KIND:
-                                $raw_calculations[$credit_category_id][$credit_account_id]
-                                    = $raw_calculations[$credit_category_id][$credit_account_id]
+                                $raw_calculations
+                                    [$credit_category_id][$credit_account_id]["net_amount"]
+                                    = $raw_calculations
+                                        [$credit_category_id][$credit_account_id]["net_amount"]
                                         ->minus($credit_amount);
                                 break;
                         }
@@ -633,12 +659,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ...array_map(
                 function ($raw_calculations_per_account) {
                     return array_map(
-                        array_values($raw_calculations_per_account),
-                        function ($raw_flow_calculation) {
+                        function ($raw_calculation) {
                             $raw_calculation["net_amount"] = $raw_calculation["net_amount"]
                                 ->simplified();
                             return (new FlowCalculation())->fill($raw_calculation);
-                        }
+                        },
+                        array_values($raw_calculations_per_account)
                     );
                 },
                 array_values($raw_flow_calculations)
@@ -661,11 +687,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $raw_summary_calculations
         );
 
-        $raw_flow_calculations = array_map(
+        $raw_flow_calculations = array_filter(
+            $raw_flow_calculations,
             function ($raw_flow_calculation) {
                 return $raw_flow_calculation->net_amount->getSign() !== 0;
-            },
-            $raw_flow_calculations
+            }
         );
         $retained_accounts_on_flow_calculations = array_map(
             function ($raw_flow_calculation) {
