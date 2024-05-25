@@ -286,7 +286,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $cash_flow_categories,
                         $accounts,
                         $raw_summary_calculations,
-                        $raw_flow_calculations
+                        $raw_flow_calculations,
+                        $raw_exchange_rates
                     ] = static::calculateValidSummaryCalculations(
                         $info,
                         false
