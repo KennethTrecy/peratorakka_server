@@ -87,9 +87,6 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ])->create();
         $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
-        $cash_flow_category_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
         $liquid_cash_flow_category = $cash_flow_category_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id,
             "kind" => LIQUID_CASH_FLOW_CATEGORY_KIND
@@ -305,9 +302,6 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ])->create();
         $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
-        $cash_flow_category_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
         $liquid_cash_flow_category = $cash_flow_category_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id,
             "kind" => LIQUID_CASH_FLOW_CATEGORY_KIND
@@ -476,6 +470,15 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $currency = $currency_fabricator->setOverrides([
             "user_id" => $authenticated_info->getUser()->id
         ])->create();
+        $cash_flow_category_fabricator = new Fabricator(CashFlowCategoryModel::class);
+        $liquid_cash_flow_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "kind" => LIQUID_CASH_FLOW_CATEGORY_KIND
+        ])->create();
+        $illiquid_cash_flow_category = $cash_flow_category_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "kind" => ILLIQUID_CASH_FLOW_CATEGORY_KIND
+        ])->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $equity_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
@@ -493,16 +496,22 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $normal_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id,
+            "debit_cash_flow_category_id" => $liquid_cash_flow_category->id,
+            "credit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
         $expense_record_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $expense_account->id,
             "credit_account_id" => $asset_account->id,
+            "debit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "credit_cash_flow_category_id" => $liquid_cash_flow_category->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
         $close_modifier = $modifier_fabricator->setOverrides([
             "debit_account_id" => $equity_account->id,
             "credit_account_id" => $expense_account->id,
+            "debit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "credit_cash_flow_category_id" => $illiquid_cash_flow_category->id,
             "action" => CLOSE_MODIFIER_ACTION
         ])->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
@@ -539,6 +548,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "summary_calculations", []);
+        $this->seeNumRecords(3, "flow_calculations", []);
     }
 
     public function testDefaultUpdate()
