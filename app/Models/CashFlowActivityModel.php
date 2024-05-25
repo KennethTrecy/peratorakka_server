@@ -5,17 +5,16 @@ namespace App\Models;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
-use App\Entities\CashFlowCategory;
+use App\Entities\CashFlowActivity;
 
-class CashFlowCategoryModel extends BaseResourceModel
+class CashFlowActivityModel extends BaseResourceModel
 {
-    protected $table = "cash_flow_categories";
-    protected $returnType = CashFlowCategory::class;
+    protected $table = "cash_flow_activities";
+    protected $returnType = CashFlowActivity::class;
     protected $allowedFields = [
         "user_id",
         "name",
         "description",
-        "kind",
         "deleted_at"
     ];
 
@@ -31,7 +30,6 @@ class CashFlowCategoryModel extends BaseResourceModel
         return [
             "name"  => $faker->unique()->firstName(),
             "description"  => $faker->paragraph(),
-            "kind"  => $faker->randomElement(ACCEPTABLE_CASH_FLOW_CATEGORY_KINDS),
         ];
     }
 

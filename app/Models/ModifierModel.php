@@ -14,8 +14,8 @@ class ModifierModel extends BaseResourceModel
     protected $allowedFields = [
         "debit_account_id",
         "credit_account_id",
-        "debit_cash_flow_category_id",
-        "credit_cash_flow_category_id",
+        "debit_cash_flow_activity_id",
+        "credit_cash_flow_activity_id",
         "name",
         "description",
         "action",
@@ -54,7 +54,7 @@ class ModifierModel extends BaseResourceModel
                     ->select("id")
                     ->where("user_id", $user->id)
             );
-        $cash_flow_category_subquery = model(CashFlowCategoryModel::class, false)
+        $cash_flow_activity_subquery = model(CashFlowActivityModel::class, false)
             ->builder()
             ->select("id")
             ->where("user_id", $user->id);
@@ -62,7 +62,7 @@ class ModifierModel extends BaseResourceModel
         return $query_builder
             ->whereIn("debit_account_id", $account_subquery)
             ->whereIn("credit_account_id", $account_subquery)
-            ->whereIn("debit_cash_flow_category_id", $cash_flow_category_subquery)
-            ->whereIn("credit_cash_flow_category_id", $cash_flow_category_subquery);
+            ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
+            ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery);
     }
 }

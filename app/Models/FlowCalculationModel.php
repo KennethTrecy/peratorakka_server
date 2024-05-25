@@ -15,7 +15,7 @@ class FlowCalculationModel extends BaseResourceModel
     protected $returnType = FlowCalculation::class;
     protected $allowedFields = [
         "frozen_period_id",
-        "cash_flow_category_id",
+        "cash_flow_activity_id",
         "account_id",
         "net_amount"
     ];
@@ -33,8 +33,8 @@ class FlowCalculationModel extends BaseResourceModel
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
         return $query_builder
             ->whereIn(
-                "cash_flow_category_id",
-                model(CashFlowCategoryModel::class, false)
+                "cash_flow_activity_id",
+                model(CashFlowActivityModel::class, false)
                     ->builder()
                     ->select("id")
                     ->where("user_id", $user->id)
