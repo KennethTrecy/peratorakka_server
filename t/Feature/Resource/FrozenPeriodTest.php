@@ -548,7 +548,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "summary_calculations", []);
-        $this->seeNumRecords(3, "flow_calculations", []);
+        $this->seeNumRecords(2, "flow_calculations", []);
     }
 
     public function testDefaultUpdate()
