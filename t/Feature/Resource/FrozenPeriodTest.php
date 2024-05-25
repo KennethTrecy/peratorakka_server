@@ -208,6 +208,12 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
             "account_id" => $equity_account->id,
             "net_amount" => $recorded_normal_financial_entry->credit_amount
         ])->create();
+        $expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_category_id" => $illiquid_cash_flow_category->id,
+            "account_id" => $expense_account->id,
+            "net_amount" => $recorded_expense_financial_entry->debit_amount->negated()
+        ])->create();
 
         $result = $authenticated_info
             ->getRequest()
@@ -241,11 +247,11 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                             "opened_liquid_amount" => "0",
                             "closed_liquid_amount" => $recorded_normal_financial_entry
                                 ->debit_amount
-                                ->minus($closed_financial_entry->credit_amount),
+                                ->minus($recorded_expense_financial_entry->debit_amount),
                             "subtotals" => [
                                 [
                                     "cash_flow_category_id" => $illiquid_cash_flow_category->id,
-                                    "net_income" => $recorded_normal_financial_entry
+                                    "net_income" => $recorded_expense_financial_entry
                                         ->debit_amount
                                         ->negated(),
                                     "subtotal" => $recorded_normal_financial_entry
@@ -283,8 +289,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                 $expense_summary_calculation
             ])),
             "flow_calculations" => json_decode(json_encode([
-                $equity_flow_calculation,
                 $asset_flow_calculation,
+                $equity_flow_calculation,
+                $expense_flow_calculation
             ])),
         ]);
     }
