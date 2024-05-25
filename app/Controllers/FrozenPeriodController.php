@@ -600,27 +600,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $debit_flow_activity = $keyed_cash_flow_activities[$debit_activity_id];
                     $credit_flow_activity = $keyed_cash_flow_activities[$credit_activity_id];
 
-                    if ($debit_flow_activity->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
-                        $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                            = $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                                ->minus($debit_amount);
-                    } else if ($debit_flow_activity->kind === LIQUID_CASH_FLOW_CATEGORY_KIND) {
-                        $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                            = $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                                ->plus($debit_amount);
-                    }
+                    $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
+                        = $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
+                            ->minus($debit_amount);
 
-                    if ($credit_flow_activity->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
-                        $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
-                            = $raw_calculations
-                                [$credit_activity_id][$credit_account_id]["net_amount"]
-                                ->plus($credit_amount);
-                    } else if ($credit_flow_activity->kind === LIQUID_CASH_FLOW_CATEGORY_KIND) {
-                        $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
-                            = $raw_calculations
-                                [$credit_activity_id][$credit_account_id]["net_amount"]
-                                ->minus($credit_amount);
-                    }
+                    $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
+                        = $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
+                            ->plus($credit_amount);
                 }
 
                 return $raw_calculations;
@@ -938,7 +924,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     BigRational::zero()
                 );
                 $unadjusted_total_assets = array_reduce(
-                    $summaries[GENERAL_ASSET_ACCOUNT_KIND],
+                    array_merge(
+                        $summaries[GENERAL_ASSET_ACCOUNT_KIND],
+                        $summaries[LIQUID_ASSET_ACCOUNT_KIND],
+                        $summaries[DEPRECIATIVE_ASSET_ACCOUNT_KIND]
+                    ),
                     function ($previous_total, $summary) {
                         return $previous_total
                             ->plus($summary->unadjusted_debit_amount)
@@ -984,7 +974,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     BigRational::zero()
                 );
                 $adjusted_total_assets = array_reduce(
-                    $summaries[GENERAL_ASSET_ACCOUNT_KIND],
+                    array_merge(
+                        $summaries[GENERAL_ASSET_ACCOUNT_KIND],
+                        $summaries[LIQUID_ASSET_ACCOUNT_KIND],
+                        $summaries[DEPRECIATIVE_ASSET_ACCOUNT_KIND]
+                    ),
                     function ($previous_total, $summary) {
                         return $previous_total
                             ->plus($summary->closed_debit_amount)
@@ -1025,8 +1019,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     ->plus($adjusted_total_income);
 
                 // Compute for cash flow statement
-                $opened_liquid_amount = BigRational::zero();
-                $closed_liquid_amount = BigRational::zero();
+                $opened_liquid_amount = array_reduce(
+                    $summaries[LIQUID_ASSET_ACCOUNT_KIND],
+                    function ($previous_total, $summary) {
+                        return $previous_total->plus($summary->opened_debit_amount);
+                    },
+                    BigRational::zero()
+                );
+                $closed_liquid_amount = $opened_liquid_amount;
                 $illiquid_cash_flow_activity_subtotals = [];
 
                 if (isset($grouped_flow_calculation[$currency->id])) {
@@ -1036,21 +1036,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     foreach ($flows as $flow_info) {
                         $account = $keyed_accounts[$flow_info->account_id];
                         $activity = $keyed_cash_flow_activities[$flow_info->cash_flow_activity_id];
-
-                        if (
-                            $account->kind === GENERAL_ASSET_ACCOUNT_KIND
-                            && $activity->kind === LIQUID_CASH_FLOW_CATEGORY_KIND
-                        ) {
-                            $summary_calculation = $keyed_summary_calculations[$account->id];
-                            $opened_liquid_amount = $opened_liquid_amount
-                                ->plus($summary_calculation->opened_debit_amount)
-                                ->minus($summary_calculation->opened_credit_amount);
-                            $closed_liquid_amount = $closed_liquid_amount
-                                ->plus($summary_calculation->opened_debit_amount)
-                                ->minus($summary_calculation->opened_credit_amount);
-                            continue;
-                        }
-
                         $closed_liquid_amount = $closed_liquid_amount->plus($flow_info->net_amount);
 
                         if (!isset($illiquid_cash_flow_activity_subtotals[$activity->id])) {
