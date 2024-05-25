@@ -311,7 +311,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         "summary_calculations" => $raw_summary_calculations,
                         "accounts" => $accounts,
                         "currencies" => $currencies,
-                        "cash_flow_categories" => $cash_flow_categories
+                        "cash_flow_categories" => $cash_flow_categories,
+                        "flow_calculations" => $raw_flow_calculations
                     ];
 
                     return $controller->response->setJSON($response_document);
@@ -580,51 +581,25 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $credit_flow_category = $keyed_cash_flow_categories[$credit_category_id];
 
                     if ($debit_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
-                        $debit_account = $keyed_accounts[$debit_account_id];
-
-                        switch($debit_account->kind) {
-                            case ASSET_ACCOUNT_KIND:
-                            case EXPENSE_ACCOUNT_KIND:
-                                $raw_calculations
-                                    [$debit_category_id][$debit_account_id]["net_amount"]
-                                    = $raw_calculations
-                                        [$debit_category_id][$debit_account_id]["net_amount"]
-                                        ->minus($debit_amount);
-                                break;
-                            case LIABILITY_ACCOUNT_KIND:
-                            case EQUITY_ACCOUNT_KIND:
-                            case INCOME_ACCOUNT_KIND:
-                                $raw_calculations
-                                    [$debit_category_id][$debit_account_id]["net_amount"]
-                                    = $raw_calculations
-                                        [$debit_category_id][$debit_account_id]["net_amount"]
-                                        ->plus($debit_amount);
-                                break;
-                        }
+                        $raw_calculations[$debit_category_id][$debit_account_id]["net_amount"]
+                            = $raw_calculations[$debit_category_id][$debit_account_id]["net_amount"]
+                                ->minus($debit_amount);
+                    } else if ($debit_flow_category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND) {
+                        $raw_calculations[$debit_category_id][$debit_account_id]["net_amount"]
+                            = $raw_calculations[$debit_category_id][$debit_account_id]["net_amount"]
+                                ->plus($debit_amount);
                     }
 
                     if ($credit_flow_category->kind === ILLIQUID_CASH_FLOW_CATEGORY_KIND) {
-                        $credit_account = $keyed_accounts[$credit_account_id];
-
-                        switch($credit_account->kind) {
-                            case ASSET_ACCOUNT_KIND:
-                            case EXPENSE_ACCOUNT_KIND:
-                                $raw_calculations
-                                    [$credit_category_id][$credit_account_id]["net_amount"]
-                                    = $raw_calculations
-                                        [$credit_category_id][$credit_account_id]["net_amount"]
-                                        ->plus($credit_amount);
-                                break;
-                            case LIABILITY_ACCOUNT_KIND:
-                            case EQUITY_ACCOUNT_KIND:
-                            case INCOME_ACCOUNT_KIND:
-                                $raw_calculations
-                                    [$credit_category_id][$credit_account_id]["net_amount"]
-                                    = $raw_calculations
-                                        [$credit_category_id][$credit_account_id]["net_amount"]
-                                        ->minus($credit_amount);
-                                break;
-                        }
+                        $raw_calculations[$credit_category_id][$credit_account_id]["net_amount"]
+                            = $raw_calculations
+                                [$credit_category_id][$credit_account_id]["net_amount"]
+                                ->plus($credit_amount);
+                    } else if ($credit_flow_category->kind === LIQUID_CASH_FLOW_CATEGORY_KIND) {
+                        $raw_calculations[$credit_category_id][$credit_account_id]["net_amount"]
+                            = $raw_calculations
+                                [$credit_category_id][$credit_account_id]["net_amount"]
+                                ->minus($credit_amount);
                     }
                 }
 
