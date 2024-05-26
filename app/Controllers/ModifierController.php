@@ -7,6 +7,7 @@ use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
+use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
 
@@ -146,6 +147,28 @@ class ModifierController extends BaseOwnedResourceController
         $validation->setRule($individual_name, "modifier info", [
             "required"
         ]);
+        $validation->setRule(
+            "$individual_name.debit_cash_flow_activity_id",
+            "debit cash flow activity", [
+                "permit_empty",
+                "is_natural_no_zero",
+                "ensure_ownership[".implode(",", [
+                    CashFlowActivityModel::class,
+                    SEARCH_NORMALLY
+                ])."]"
+            ]
+        );
+        $validation->setRule(
+            "$individual_name.credit_cash_flow_activity_id",
+            "credit cash flow activity", [
+                "permit_empty",
+                "is_natural_no_zero",
+                "ensure_ownership[".implode(",", [
+                    CashFlowActivityModel::class,
+                    SEARCH_NORMALLY
+                ])."]"
+            ]
+        );
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
             "max_length[500]",

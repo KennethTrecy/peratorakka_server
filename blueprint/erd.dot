@@ -91,9 +91,11 @@ digraph {
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
+						description<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
+						nullable text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -124,12 +126,12 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
-						kind<br align="left"/>
+						kind<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,asset,liability,equity,expense,income)<br align="left"/>
+						enum(unknown,general_asset,liability,equity,<br align="left"/>expense,income,liquid_asset,depreciative_asset)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -291,6 +293,16 @@ digraph {
 					<td>FK</td>
 					<td align="left">credit_account_id</td>
 					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">debit_cash_flow_activity_id</td>
+					<td align="left">nullable bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">credit_cash_flow_activity_id</td>
+					<td align="left">nullable bigint</td>
 				</tr>
 				<tr>
 					<td></td>
@@ -488,15 +500,61 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
+						opened_debit_amount<br align="left"/>
+						opened_credit_amount<br align="left"/>
 						unadjusted_debit_amount<br align="left"/>
 						unadjusted_credit_amount<br align="left"/>
-						adjusted_debit_amount<br align="left"/>
-						adjusted_credit_amount<br align="left"/>
+						closed_debit_amount<br align="left"/>
+						closed_credit_amount<br align="left"/>
 					</td>
 					<td align="left">
 						string<br align="left"/>
 						string<br align="left"/>
 						string<br align="left"/>
+						string<br align="left"/>
+						string<br align="left"/>
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		flow_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Flow Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_period_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">cash_flow_activity_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						net_amount<br align="left"/>
+					</td>
+					<td align="left">
 						string<br align="left"/>
 					</td>
 				</tr>
@@ -528,8 +586,8 @@ digraph {
 
 		users -> currencies
 		users -> cash_flow_activities
+		cash_flow_activities -> flow_calculations
 		currencies -> accounts
-		cash_flow_activities -> accounts
 		users -> events
 		accounts -> modifiers
 		accounts -> modifiers
@@ -538,6 +596,10 @@ digraph {
 		modifiers -> financial_entries
 		users -> frozen_periods
 		accounts -> summary_calculations
+		cash_flow_activities -> modifiers
+		cash_flow_activities -> modifiers
+		frozen_periods -> flow_calculations
+		accounts -> flow_calculations
 	}
 
 	{
@@ -546,8 +608,6 @@ digraph {
 			arrowhead = nonecrowodot
 			arrowtail = noneteeodot
 		]
-
-		modifiers -> modifiers
 	}
 
 	{
@@ -562,39 +622,45 @@ digraph {
 
 	{
 		rank = source;
-		timeout_events
-		interval_events
-		users
+		events
+		frozen_periods
+		event_started_times
+		summary_calculations
 	}
 
 	{
 		rank = same;
-		events
-		cash_flow_activities
-		frozen_periods
+		users
+		flow_calculations
+		interval_events
+		timeout_events
 	}
 
 	{
 		rank = same;
 		currencies
 		reactive_modifiers
-		summary_calculations
 	}
 
 	{
 		rank = same;
 		accounts
+		cash_flow_activities
+		dependent_modifiers
+	}
+
+	{
+		rank = same;
 	}
 
 	{
 		rank = same;
 		modifiers
-		event_started_times
+
+		financial_entries
 	}
 
 	{
 		rank = sink;
-		dependent_modifiers
-		financial_entries
 	}
 }
