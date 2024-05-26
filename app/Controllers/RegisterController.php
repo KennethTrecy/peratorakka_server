@@ -8,7 +8,8 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
 
-// use Config\App;
+use Config\App;
+use Config\Database;
 use Config\Services;
 
 use App\Helpers\RequireCompatibleTokenExpiration;
@@ -21,6 +22,28 @@ class RegisterController extends BaseRegisterController {
 
         // Remove the following keys to prevent registration errors
         $session->remove("errors");
+
+        $app = new App();
+        if ($app->userCountLimit > 0) {
+            // Prevent new users to register if limit was already met.
+            $database = Database::connect();
+            $user_count = $database->table("users")->select("id")->countAll();
+            if ($user_count >= $app->userCountLimit) {
+                return $this->response
+                    ->setStatusCode(422)
+                    ->setJSON([
+                        "errors" => [
+                            [
+                                "message" => implode(" ", [
+                                    "The server has too many users already.",
+                                    "Please find or create another Peratorakka server to manage your finances."
+                                ])
+                            ]
+                        ]
+                    ]);
+            }
+            log_message("error", json_encode($user_count));
+        }
 
         $_POST = array_merge($_POST, $this->request->getJSON(true) ?? []);
         Services::resetSingle("request");
