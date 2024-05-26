@@ -133,13 +133,13 @@ define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
  | it will be labeled as unknown.
  */
 define("UNKNOWN_ACCOUNT_KIND", "unknown");
-define("GENERAL_ASSET_ACCOUNT_KIND", "general asset");
+define("GENERAL_ASSET_ACCOUNT_KIND", "general_asset");
 define("LIABILITY_ACCOUNT_KIND", "liability");
 define("EQUITY_ACCOUNT_KIND", "equity");
 define("EXPENSE_ACCOUNT_KIND", "expense");
 define("INCOME_ACCOUNT_KIND", "income");
-define("LIQUID_ASSET_ACCOUNT_KIND", "liquid asset");
-define("DEPRECIATIVE_ASSET_ACCOUNT_KIND", "depreciative asset");
+define("LIQUID_ASSET_ACCOUNT_KIND", "liquid_asset");
+define("DEPRECIATIVE_ASSET_ACCOUNT_KIND", "depreciative_asset");
 
 define("ACCEPTABLE_ACCOUNT_KINDS", [
     GENERAL_ASSET_ACCOUNT_KIND,
