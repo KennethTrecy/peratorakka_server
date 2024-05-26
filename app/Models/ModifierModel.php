@@ -62,7 +62,13 @@ class ModifierModel extends BaseResourceModel
         return $query_builder
             ->whereIn("debit_account_id", $account_subquery)
             ->whereIn("credit_account_id", $account_subquery)
-            ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
-            ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery);
+            ->groupStart()
+                ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
+                ->orWhere("debit_cash_flow_activity_id IS NULL")
+            ->groupEnd()
+            ->groupStart()
+                ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery)
+                ->orWhere("credit_cash_flow_activity_id IS NULL")
+            ->groupEnd();
     }
 }
