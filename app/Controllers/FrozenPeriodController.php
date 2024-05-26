@@ -862,10 +862,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     );
                 }
 
-                array_push(
-                    $groups[$account->currency_id][$account->kind],
-                    $keyed_summary_calculations[$account->id]
-                );
+                // Some accounts are temporary and exist only for closing other accounts.
+                // Therefore, they would not have any summary calculations.
+                if (isset($keyed_summary_calculations[$account->id])) {
+                    array_push(
+                        $groups[$account->currency_id][$account->kind],
+                        $keyed_summary_calculations[$account->id]
+                    );
+                }
 
                 return $groups;
             },
