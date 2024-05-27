@@ -244,8 +244,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if ($must_be_strict) {
             foreach ($accounts as $account) {
                 if (
-                    $account->kind === EXPENSE_ACCOUNT_KIND
-                    || $account->kind === INCOME_ACCOUNT_KIND
+                    (
+                        $account->kind === EXPENSE_ACCOUNT_KIND
+                        || $account->kind === INCOME_ACCOUNT_KIND
+                    )
+                    // Some accounts are temporary and exist only for closing other accounts.
+                    // Therefore, they would not have any summary calculations.
+                    && isset($keyed_calculations[$account->id])
                 ) {
                     $raw_calculation = $keyed_calculations[$account->id];
                     if (
@@ -670,6 +675,12 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $raw_summary_calculations
         );
 
+        $raw_flow_calculations = array_filter(
+            $raw_flow_calculations,
+            function ($raw_flow_calculation) {
+                return $raw_flow_calculation->net_amount->getSign() !== 0;
+            }
+        );
         $retained_accounts_on_flow_calculations = array_map(
             function ($raw_flow_calculation) {
                 return $raw_flow_calculation->account_id;
