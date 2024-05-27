@@ -832,7 +832,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $flow_calculations
     ): array {
         $keyed_summary_calculations = static::keyCalculationsWithAccounts($summary_calculations);
-        $keyed_flow_calculations = static::keyCalculationsWithAccounts($flow_calculations);
         $keyed_accounts = array_reduce(
             $accounts,
             function ($keyed_items, $account) {
@@ -876,20 +875,22 @@ class FrozenPeriodController extends BaseOwnedResourceController
             []
         );
         $grouped_flow_calculation = array_reduce(
-            $accounts,
-            function ($groups, $account) use ($keyed_flow_calculations) {
+            $flow_calculations,
+            function ($groups, $calculation) use ($keyed_accounts) {
+                $account = $keyed_accounts[$calculation->account_id];
+
                 if (!isset($groups[$account->currency_id])) {
                     $groups[$account->currency_id] = [];
                 }
 
-                // For old records before v0.4.0, flow calculations were not yet created.
-                // User must regenerate the previous frozen periods.
-                if (isset($keyed_flow_calculations[$account->id])) {
-                    array_push(
-                        $groups[$account->currency_id],
-                        $keyed_flow_calculations[$account->id]
-                    );
+                if (!isset($groups[$account->currency_id][$calculation->cash_flow_activity_id])) {
+                    $groups[$account->currency_id][$calculation->cash_flow_activity_id] = [];
                 }
+
+                array_push(
+                    $groups[$account->currency_id][$calculation->cash_flow_activity_id],
+                    $calculation
+                );
 
                 return $groups;
             },
@@ -1038,13 +1039,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $illiquid_cash_flow_activity_subtotals = [];
 
                 if (isset($grouped_flow_calculation[$currency->id])) {
-                    $keyed_flow_activity_subtotals = [];
-                    $flows = $grouped_flow_calculation[$currency->id];
+                    $categorized_flows = $grouped_flow_calculation[$currency->id];
 
-                    foreach ($flows as $flow_info) {
-                        $account = $keyed_accounts[$flow_info->account_id];
-                        $activity = $keyed_cash_flow_activities[$flow_info->cash_flow_activity_id];
-                        $closed_liquid_amount = $closed_liquid_amount->plus($flow_info->net_amount);
+                    foreach ($categorized_flows as $cash_flow_activity_id => $flows) {
+                        $activity = $keyed_cash_flow_activities[$cash_flow_activity_id];
 
                         if (!isset($illiquid_cash_flow_activity_subtotals[$activity->id])) {
                             $illiquid_cash_flow_activity_subtotals[$activity->id] = [
@@ -1054,20 +1052,27 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             ];
                         }
 
-                        $illiquid_cash_flow_activity_subtotals[$activity->id]["subtotal"]
-                            = $illiquid_cash_flow_activity_subtotals[$activity->id]["subtotal"]
+                        foreach ($flows as $flow_info) {
+                            $account = $keyed_accounts[$flow_info->account_id];
+
+                            $closed_liquid_amount = $closed_liquid_amount
                                 ->plus($flow_info->net_amount);
 
-                        if (
-                            !(
-                                $account->kind === EXPENSE_ACCOUNT_KIND
-                                || $account->kind === INCOME_ACCOUNT_KIND
-                            )
-                        ) continue;
+                            $illiquid_cash_flow_activity_subtotals[$activity->id]["subtotal"]
+                                = $illiquid_cash_flow_activity_subtotals[$activity->id]["subtotal"]
+                                    ->plus($flow_info->net_amount);
 
-                        $illiquid_cash_flow_activity_subtotals[$activity->id]["net_income"]
-                            = $illiquid_cash_flow_activity_subtotals[$activity->id]["net_income"]
-                                ->plus($flow_info->net_amount);
+                            if (
+                                !(
+                                    $account->kind === EXPENSE_ACCOUNT_KIND
+                                    || $account->kind === INCOME_ACCOUNT_KIND
+                                )
+                            ) continue;
+
+                            $illiquid_cash_flow_activity_subtotals[$activity->id]["net_income"]
+                                = $illiquid_cash_flow_activity_subtotals[$activity->id]["net_income"]
+                                    ->plus($flow_info->net_amount);
+                        }
                     }
 
                     $illiquid_cash_flow_activity_subtotals = array_map(
