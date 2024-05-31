@@ -1,4 +1,4 @@
-[![Backend Tests](https://img.shields.io/github/actions/workflow/status/KennethTrecy/peratorakka_server/backend.yml?style=for-the-badge)](https://github.com/KennethTrecy/peratorakka_server/actions/workflows/backend.yml)
+[![Backend Tests](https://img.shields.io/github/actions/workflow/status/KennethTrecy/peratorakka_server/back-end.yml?style=for-the-badge)](https://github.com/KennethTrecy/peratorakka_server/actions/workflows/back-end.yml)
 ![GitHub lines](https://img.shields.io/github/license/KennethTrecy/peratorakka_server?style=for-the-badge)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/KennethTrecy/peratorakka_server?style=for-the-badge&display_name=tag&sort=semver)
 ![GitHub closed issues count](https://img.shields.io/github/issues-closed/KennethTrecy/peratorakka_server?style=for-the-badge)
