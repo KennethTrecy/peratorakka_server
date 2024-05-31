@@ -55,6 +55,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
             "currencies" => [ $currency ],
             "modifiers" => json_decode(json_encode($modifiers)),
+            "cash_flow_activities" => [
+                $cash_flow_activity
+            ]
         ]);
     }
 
@@ -94,6 +97,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
             "currencies" => [ $currency ],
             "modifier" => json_decode(json_encode($modifier)),
+            "cash_flow_activities" => [
+                $cash_flow_activity
+            ]
         ]);
     }
 
@@ -319,6 +325,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "accounts" => [],
             "currencies" => [],
             "modifiers" => [],
+            "cash_flow_activities" => []
         ]);
     }
 
@@ -365,6 +372,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
             "currencies" => [ $currency ],
             "modifiers" => json_decode(json_encode(array_slice($modifiers, 0, 5))),
+            "cash_flow_activities" => [
+                $cash_flow_activity
+            ]
         ]);
     }
 
