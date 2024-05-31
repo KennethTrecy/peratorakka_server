@@ -199,4 +199,16 @@ class App extends BaseConfig
      * @see http://www.w3.org/TR/CSP/
      */
     public bool $CSPEnabled = false;
+
+    /**
+     * --------------------------------------------------------------------------
+     * User Count Limit
+     * --------------------------------------------------------------------------
+     *
+     * Limits the number of users the server allows to register. A value of 0 allows an unlimited
+     * number of users, as long as the database allows.
+     *
+     * @see https://github.com/KennethTrecy/peratorakka_server/issues/16
+     */
+    public int $userCountLimit = 0;
 }

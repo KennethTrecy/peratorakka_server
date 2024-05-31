@@ -90,6 +90,10 @@ class FinancialEntryModel extends BaseResourceModel
                     ->select("id")
                     ->where("user_id", $user->id)
             );
+        $cash_flow_activity_subquery = model(CashFlowActivityModel::class, false)
+            ->builder()
+            ->select("id")
+            ->where("user_id", $user->id);
 
         return $query_builder
             ->whereIn(
@@ -99,6 +103,14 @@ class FinancialEntryModel extends BaseResourceModel
                     ->select("id")
                     ->whereIn("debit_account_id", $account_subquery)
                     ->whereIn("credit_account_id", $account_subquery)
+                    ->groupStart()
+                        ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
+                        ->orWhere("debit_cash_flow_activity_id IS NULL")
+                    ->groupEnd()
+                    ->groupStart()
+                        ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery)
+                        ->orWhere("credit_cash_flow_activity_id IS NULL")
+                    ->groupEnd()
             );
     }
 }

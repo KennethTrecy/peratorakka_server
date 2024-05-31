@@ -2,6 +2,8 @@
 
 namespace App\Validation;
 
+use CodeIgniter\Validation\InvalidArgumentException;
+
 use App\Contracts\OwnedResource;
 use App\Models\BaseResourceModel;
 
@@ -23,9 +25,10 @@ class DatabaseRules {
                 SEARCH_ONLY_DELETED
             ])
         ) {
-            $error = 'An owned resource model and search mode is required'
-                .' in "{0}" to check ownership for {field}.';
-            return false;
+            throw new InvalidArgumentException(
+                'An owned resource model and search mode is required'
+                .' in "ensure_ownership" to check ownership for field.'
+            );
         }
 
         $model = model($parameters[0]);
@@ -34,7 +37,6 @@ class DatabaseRules {
         $search_mode = $parameters[1];
 
         if (!$model->isOwnedBy($current_user, $search_mode, intval($id))) {
-            $error = "{field} must be owned by the current user and present.";
             return false;
         }
 
@@ -54,9 +56,10 @@ class DatabaseRules {
             || !(model($parameters[0]) instanceof BaseResourceModel)
             || !in_array($parameters[1], model($parameters[0])->allowedFields)
         ) {
-            $error = 'A resource model, column to check, and acceptable list of column values is'
-                .' required in "{0}" to check if the selected option in {field} is allowed.';
-            return false;
+            throw new InvalidArgumentException(
+                'A resource model, column to check, and acceptable list of column values is in'
+                .' "has_column_value_in_list" to check if the selected option in field is unique.'
+            );
         }
 
         $model = model($parameters[0]);
@@ -66,7 +69,6 @@ class DatabaseRules {
         $entity = $model->find($id);
 
         if (!in_array($entity->$column, $allowed_values)) {
-            $error = "{field} does not match the acceptable values.";
             return false;
         }
 
@@ -92,17 +94,19 @@ class DatabaseRules {
         $parameters = explode(",", $parameters);
 
         if (count($parameters) < 1) {
-            $error = 'Number of parameters is fewer than required number'
-                .' in "{0}" to check if the value in {field} is unique.';
-            return false;
+            throw new InvalidArgumentException(
+                'Number of parameters is fewer than required number'
+                .' in "is_unique_compositely" to check if the value in field is unique.'
+            );
         }
 
         $combined_parameters = explode("|", $parameters[0]);
 
         if (count($combined_parameters) < 2) {
-            $error = 'Number of combined parameters is fewer than required number'
-                .' in "{0}" to check if the value in {field} is unique.';
-            return false;
+            throw new InvalidArgumentException(
+                'Number of combined parameters is fewer than required number'
+                .' in "is_unique_compositely" to check if the value in field is unique.'
+            );
         }
 
         $essential_parameters = explode(":", $combined_parameters[0]);
@@ -111,9 +115,10 @@ class DatabaseRules {
             || !(model($essential_parameters[0]) instanceof BaseResourceModel)
             || !in_array($essential_parameters[1], model($essential_parameters[0])->allowedFields)
         ) {
-            $error = 'A model name and column name of the existing value is required'
-                .' in "{0}" to check if the value in {field} is unique.';
-            return false;
+            throw new InvalidArgumentException(
+                'A model name and column name of the existing value is required'
+                .' in "is_unique_compositely" to check if the value in field is unique.'
+            );
         }
 
         $extra_parameters = [];
@@ -154,9 +159,10 @@ class DatabaseRules {
 
                 array_push($extra_parameters, $extra_parameter);
             } else {
-                $error = 'A valid composite data is required'
-                    .' in "{0}" to check if the value in {field} is unique.';
-                return false;
+                throw new InvalidArgumentException(
+                    'A valid composite data is required'
+                    .' in "is_unique_compositely" to check if the value in field is unique.'
+                );
             }
         }
 
@@ -175,21 +181,22 @@ class DatabaseRules {
 
         if ($found_model !== null) {
             if (count($parameters) === 1) {
-                $error = '{field} must be a unique value in the database.';
+                $error = null;
                 return false;
             }
 
             $ignored_parameters = explode("=", $parameters[1]);
             if (count($ignored_parameters) < 2) {
-                $error = 'Ignore column and ignore value is required'
-                    .' in "{0}" to check if the value in {field} is unique.';
-                return false;
+                throw new InvalidArgumentException(
+                    'Ignore column and ignore value is required'
+                    .' in "is_unique_compositely" to check if the value in field is unique.'
+                );
             }
 
             $column_name = $ignored_parameters[0];
             $column_value = $ignored_parameters[1];
             if (strval($found_model->$column_name) !== $column_value) {
-                $error = '{field} must be a unique value in the database.';
+                $error = null;
                 return false;
             }
         }

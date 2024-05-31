@@ -9,6 +9,7 @@ use CodeIgniter\Test\Fabricator;
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
+use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
@@ -24,6 +25,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -33,7 +39,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifiers = $modifier_fabricator->create(10);
 
@@ -59,6 +67,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -68,7 +81,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
 
@@ -91,6 +106,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -100,7 +120,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->make();
 
@@ -126,6 +148,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -135,7 +162,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         $new_details = $modifier_fabricator->make();
@@ -163,6 +192,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -172,7 +206,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
 
@@ -199,6 +235,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -208,7 +249,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         model(ModifierModel::class)->delete($modifier->id);
@@ -233,6 +276,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -242,7 +290,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         model(ModifierModel::class)->delete($modifier->id);
@@ -281,6 +331,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -290,7 +345,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifiers = $modifier_fabricator->create(10);
 
@@ -320,6 +377,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -329,7 +391,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         $modifier->id = $modifier->id + 1;
@@ -348,6 +412,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -358,6 +427,8 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
             "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
             "name" => "@only alphanumeric characters only"
         ]);
         $modifier = $modifier_fabricator->make();
@@ -386,6 +457,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currencyB = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currencyA->id
@@ -398,7 +474,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->make();
 
@@ -425,12 +503,19 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
         ]);
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $debit_account = $account_fabricator->create();
         $credit_account = $account_fabricator->create();
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         $modifier_fabricator->setOverrides([
@@ -458,6 +543,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -467,7 +557,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
 
@@ -503,6 +595,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -512,7 +609,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         model(ModifierModel::class)->delete($modifier->id);
@@ -549,6 +648,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -558,7 +662,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
 
@@ -589,6 +695,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $authenticated_info->getUser()->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -598,7 +709,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
 
@@ -619,6 +732,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "user_id" => $another_user->id
         ]);
         $currency = $currency_fabricator->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ]);
+        $cash_flow_activity = $cash_flow_activity_fabricator->create();
         $account_fabricator = new Fabricator(AccountModel::class);
         $account_fabricator->setOverrides([
             "currency_id" => $currency->id
@@ -628,7 +746,9 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $modifier_fabricator = new Fabricator(ModifierModel::class);
         $modifier_fabricator->setOverrides([
             "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id
+            "credit_account_id" => $credit_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id
         ]);
         $modifier = $modifier_fabricator->create();
         model(ModifierModel::class)->delete($modifier->id, true);

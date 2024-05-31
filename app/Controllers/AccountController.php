@@ -48,7 +48,7 @@ class AccountController extends BaseOwnedResourceController
                 ])
             ])."]"
         ]);
-        $validation->setRule("$individual_name.kind", "description", [
+        $validation->setRule("$individual_name.kind", "kind", [
             "required",
             "min_length[3]",
             "max_length[255]",
@@ -75,6 +75,13 @@ class AccountController extends BaseOwnedResourceController
                 ]),
                 "id=$resource_id"
             ])."]"
+        ]);
+        $validation->setRule("$individual_name.kind", "kind", [
+            "required",
+            "min_length[3]",
+            "max_length[255]",
+            "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]",
+            // TODO: Make validation to allow this field if the entity was not yet updated
         ]);
 
         return $validation;

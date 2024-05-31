@@ -3,6 +3,7 @@
 namespace App\Validation;
 
 use CodeIgniter\I18n\Time;
+use CodeIgniter\Validation\InvalidArgumentException;
 
 use App\Models\FrozenPeriodModel;
 
@@ -15,10 +16,6 @@ class TimeRules {
             $value,
             Time::now("Asia/Manila")->toDateTimeString()
         );
-
-        if (!$does_not_exceed) {
-            $error = "{field} must be on or before the current time.";
-        }
 
         return $does_not_exceed;
     }
@@ -35,10 +32,6 @@ class TimeRules {
                 ->setSecond(59)
                 ->toDateTimeString()
         );
-
-        if (!$does_not_exceed) {
-            $error = "{field} must be before the incoming midnight.";
-        }
 
         return $does_not_exceed;
     }
@@ -57,8 +50,9 @@ class TimeRules {
             count($parameters) < 1
             || is_null(dot_array_search($parameters[0], $data))
         ) {
-            $error = '"{0}" needs a valid date to check the {field}.';
-            return false;
+            throw new InvalidArgumentException(
+                '"'.$parameters[0].'" needs a valid date to check the field.'
+            );
         }
 
         $other_time = dot_array_search($parameters[0], $data);
@@ -69,7 +63,7 @@ class TimeRules {
         $does_not_exceed = $this->isOnOrBeforeOtherTime($value, $other_time);
 
         if (!$does_not_exceed) {
-            $error = "{field} must be on or before $other_time.";
+            $error = "This must be on or before $other_time.";
         }
 
         return $does_not_exceed;

@@ -7,6 +7,7 @@ use CodeIgniter\Validation\Validation;
 
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
+use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
 
@@ -122,6 +123,28 @@ class ModifierController extends BaseOwnedResourceController
         }
         $enriched_document["accounts"] = $accounts;
 
+        $linked_cash_flow_activities = [];
+        foreach ($main_documents as $document) {
+            $debit_cash_flow_activity_id = $document->debit_cash_flow_activity_id;
+            $credit_cash_flow_activity_id = $document->credit_cash_flow_activity_id;
+
+            if ($debit_cash_flow_activity_id !== null) {
+                array_push($linked_cash_flow_activities, $debit_cash_flow_activity_id);
+            }
+
+            if ($credit_cash_flow_activity_id !== null) {
+                array_push($linked_cash_flow_activities, $credit_cash_flow_activity_id);
+            }
+        }
+
+        $cash_flow_activities = [];
+        if (count($linked_cash_flow_activities) > 0) {
+            $cash_flow_activities = model(CashFlowActivityModel::class)
+                ->whereIn("id", array_unique($linked_cash_flow_activities))
+                ->findAll();
+        }
+        $enriched_document["cash_flow_activities"] = $cash_flow_activities;
+
         $linked_currencies = [];
         foreach ($accounts as $document) {
             $currency_id = $document->currency_id;
@@ -146,6 +169,28 @@ class ModifierController extends BaseOwnedResourceController
         $validation->setRule($individual_name, "modifier info", [
             "required"
         ]);
+        $validation->setRule(
+            "$individual_name.debit_cash_flow_activity_id",
+            "debit cash flow activity", [
+                "permit_empty",
+                "is_natural_no_zero",
+                "ensure_ownership[".implode(",", [
+                    CashFlowActivityModel::class,
+                    SEARCH_NORMALLY
+                ])."]"
+            ]
+        );
+        $validation->setRule(
+            "$individual_name.credit_cash_flow_activity_id",
+            "credit cash flow activity", [
+                "permit_empty",
+                "is_natural_no_zero",
+                "ensure_ownership[".implode(",", [
+                    CashFlowActivityModel::class,
+                    SEARCH_NORMALLY
+                ])."]"
+            ]
+        );
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
             "max_length[500]",

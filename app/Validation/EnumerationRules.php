@@ -2,6 +2,8 @@
 
 namespace App\Validation;
 
+use CodeIgniter\Validation\InvalidArgumentException;
+
 use App\Models\AccountModel;
 use App\Models\ModifierModel;
 
@@ -21,9 +23,10 @@ class EnumerationRules {
             || is_null(dot_array_search($parameters[0], $data))
             || is_null(dot_array_search($parameters[1], $data))
         ) {
-            $error = '"{0}" needs keys to account IDs from both sides'
-                .' to check the validity for {field}.';
-            return false;
+            throw new InvalidArgumentException(
+                '"may_allow_exchange_action" needs keys to account IDs from both sides'
+                .' to check the validity for field.'
+            );
         }
 
         if ($value === EXCHANGE_MODIFIER_ACTION) {

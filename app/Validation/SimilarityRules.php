@@ -2,6 +2,8 @@
 
 namespace App\Validation;
 
+use CodeIgniter\Validation\InvalidArgumentException;
+
 use App\Models\AccountModel;
 use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
@@ -22,8 +24,10 @@ class SimilarityRules {
             || is_null(dot_array_search($parameters[0], $data))
             || is_null(dot_array_search($parameters[1], $data))
         ) {
-            $error = '"{0}" needs a key to modifier ID and key to credit value'
-                .' to check the required similarity for {field}.';
+            throw new InvalidArgumentException(
+                '"must_be_same_for_modifier" needs a key to modifier ID and key to credit value'
+                .' to check the required similarity for field.'
+            );
             return false;
         }
 
@@ -49,9 +53,10 @@ class SimilarityRules {
             count($parameters) < 2
             || is_null(dot_array_search($parameters[1], $data))
         ) {
-            $error = '"{0}" needs a key to financial entry ID and key to credit value'
-                .' to check the required similarity for {field}.';
-            return false;
+            throw new InvalidArgumentException(
+                '"must_be_same_for_financial_entry" needs a key to financial entry ID and key to'
+                .' credit value to check the required similarity for field.'
+            );
         }
 
         $credit_value = dot_array_search($parameters[1], $data);

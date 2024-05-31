@@ -6,7 +6,7 @@ use CodeIgniter\Database\Migration;
 
 use Config\Database;
 
-class CreateSummaryCalculationsTable extends Migration
+class CreateFlowCalculationsTable extends Migration
 {
     public function up()
     {
@@ -22,24 +22,19 @@ class CreateSummaryCalculationsTable extends Migration
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
+            "cash_flow_activity_id" => [
+                "type" => "BIGINT",
+                "unsigned" => true,
+            ],
             "account_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
             ],
-            "unadjusted_debit_amount" => [
-                "type" => "TEXT",
-            ],
-            "unadjusted_credit_amount" => [
-                "type" => "TEXT",
-            ],
-            "adjusted_debit_amount" => [
-                "type" => "TEXT",
-            ],
-            "adjusted_credit_amount" => [
+            "net_amount" => [
                 "type" => "TEXT",
             ]
         ]);
-        $this->forge->addPrimaryKey("id", "pk_summary_calculations");
+        $this->forge->addPrimaryKey("id", "pk_flow_calculations");
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
                 "frozen_period_id",
@@ -47,7 +42,15 @@ class CreateSummaryCalculationsTable extends Migration
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "summary_calculations_frozen_period_id_foreign"
+                "flow_calculations_frozen_period_id_foreign"
+            );
+            $this->forge->addForeignKey(
+                "cash_flow_activity_id",
+                "cash_flow_activities",
+                "id",
+                "CASCADE",
+                "CASCADE",
+                "flow_calculations_cash_flow_activity_id_foreign"
             );
             $this->forge->addForeignKey(
                 "account_id",
@@ -55,14 +58,14 @@ class CreateSummaryCalculationsTable extends Migration
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "summary_calculations_account_id_foreign"
+                "flow_calculations_account_id_foreign"
             );
         }
-        $this->forge->createTable("summary_calculations");
+        $this->forge->createTable("flow_calculations");
     }
 
     public function down()
     {
-        $this->forge->dropTable("summary_calculations");
+        $this->forge->dropTable("flow_calculations");
     }
 }

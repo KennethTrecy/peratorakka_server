@@ -13,6 +13,8 @@ class Modifier extends BaseResourceEntity
         "id" => "integer",
         "debit_account_id" => "integer",
         "credit_account_id" => "integer",
+        "debit_cash_flow_activity_id" => "?integer",
+        "credit_cash_flow_activity_id" => "?integer",
         "name" => "string",
         "description" => "?string",
         "action" => "modifier_action",
