@@ -34,19 +34,19 @@ class MakeTestUser extends Seeder
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $peso_currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
+            "user_id" => $user_id,
             "name" => "Philippine Peso",
             "code" => "PHP"
         ])->create();
 
         $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
         $operating_cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
+            "user_id" => $user_id,
             "name" => "Operating Activities",
             "description" => "Activities that are part or related to your normal life."
         ])->create();
         $financing_cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
+            "user_id" => $user_id,
             "name" => "Financing Activities",
             "description" => "Activities that are part or related to your loans."
         ])->create();
