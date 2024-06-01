@@ -53,32 +53,32 @@ class MakeTestUser extends Seeder
 
         $account_fabricator = new Fabricator(AccountModel::class);
         $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+            "currency_id" => $peso_currency->id,
             "name" => "Cash",
             "kind" => LIQUID_ASSET_ACCOUNT_KIND
         ])->create();
         $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+            "currency_id" => $peso_currency->id,
             "name" => "Fare",
             "kind" => EXPENSE_ACCOUNT_KIND
         ])->create();
         $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+            "currency_id" => $peso_currency->id,
             "name" => "Living Equity",
             "kind" => EQUITY_ACCOUNT_KIND
         ])->create();
         $liability_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+            "currency_id" => $peso_currency->id,
             "name" => "Accounts Payable to Friend",
             "kind" => LIABILITY_ACCOUNT_KIND
         ])->create();
         $income_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+            "currency_id" => $peso_currency->id,
             "name" => "Service Income",
             "kind" => INCOME_ACCOUNT_KIND
         ])->create();
         $closing_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
+            "currency_id" => $peso_currency->id,
             "name" => "Revenue and Expenses",
             "kind" => INCOME_ACCOUNT_KIND
         ])->create();
