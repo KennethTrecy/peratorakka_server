@@ -89,14 +89,22 @@ class MakeTestUser extends Seeder
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $equity_account->id,
             "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $loan_record_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Borrow cash from a friend",
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $liability_account->id,
+            "debit_cash_flow_activity_id" => null,
+            "credit_cash_flow_activity_id" => $financing_cash_flow_activity->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
         $expense_record_modifier = $modifier_fabricator->setOverrides([
             "name" => "Pay fare",
             "debit_account_id" => $expense_account->id,
             "credit_account_id" => $asset_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "credit_cash_flow_activity_id" => null,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
@@ -105,31 +113,31 @@ class MakeTestUser extends Seeder
             "debit_account_id" => $asset_account->id,
             "credit_account_id" => $income_account->id,
             "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
         $close_income_modifier = $modifier_fabricator->setOverrides([
             "name" => "Close service income",
             "debit_account_id" => $income_account->id,
             "credit_account_id" => $closing_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "action" => CLOSE_MODIFIER_ACTION
         ])->create();
         $close_expense_modifier = $modifier_fabricator->setOverrides([
             "name" => "Close fare",
             "debit_account_id" => $closing_account->id,
             "credit_account_id" => $expense_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "action" => CLOSE_MODIFIER_ACTION
         ])->create();
         $close_equity_modifier = $modifier_fabricator->setOverrides([
             "name" => "Close net income",
             "debit_account_id" => $closing_account->id,
             "credit_account_id" => $equity_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "action" => CLOSE_MODIFIER_ACTION
         ])->create();
     }
