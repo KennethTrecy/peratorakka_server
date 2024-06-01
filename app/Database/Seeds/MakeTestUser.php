@@ -54,23 +54,83 @@ class MakeTestUser extends Seeder
         $account_fabricator = new Fabricator(AccountModel::class);
         $asset_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "name" => "Cash",
             "kind" => LIQUID_ASSET_ACCOUNT_KIND
         ])->create();
         $expense_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "name" => "Fare",
             "kind" => EXPENSE_ACCOUNT_KIND
         ])->create();
         $equity_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "name" => "Living Equity",
             "kind" => EQUITY_ACCOUNT_KIND
         ])->create();
         $liability_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "name" => "Accounts Payable to Friend",
             "kind" => LIABILITY_ACCOUNT_KIND
         ])->create();
         $income_account = $account_fabricator->setOverrides([
             "currency_id" => $currency->id,
+            "name" => "Service Income",
             "kind" => INCOME_ACCOUNT_KIND
+        ])->create();
+        $closing_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "name" => "Revenue and Expenses",
+            "kind" => INCOME_ACCOUNT_KIND
+        ])->create();
+
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $normal_record_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Record existing balance",
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id,
+            "debit_cash_flow_activity_id" => null,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $expense_record_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Pay fare",
+            "debit_account_id" => $expense_account->id,
+            "credit_account_id" => $asset_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => null,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $income_record_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Collect service income",
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $income_account->id,
+            "debit_cash_flow_activity_id" => null,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $close_income_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Close service income",
+            "debit_account_id" => $income_account->id,
+            "credit_account_id" => $closing_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => CLOSE_MODIFIER_ACTION
+        ])->create();
+        $close_expense_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Close fare",
+            "debit_account_id" => $closing_account->id,
+            "credit_account_id" => $expense_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => CLOSE_MODIFIER_ACTION
+        ])->create();
+        $close_equity_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Close net income",
+            "debit_account_id" => $closing_account->id,
+            "credit_account_id" => $equity_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => CLOSE_MODIFIER_ACTION
         ])->create();
     }
 }
