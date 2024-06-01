@@ -20,8 +20,13 @@ class RegisterController extends BaseRegisterController {
     public function customRegisterAction(): ResponseInterface {
         $session = session();
 
-        // Remove the following keys to prevent registration errors
+
+        // Remove the following keys to prevent log in errors
         $session->remove("errors");
+
+        // Remove previous users
+        auth()->logout();
+        $session->remove(setting("Auth.sessionConfig")["field"]);
 
         $app = new App();
         if ($app->userCountLimit > 0) {

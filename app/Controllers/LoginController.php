@@ -24,10 +24,9 @@ class LoginController extends BaseLoginController {
         // Remove the following keys to prevent log in errors
         $session->remove("errors");
 
-        $current_user_id = $session->get("user.id", null);
-        if (!is_null($current_user_id)) {
-            return $this->respondNoContent();
-        }
+        // Remove previous users
+        auth()->logout();
+        $session->remove(setting("Auth.sessionConfig")["field"]);
 
         $_POST = array_merge($_POST, $this->request->getJSON(true));
         Services::resetSingle("request");
@@ -58,7 +57,7 @@ class LoginController extends BaseLoginController {
 
         $new_response = $original_response->removeHeader("Location");
 
-        $raw_error = $session->getFlashdata("error");
+        $raw_error = $session->getFlashdata("errors");
         if (is_null($raw_error)) {
             $current_user = auth()->user();
             $token = $current_user->generateAccessToken(
