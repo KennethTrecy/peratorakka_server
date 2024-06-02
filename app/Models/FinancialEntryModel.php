@@ -34,7 +34,7 @@ class FinancialEntryModel extends BaseResourceModel
     {
         $amount = $faker->regexify("\d{5}\.\d{3}");
         return [
-            "transacted_at"  => Time::now()->toDateTimeString(),
+            "transacted_at"  => Time::today()->toDateTimeString(),
             "debit_amount"  => $amount,
             "credit_amount"  => $amount,
             "remarks"  => $faker->paragraph(),
