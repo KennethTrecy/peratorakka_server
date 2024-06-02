@@ -156,7 +156,6 @@ class MakeTestUser extends Seeder
         ])->create();
 
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-
         $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $normal_record_modifier->id,
             "debit_amount" => "1000",
@@ -191,6 +190,72 @@ class MakeTestUser extends Seeder
             "modifier_id" => $close_equity_modifier->id,
             "debit_amount" => "250",
             "credit_amount" => "250"
+        ])->create();
+
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $user_id,
+        ])->create();
+
+        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
+        $asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $asset_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => $recorded_normal_financial_entry
+                ->debit_amount
+                ->plus($recorded_income_financial_entry->debit_amount)
+                ->plus($recorded_loan_financial_entry->debit_amount),
+            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
+            "closed_debit_amount" => $recorded_normal_financial_entry
+                ->debit_amount
+                ->plus($recorded_loan_financial_entry->debit_amount)
+                ->plus($recorded_income_financial_entry->debit_amount)
+                ->minus($recorded_expense_financial_entry->credit_amount),
+            "closed_credit_amount" => "0"
+        ])->create();
+        $equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $equity_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => $recorded_normal_financial_entry->credit_amount,
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => $recorded_normal_financial_entry
+                ->credit_amount
+                ->plus($closed_equity_financial_entry->credit_amount)
+        ])->create();
+        $liability_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $liability_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => $recorded_loan_financial_entry->credit_amount,
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => $recorded_loan_financial_entry->credit_amount
+        ])->create();
+        $expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $expense_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => "0",
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => "0"
+        ])->create();
+        $income_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $income_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => $recorded_income_financial_entry->credit_amount,
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => "0"
         ])->create();
     }
 }
