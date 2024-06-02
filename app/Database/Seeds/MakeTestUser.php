@@ -257,5 +257,43 @@ class MakeTestUser extends Seeder
             "closed_debit_amount" => "0",
             "closed_credit_amount" => "0"
         ])->create();
+
+        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
+        $asset_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "account_id" => $asset_account->id,
+            "net_amount" => $recorded_normal_financial_entry
+                ->credit_amount
+                ->plus($closed_equity_financial_entry->credit_amount)
+        ])->create();
+        $equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "account_id" => $equity_account->id,
+            "net_amount" => $recorded_normal_financial_entry
+                ->debit_amount
+                ->plus($recorded_loan_financial_entry->debit_amount)
+                ->plus($recorded_income_financial_entry->debit_amount)
+                ->minus($recorded_expense_financial_entry->credit_amount)
+        ])->create();
+        $liability_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "account_id" => $liability_account->id,
+            "net_amount" => $recorded_loan_financial_entry->credit_amount
+        ])->create();
+        $expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "account_id" => $expense_account->id,
+            "net_amount" => $recorded_expense_financial_entry->debit_amount->negated()
+        ])->create();
+        $income_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "account_id" => $income_account->id,
+            "net_amount" => $recorded_income_financial_entry->credit_amount
+        ])->create();
     }
 }
