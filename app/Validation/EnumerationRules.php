@@ -2,7 +2,7 @@
 
 namespace App\Validation;
 
-use CodeIgniter\Validation\InvalidArgumentException;
+use InvalidArgumentException;
 
 use App\Models\AccountModel;
 use App\Models\ModifierModel;

@@ -3,7 +3,7 @@
 namespace App\Validation;
 
 use CodeIgniter\I18n\Time;
-use CodeIgniter\Validation\InvalidArgumentException;
+use InvalidArgumentException;
 
 use App\Models\FrozenPeriodModel;
 
