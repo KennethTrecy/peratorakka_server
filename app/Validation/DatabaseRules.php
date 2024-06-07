@@ -75,6 +75,38 @@ class DatabaseRules {
         return true;
     }
 
+    public function permit_empty_if_column_value_matches(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+
+        if (
+            count($parameters) < 2
+            || !(model($parameters[0]) instanceof BaseResourceModel)
+            || !in_array($parameters[1], model($parameters[0])->allowedFields)
+        ) {
+            throw new InvalidArgumentException(
+                'A resource model, column to check, and acceptable list of column values is in'
+                .' "has_column_value_in_list" to check if the selected option in field is unique.'
+            );
+        }
+
+        $model = model($parameters[0]);
+        $id = $value;
+        $column = $parameters[1];
+        $allowed_values = array_slice($parameters, 2);
+        $entity = $model->find($id);
+
+        if (!in_array($entity->$column, $allowed_values)) {
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Validator syntax: `is_unique_compositely[
      *      model:column_name
