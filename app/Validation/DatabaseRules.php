@@ -14,6 +14,9 @@ class DatabaseRules {
         array $data,
         ?string &$error = null
     ): bool {
+        // Skip nullable fields
+        if ($value === null) return true;
+
         $parameters = explode(",", $parameters);
 
         if (
