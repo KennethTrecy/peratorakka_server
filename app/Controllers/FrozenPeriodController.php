@@ -631,11 +631,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $is_adjusted_balance_positive = $adjusted_balance->getSign() > 0;
                 $is_adjusted_balance_negative = $adjusted_balance->getSign() < 0;
 
+                $raw_calculation["opened_debit_amount"]
+                    = $raw_calculation["opened_debit_amount"]->simplified();
+                $raw_calculation["opened_credit_amount"]
+                    = $raw_calculation["opened_credit_amount"]->simplified();
+                $raw_calculation["unadjusted_debit_amount"]
+                    = $raw_calculation["unadjusted_debit_amount"]->simplified();
+                $raw_calculation["unadjusted_credit_amount"]
+                    = $raw_calculation["unadjusted_credit_amount"]->simplified();
                 $raw_calculation["closed_debit_amount"] = $is_adjusted_balance_positive
-                    ? $adjusted_balance
+                    ? $adjusted_balance->simplified()
                     : BigRational::zero();
                 $raw_calculation["closed_credit_amount"] = $is_adjusted_balance_negative
-                    ? $adjusted_balance->negated()
+                    ? $adjusted_balance->negated()->simplified()
                     : BigRational::zero();
                 $raw_calculation = (new SummaryCalculation())->fill($raw_calculation);
 
