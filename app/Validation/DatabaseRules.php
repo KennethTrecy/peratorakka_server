@@ -39,7 +39,7 @@ class DatabaseRules {
         $current_user = auth()->user();
         $search_mode = $parameters[1];
 
-        if (!$model->isOwnedBy($current_user, $search_mode, intval($id))) {
+        if (intval($id) <= 0 || !$model->isOwnedBy($current_user, $search_mode, intval($id))) {
             return false;
         }
 
