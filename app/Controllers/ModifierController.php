@@ -178,7 +178,6 @@ class ModifierController extends BaseOwnedResourceController
                     "kind",
                     LIQUID_ASSET_ACCOUNT_KIND
                 ])."]",
-                "is_natural_no_zero",
                 "ensure_ownership[".implode(",", [
                     CashFlowActivityModel::class,
                     SEARCH_NORMALLY
@@ -194,7 +193,6 @@ class ModifierController extends BaseOwnedResourceController
                     "kind",
                     LIQUID_ASSET_ACCOUNT_KIND
                 ])."]",
-                "is_natural_no_zero",
                 "ensure_ownership[".implode(",", [
                     CashFlowActivityModel::class,
                     SEARCH_NORMALLY
