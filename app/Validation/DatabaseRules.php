@@ -2,7 +2,7 @@
 
 namespace App\Validation;
 
-use CodeIgniter\Validation\InvalidArgumentException;
+use InvalidArgumentException;
 
 use App\Contracts\OwnedResource;
 use App\Models\BaseResourceModel;
@@ -81,27 +81,33 @@ class DatabaseRules {
         array $data,
         ?string &$error = null
     ): bool {
+        helper("array");
+
         $parameters = explode(",", $parameters);
 
         if (
-            count($parameters) < 2
+            count($parameters) < 4
             || !(model($parameters[0]) instanceof BaseResourceModel)
-            || !in_array($parameters[1], model($parameters[0])->allowedFields)
+            || !in_array($parameters[2], model($parameters[0])->allowedFields)
         ) {
             throw new InvalidArgumentException(
-                'A resource model, column to check, and acceptable list of column values is in'
-                .' "has_column_value_in_list" to check if the selected option in field is unique.'
+                'A resource model, parameter name of the ID, column to check in resource, and'
+                .' acceptable list of column values is in "permit_empty_if_column_value_matches"'
+                .' to check if the selected option in field is unique.'
             );
         }
 
         $model = model($parameters[0]);
-        $id = $value;
-        $column = $parameters[1];
-        $allowed_values = array_slice($parameters, 2);
+        $id = dot_array_search($parameters[1], $data);
+
+        if ($id === null) return false;
+
+        $column = $parameters[2];
+        $allowed_values = array_slice($parameters, 3);
         $entity = $model->find($id);
 
         if (!in_array($entity->$column, $allowed_values)) {
-            return false;
+            return $value !== null;
         }
 
         return true;
