@@ -30,22 +30,6 @@ class ModifierController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $validation->setRule("$individual_name.debit_account_id", "debit account", [
-            "required",
-            "is_natural_no_zero",
-            "ensure_ownership[".implode(",", [
-                AccountModel::class,
-                SEARCH_NORMALLY
-            ])."]"
-        ]);
-        $validation->setRule("$individual_name.credit_account_id", "credit account", [
-            "required",
-            "is_natural_no_zero",
-            "ensure_ownership[".implode(",", [
-                AccountModel::class,
-                SEARCH_NORMALLY
-            ])."]"
-        ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[3]",
@@ -169,11 +153,28 @@ class ModifierController extends BaseOwnedResourceController
         $validation->setRule($individual_name, "modifier info", [
             "required"
         ]);
+        $validation->setRule("$individual_name.debit_account_id", "debit account", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                AccountModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
+        $validation->setRule("$individual_name.credit_account_id", "credit account", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                AccountModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
         $validation->setRule(
             "$individual_name.debit_cash_flow_activity_id",
             "debit cash flow activity", [
                 "permit_empty_if_column_value_matches[".implode(",", [
                     AccountModel::class,
+                    "$individual_name.debit_account_id",
                     "kind",
                     LIQUID_ASSET_ACCOUNT_KIND
                 ])."]",
@@ -189,6 +190,7 @@ class ModifierController extends BaseOwnedResourceController
             "credit cash flow activity", [
                 "permit_empty_if_column_value_matches[".implode(",", [
                     AccountModel::class,
+                    "$individual_name.credit_account_id",
                     "kind",
                     LIQUID_ASSET_ACCOUNT_KIND
                 ])."]",
