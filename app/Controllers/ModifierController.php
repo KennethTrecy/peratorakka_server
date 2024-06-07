@@ -172,7 +172,11 @@ class ModifierController extends BaseOwnedResourceController
         $validation->setRule(
             "$individual_name.debit_cash_flow_activity_id",
             "debit cash flow activity", [
-                "permit_empty",
+                "permit_empty_if_column_value_matches[".implode(",", [
+                    AccountModel::class,
+                    "kind",
+                    LIQUID_ASSET_ACCOUNT_KIND
+                ])."]",
                 "is_natural_no_zero",
                 "ensure_ownership[".implode(",", [
                     CashFlowActivityModel::class,
@@ -183,7 +187,11 @@ class ModifierController extends BaseOwnedResourceController
         $validation->setRule(
             "$individual_name.credit_cash_flow_activity_id",
             "credit cash flow activity", [
-                "permit_empty",
+                "permit_empty_if_column_value_matches[".implode(",", [
+                    AccountModel::class,
+                    "kind",
+                    LIQUID_ASSET_ACCOUNT_KIND
+                ])."]",
                 "is_natural_no_zero",
                 "ensure_ownership[".implode(",", [
                     CashFlowActivityModel::class,
