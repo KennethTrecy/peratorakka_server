@@ -1129,6 +1129,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     "cash_flow_statement" => [
                         "opened_liquid_amount" => $opened_liquid_amount->simplified(),
                         "closed_liquid_amount" => $closed_liquid_amount->simplified(),
+                        "liquid_amount_difference" => $closed_liquid_amount->minus(
+                            $opened_liquid_amount
+                        )->simplified(),
                         "subtotals" => $illiquid_cash_flow_activity_subtotals
                     ],
                     "adjusted_trial_balance" => [
