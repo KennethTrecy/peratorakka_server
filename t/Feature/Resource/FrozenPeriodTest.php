@@ -227,6 +227,9 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                             "closed_liquid_amount" => $recorded_normal_financial_entry
                                 ->debit_amount
                                 ->minus($recorded_expense_financial_entry->debit_amount),
+                            "liquid_amount_difference" => $recorded_normal_financial_entry
+                                ->debit_amount
+                                ->minus($recorded_expense_financial_entry->debit_amount),
                             "subtotals" => [
                                 [
                                     "cash_flow_activity_id" => $cash_flow_activity->id,
@@ -406,6 +409,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                         "cash_flow_statement" => [
                             "opened_liquid_amount" => "0",
                             "closed_liquid_amount" => "0",
+                            "liquid_amount_difference" => "0",
                             "subtotals" => []
                         ],
                         "adjusted_trial_balance" => [
@@ -844,6 +848,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                         "cash_flow_statement" => [
                             "opened_liquid_amount" => "2000",
                             "closed_liquid_amount" => "2750",
+                            "liquid_amount_difference" => "750",
                             "subtotals" => [
                                 [
                                     "cash_flow_activity_id" => $cash_flow_activity->id,
