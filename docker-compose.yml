@@ -15,20 +15,20 @@ services:
     networks:
       - peratorakka_server_network
 
-  relational_database_server:
-    image: postgres
-    container_name: relational_database_server
-    ports:
-      - ${RELATIONAL_DATABASE_PORT}:5432
-    restart: always
-    environment:
-      POSTGRES_DB: ${RELATIONAL_DATABASE_NAME}
-      POSTGRES_USER: ${RELATIONAL_DATABASE_USERNAME}
-      POSTGRES_PASSWORD: ${RELATIONAL_DATABASE_PASSWORD}
-    networks:
-      - peratorakka_server_network
-    volumes:
-      - ./stage_database:/var/lib/postgresql/data
+  # relational_database_server:
+  #   image: postgres
+  #   container_name: relational_database_server
+  #   ports:
+  #     - ${RELATIONAL_DATABASE_PORT}:5432
+  #   restart: always
+  #   environment:
+  #     POSTGRES_DB: ${RELATIONAL_DATABASE_NAME}
+  #     POSTGRES_USER: ${RELATIONAL_DATABASE_USERNAME}
+  #     POSTGRES_PASSWORD: ${RELATIONAL_DATABASE_PASSWORD}
+  #   networks:
+  #     - peratorakka_server_network
+  #   volumes:
+  #     - ./stage_database:/var/lib/postgresql/data
 
 networks:
   peratorakka_server_network:
