@@ -160,7 +160,4 @@ RUN sudo chmod -R a+rw /var/www/html/vendor
 RUN /usr/bin/composer run seed:initial
 
 # 6. Start HTTP service to apply changes
-RUN service apache2 stop
-CMD [ "php", "spark", "serve", "--host=0.0.0.0", "--port=80" ]
-
-EXPOSE 80
+RUN service apache2 restart
