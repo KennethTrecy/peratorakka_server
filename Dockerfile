@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 	zip
 
 # 2. Apache configs + document root.
-RUN echo 'Header set Access-Control-Allow-Origin "*"' >> /etc/apache2/apache2.conf
+# RUN echo 'Header set Access-Control-Allow-Origin "*"' >> /etc/apache2/apache2.conf
 
 RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
@@ -160,4 +160,7 @@ RUN sudo chmod -R a+rw /var/www/html/vendor
 RUN /usr/bin/composer run seed:initial
 
 # 6. Start HTTP service to apply changes
-RUN service apache2 restart
+RUN service apache2 stop
+CMD [ "php", "spark", "serve", "--host=0.0.0.0", "--port=80" ]
+
+EXPOSE 80
