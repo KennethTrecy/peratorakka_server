@@ -98,7 +98,11 @@ To synchronize the files in this repository's history from the framework's appli
 The repository is licensed under [MIT].
 
 ### Want to contribute?
-Read the [contributing guide] for different ways to contribute in the project.
+Please read the [contributing guide] for different ways to contribute in the project.
+
+You can also make a financial contribution, no matter how small, to support its development and maintenance.
+
+[![Donate badge](https://img.shields.io/badge/PayPal-_?logo=paypal&label=Donate%20via&color=%23003087&link=https%3A%2F%2Fpaypal.me%2FKennethTrecy)](https://www.paypal.me/KennethTrecy)
 
 ### Author
 Coded by Kenneth Trecy Tobias.
