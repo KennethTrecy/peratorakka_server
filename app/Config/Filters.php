@@ -8,7 +8,6 @@ use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\SecureHeaders;
-use Fluent\Cors\Filters\CorsFilter;
 
 use App\Filters\EnsureOwnership;
 use App\Filters\ChainAuth;
@@ -29,7 +28,6 @@ class Filters extends BaseConfig
         "invalidchars"     => InvalidChars::class,
         "secureheaders"    => SecureHeaders::class,
         "ensure_ownership" => EnsureOwnership::class,
-        "cors"             => CorsFilter::class,
         "auth_thru_chain"  => ChainAuth::class
     ];
 
@@ -51,12 +49,10 @@ class Filters extends BaseConfig
                     "register",
                     "auth/a/*"
                 ]
-            ],
-            "cors",
+            ]
         ],
         "after" => [
             // "toolbar",
-            "cors",
             // "honeypot",
             // "secureheaders",
         ],
