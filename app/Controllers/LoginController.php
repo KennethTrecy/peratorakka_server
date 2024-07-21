@@ -19,13 +19,15 @@ class LoginController extends BaseLoginController {
     use RequireCompatibleTokenExpiration;
 
     public function customLoginAction(): ResponseInterface {
+        helper([ "auth", "setting", "session" ]);
+
         $session = session();
 
         // Remove the following keys to prevent log in errors
         $session->remove("errors");
 
         // Remove previous users
-        auth()->logout();
+        auth("session")->logout();
         $session->remove(setting("Auth.sessionConfig")["field"]);
 
         $_POST = array_merge($_POST, $this->request->getJSON(true));
@@ -59,7 +61,7 @@ class LoginController extends BaseLoginController {
 
         $raw_error = $session->getFlashdata("errors");
         if (is_null($raw_error)) {
-            $current_user = auth()->user();
+            $current_user = auth("session")->user();
             $token = $current_user->generateAccessToken(
                 Time::now("Asia/Manila")->toDateTimeString()
             );

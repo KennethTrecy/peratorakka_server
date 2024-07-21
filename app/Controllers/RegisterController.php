@@ -18,6 +18,8 @@ class RegisterController extends BaseRegisterController {
     use RequireCompatibleTokenExpiration;
 
     public function customRegisterAction(): ResponseInterface {
+        helper([ "auth", "setting", "session" ]);
+
         $session = session();
 
 
