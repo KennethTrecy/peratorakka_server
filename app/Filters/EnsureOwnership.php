@@ -38,6 +38,8 @@ class EnsureOwnership implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
+        helper([ "auth" ]);
+
         if (
             $arguments === null
             || !is_array($arguments)
