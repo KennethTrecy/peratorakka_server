@@ -77,6 +77,8 @@ abstract class BaseOwnedResourceController extends BaseController
 
     public function index()
     {
+        helper([ "auth" ]);
+
         $current_user = auth()->user();
         $request = $this->request;
 
@@ -120,6 +122,8 @@ abstract class BaseOwnedResourceController extends BaseController
 
     public function show(int $id)
     {
+        helper([ "auth" ]);
+
         $current_user = auth()->user();
         $model = static::getModel();
         $data = $model->find($id);
@@ -140,6 +144,8 @@ abstract class BaseOwnedResourceController extends BaseController
 
     public function create()
     {
+        helper([ "auth" ]);
+
         $current_user = auth()->user();
         $controller = $this;
         $validation = static::makeCreateValidation($current_user);
@@ -193,6 +199,8 @@ abstract class BaseOwnedResourceController extends BaseController
 
     public function update(int $id)
     {
+        helper([ "auth" ]);
+
         $current_user = auth()->user();
         $controller = $this;
         $validation = $this->makeUpdateValidation($current_user, $id);
