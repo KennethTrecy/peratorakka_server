@@ -59,6 +59,7 @@ if (!function_exists("make_owned_resource_routes")) {
             $possible_operations,
             array_flip($accessible_operations)
         );
+        $allowed_methods = [];
         foreach ($remaining_operations as $controller_method => $route_info) {
             $HTTP_method = $route_info["http_method"];
             $URI = $route_info["uri"];
@@ -72,6 +73,25 @@ if (!function_exists("make_owned_resource_routes")) {
             } else {
                 $routes->$HTTP_method($URI, [ $controller, $controller_method ]);
             }
+
+            if (!isset($allowed_methods[$URI])) {
+                $allowed_methods[$URI] = [];
+            }
+
+            array_push($allowed_methods[$URI], $HTTP_method);
+        }
+
+        foreach ($allowed_methods as $URI => $HTTP_methods) {
+            $routes->options($URI, function () {
+                $response = response();
+                $response->setStatusCode(204);
+                $response->setHeader(
+                    "Allow:",
+                    implode(", ", array_merge([ "OPTIONS" ], $HTTP_methods))
+                );
+
+                return $response;
+            });
         }
     }
 }
@@ -123,5 +143,6 @@ $routes->patch(
 );
 
 $routes->get("/", "Home::index");
+$routes->options("(:any)", static function () {});
 
 service("auth")->routes($routes);
