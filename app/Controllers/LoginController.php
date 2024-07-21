@@ -99,6 +99,8 @@ class LoginController extends BaseLoginController {
     }
 
     public function customLogoutAction(): ResponseInterface {
+        helper([ "auth", "setting", "session" ]);
+
         $session = session();
         $has_authorization_header = $this->request->hasHeader("Authorization");
 
