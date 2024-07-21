@@ -37,6 +37,8 @@ class ChainAuth extends BaseAuth implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
+        helper([ "auth", "setting", "session" ]);
+
         $session = session();
         $original_response = parent::before($request, $arguments);
 
