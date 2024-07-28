@@ -21,6 +21,8 @@ class MakeTestUser extends Seeder
 {
     public function run()
     {
+        helper([ "auth" ]);
+
         $users = auth()->getProvider();
 
         $user = new User([
