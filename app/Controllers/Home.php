@@ -11,10 +11,10 @@ class Home extends BaseController
             "data" => [
                 "csrf_token" => csrf_hash()
             ],
-            "meta" => array_merge($metadata, [
+            "meta" => [
                 "NF_POD_IP" => $_ENV["NF_POD_IP"] ?? null,
                 "headers" => $this->request->headers()
-            ])
+            ]
         ]);
     }
 }
