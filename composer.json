@@ -66,9 +66,6 @@
 			"php spark migrate -n \"App\""
 		],
 		"seed:initial": [
-			"php spark migrate:rollback",
-			"php spark migrate:rollback",
-			"php spark migrate:rollback",
 			"composer run migrate:all",
 			"php spark db:seed MakeTestUser"
 		]
