@@ -211,4 +211,12 @@ class App extends BaseConfig
      * @see https://github.com/KennethTrecy/peratorakka_server/issues/16
      */
     public int $userCountLimit = 0;
+
+    public function __construct() {
+        parent::__construct();
+
+        if (isset($_ENV["NF_POD_IP"])) {
+            $this->proxyIPs[$_ENV["NF_POD_IP"]] = "X-Forwarded-For";
+        }
+    }
 }
