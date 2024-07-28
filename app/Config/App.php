@@ -215,8 +215,8 @@ class App extends BaseConfig
     public function __construct() {
         parent::__construct();
 
-        if (isset($_ENV["NF_POD_IP"])) {
-            $this->proxyIPs[$_ENV["NF_POD_IP"]] = "X-Forwarded-For";
+        if (!is_null(env("NF_POD_IP"))) {
+            $this->proxyIPs[env("NF_POD_IP")] = "X-Forwarded-For";
         }
     }
 }
