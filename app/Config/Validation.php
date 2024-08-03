@@ -12,6 +12,7 @@ use App\Validation\DatabaseRules;
 use App\Validation\SimilarityRules;
 use App\Validation\TimeRules;
 use App\Validation\EnumerationRules;
+use App\Validation\FractionRules;
 
 class Validation extends BaseConfig
 {
@@ -34,6 +35,7 @@ class Validation extends BaseConfig
         SimilarityRules::class,
         TimeRules::class,
         EnumerationRules::class,
+        FractionRules::class
     ];
 
     /**
