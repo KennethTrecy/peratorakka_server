@@ -472,6 +472,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
             Time::now()
         );
 
+        $last_entry_transacted_time = array_reduce(
+            $financial_entries,
+            function ($previous_time, $current_entry) {
+                $current_time = $current_entry->transacted_at;
+                $later_time = $previous_time->isAfter($current_time)
+                    ? $previous_time
+                    : $current_time;
+
+                return $later_time;
+            },
+            $first_entry_transacted_time
+        );
+
         $previous_frozen_period = model(FrozenPeriodModel::class, false)
             ->where("finished_at <", $first_entry_transacted_time)
             ->orderBy("finished_at", "DESC")
@@ -700,17 +713,48 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $retained_accounts_on_flow_calculations
         ));
 
-        $exchange_modifiers = array_filter(
-            $modifiers,
-            function ($modifier) {
-                return $modifier->action === EXCHANGE_MODIFIER_ACTION;
-            }
-        );
-        $raw_exchange_rates = static::makeExchangeRates(
-            $exchange_modifiers,
-            $accounts,
-            $grouped_financial_entries
-        );
+        $exchange_modifiers = model(ModifierModel::class)
+            ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
+            ->whereIn(
+                "id",
+                model(FinancialEntryModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->where(
+                        "transacted_at <=",
+                        $last_entry_transacted_time
+                    )
+            )
+            ->findAll();
+
+        foreach ($exchange_modifiers as $modifier) {
+            $debit_account_id = $modifier->debit_account_id;
+            $credit_account_id = $modifier->credit_account_id;
+            array_push($linked_accounts, $debit_account_id, $credit_account_id);
+        }
+
+        $financial_entries = count($exchange_modifiers) > 0
+            ? model(FinancialEntryModel::class)
+                ->whereIn("modifier_id", array_map(
+                    function ($modifier) {
+                        return $modifier->id;
+                    },
+                    $exchange_modifiers
+                ))
+                ->orderBy("transacted_at", "DESC")
+                ->findAll()
+            : [];
+
+        $grouped_financial_entries = count($financial_entries) > 0
+            ? static::groupFinancialEntriesByModifier($financial_entries)
+            : [];
+
+        $raw_exchange_rates = count($grouped_financial_entries) > 0
+            ? static::makeExchangeRates(
+                $exchange_modifiers,
+                $accounts,
+                $grouped_financial_entries
+            ) : [];
 
         $accounts = array_filter(
             $accounts,
