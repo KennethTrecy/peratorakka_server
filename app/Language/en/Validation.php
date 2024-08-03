@@ -17,5 +17,7 @@ return [
 
     'ensure_ownership' => 'The {field} must be owned by the current user and present.',
     'has_column_value_in_list' => 'The {field} does not match the acceptable values.',
-    'is_unique_compositely' => 'The {field} must be a unique value in the database.'
+    'is_unique_compositely' => 'The {field} must be a unique value in the database.',
+
+    'is_valid_currency_amount' => 'The amount in {field} must be a fractional form or decimal form.'
 ];
