@@ -3,7 +3,7 @@
 namespace App\Validation;
 
 class FractionRules {
-    public function is_fractional_or_numeric_number(
+    public function is_valid_currency_amount(
         $value,
         string $parameters,
         array $data,
