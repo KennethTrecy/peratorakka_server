@@ -75,7 +75,7 @@ class TimeRules {
     ): bool {
         $frozen_period_model = model(FrozenPeriodModel::class);
         $matched_frozen_entry_count = $frozen_period_model
-            ->where("started_at >=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
+            ->where("started_at <=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
             ->where("finished_at >=", Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value))
             ->countAllResults();
         $is_not_frozen = $matched_frozen_entry_count === 0;
