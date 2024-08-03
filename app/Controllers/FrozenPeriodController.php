@@ -278,6 +278,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
     public function dry_run_create()
     {
+        helper("auth");
+
         $current_user = auth()->user();
         $controller = $this;
         $validation = $this->makeCreateValidation($current_user);
