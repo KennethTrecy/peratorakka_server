@@ -729,10 +729,18 @@ class FrozenPeriodController extends BaseOwnedResourceController
             )
             ->findAll();
 
+        $linked_exchange_accounts = [];
         foreach ($exchange_modifiers as $modifier) {
             $debit_account_id = $modifier->debit_account_id;
             $credit_account_id = $modifier->credit_account_id;
-            array_push($linked_accounts, $debit_account_id, $credit_account_id);
+            array_push($linked_exchange_accounts, $debit_account_id, $credit_account_id);
+        }
+
+        $exchange_accounts = [];
+        if (count($linked_exchange_accounts) > 0) {
+            $exchange_accounts = model(AccountModel::class)
+                ->whereIn("id", array_unique($linked_exchange_accounts))
+                ->findAll();
         }
 
         $financial_entries = count($exchange_modifiers) > 0
@@ -754,7 +762,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $raw_exchange_rates = count($grouped_financial_entries) > 0
             ? static::makeExchangeRates(
                 $exchange_modifiers,
-                $accounts,
+                $exchange_accounts,
                 $grouped_financial_entries
             ) : [];
 
