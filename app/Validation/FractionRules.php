@@ -5,8 +5,6 @@ namespace App\Validation;
 class FractionRules {
     public function is_valid_currency_amount(
         $value,
-        string $parameters,
-        array $data,
         ?string &$error = null
     ): bool {
         if ($this->isRationalNumber($value)) return true;
