@@ -47,7 +47,7 @@ class FinancialEntryController extends BaseOwnedResourceController
             "string",
             "min_length[1]",
             "max_length[255]",
-            "numeric",
+            "is_valid_currency_amount",
             "must_be_same_for_modifier[$individual_name.modifier_id,$individual_name.credit_amount]"
         ]);
 
@@ -63,7 +63,7 @@ class FinancialEntryController extends BaseOwnedResourceController
             "string",
             "min_length[1]",
             "max_length[255]",
-            "numeric",
+            "is_valid_currency_amount",
             "must_be_same_for_financial_entry[$resource_id,$individual_name.credit_amount]"
         ]);
 
@@ -140,7 +140,7 @@ class FinancialEntryController extends BaseOwnedResourceController
             "string",
             "min_length[1]",
             "max_length[255]",
-            "numeric"
+            "is_valid_currency_amount"
         ]);
         $validation->setRule("$individual_name.transacted_at", "transacted date", [
             "required",
