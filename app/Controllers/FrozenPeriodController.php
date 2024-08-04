@@ -8,6 +8,7 @@ use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
 use App\Casts\ModifierAction;
+use App\Casts\RationalNumber;
 use App\Contracts\OwnedResource;
 use App\Entities\FlowCalculation;
 use App\Entities\SummaryCalculation;
@@ -893,6 +894,18 @@ class FrozenPeriodController extends BaseOwnedResourceController
             []
         );
         $raw_exchange_rates = array_values($raw_exchange_rates);
+        $raw_exchange_rates = array_map(
+            function ($raw_exchange_rate) {
+                $source = RationalNumber::get($raw_exchange_rate["source"]["value"]);
+                $destination = RationalNumber::get($raw_exchange_rate["destination"]["value"]);
+                $rate = $destination->dividedBy($source)->simplified();
+
+                $raw_exchange_rate["source"]["value"] = $rate->getDenominator();
+                $raw_exchange_rate["destination"]["value"] = $rate->getNumerator();
+                return $raw_exchange_rate;
+            },
+            $raw_exchange_rates
+        );
 
         return $raw_exchange_rates;
     }
