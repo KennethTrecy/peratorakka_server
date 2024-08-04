@@ -8,8 +8,8 @@
 # Peratorakka Server
 A server for any Peratorakka client.
 
-Peratorakka is a software system aimed to manage and track the personal
-finances. It is made up of a [client] and server. In this repository, it has an
+Peratorakka is a software system aimed to manage and track personal finances.
+It is made up of a [client] and server. In this repository, it has an
 implementation of the server which process the data and stores them in any
 compatible database. The database may be an instance of PostgreSQL server,
 MySQL server, or others as long as it is supported by CodeIgniter framework.
