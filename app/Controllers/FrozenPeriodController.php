@@ -77,7 +77,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 "id",
                 model(FinancialEntryModel::class, false)
                     ->builder()
-                    ->select("id")
+                    ->select("modifier_id")
                     ->where(
                         "transacted_at <=",
                         $initial_document[static::getIndividualName()]->finished_at
@@ -721,7 +721,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 "id",
                 model(FinancialEntryModel::class, false)
                     ->builder()
-                    ->select("id")
+                    ->select("modifier_id")
                     ->where(
                         "transacted_at <=",
                         $last_entry_transacted_time
@@ -868,8 +868,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 if (isset($raw_exchanges[$exchange_id])) {
                     if (
                         $financial_entry
-                        ->updated_at
-                        ->isAfter($raw_exchanges[$exchange_id]["updated_at"])
+                            ->updated_at
+                            ->isAfter($raw_exchanges[$exchange_id]["updated_at"])
                     ) {
                         $raw_exchanges[$exchange_id]["source"]["value"] = $source_value;
                         $raw_exchanges[$exchange_id]["destination"]["value"] = $destination_value;
