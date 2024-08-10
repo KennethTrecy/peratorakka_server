@@ -626,6 +626,34 @@ digraph {
 			</table>
 			>
 		]
+		collected_formula [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Collected Formula
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">collections_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">formula_id</td>
+					<td align="left">bigint</td>
+				</tr>
+			</table>
+			>
+		]
 		formula [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -800,7 +828,9 @@ digraph {
 		frozen_periods -> flow_calculations
 		accounts -> flow_calculations
 		accounts -> collected_accounts
+		formula -> collected_formula
 		collections -> collected_accounts
+		collections -> collected_formula
 		collections -> collection_operands
 	}
 
@@ -831,6 +861,7 @@ digraph {
 		interval_events
 		timeout_events
 		event_started_times
+		collected_formula
 	}
 
 	{
@@ -842,7 +873,6 @@ digraph {
 
 	{
 		rank = same;
-		// currencies
 		events
 		cash_flow_activities
 		frozen_periods
