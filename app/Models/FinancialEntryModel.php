@@ -45,6 +45,7 @@ class FinancialEntryModel extends BaseResourceModel
         $query_builder = parent::filterList($query_builder, $options);
 
         $filter_account_id = $options["account_id"] ?? null;
+        $filter_modifier_id = $options["modifier_id"] ?? null;
         $begin_date = $options["begin_date"] ?? null;
         $end_date = $options["end_date"] ?? null;
 
@@ -58,6 +59,11 @@ class FinancialEntryModel extends BaseResourceModel
                         ->where("debit_account_id", $filter_account_id)
                         ->orWhere("credit_account_id", $filter_account_id)
                 );
+        }
+
+        if (!is_null($filter_modifier_id)) {
+            $query_builder = $query_builder
+                ->where("modifier_id", $filter_modifier_id);
         }
 
         if (!is_null($begin_date)) {
