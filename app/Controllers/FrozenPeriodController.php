@@ -84,6 +84,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $initial_document[static::getIndividualName()]->finished_at
                     )
             )
+            ->withDeleted()
             ->findAll();
 
         foreach ($exchange_modifiers as $modifier) {
@@ -102,6 +103,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $exchange_modifiers
                 ))
                 ->orderBy("transacted_at", "DESC")
+                ->withDeleted()
                 ->findAll()
             : [];
 
@@ -113,6 +115,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_accounts) > 0) {
             $accounts = model(AccountModel::class)
                 ->whereIn("id", array_unique($linked_accounts))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["accounts"] = $accounts;
@@ -162,6 +165,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_cash_flow_activities) > 0) {
             $cash_flow_activities = model(CashFlowActivityModel::class)
                 ->whereIn("id", array_unique($linked_cash_flow_activities))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["cash_flow_activities"] = $cash_flow_activities;
@@ -231,6 +235,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $financial_entries = model(FinancialEntryModel::class)
             ->where("transacted_at >=", $main_document["started_at"])
             ->where("transacted_at <=", $main_document["finished_at"])
+            ->withDeleted()
             ->findAll();
 
         [
@@ -369,6 +374,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_modifiers) > 0) {
             $modifiers = model(ModifierModel::class)
                 ->whereIn("id", array_unique($linked_modifiers))
+                ->withDeleted()
                 ->findAll();
         }
 
@@ -412,6 +418,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_cash_flow_activities) > 0) {
             $cash_flow_activities = model(CashFlowActivityModel::class)
                 ->whereIn("id", array_unique($linked_cash_flow_activities))
+                ->withDeleted()
                 ->findAll();
         }
         $keyed_cash_flow_activities = array_reduce(
@@ -547,6 +554,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_accounts) > 0) {
             $accounts = model(AccountModel::class)
                 ->whereIn("id", array_unique($linked_accounts))
+                ->withDeleted()
                 ->findAll();
         }
         $keyed_accounts = array_reduce(
@@ -728,6 +736,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $last_entry_transacted_time
                     )
             )
+            ->withDeleted()
             ->findAll();
 
         $linked_exchange_accounts = [];
@@ -741,6 +750,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (count($linked_exchange_accounts) > 0) {
             $exchange_accounts = model(AccountModel::class)
                 ->whereIn("id", array_unique($linked_exchange_accounts))
+                ->withDeleted()
                 ->findAll();
         }
 
@@ -753,6 +763,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $exchange_modifiers
                 ))
                 ->orderBy("transacted_at", "DESC")
+                ->withDeleted()
                 ->findAll()
             : [];
 
@@ -1234,7 +1245,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 $currencies = $currency_modifier($currencies);
             }
 
-            return $currencies->findAll();
+            return $currencies->withDeleted()->findAll();
         }
 
         return $currencies;
