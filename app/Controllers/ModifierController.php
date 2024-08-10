@@ -103,6 +103,7 @@ class ModifierController extends BaseOwnedResourceController
         if (count($linked_accounts) > 0) {
             $accounts = model(AccountModel::class)
                 ->whereIn("id", array_unique($linked_accounts))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["accounts"] = $accounts;
@@ -125,6 +126,7 @@ class ModifierController extends BaseOwnedResourceController
         if (count($linked_cash_flow_activities) > 0) {
             $cash_flow_activities = model(CashFlowActivityModel::class)
                 ->whereIn("id", array_unique($linked_cash_flow_activities))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["cash_flow_activities"] = $cash_flow_activities;
@@ -139,6 +141,7 @@ class ModifierController extends BaseOwnedResourceController
         if (count($linked_currencies) > 0) {
             $currencies = model(CurrencyModel::class)
                 ->whereIn("id", array_unique($linked_currencies))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["currencies"] = $currencies;
