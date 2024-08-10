@@ -4,6 +4,7 @@ namespace App\Libraries;
 
 use Throwable;
 
+use CodeIgniter\Filters\Cors;
 use CodeIgniter\Debug\BaseExceptionHandler;
 use CodeIgniter\Debug\ExceptionHandlerInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
@@ -21,6 +22,10 @@ class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHand
         int $statusCode,
         int $exitCode
     ): void {
+        $filter = new Cors();
+
+        $filter->after($request, $response);
+
         $response
             ->setStatusCode(
                 $exception instanceof HTTPExceptionInterface
