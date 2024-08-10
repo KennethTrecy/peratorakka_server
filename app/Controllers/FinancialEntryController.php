@@ -87,6 +87,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         if (count($linked_modifiers) > 0) {
             $modifiers = model(ModifierModel::class)
                 ->whereIn("id", array_unique($linked_modifiers))
+                ->withDeleted()
                 ->findAll();
         }
 
@@ -107,6 +108,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         if (count($linked_accounts) > 0) {
             $accounts = model(AccountModel::class)
                 ->whereIn("id", array_unique($linked_accounts))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["accounts"] = $accounts;
@@ -121,6 +123,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         if (count($linked_currencies) > 0) {
             $currencies = model(CurrencyModel::class)
                 ->whereIn("id", array_unique($linked_currencies))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["currencies"] = $currencies;
