@@ -150,7 +150,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation->setRule("$individual_name.remarks", "remarks", [
             "permit_empty",
             "max_length[500]",
-            "alpha_numeric_punct"
+            "string"
         ]);
 
         return $validation;
