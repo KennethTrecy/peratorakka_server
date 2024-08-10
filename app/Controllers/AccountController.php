@@ -103,6 +103,7 @@ class AccountController extends BaseOwnedResourceController
         if (count($linked_currencies) > 0) {
             $currencies = model(CurrencyModel::class)
                 ->whereIn("id", array_unique($linked_currencies))
+                ->withDeleted()
                 ->findAll();
         }
         $enriched_document["currencies"] = $currencies;
@@ -120,7 +121,7 @@ class AccountController extends BaseOwnedResourceController
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
             "max_length[500]",
-            "alpha_numeric_punct"
+            "string"
         ]);
 
         return $validation;
