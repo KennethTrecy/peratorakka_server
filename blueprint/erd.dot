@@ -2,7 +2,8 @@ digraph {
 	graph [
 		layout = dot
 		splines = true
-		nodesep = 0.3
+		nodesep = 0.75
+		rankdir = LR
 	]
 	{
 		node [ shape = none margin = 0 fontname="Candara" ]
@@ -58,10 +59,12 @@ digraph {
 					<td align="left">
 						code<br align="left"/>
 						name<br align="left"/>
+						presentational_precision<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
 						varchar(255)<br align="left"/>
+						int<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -561,9 +564,201 @@ digraph {
 			</table>
 			>
 		]
+		collections [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Collections
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+						description<br align="left"/>
+					</td>
+					<td align="left">
+						name<br align="left"/>
+						nullable text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		collected_accounts [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Collected Accounts
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">collections_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+			</table>
+			>
+		]
+		formula [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Formula
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+						description<br align="left"/>
+						operator<br align="left"/>
+					</td>
+					<td align="left">
+						name<br align="left"/>
+						nullable text<br align="left"/>
+						enum(plus,minus,multiply,divide,power,identity)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		operands [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Operands
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">formula_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						kind<br align="left"/>
+						side<br align="left"/>
+					</td>
+					<td align="left">
+						enum(constant,collective_sum)<br align="left"/>
+						enum(debit,credit)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		constant_operands [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Constant Operands
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">operand_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						value<br align="left"/>
+					</td>
+					<td align="left">
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		collection_operands [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Collection Operands
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">operand_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">collections_id</td>
+					<td align="left">bigint</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
-	edge [ dir = "both" ]
+	edge [ dir = "both" len = 0.1 ]
 	{
 		// zero or one
 		edge [
@@ -575,6 +770,8 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
+		operands -> constant_operands
+		operands -> collection_operands
 	}
 
 	{
@@ -586,6 +783,8 @@ digraph {
 
 		users -> currencies
 		users -> cash_flow_activities
+		users -> collections
+		users -> formula
 		cash_flow_activities -> flow_calculations
 		currencies -> accounts
 		users -> events
@@ -600,6 +799,9 @@ digraph {
 		cash_flow_activities -> modifiers
 		frozen_periods -> flow_calculations
 		accounts -> flow_calculations
+		accounts -> collected_accounts
+		collections -> collected_accounts
+		collections -> collection_operands
 	}
 
 	{
@@ -618,49 +820,48 @@ digraph {
 		]
 
 		frozen_periods -> summary_calculations
+		formula -> operands
 	}
 
 	{
 		rank = source;
-		events
-		frozen_periods
+		formula
+		operands
+		constant_operands
+		interval_events
+		timeout_events
 		event_started_times
-		summary_calculations
 	}
 
 	{
 		rank = same;
 		users
-		flow_calculations
-		interval_events
-		timeout_events
+		collections
+		collection_operands
+	}
+
+	{
+		rank = same;
+		// currencies
+		events
+		cash_flow_activities
+		frozen_periods
 	}
 
 	{
 		rank = same;
 		currencies
-		reactive_modifiers
+		collected_accounts
+		flow_calculations
+		summary_calculations
+		modifiers
+		financial_entries
 	}
 
 	{
 		rank = same;
 		accounts
-		cash_flow_activities
+		reactive_modifiers
 		dependent_modifiers
-	}
-
-	{
-		rank = same;
-	}
-
-	{
-		rank = same;
-		modifiers
-
-		financial_entries
-	}
-
-	{
-		rank = sink;
 	}
 }
