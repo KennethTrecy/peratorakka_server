@@ -40,7 +40,7 @@ class AccountController extends BaseOwnedResourceController
             "required",
             "min_length[3]",
             "max_length[255]",
-            "alpha_numeric_space",
+            "alpha_numeric_punct",
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
@@ -67,7 +67,7 @@ class AccountController extends BaseOwnedResourceController
             "required",
             "min_length[3]",
             "max_length[255]",
-            "alpha_numeric_space",
+            "alpha_numeric_punct",
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
