@@ -33,7 +33,7 @@ class CashFlowActivityController extends BaseOwnedResourceController
             "required",
             "min_length[2]",
             "max_length[255]",
-            "alpha_numeric_space",
+            "alpha_numeric_punct",
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
@@ -56,7 +56,7 @@ class CashFlowActivityController extends BaseOwnedResourceController
             "required",
             "min_length[2]",
             "max_length[255]",
-            "alpha_numeric_space",
+            "alpha_numeric_punct",
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
@@ -88,7 +88,7 @@ class CashFlowActivityController extends BaseOwnedResourceController
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
             "max_length[500]",
-            "alpha_numeric_punct"
+            "string"
         ]);
 
         return $validation;
