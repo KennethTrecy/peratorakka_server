@@ -44,7 +44,8 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
     // Custom attributes
     protected $available_search_modes = [
         SEARCH_NORMALLY,
-        SEARCH_ONLY_DELETED
+        SEARCH_ONLY_DELETED,
+        SEARCH_WITH_DELETED
     ];
     protected $sortable_fields = [];
     protected $sortable_factors = [];
