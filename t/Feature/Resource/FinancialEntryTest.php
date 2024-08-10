@@ -568,8 +568,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "remarks" => "@ characters not allowed here"
+            "modifier_id" => $modifier->id + 1
         ]);
         $financial_entry = $financial_entry_fabricator->make();
 
@@ -780,14 +779,13 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $modifier = $modifier_fabricator->create();
         $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
         $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "remarks" => "@ characters not allowed here"
+            "modifier_id" => $modifier->id + 1
         ]);
         $financial_entry = $financial_entry_fabricator->create();
         $new_details = $financial_entry_fabricator->make();
 
-        $this->expectException(InvalidRequest::class);
-        $this->expectExceptionCode(400);
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
