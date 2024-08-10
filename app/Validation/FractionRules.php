@@ -19,7 +19,7 @@ class FractionRules {
     }
 
     private function isRationalNumber(string $value): bool {
-        return preg_match("/^\d+\.\d+$/", $value) === 1;
+        return preg_match("/^\d+(\.\d+)?$/", $value) === 1;
     }
 
     private function isInteger(string $value): bool {
