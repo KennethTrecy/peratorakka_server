@@ -49,7 +49,6 @@ class RegisterController extends BaseRegisterController {
                         ]
                     ]);
             }
-            log_message("error", json_encode($user_count));
         }
 
         $_POST = array_merge($_POST, $this->request->getJSON(true) ?? []);
