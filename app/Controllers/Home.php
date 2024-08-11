@@ -2,8 +2,6 @@
 
 namespace App\Controllers;
 
-use Config\App;
-
 class Home extends BaseController
 {
     public function index()
@@ -13,10 +11,7 @@ class Home extends BaseController
             "data" => [
                 "csrf_token" => csrf_hash()
             ],
-            "meta" => array_merge($metadata, [
-                "userCountLimit" => (new App())->userCountLimit,
-                "environment" => $_ENV["CI_ENVIRONMENT"]
-            ])
+            "meta" => $metadata
         ]);
     }
 }
