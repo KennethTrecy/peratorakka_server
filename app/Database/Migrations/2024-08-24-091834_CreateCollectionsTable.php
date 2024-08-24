@@ -29,6 +29,18 @@ class CreateCollectionsTable extends Migration
             "description" => [
                 "type" => "TEXT",
                 "null" => true,
+            ],
+            "created_at" => [
+                "type" => "DATETIME",
+                "default" => new RawSql("CURRENT_TIMESTAMP"),
+            ],
+            "updated_at" => [
+                "type" => "DATETIME",
+                "default" => new RawSql("CURRENT_TIMESTAMP"),
+            ],
+            "deleted_at" => [
+                "type" => "DATETIME",
+                "null" => true,
             ]
         ]);
         $this->forge->addPrimaryKey("id", "pk_collections");
