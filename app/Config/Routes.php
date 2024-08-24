@@ -104,6 +104,7 @@ use App\Controllers\CurrencyController;
 use App\Controllers\FinancialEntryController;
 use App\Controllers\FrozenPeriodController;
 use App\Controllers\ModifierController;
+use App\Controllers\AccountCollectionController;
 use App\Controllers\UserController;
 
 make_owned_resource_routes($routes, AccountController::class);
@@ -116,6 +117,11 @@ make_owned_resource_routes($routes, FrozenPeriodController::class, [
     "forceDelete",
     "show",
     "index",
+    "create"
+]);
+make_owned_resource_routes($routes, AccountCollectionController::class, [
+    "forceDelete",
+    "show",
     "create"
 ]);
 make_owned_resource_routes($routes, AccessTokenController::class, [
