@@ -690,6 +690,44 @@ digraph {
 			</table>
 			>
 		]
+		chart [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Chart
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">formula_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+						kind<br align="left"/>
+						notes<br align="left"/>
+						extra<br align="left"/>
+					</td>
+					<td align="left">
+						name<br align="left"/>
+						enum(number,pie,monthly_line,yearly_line)<br align="left"/>
+						nullable text<br align="left"/>
+						nullable text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 		operands [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -920,6 +958,16 @@ digraph {
 	}
 
 	{
+		// one to many
+		edge [
+			arrowhead = noneteetee
+			arrowtail = nonecrowtee
+		]
+
+		chart -> formula
+	}
+
+	{
 		rank = source;
 		collections
 		interval_events
@@ -936,6 +984,7 @@ digraph {
 		users
 		custom_constant_operands
 		system_constant_operands
+		chart
 	}
 
 	{
