@@ -15,9 +15,15 @@ compatible database. The database may be an instance of PostgreSQL server,
 MySQL server, or others as long as it is supported by CodeIgniter framework.
 CodeIgniter is the framework that Peratorakka server builds on.
 
-There is no public server available right now, but it may happen in the future
-when the author has enough time. Yet, I still outlined the instructions below
-in case someone wants to host an instance of Peratorakka server.
+There is a public server available right now for anyone to try the Peratorakka
+server. Use `https://site--server--xtzwjgsybx5v.code.run` on any compatible
+Peratorakka client with `test@example.com` as the email and `12345678` as the
+password. The public Peratorakka client is compatible with the public
+Peratorakka server. To anyone who uses the public Peratorakka server, please
+use the server responsibly, so others can try it.
+
+I still outlined the instructions below in case someone wants to host an
+instance of Peratorakka server.
 
 For more information on the abilities of the system, please read the [author's
 post].
