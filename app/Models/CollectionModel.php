@@ -16,7 +16,8 @@ class CollectionModel extends BaseResourceModel
     protected $allowedFields = [
         "user_id",
         "name",
-        "description"
+        "description",
+        "deleted_at"
     ];
     protected $useTimestamps = true;
     protected $useSoftDeletes = true;
