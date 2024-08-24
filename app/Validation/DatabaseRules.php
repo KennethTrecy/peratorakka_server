@@ -121,7 +121,7 @@ class DatabaseRules {
      *      model:column_name
      *      |other_column->body_pointer
      *      |other_column=raw_value,
-     *      optional_field=optional_value
+     *      ignore_field=ignore_raw_value
      * ]`
      */
     public function is_unique_compositely(
