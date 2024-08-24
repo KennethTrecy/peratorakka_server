@@ -598,13 +598,13 @@ digraph {
 			</table>
 			>
 		]
-		collected_accounts [
+		account_collections [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Collected Accounts
+							Account Collections
 						</font>
 					</td>
 				</tr>
@@ -626,13 +626,13 @@ digraph {
 			</table>
 			>
 		]
-		collected_formula [
+		formula_collections [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Collected Formula
+							Formula Collections
 						</font>
 					</td>
 				</tr>
@@ -654,13 +654,13 @@ digraph {
 			</table>
 			>
 		]
-		formula [
+		formulae [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Formula
+							Formulae
 						</font>
 					</td>
 				</tr>
@@ -931,10 +931,10 @@ digraph {
 		cash_flow_activities -> modifiers
 		frozen_periods -> flow_calculations
 		accounts -> flow_calculations
-		accounts -> collected_accounts
-		formula -> collected_formula
-		collections -> collected_accounts
-		collections -> collected_formula
+		accounts -> account_collections
+		formulae -> formula_collections
+		collections -> account_collections
+		collections -> formula_collections
 		collections -> collection_operands
 	}
 
@@ -945,7 +945,7 @@ digraph {
 			arrowtail = noneteeodot
 		]
 
-		currencies -> formula
+		currencies -> formulae
 	}
 
 	{
@@ -956,7 +956,7 @@ digraph {
 		]
 
 		frozen_periods -> summary_calculations
-		formula -> operands
+		formulae -> operands
 	}
 
 	{
@@ -966,7 +966,7 @@ digraph {
 			arrowtail = nonecrowtee
 		]
 
-		numerical_tool -> formula
+		numerical_tool -> formulae
 	}
 
 	{
@@ -975,13 +975,13 @@ digraph {
 		interval_events
 		timeout_events
 		event_started_times
-		collected_formula
+		formula_collections
 		collection_operands
 	}
 
 	{
 		rank = same;
-		formula
+		formulae
 		operands
 		users
 		custom_constant_operands
@@ -999,7 +999,7 @@ digraph {
 	{
 		rank = same;
 		currencies
-		collected_accounts
+		account_collections
 		flow_calculations
 		summary_calculations
 		modifiers
