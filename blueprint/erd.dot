@@ -671,8 +671,8 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">user_id</td>
-					<td align="left">bigint</td>
+					<td align="left">currency_id</td>
+					<td align="left">nullable bigint</td>
 				</tr>
 				<tr>
 					<td></td>
@@ -714,23 +714,23 @@ digraph {
 					<td></td>
 					<td align="left">
 						kind<br align="left"/>
-						side<br align="left"/>
+						operand_index<br align="left"/>
 					</td>
 					<td align="left">
-						enum(constant,collective_sum)<br align="left"/>
-						enum(debit,credit)<br align="left"/>
+						enum(custom_constant,collective_debit_sum,collective_credit_sum)<br align="left"/>
+						int<br align="left"/>
 					</td>
 				</tr>
 			</table>
 			>
 		]
-		constant_operands [
+		custom_constant_operands [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Constant Operands
+							Custom Constant Operands
 						</font>
 					</td>
 				</tr>
@@ -798,7 +798,7 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
-		operands -> constant_operands
+		operands -> custom_constant_operands
 		operands -> collection_operands
 	}
 
@@ -812,7 +812,6 @@ digraph {
 		users -> currencies
 		users -> cash_flow_activities
 		users -> collections
-		users -> formula
 		cash_flow_activities -> flow_calculations
 		currencies -> accounts
 		users -> events
@@ -840,6 +839,8 @@ digraph {
 			arrowhead = nonecrowodot
 			arrowtail = noneteeodot
 		]
+
+		currencies -> formula
 	}
 
 	{
@@ -855,20 +856,20 @@ digraph {
 
 	{
 		rank = source;
-		formula
-		operands
-		constant_operands
+		collections
 		interval_events
 		timeout_events
 		event_started_times
 		collected_formula
+		collection_operands
 	}
 
 	{
 		rank = same;
+		formula
+		operands
 		users
-		collections
-		collection_operands
+		custom_constant_operands
 	}
 
 	{
