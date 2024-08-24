@@ -50,6 +50,8 @@ class CollectionController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
+        $user_id = $owner->id;
+
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[3]",
