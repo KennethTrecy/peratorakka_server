@@ -720,7 +720,7 @@ digraph {
 					</td>
 					<td align="left">
 						name<br align="left"/>
-						enum(number,pie,monthly_line,yearly_line)<br align="left"/>
+						enum(number,table,pie,line)<br align="left"/>
 						nullable text<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
