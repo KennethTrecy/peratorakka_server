@@ -690,13 +690,13 @@ digraph {
 			</table>
 			>
 		]
-		chart [
+		numerical_tool [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Chart
+							Numerical Tools
 						</font>
 					</td>
 				</tr>
@@ -715,12 +715,14 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						kind<br align="left"/>
+						order<br align="left"/>
 						notes<br align="left"/>
 						extra<br align="left"/>
 					</td>
 					<td align="left">
 						name<br align="left"/>
 						enum(number,table,pie,line)<br align="left"/>
+						int<br align="left"/>
 						nullable text<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
@@ -964,7 +966,7 @@ digraph {
 			arrowtail = nonecrowtee
 		]
 
-		chart -> formula
+		numerical_tool -> formula
 	}
 
 	{
@@ -984,7 +986,7 @@ digraph {
 		users
 		custom_constant_operands
 		system_constant_operands
-		chart
+		numerical_tool
 	}
 
 	{
