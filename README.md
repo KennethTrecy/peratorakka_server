@@ -18,7 +18,7 @@ CodeIgniter is the framework that Peratorakka server builds on.
 There is a public server available right now for anyone to try the Peratorakka
 server. Use `https://site--server--xtzwjgsybx5v.code.run` on any compatible
 Peratorakka client with `test@example.com` as the email and `12345678` as the
-password. The public Peratorakka client is compatible with the public
+password. The [public Peratorakka client] is compatible with the public
 Peratorakka server. To anyone who uses the public Peratorakka server, please
 use the server responsibly, so others can try it.
 
@@ -152,3 +152,4 @@ trademark holders unless explicitly stated.
 [contributing guide]: ./CONTRIBUTING.md
 [client]: https://github.com/KennethTrecy/peratorakka_client
 [author's post]: https://www.linkedin.com/posts/kenneth-trecy-tobias_good-day-everyone-after-five-months-of-testing-activity-7134037085828616192-Xtvx
+[public Peratorakka client]: https://peratorakka-client.pages.dev/
