@@ -717,7 +717,7 @@ digraph {
 						operand_index<br align="left"/>
 					</td>
 					<td align="left">
-						enum(custom_constant,collective_debit_sum,collective_credit_sum)<br align="left"/>
+						enum(custom_constant,system_constant,collective_debit_sum,collective_credit_sum)<br align="left"/>
 						int<br align="left"/>
 					</td>
 				</tr>
@@ -784,6 +784,70 @@ digraph {
 			</table>
 			>
 		]
+		custom_constant_operands [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Custom Constant Operands
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">operand_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						value<br align="left"/>
+					</td>
+					<td align="left">
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		system_constant_operands [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							System Constant Operands
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">operand_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						system_constant<br align="left"/>
+					</td>
+					<td align="left">
+						enum(days_in_evaluated_period, months_in_evaluated_period)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 	}
 
 	edge [ dir = "both" len = 0.1 ]
@@ -799,6 +863,7 @@ digraph {
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
 		operands -> custom_constant_operands
+		operands -> system_constant_operands
 		operands -> collection_operands
 	}
 
@@ -870,6 +935,7 @@ digraph {
 		operands
 		users
 		custom_constant_operands
+		system_constant_operands
 	}
 
 	{
