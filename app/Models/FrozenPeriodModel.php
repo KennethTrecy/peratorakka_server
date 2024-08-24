@@ -24,10 +24,7 @@ class FrozenPeriodModel extends BaseResourceModel
 
     protected $sortable_fields = [
         "started_at",
-        "finished_at",
-        "created_at",
-        "updated_at",
-        "deleted_at"
+        "finished_at"
     ];
 
     public function fake(Generator &$faker)
