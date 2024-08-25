@@ -19,8 +19,8 @@ class CreateFormulaeTable extends Migration
                 "unsigned" => true,
                 "auto_increment" => true,
             ],
-            "currency_id" => [
-                "type" => "BIGINT",
+            "user_id" => [
+                "type" => "INT",
                 "unsigned" => true,
             ],
             "name" => [
@@ -55,23 +55,23 @@ class CreateFormulaeTable extends Migration
                 "null" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id", "pk_accounts");
-        $this->forge->addUniqueKey("name", "accounts_name_key");
+        $this->forge->addPrimaryKey("id", "pk_formulae");
+        $this->forge->addUniqueKey("name", "formulae_name_key");
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
-                "currency_id",
-                "currencies",
+                "user_id",
+                "users",
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "accounts_currency_id_foreign"
+                "formulae_user_id_foreign"
             );
         }
-        $this->forge->createTable("accounts");
+        $this->forge->createTable("formulae");
     }
 
     public function down()
     {
-        $this->forge->dropTable("accounts");
+        $this->forge->dropTable("formulae");
     }
 }
