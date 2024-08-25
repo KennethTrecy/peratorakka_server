@@ -16,6 +16,7 @@ class Currency extends BaseResourceEntity
         "id" => "integer",
         "user_id" => "integer",
         "code" => "string",
-        "name" => "string"
+        "name" => "string",
+        "presentational_precision" => "integer"
     ];
 }
