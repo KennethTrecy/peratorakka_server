@@ -14,7 +14,6 @@ class AccountCollectionModel extends BaseResourceModel
     protected $table = "account_collections";
     protected $returnType = AccountCollection::class;
     protected $allowedFields = [
-        "user_id",
         "collection_id",
         "account_id"
     ];
@@ -36,6 +35,19 @@ class AccountCollectionModel extends BaseResourceModel
                     ->builder()
                     ->select("id")
                     ->where("user_id", $user->id)
+            )
+            ->whereIn(
+                "account_id",
+                model(AccountModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->whereIn(
+                        "currency_id",
+                        model(CurrencyModel::class, false)
+                            ->builder()
+                            ->select("id")
+                            ->where("user_id", $user->id)
+                    )
             );
     }
 }
