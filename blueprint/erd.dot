@@ -623,46 +623,6 @@ digraph {
 					<td align="left">account_id</td>
 					<td align="left">bigint</td>
 				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						considered_amount<br align="left"/>
-					</td>
-					<td align="left">
-						enum(unknown,<br align="left"/>
-						opening_debit_amount,opening_credit_amount,<br align="left"/>
-						unadjusted_debit_amount,unadjusted_credit_amount,<br align="left"/>
-						closed_debit_amount,closed_credit_amount)<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
-		formula_collections [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Formula Collections
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">collections_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">formula_id</td>
-					<td align="left">bigint</td>
-				</tr>
 			</table>
 			>
 		]
@@ -693,14 +653,14 @@ digraph {
 						description<br align="left"/>
 						output_format<br align="left"/><br align="left"/>
 						presentational_precision<br align="left"/>
-						operator<br align="left"/><br align="left"/>
+						formula<br align="left"/>
 					</td>
 					<td align="left">
 						name<br align="left"/>
 						nullable text<br align="left"/>
 						enum(unknown,raw,<br align="left"/>percentage,currency)<br align="left"/>
 						int<br align="left"/>
-						enum(unknown,plus,<br align="left"/>minus,multiply,divide,<br align="left"/>power,identity)<br align="left"/>
+						text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -740,7 +700,6 @@ digraph {
 						enum(number,table,pie,line)<br align="left"/>
 						int<br align="left"/>
 						nullable text<br align="left"/>
-						nullable text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -774,164 +733,6 @@ digraph {
 			</table>
 			>
 		]
-		operands [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Operands
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">formula_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						kind<br align="left"/><br align="left"/>
-						operand_index<br align="left"/>
-					</td>
-					<td align="left">
-						enum(unknown,custom_constant,<br align="left"/>system_constant,collective_sum)<br align="left"/>
-						int<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
-		custom_constant_operands [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Custom Constant Operands
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">operand_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						value<br align="left"/>
-					</td>
-					<td align="left">
-						string<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
-		collection_operands [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Collection Operands
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">operand_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">collections_id</td>
-					<td align="left">bigint</td>
-				</tr>
-			</table>
-			>
-		]
-		custom_constant_operands [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Custom Constant Operands
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">operand_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						value<br align="left"/>
-					</td>
-					<td align="left">
-						string<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
-		system_constant_operands [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							System Constant Operands
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">operand_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						system_constant<br align="left"/>
-					</td>
-					<td align="left">
-						enum(unknown,days_in_evaluated_period, months_in_evaluated_period)<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
 	}
 
 	edge [ dir = "both" len = 0.1 ]
@@ -946,8 +747,6 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
-		operands -> system_constant_operands
-		operands -> collection_operands
 		formulae -> formula_currencies
 	}
 
@@ -958,7 +757,6 @@ digraph {
 			arrowtail = noneteeodot
 		]
 
-		custom_constant_operands -> operands
 		formula_currencies -> currencies
 	}
 
@@ -987,9 +785,7 @@ digraph {
 		frozen_periods -> flow_calculations
 		accounts -> flow_calculations
 		accounts -> account_collections
-		formulae -> formula_collections
 		collections -> account_collections
-		collections -> collection_operands
 	}
 
 	{
@@ -999,7 +795,6 @@ digraph {
 			arrowtail = nonecrowodot
 		]
 
-		formula_collections -> collections
 	}
 
 	{
@@ -1019,7 +814,6 @@ digraph {
 		]
 
 		frozen_periods -> summary_calculations
-		formulae -> operands
 		numerical_tools -> formulae
 	}
 
@@ -1029,6 +823,8 @@ digraph {
 			style = invis
 		]
 
+		collections -> frozen_periods
+		// summary_calculations -> account_collections
 		numerical_tools -> users
 	}
 
@@ -1044,46 +840,41 @@ digraph {
 
 	{
 		rank = source;
-		collections
 		interval_events
 		timeout_events
 		event_started_times
-		formula_collections
-		collection_operands
-		custom_constant_operands
-		numerical_tools
-	}
-
-	{
-		rank = same;
-		formulae
-		operands
 		users
 	}
 
 	{
 		rank = same;
-		events
-		cash_flow_activities
-		frozen_periods
-		formula_currencies
+		formulae
 	}
 
 	{
 		rank = same;
+		numerical_tools
+		collections
+		events
+		cash_flow_activities
+		frozen_periods
+	}
+
+	{
+		rank = same;
+		formula_currencies
 		currencies
 		account_collections
 		flow_calculations
 		summary_calculations
 		modifiers
 		financial_entries
-		system_constant_operands
 	}
 
 	{
 		rank = same;
-		accounts
 		reactive_modifiers
+		accounts
 		dependent_modifiers
 	}
 }
