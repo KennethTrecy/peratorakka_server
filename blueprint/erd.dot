@@ -629,7 +629,8 @@ digraph {
 						considered_amount<br align="left"/>
 					</td>
 					<td align="left">
-						enum(opening_debit_amount,opening_credit_amount,<br align="left"/>
+						enum(unknown,<br align="left"/>
+						opening_debit_amount,opening_credit_amount,<br align="left"/>
 						unadjusted_debit_amount,unadjusted_credit_amount,<br align="left"/>
 						closed_debit_amount,closed_credit_amount)<br align="left"/>
 					</td>
@@ -690,16 +691,16 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
-						output_format<br align="left"/>
+						output_format<br align="left"/><br align="left"/>
 						presentational_precision<br align="left"/>
-						operator<br align="left"/>
+						operator<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
 						name<br align="left"/>
 						nullable text<br align="left"/>
-						enum(raw,percentage,currency)<br align="left"/>
+						enum(unknown,raw,<br align="left"/>percentage,currency)<br align="left"/>
 						int<br align="left"/>
-						enum(plus,minus,multiply,divide,power,identity)<br align="left"/>
+						enum(unknown,plus,<br align="left"/>minus,multiply,divide,<br align="left"/>power,identity)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -796,11 +797,11 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
-						kind<br align="left"/>
+						kind<br align="left"/><br align="left"/>
 						operand_index<br align="left"/>
 					</td>
 					<td align="left">
-						enum(custom_constant,system_constant,collective_sum)<br align="left"/>
+						enum(unknown,custom_constant,<br align="left"/>system_constant,collective_sum)<br align="left"/>
 						int<br align="left"/>
 					</td>
 				</tr>
@@ -925,7 +926,7 @@ digraph {
 						system_constant<br align="left"/>
 					</td>
 					<td align="left">
-						enum(days_in_evaluated_period, months_in_evaluated_period)<br align="left"/>
+						enum(unknown,days_in_evaluated_period, months_in_evaluated_period)<br align="left"/>
 					</td>
 				</tr>
 			</table>
