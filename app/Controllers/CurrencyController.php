@@ -114,6 +114,14 @@ class CurrencyController extends BaseOwnedResourceController
         $validation->setRule($individual_name, "currency info", [
             "required"
         ]);
+        $validation->setRule(
+            "$individual_name.presentational_precision",
+            "presentational precision",
+            [
+                "required",
+                "is_natural"
+            ]
+        );
 
         return $validation;
     }
