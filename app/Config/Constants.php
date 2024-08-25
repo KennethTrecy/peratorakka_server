@@ -216,6 +216,34 @@ define("MODIFIER_KINDS", [
 
 /*
  | --------------------------------------------------------------------------
+ | Output Formats
+ | --------------------------------------------------------------------------
+ |
+ | There are different output formats for formulae that the system can handle.
+ | - UNKNOWN_OUTPUT_FORMAT. A formula with this output format is not supported by the system at
+ |   the current version. This case may happen when the system downgraded.
+ | - RAW_OUTPUT_FORMAT. A formula with this output format outputs raw calculated results.
+ | - PERCENTAGE_OUTPUT_FORMAT. A formula with this output format multiplies the result with 100.
+ | - CURRENCY_OUTPUT_FORMAT. A formula with this output format converts the output into .
+ */
+define("UNKNOWN_OUTPUT_FORMAT", "unknown");
+define("RAW_OUTPUT_FORMAT", "record");
+define("PERCENTAGE_OUTPUT_FORMAT", "close");
+define("CURRENCY_OUTPUT_FORMAT", "exchange");
+
+define("ACCEPTABLE_OUTPUT_FORMATS", [
+    RAW_OUTPUT_FORMAT,
+    PERCENTAGE_OUTPUT_FORMAT,
+    CURRENCY_OUTPUT_FORMAT,
+]);
+
+define("OUTPUT_FORMATS", [
+    UNKNOWN_OUTPUT_FORMAT,
+    ...ACCEPTABLE_OUTPUT_FORMATS
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Token Expiration Types
  | --------------------------------------------------------------------------
  |
