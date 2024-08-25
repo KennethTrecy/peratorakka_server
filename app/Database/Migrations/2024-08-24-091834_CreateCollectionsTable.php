@@ -20,7 +20,7 @@ class CreateCollectionsTable extends Migration
                 "auto_increment" => true,
             ],
             "user_id" => [
-                "type" => "BIGINT",
+                "type" => "INT",
                 "unsigned" => true,
             ],
             "name" => [
