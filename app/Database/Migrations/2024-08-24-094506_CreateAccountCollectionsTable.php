@@ -25,10 +25,6 @@ class CreateAccountCollectionsTable extends Migration
             "account_id" => [
                 "type" => "BIGINT",
                 "unsigned" => true,
-            ],
-            "considered_amount" => [
-                "type" => "INT",
-                "unsigned" => true,
             ]
         ]);
         $this->forge->addPrimaryKey("id", "pk_account_collections");
