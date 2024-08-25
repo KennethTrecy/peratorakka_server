@@ -5,7 +5,6 @@ namespace App\Controllers;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
-use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
 use App\Models\AccountCollectionModel;
@@ -92,7 +91,7 @@ class AccountCollectionController extends BaseOwnedResourceController
         $enriched_document["accounts"] = $accounts;
 
         $linked_collections = [];
-        foreach ($accounts as $document) {
+        foreach ($main_documents as $document) {
             $collection_id = $document->collection_id;
             array_push($linked_collections, $collection_id);
         }
