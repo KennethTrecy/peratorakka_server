@@ -13,11 +13,11 @@ use App\Models\AccountCollectionModel;
 class AccountCollectionController extends BaseOwnedResourceController
 {
     protected static function getIndividualName(): string {
-        return "financial_entry";
+        return "account_collection";
     }
 
     protected static function getCollectiveName(): string {
-        return "financial_entries";
+        return "account_collections";
     }
 
     protected static function getModelName(): string {
