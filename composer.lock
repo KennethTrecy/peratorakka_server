@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7c7499d403c087adb93df2b48447e2e9",
+    "content-hash": "092357d10af8b0cda6171d6613edf580",
     "packages": [
         {
             "name": "brick/math",
@@ -375,6 +375,51 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.0"
             },
             "time": "2021-07-14T16:46:02+00:00"
+        },
+        {
+            "name": "xylemical/php-expressions",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/xylemical/php-expressions.git",
+                "reference": "50c912a8c0129ca58e9c1686b6cf5c8cf61b6dc9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/xylemical/php-expressions/zipball/50c912a8c0129ca58e9c1686b6cf5c8cf61b6dc9",
+                "reference": "50c912a8c0129ca58e9c1686b6cf5c8cf61b6dc9",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.0|>=8.0"
+            },
+            "require-dev": {
+                "ext-bcmath": "*",
+                "phpunit/phpunit": "^7.0|^8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Xylemical\\Expressions\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "An extensible mathematical expression parser and evaluator.",
+            "homepage": "https://github.com/xylemical/php-expressions",
+            "keywords": [
+                "expression evaluator",
+                "math calculator",
+                "math parser",
+                "shunting-yard algorithm"
+            ],
+            "support": {
+                "issues": "https://github.com/xylemical/php-expressions/issues",
+                "source": "https://github.com/xylemical/php-expressions/tree/v1.1.0"
+            },
+            "time": "2022-08-31T09:04:34+00:00"
         }
     ],
     "packages-dev": [
