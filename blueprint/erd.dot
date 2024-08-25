@@ -693,12 +693,13 @@ digraph {
 						kind<br align="left"/>
 						order<br align="left"/>
 						notes<br align="left"/>
-						extra<br align="left"/>
+						configuration<br align="left"/>
 					</td>
 					<td align="left">
 						name<br align="left"/>
-						enum(number,table,pie,line)<br align="left"/>
+						enum(unknown,number,table,pie,line)<br align="left"/>
 						int<br align="left"/>
+						nullable text<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
 				</tr>
