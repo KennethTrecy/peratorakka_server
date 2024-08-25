@@ -683,7 +683,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">formula_id</td>
+					<td align="left">user_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -796,6 +796,7 @@ digraph {
 			arrowtail = nonecrowodot
 		]
 
+		numerical_tools -> users
 	}
 
 	{
@@ -815,7 +816,6 @@ digraph {
 		]
 
 		frozen_periods -> summary_calculations
-		numerical_tools -> formulae
 	}
 
 	{
@@ -825,8 +825,6 @@ digraph {
 		]
 
 		collections -> frozen_periods
-		// summary_calculations -> account_collections
-		numerical_tools -> users
 	}
 
 	{
@@ -844,17 +842,18 @@ digraph {
 		interval_events
 		timeout_events
 		event_started_times
-		users
-	}
-
-	{
-		rank = same;
+		numerical_tools
 		formulae
 	}
 
 	{
 		rank = same;
-		numerical_tools
+		users
+		formula_currencies
+	}
+
+	{
+		rank = same;
 		collections
 		events
 		cash_flow_activities
@@ -863,7 +862,6 @@ digraph {
 
 	{
 		rank = same;
-		formula_currencies
 		currencies
 		account_collections
 		flow_calculations
