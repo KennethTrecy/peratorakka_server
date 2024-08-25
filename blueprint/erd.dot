@@ -682,26 +682,30 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">currency_id</td>
-					<td align="left">nullable bigint</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
 				</tr>
 				<tr>
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
+						output_format<br align="left"/>
+						presentational_precision<br align="left"/>
 						operator<br align="left"/>
 					</td>
 					<td align="left">
 						name<br align="left"/>
 						nullable text<br align="left"/>
+						enum(raw,percentage,currency)<br align="left"/>
+						int<br align="left"/>
 						enum(plus,minus,multiply,divide,power,identity)<br align="left"/>
 					</td>
 				</tr>
 			</table>
 			>
 		]
-		numerical_tool [
+		numerical_tools [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
@@ -737,6 +741,34 @@ digraph {
 						nullable text<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
+				</tr>
+			</table>
+			>
+		]
+		formula_currencies [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Formula Currencies
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">formula_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">currency_id</td>
+					<td align="left">bigint</td>
 				</tr>
 			</table>
 			>
@@ -913,9 +945,20 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
-		operands -> custom_constant_operands
 		operands -> system_constant_operands
 		operands -> collection_operands
+		formulae -> formula_currencies
+	}
+
+	{
+		// one or zero
+		edge [
+			arrowhead = noneteetee
+			arrowtail = noneteeodot
+		]
+
+		custom_constant_operands -> operands
+		formula_currencies -> currencies
 	}
 
 	{
@@ -945,8 +988,17 @@ digraph {
 		accounts -> account_collections
 		formulae -> formula_collections
 		collections -> account_collections
-		collections -> formula_collections
 		collections -> collection_operands
+	}
+
+	{
+		// many to zero
+		edge [
+			arrowhead = noneteetee
+			arrowtail = nonecrowodot
+		]
+
+		formula_collections -> collections
 	}
 
 	{
@@ -956,11 +1008,10 @@ digraph {
 			arrowtail = noneteeodot
 		]
 
-		currencies -> formulae
 	}
 
 	{
-		// one to many
+		// many to one
 		edge [
 			arrowhead = nonecrowtee
 			arrowtail = noneteetee
@@ -968,6 +1019,16 @@ digraph {
 
 		frozen_periods -> summary_calculations
 		formulae -> operands
+		numerical_tools -> formulae
+	}
+
+	{
+		// invisible
+		edge [
+			style = invis
+		]
+
+		numerical_tools -> users
 	}
 
 	{
@@ -977,7 +1038,7 @@ digraph {
 			arrowtail = nonecrowtee
 		]
 
-		numerical_tool -> formulae
+		users -> formulae
 	}
 
 	{
@@ -988,6 +1049,8 @@ digraph {
 		event_started_times
 		formula_collections
 		collection_operands
+		custom_constant_operands
+		numerical_tools
 	}
 
 	{
@@ -995,9 +1058,6 @@ digraph {
 		formulae
 		operands
 		users
-		custom_constant_operands
-		system_constant_operands
-		numerical_tool
 	}
 
 	{
@@ -1005,6 +1065,7 @@ digraph {
 		events
 		cash_flow_activities
 		frozen_periods
+		formula_currencies
 	}
 
 	{
@@ -1015,6 +1076,7 @@ digraph {
 		summary_calculations
 		modifiers
 		financial_entries
+		system_constant_operands
 	}
 
 	{
