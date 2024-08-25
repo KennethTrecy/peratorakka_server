@@ -31,39 +31,25 @@ class AccountCollectionController extends BaseOwnedResourceController
             "required",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
-                collectionModel::class,
+                CollectionModel::class,
                 SEARCH_NORMALLY
-            ])."]",
-            "has_column_value_in_list[".implode(",", [
-                collectionModel::class,
-                "kind",
-                MANUAL_collection_KIND
             ])."]"
         ]);
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
+        $validation->setRule("$individual_name.account_id", "account", [
             "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_collection_amount",
-            "must_be_same_for_collection[$individual_name.collection_id,$individual_name.credit_amount]"
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                AccountModel::class,
+                SEARCH_NORMALLY
+            ])."]"
         ]);
 
         return $validation;
     }
 
     protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
+        // There is no update validation because it is not possible to update an account collection.
         $validation = static::makeValidation();
-        $individual_name = static::getIndividualName();
-
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_collection_amount",
-            "must_be_same_for_financial_entry[$resource_id,$individual_name.credit_amount]"
-        ]);
 
         return $validation;
     }
