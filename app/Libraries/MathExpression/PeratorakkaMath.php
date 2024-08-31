@@ -45,6 +45,14 @@ class PeratorakkaMath implements MathInterface
         return $dividend->dividedBy($divisor);
     }
 
+    public function modulus($rawDividend, $rawDivisor, $scale = 0) {
+        $scale = $this->getScale($scale);
+        $dividend = BigRational::of($rawDividend, $scale);
+        $divisor = BigRational::of($rawDivisor, $scale);
+
+        return $dividend->remainder($divisor);
+    }
+
     public function compare($rawOperandA, $rawOperandB, $scale = 0) {
         $scale = $this->getScale($scale);
         $operandA = BigRational::of($rawOperandA, $scale);
