@@ -244,6 +244,33 @@ define("OUTPUT_FORMATS", [
 
 /*
  | --------------------------------------------------------------------------
+ | Recurrence Period
+ | --------------------------------------------------------------------------
+ |
+ | There are different recurrence periods that numerical tools may consider.
+ | - UNKNOWN_RECURRENCE_PERIOD. A numerical tool with this recurrence period is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - PERIODIC_RECURRENCE_PERIOD. A numerical tool with this recurrence period only considers
+ |   the data on a periodic basis.
+ | - YEARLY_RECURRENCE_PERIOD. A numerical tool with this recurrence period only considers
+ |   the data on a yearly basis.
+ */
+define("UNKNOWN_RECURRENCE_PERIOD", "unknown");
+define("PERIODIC_RECURRENCE_PERIOD", "periodic");
+define("YEARLY_RECURRENCE_PERIOD", "yearly");
+
+define("ACCEPTABLE_RECURRENCE_PERIODS", [
+    PERIODIC_RECURRENCE_PERIOD,
+    YEARLY_RECURRENCE_PERIOD
+]);
+
+define("RECURRENCE_PERIODS", [
+    UNKNOWN_RECURRENCE_PERIOD,
+    ...ACCEPTABLE_RECURRENCE_PERIODS
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Token Expiration Types
  | --------------------------------------------------------------------------
  |
