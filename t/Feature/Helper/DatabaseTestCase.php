@@ -17,4 +17,10 @@ class DatabaseTestCase extends CIUnitTestCase
     protected $seedOnce = false;
     protected $seed     = "";
     protected $basePath = "app/Database/Seeds";
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        helper([ "auth", "setting" ]);
+    }
 }
