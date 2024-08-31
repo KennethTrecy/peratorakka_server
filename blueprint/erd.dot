@@ -691,8 +691,8 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						kind<br align="left"/><br align="left"/>
-						recurrence_period<br align="left"/><br align="left"/><br align="left"/>
-						recurrence_offset<br align="left"/><br align="left"/>
+						recurrence<br align="left"/><br align="left"/>
+						recency<br align="left"/>
 						order<br align="left"/>
 						notes<br align="left"/>
 						configuration<br align="left"/>
@@ -700,9 +700,9 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						enum(unknown,number,<br align="left"/>table,pie,line)<br align="left"/>
-						enum(unknown,latest_period,<br align="left"/>latest_year,every_period,<br align="left"/>every_year)<br align="left"/>
-						enum(unknown,only_frozen,<br align="left"/>exclude_frozen,overall)<br align="left"/>
-						int<br align="left"/>
+						enum(unknown,periodic,<br align="left"/>yearly)<br align="left"/>
+						signed int<br align="left"/>
+						unsigned int<br align="left"/>
 						nullable text<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
