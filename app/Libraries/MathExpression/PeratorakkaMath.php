@@ -7,7 +7,7 @@ use Xylemical\Expressions\MathInterface;
 
 class PeratorakkaMath implements MathInterface
 {
-    private int $scale = 0;
+    private readonly int $scale;
 
     public function __construct(int $scale = 0) {
         $this->scale = $scale;
