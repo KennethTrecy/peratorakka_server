@@ -41,7 +41,7 @@ class PeratorakkaMath implements MathInterface
                 return $multiplicand->multipliedBy($multipier)->simplified();
             }
 
-            return BigRational::zero();
+            return null;
         }, $resolvedOperators));
     }
 
@@ -69,7 +69,7 @@ class PeratorakkaMath implements MathInterface
                 return BigRational::zero();
             }
 
-            throw new ExpressionException("Division by zero");
+            return null;
         }, $resolvedOperators));
     }
 
@@ -84,7 +84,7 @@ class PeratorakkaMath implements MathInterface
                 return BigRational::zero();
             }
 
-            throw new ExpressionException("Division by zero");
+            return null;
         }, $resolvedOperators));
     }
 
