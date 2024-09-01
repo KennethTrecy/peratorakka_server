@@ -2,6 +2,7 @@
 
 namespace App\Libraries\MathExpression;
 
+use App\Exceptions\ExpressionException;
 use Brick\Math\BigRational;
 use Xylemical\Expressions\MathInterface;
 
@@ -72,6 +73,48 @@ class PeratorakkaMath implements MathInterface
         }
 
         return $rationalValue->toFloat();
+    }
+
+    public function resolve(string $value, int $overridenScale = 0): mixed {
+        $scale = $this->getScale($overridenScale);
+
+        if (str_starts_with($value, "[") && str_ends_with($value, "]")) {
+            return array_map(
+                function ($element) {
+                    return BigRational::of($element, $scale);
+                },
+                json_decode($value, true)
+            );
+        }
+
+        return BigRational::of($value, $scale);
+    }
+
+    private function resolveOperators(
+        string $rawLeftHand,
+        string $rawRightHand,
+        int $overridenScale
+    ): array {
+        $leftHand = $this->resolve($rawLeftHand, $overridenScale);
+        $rightHand = $this->resolve($rawRightHand, $overridenScale);
+
+        if ($leftHand instanceof BigRational && $rightHand instanceof BigRational) {
+            return [ [ $leftHand, $rightHand ] ];
+        } elseif ($leftHand instanceof BigRational && is_array($rightHand)) {
+            return array_map(function ($rightHandElement) use ($leftHand) {
+                return [ $leftHand, $rightHandElement ];
+            }, $rightHand);
+        } elseif (is_array($leftHand) && $rightHand instanceof BigRational) {
+            return array_map(function ($leftHandElement) use ($rightHand) {
+                return [ $leftHandElement, $rightHand ];
+            }, $rightHand);
+        } elseif (is_array($leftHand) && is_array($rightHand)) {
+            return array_map(function ($leftHandElement, $rightHandElement) {
+                return [ $leftHandElement, $rightHandElement ];
+            }, $leftHand, $rightHand);
+        } else {
+            throw new ExpressionException("Cannot resolve operators");
+        }
     }
 
     private function getScale(?int $defaultScale): int {
