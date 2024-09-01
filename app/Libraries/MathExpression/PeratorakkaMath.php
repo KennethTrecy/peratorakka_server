@@ -15,51 +15,90 @@ class PeratorakkaMath implements MathInterface
     }
 
     public function add($rawAddend, $rawAdder, $overridenScale = 0) {
-        $scale = $this->getScale($overridenScale);
-        $addend = BigRational::of($rawAddend, $scale);
-        $adder = BigRational::of($rawAdder, $scale);
+        $resolvedOperators = $this->resolveOperators($rawAddend, $rawAdder, $overridenScale);
+        return json_encode(array_map(function ($operators) {
+            [ $addend, $adder ] = $operators;
 
-        return $addend->plus($adder);
+            if ($addend instanceof BigRational && $adder instanceof BigRational) {
+                return $addend->plus($adder);
+            }
+
+            return $addend ?? $adder ?? BigRational::zero();
+        }, $resolvedOperators));
     }
 
-    public function multiply($rawMultiplicand, $rawMultipier, $scale = 0) {
-        $scale = $this->getScale($scale);
-        $multiplicand = BigRational::of($rawMultiplicand, $scale);
-        $multipier = BigRational::of($rawMultipier, $scale);
+    public function multiply($rawMultiplicand, $rawMultipier, $overridenScale = 0) {
+        $resolvedOperators = $this->resolveOperators(
+            $rawMultiplicand,
+            $rawMultipier,
+            $overridenScale
+        );
 
-        return $multiplicand->multipliedBy($multipier);
+        return json_encode(array_map(function ($operators) {
+            [ $multiplicand, $multipier ] = $operators;
+
+            if ($multiplicand instanceof BigRational && $multipier instanceof BigRational) {
+                return $multiplicand->multipliedBy($multipier);
+            }
+
+            return BigRational::zero();
+        }, $resolvedOperators));
     }
 
-    public function subtract($rawSubtrahend, $rawMinuend, $scale = 0) {
-        $scale = $this->getScale($scale);
-        $subtrahend = BigRational::of($rawSubtrahend, $scale);
-        $minuend = BigRational::of($rawMinuend, $scale);
+    public function subtract($rawSubtrahend, $rawMinuend, $overridenScale = 0) {
+        $resolvedOperators = $this->resolveOperators($rawSubtrahend, $rawMinuend, $overridenScale);
+        return json_encode(array_map(function ($operators) {
+            [ $subtrahend, $minuend ] = $operators;
 
-        return $subtrahend->minus($minuend);
+            if ($subtrahend instanceof BigRational && $minuend instanceof BigRational) {
+                return $subtrahend->minus($minuend);
+            }
+
+            return $subtrahend ?? $minuend->negated() ?? BigRational::zero();
+        }, $resolvedOperators));
     }
 
-    public function divide($rawDividend, $rawDivisor, $scale = 0) {
-        $scale = $this->getScale($scale);
-        $dividend = BigRational::of($rawDividend, $scale);
-        $divisor = BigRational::of($rawDivisor, $scale);
+    public function divide($rawDividend, $rawDivisor, $overridenScale = 0) {
+        $resolvedOperators = $this->resolveOperators($rawDividend, $rawDivisor, $overridenScale);
+        return json_encode(array_map(function ($operators) {
+            [ $dividend, $divisor ] = $operators;
 
-        return $dividend->dividedBy($divisor);
+            if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
+                return $dividend->dividedBy($divisor);
+            } else if ($divisor instanceof BigRational) {
+                return BigRational::zero();
+            }
+
+            throw new ExpressionException("Division by zero");
+        }, $resolvedOperators));
     }
 
-    public function modulus($rawDividend, $rawDivisor, $scale = 0) {
-        $scale = $this->getScale($scale);
-        $dividend = BigRational::of($rawDividend, $scale);
-        $divisor = BigRational::of($rawDivisor, $scale);
+    public function modulus($rawDividend, $rawDivisor, $overridenScale = 0) {
+        $resolvedOperators = $this->resolveOperators($rawDividend, $rawDivisor, $overridenScale);
+        return json_encode(array_map(function ($operators) {
+            [ $dividend, $divisor ] = $operators;
 
-        return $dividend->remainder($divisor);
+            if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
+                return $dividend->modulo($divisor);
+            } else if ($divisor instanceof BigRational) {
+                return BigRational::zero();
+            }
+
+            throw new ExpressionException("Division by zero");
+        }, $resolvedOperators));
     }
 
-    public function compare($rawOperandA, $rawOperandB, $scale = 0) {
-        $scale = $this->getScale($scale);
-        $operandA = BigRational::of($rawOperandA, $scale);
-        $operandB = BigRational::of($rawOperandB, $scale);
+    public function compare($rawOperandA, $rawOperandB, $overridenScale = 0) {
+        $resolvedOperators = $this->resolveOperators($rawOperandA, $rawOperandB, $overridenScale);
+        return json_encode(array_map(function ($operators) {
+            [ $operandA, $operandB ] = $operators;
 
-        return $operandA->compareTo($operandB);
+            if ($operandA instanceof BigRational && $operandB instanceof BigRational) {
+                return $operandA->compareTo($operandB);
+            }
+
+            return 0;
+        }, $resolvedOperators));
     }
 
     public function native($value) {
@@ -80,7 +119,7 @@ class PeratorakkaMath implements MathInterface
 
         if (str_starts_with($value, "[") && str_ends_with($value, "]")) {
             return array_map(
-                function ($element) {
+                function ($element) use ($scale) {
                     return BigRational::of($element, $scale);
                 },
                 json_decode($value, true)
@@ -107,7 +146,7 @@ class PeratorakkaMath implements MathInterface
         } elseif (is_array($leftHand) && $rightHand instanceof BigRational) {
             return array_map(function ($leftHandElement) use ($rightHand) {
                 return [ $leftHandElement, $rightHand ];
-            }, $rightHand);
+            }, $leftHand);
         } elseif (is_array($leftHand) && is_array($rightHand)) {
             return array_map(function ($leftHandElement, $rightHandElement) {
                 return [ $leftHandElement, $rightHandElement ];
