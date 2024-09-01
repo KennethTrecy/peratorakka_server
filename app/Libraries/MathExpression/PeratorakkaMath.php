@@ -20,7 +20,7 @@ class PeratorakkaMath implements MathInterface
             [ $addend, $adder ] = $operators;
 
             if ($addend instanceof BigRational && $adder instanceof BigRational) {
-                return $addend->plus($adder);
+                return $addend->plus($adder)->simplified();
             }
 
             return $addend ?? $adder ?? BigRational::zero();
@@ -38,7 +38,7 @@ class PeratorakkaMath implements MathInterface
             [ $multiplicand, $multipier ] = $operators;
 
             if ($multiplicand instanceof BigRational && $multipier instanceof BigRational) {
-                return $multiplicand->multipliedBy($multipier);
+                return $multiplicand->multipliedBy($multipier)->simplified();
             }
 
             return BigRational::zero();
@@ -51,7 +51,7 @@ class PeratorakkaMath implements MathInterface
             [ $subtrahend, $minuend ] = $operators;
 
             if ($subtrahend instanceof BigRational && $minuend instanceof BigRational) {
-                return $subtrahend->minus($minuend);
+                return $subtrahend->minus($minuend)->simplified();
             }
 
             return $subtrahend ?? $minuend->negated() ?? BigRational::zero();
@@ -64,7 +64,7 @@ class PeratorakkaMath implements MathInterface
             [ $dividend, $divisor ] = $operators;
 
             if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
-                return $dividend->dividedBy($divisor);
+                return $dividend->dividedBy($divisor)->simplified();
             } else if ($divisor instanceof BigRational) {
                 return BigRational::zero();
             }
