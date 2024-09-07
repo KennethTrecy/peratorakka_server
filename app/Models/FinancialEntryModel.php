@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use DateTimeInterface;
-
+use App\Entities\FinancialEntry;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
+use DateTimeInterface;
 use Faker\Generator;
-
-use App\Entities\FinancialEntry;
 
 class FinancialEntryModel extends BaseResourceModel
 {
@@ -41,7 +39,8 @@ class FinancialEntryModel extends BaseResourceModel
         ];
     }
 
-    public function filterList(BaseResourceModel $query_builder, array $options) {
+    public function filterList(BaseResourceModel $query_builder, array $options)
+    {
         $query_builder = parent::filterList($query_builder, $options);
 
         $filter_account_id = $options["account_id"] ?? null;
@@ -85,7 +84,8 @@ class FinancialEntryModel extends BaseResourceModel
         return $query_builder;
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         $account_subquery = model(AccountModel::class, false)
             ->builder()
             ->select("id")
@@ -118,5 +118,12 @@ class FinancialEntryModel extends BaseResourceModel
                         ->orWhere("credit_cash_flow_activity_id IS NULL")
                     ->groupEnd()
             );
+    }
+
+    protected static function identifyAncestors(): array
+    {
+        return [
+            ModifierModel::class => [ "modifier_id" ]
+        ];
     }
 }
