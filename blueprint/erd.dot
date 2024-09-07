@@ -735,6 +735,15 @@ digraph {
 					<td align="left">currency_id</td>
 					<td align="left">bigint</td>
 				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						exchange_rate_basis<br align="left"/>
+					</td>
+					<td align="left">
+						enum(unknown,periodic,latest)<br align="left"/>
+					</td>
+				</tr>
 			</table>
 			>
 		]
@@ -853,11 +862,11 @@ digraph {
 	{
 		rank = same;
 		users
-		formula_currencies
 	}
 
 	{
 		rank = same;
+		formula_currencies
 		collections
 		events
 		cash_flow_activities
