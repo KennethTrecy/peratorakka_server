@@ -244,6 +244,33 @@ define("OUTPUT_FORMATS", [
 
 /*
  | --------------------------------------------------------------------------
+ | Exchange Rate Bases
+ | --------------------------------------------------------------------------
+ |
+ | There are different bases for exchange rates that the system can handle.
+ | - UNKNOWN_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - PERIODIC_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis outputs uses the
+ |   exchange rates with respect to the period.
+ | - LATEST_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis uses the latest exchange
+ |   rate regardless of the exchange rate during the respective period.into .
+ */
+define("UNKNOWN_EXCHANGE_RATE_BASIS", "unknown");
+define("PERIODIC_EXCHANGE_RATE_BASIS", "periodic");
+define("LATEST_EXCHANGE_RATE_BASIS", "latest");
+
+define("ACCEPTABLE_EXCHANGE_RATE_BASES", [
+    PERIODIC_EXCHANGE_RATE_BASIS,
+    LATEST_EXCHANGE_RATE_BASIS
+]);
+
+define("EXCHANGE_RATE_BASES", [
+    UNKNOWN_EXCHANGE_RATE_BASIS,
+    ...ACCEPTABLE_EXCHANGE_RATE_BASES
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Recurrence Period
  | --------------------------------------------------------------------------
  |
