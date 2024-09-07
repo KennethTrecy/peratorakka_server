@@ -224,12 +224,13 @@ define("MODIFIER_KINDS", [
  |   the current version. This case may happen when the system downgraded.
  | - RAW_OUTPUT_FORMAT. A formula with this output format outputs raw calculated results.
  | - PERCENTAGE_OUTPUT_FORMAT. A formula with this output format multiplies the result with 100.
- | - CURRENCY_OUTPUT_FORMAT. A formula with this output format converts the output into .
+ | - CURRENCY_OUTPUT_FORMAT. A formula with this output format converts the output into target
+ |   currency.
  */
 define("UNKNOWN_OUTPUT_FORMAT", "unknown");
-define("RAW_OUTPUT_FORMAT", "record");
-define("PERCENTAGE_OUTPUT_FORMAT", "close");
-define("CURRENCY_OUTPUT_FORMAT", "exchange");
+define("RAW_OUTPUT_FORMAT", "raw");
+define("PERCENTAGE_OUTPUT_FORMAT", "percentage");
+define("CURRENCY_OUTPUT_FORMAT", "currency");
 
 define("ACCEPTABLE_OUTPUT_FORMATS", [
     RAW_OUTPUT_FORMAT,
