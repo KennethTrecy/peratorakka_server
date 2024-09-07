@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use DateTimeInterface;
-
-use CodeIgniter\Shield\Entities\User;
-use Faker\Generator;
-
 use App\Entities\SummaryCalculation;
+use CodeIgniter\Shield\Entities\User;
+use DateTimeInterface;
+use Faker\Generator;
 
 class SummaryCalculationModel extends BaseResourceModel
 {
@@ -39,7 +37,8 @@ class SummaryCalculationModel extends BaseResourceModel
         ];
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         return $query_builder
             ->whereIn(
                 "frozen_period_id",
@@ -61,5 +60,15 @@ class SummaryCalculationModel extends BaseResourceModel
                             ->where("user_id", $user->id)
                     )
             );
+    }
+
+    public static function extractLinkedAccounts(array $calculations): array
+    {
+        return array_map(
+            function ($calculation) {
+                return $calculation->account_id;
+            },
+            $calculations
+        );
     }
 }
