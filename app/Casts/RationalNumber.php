@@ -16,4 +16,9 @@ class RationalNumber extends BaseCast
     {
         return strval($value);
     }
+
+    public static function zero(): BigRational
+    {
+        return BigRational::zero();
+    }
 }
