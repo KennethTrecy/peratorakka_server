@@ -2,30 +2,32 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\Shield\Entities\User;
-use CodeIgniter\Validation\Validation;
-
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
-use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
+use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\Validation\Validation;
 
 class ModifierController extends BaseOwnedResourceController
 {
-    protected static function getIndividualName(): string {
+    protected static function getIndividualName(): string
+    {
         return "modifier";
     }
 
-    protected static function getCollectiveName(): string {
+    protected static function getCollectiveName(): string
+    {
         return "modifiers";
     }
 
-    protected static function getModelName(): string {
+    protected static function getModelName(): string
+    {
         return ModifierModel::class;
     }
 
-    protected static function makeCreateValidation(User $owner): Validation {
+    protected static function makeCreateValidation(User $owner): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -63,7 +65,8 @@ class ModifierController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -86,70 +89,27 @@ class ModifierController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array {
+    protected static function enrichResponseDocument(array $initial_document): array
+    {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
-            : ($initial_document[static::getCollectiveName()] ?? [] );
+            : ($initial_document[static::getCollectiveName()] ?? []);
 
-        $linked_accounts = [];
-        foreach ($main_documents as $document) {
-            $debit_account_id = $document->debit_account_id;
-            $credit_account_id = $document->credit_account_id;
-            array_push($linked_accounts, $debit_account_id, $credit_account_id);
-        }
-
-        $accounts = [];
-        if (count($linked_accounts) > 0) {
-            $accounts = model(AccountModel::class)
-                ->whereIn("id", array_unique($linked_accounts))
-                ->withDeleted()
-                ->findAll();
-        }
+        [
+            $accounts,
+            $cash_flow_activities,
+            $currencies
+        ] = ModifierModel::selectAncestorsWithResolvedResources($main_documents);
         $enriched_document["accounts"] = $accounts;
-
-        $linked_cash_flow_activities = [];
-        foreach ($main_documents as $document) {
-            $debit_cash_flow_activity_id = $document->debit_cash_flow_activity_id;
-            $credit_cash_flow_activity_id = $document->credit_cash_flow_activity_id;
-
-            if ($debit_cash_flow_activity_id !== null) {
-                array_push($linked_cash_flow_activities, $debit_cash_flow_activity_id);
-            }
-
-            if ($credit_cash_flow_activity_id !== null) {
-                array_push($linked_cash_flow_activities, $credit_cash_flow_activity_id);
-            }
-        }
-
-        $cash_flow_activities = [];
-        if (count($linked_cash_flow_activities) > 0) {
-            $cash_flow_activities = model(CashFlowActivityModel::class)
-                ->whereIn("id", array_unique($linked_cash_flow_activities))
-                ->withDeleted()
-                ->findAll();
-        }
         $enriched_document["cash_flow_activities"] = $cash_flow_activities;
-
-        $linked_currencies = [];
-        foreach ($accounts as $document) {
-            $currency_id = $document->currency_id;
-            array_push($linked_currencies, $currency_id);
-        }
-
-        $currencies = [];
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->whereIn("id", array_unique($linked_currencies))
-                ->withDeleted()
-                ->findAll();
-        }
         $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
     }
 
-    private static function makeValidation(): Validation {
+    private static function makeValidation(): Validation
+    {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
@@ -174,7 +134,8 @@ class ModifierController extends BaseOwnedResourceController
         ]);
         $validation->setRule(
             "$individual_name.debit_cash_flow_activity_id",
-            "debit cash flow activity", [
+            "debit cash flow activity",
+            [
                 "permit_empty_if_column_value_matches[".implode(",", [
                     AccountModel::class,
                     "$individual_name.debit_account_id",
@@ -189,7 +150,8 @@ class ModifierController extends BaseOwnedResourceController
         );
         $validation->setRule(
             "$individual_name.credit_cash_flow_activity_id",
-            "credit cash flow activity", [
+            "credit cash flow activity",
+            [
                 "permit_empty_if_column_value_matches[".implode(",", [
                     AccountModel::class,
                     "$individual_name.credit_account_id",
