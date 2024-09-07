@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use DateTimeInterface;
-
-use CodeIgniter\Shield\Entities\User;
-use Faker\Generator;
-
 use App\Entities\FlowCalculation;
+use CodeIgniter\Shield\Entities\User;
+use DateTimeInterface;
+use Faker\Generator;
 
 class FlowCalculationModel extends BaseResourceModel
 {
@@ -30,7 +28,8 @@ class FlowCalculationModel extends BaseResourceModel
         ];
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         return $query_builder
             ->whereIn(
                 "cash_flow_activity_id",
@@ -59,5 +58,15 @@ class FlowCalculationModel extends BaseResourceModel
                             ->where("user_id", $user->id)
                     )
             );
+    }
+
+    public static function extractLinkedCashFlowActivities(array $flow_calculations): array
+    {
+        return array_map(
+            function ($flow_calculation) {
+                return $flow_calculation->cash_flow_activity_id;
+            },
+            $flow_calculations
+        );
     }
 }
