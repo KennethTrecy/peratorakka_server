@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Entities\Account;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
-
-use App\Entities\Account;
 
 class AccountModel extends BaseResourceModel
 {
@@ -35,7 +34,8 @@ class AccountModel extends BaseResourceModel
         ];
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         return $query_builder
             ->whereIn(
                 "currency_id",
@@ -44,5 +44,22 @@ class AccountModel extends BaseResourceModel
                     ->select("id")
                     ->where("user_id", $user->id)
             );
+    }
+
+    protected static function identifyAncestors(): array
+    {
+        return [
+            CurrencyModel::class => [ "currency_id" ]
+        ];
+    }
+
+    public static function extractLinkedCurrencies(array $accounts): array
+    {
+        return array_map(
+            function ($account) {
+                return $account->currency_id;
+            },
+            $accounts
+        );
     }
 }
