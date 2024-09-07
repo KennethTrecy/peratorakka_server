@@ -2,20 +2,37 @@
 
 namespace App\Libraries;
 
+use App\Casts\RationalNumber;
+use App\Contracts\TimeGroup;
 use App\Entities\FrozenPeriod;
 use App\Entities\SummaryCalculation;
+use App\Libraries\MathExpression\Context;
+use App\Libraries\MathExpression\ContextKeys;
+use App\Libraries\TimeGroup\UnfrozenTimeGroup;
+use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
-use App\Contracts\TimeGroup;
-use Brick\Math\BigRational;
 
 class TimeGroupManager
 {
+    public readonly Context $context;
+
     private readonly array $time_groups;
 
     private array $loaded_summary_calculations_by_account_id = [];
 
-    public function __construct(array $time_groups) {
+    private bool $has_loaded_for_unfrozen_time_group = false;
+
+    /**
+     * Assumes time groups were already sorted by time.
+     *
+     * @param array $time_groups
+     */
+    public function __construct(Context $context, array $time_groups)
+    {
+        $this->context = $context;
         $this->time_groups = $time_groups;
+
+        $this->context->setVariable(ContextKeys::TIME_GROUP_MANAGER, $this);
     }
 
     /**
@@ -132,6 +149,8 @@ class TimeGroupManager
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
+            // TODO: Convert values of calculations first according to the needs of numerical tool.
+
             foreach ($summary_calculations as $summary_calculation) {
                 foreach ($this->time_groups as $time_group) {
                     $is_added = $time_group->addSummaryCalculation($summary_calculation);
@@ -143,5 +162,99 @@ class TimeGroupManager
                 }
             }
         }
+
+        $this->loadPossibleLatestForUnfrozenGroup();
+    }
+
+    private function identifyDates(): array
+    {
+        $earliest_start_date = null;
+        $latest_finish_date = null;
+        $last_frozen_finished_date = null;
+
+        foreach ($this->time_groups as $time_group) {
+            $started_at = $time_group->startedAt();
+            $finished_at = $time_group->finishedAt();
+
+            if ($earliest_start_date === null || $started_at->isBefore($earliest_start_date)) {
+                $earliest_start_date = $started_at;
+            }
+
+            if ($latest_finish_date === null || $finished_at->isAfter($latest_finish_date)) {
+                $latest_finish_date = $finished_at;
+            }
+
+            if (!$time_group->hasSomeUnfrozenDetails()) {
+                $last_frozen_finished_date = $latest_finish_date;
+            }
+        }
+
+        if ($last_frozen_finished_date === null) {
+            $last_frozen_finished_date = $latest_finish_date;
+        }
+
+        return [
+            $earliest_start_date,
+            $latest_finish_date,
+            $last_frozen_finished_date
+        ];
+    }
+
+    private function hasUnfrozenTimeGroup(): bool
+    {
+        $time_group_count = count($this->time_groups);
+
+        if ($time_group_count === 0) {
+            return false;
+        }
+
+        return $this->time_groups[$time_group_count - 1]->hasSomeUnfrozenDetails();
+    }
+
+    private function incompleteFrozenTimeGroup(): ?TimeGroup
+    {
+        if (!$this->hasUnfrozenTimeGroup()) {
+            return null;
+        }
+
+        $time_group_count = count($this->time_groups);
+
+        return $this->time_groups[$time_group_count - 1];
+    }
+
+    private function loadPossibleLatestForUnfrozenGroup(): void
+    {
+        $incomplete_frozen_group = $this->incompleteFrozenTimeGroup();
+        if ($this->has_loaded_for_unfrozen_time_group || $incomplete_frozen_group === null) {
+            return;
+        }
+
+        [
+            $earliest_start_date,
+            $latest_finish_date,
+            $last_frozen_finished_date
+        ] = $this->identifyDates();
+
+        [
+            $cash_flow_activities,
+            $accounts,
+            $raw_summary_calculations,
+            $raw_flow_calculations,
+            $raw_exchange_rates
+        ] = FrozenPeriodModel::makeRawCalculations(
+            $last_frozen_finished_date->setHour(0)->setMinute(0)->setSecond(0),
+            $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
+        );
+
+        // TODO: Convert to destination currency first before calculations.
+        foreach ($raw_summary_calculations as $raw_summary_calculation) {
+            $incomplete_frozen_group->addSummaryCalculation($raw_summary_calculation);
+        }
+
+        foreach ($raw_flow_calculations as $raw_flow_calculation) {
+            $incomplete_frozen_group->addFlowCalculation($raw_flow_calculation);
+        }
+
+        $this->has_loaded_for_unfrozen_time_group = true;
     }
 }
