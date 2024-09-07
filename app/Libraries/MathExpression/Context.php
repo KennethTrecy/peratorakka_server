@@ -2,17 +2,31 @@
 
 namespace App\Libraries\MathExpression;
 
-use App\Libraries\TimeGroupManager;
+use App\Libraries\FlashCache;
 use Xylemical\Expressions\Context as BaseContext;
 
-class Context extends BaseContext {
-    public function __construct(TimeGroupManager $manager) {
-        parent::__construct([
-            "manager" => $manager
-        ]);
+class Context extends BaseContext
+{
+    public function __construct()
+    {
+        $this->setVariable(ContextKeys::CACHE, new FlashCache());
     }
 
-    public function timeGroupManager(): TimeGroupManager {
-        return $this->getVariable("manager");
+    public function getVariable($name, $default = null)
+    {
+        if ($name instanceof ContextKeys) {
+            $name = $name->value;
+        }
+
+        return parent::getVariable($name, $default);
+    }
+
+    public function setVariable($name, $value)
+    {
+        if ($name instanceof ContextKeys) {
+            $name = $name->value;
+        }
+
+        return parent::setVariable($name, $value);
     }
 }
