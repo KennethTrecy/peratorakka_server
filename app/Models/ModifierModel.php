@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Entities\Modifier;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
-
-use App\Entities\Modifier;
 
 class ModifierModel extends BaseResourceModel
 {
@@ -43,7 +42,8 @@ class ModifierModel extends BaseResourceModel
         ];
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         $account_subquery = model(AccountModel::class, false)
             ->builder()
             ->select("id")
@@ -70,5 +70,16 @@ class ModifierModel extends BaseResourceModel
                 ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery)
                 ->orWhere("credit_cash_flow_activity_id IS NULL")
             ->groupEnd();
+    }
+
+    protected static function identifyAncestors(): array
+    {
+        return [
+            AccountModel::class => [ "debit_account_id", "credit_account_id" ],
+            CashFlowActivityModel::class => [
+                "debit_cash_flow_activity_id",
+                "credit_cash_flow_activity_id"
+            ]
+        ];
     }
 }
