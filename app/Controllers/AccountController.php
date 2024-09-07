@@ -2,28 +2,31 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\Shield\Entities\User;
-use CodeIgniter\Validation\Validation;
-
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
+use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\Validation\Validation;
 
 class AccountController extends BaseOwnedResourceController
 {
-    protected static function getIndividualName(): string {
+    protected static function getIndividualName(): string
+    {
         return "account";
     }
 
-    protected static function getCollectiveName(): string {
+    protected static function getCollectiveName(): string
+    {
         return "accounts";
     }
 
-    protected static function getModelName(): string {
+    protected static function getModelName(): string
+    {
         return AccountModel::class;
     }
 
-    protected static function makeCreateValidation(User $owner): Validation {
+    protected static function makeCreateValidation(User $owner): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -58,7 +61,8 @@ class AccountController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -87,31 +91,21 @@ class AccountController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array {
+    protected static function enrichResponseDocument(array $initial_document): array
+    {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
-            : ($initial_document[static::getCollectiveName()] ?? [] );
+            : ($initial_document[static::getCollectiveName()] ?? []);
 
-        $linked_currencies = [];
-        foreach ($main_documents as $document) {
-            $currency_id = $document->currency_id;
-            array_push($linked_currencies, $currency_id);
-        }
-
-        $currencies = [];
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->whereIn("id", array_unique($linked_currencies))
-                ->withDeleted()
-                ->findAll();
-        }
+        [ $currencies ] = AccountModel::selectAncestorsWithResolvedResources($main_documents);
         $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
     }
 
-    private static function makeValidation(): Validation {
+    private static function makeValidation(): Validation
+    {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
