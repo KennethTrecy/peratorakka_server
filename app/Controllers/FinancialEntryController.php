@@ -2,30 +2,31 @@
 
 namespace App\Controllers;
 
+use App\Contracts\OwnedResource;
+use App\Models\FinancialEntryModel;
+use App\Models\ModifierModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
-use App\Contracts\OwnedResource;
-use App\Models\AccountModel;
-use App\Models\CurrencyModel;
-use App\Models\FinancialEntryModel;
-use App\Models\ModifierModel;
-
 class FinancialEntryController extends BaseOwnedResourceController
 {
-    protected static function getIndividualName(): string {
+    protected static function getIndividualName(): string
+    {
         return "financial_entry";
     }
 
-    protected static function getCollectiveName(): string {
+    protected static function getCollectiveName(): string
+    {
         return "financial_entries";
     }
 
-    protected static function getModelName(): string {
+    protected static function getModelName(): string
+    {
         return FinancialEntryModel::class;
     }
 
-    protected static function makeCreateValidation(User $owner): Validation {
+    protected static function makeCreateValidation(User $owner): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
@@ -54,7 +55,8 @@ class FinancialEntryController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
@@ -70,26 +72,20 @@ class FinancialEntryController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array {
+    protected static function enrichResponseDocument(array $initial_document): array
+    {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
         $main_documents = $is_single_main_document
             ? [ $initial_document[static::getIndividualName()] ]
-            : ($initial_document[static::getCollectiveName()] ?? [] );
+            : ($initial_document[static::getCollectiveName()] ?? []);
 
-        $linked_modifiers = [];
-        foreach ($main_documents as $document) {
-            $modifier_id = $document->modifier_id;
-            array_push($linked_modifiers, $modifier_id);
-        }
-
-        $modifiers = [];
-        if (count($linked_modifiers) > 0) {
-            $modifiers = model(ModifierModel::class)
-                ->whereIn("id", array_unique($linked_modifiers))
-                ->withDeleted()
-                ->findAll();
-        }
+        [
+            $modifiers,
+            $accounts,
+            $cash_flow_activities,
+            $currencies,
+        ] = FinancialEntryModel::selectAncestorsWithResolvedResources($main_documents);
 
         if ($is_single_main_document) {
             $enriched_document["modifier"] = $modifiers[0] ?? null;
@@ -97,41 +93,15 @@ class FinancialEntryController extends BaseOwnedResourceController
             $enriched_document["modifiers"] = $modifiers;
         }
 
-        $linked_accounts = [];
-        foreach ($modifiers as $document) {
-            $debit_account_id = $document->debit_account_id;
-            $credit_account_id = $document->credit_account_id;
-            array_push($linked_accounts, $debit_account_id, $credit_account_id);
-        }
-
-        $accounts = [];
-        if (count($linked_accounts) > 0) {
-            $accounts = model(AccountModel::class)
-                ->whereIn("id", array_unique($linked_accounts))
-                ->withDeleted()
-                ->findAll();
-        }
         $enriched_document["accounts"] = $accounts;
-
-        $linked_currencies = [];
-        foreach ($accounts as $document) {
-            $currency_id = $document->currency_id;
-            array_push($linked_currencies, $currency_id);
-        }
-
-        $currencies = [];
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->whereIn("id", array_unique($linked_currencies))
-                ->withDeleted()
-                ->findAll();
-        }
+        $enriched_document["cash_flow_activities"] = $cash_flow_activities;
         $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
     }
 
-    private static function makeValidation(): Validation {
+    private static function makeValidation(): Validation
+    {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 
