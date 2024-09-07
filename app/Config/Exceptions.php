@@ -2,15 +2,13 @@
 
 namespace Config;
 
-use Throwable;
-
+use App\Libraries\HTTPExceptionHandler;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Debug\ExceptionHandler as BaseExceptionHandler;
 use CodeIgniter\Debug\ExceptionHandlerInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
 use Psr\Log\LogLevel;
-
-use App\Libraries\HTTPExceptionHandler;
+use Throwable;
 
 /**
  * Setup how the exception handler works.

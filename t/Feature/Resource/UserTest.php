@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\Resource;
 
-use Throwable;
-
 use CodeIgniter\Test\Fabricator;
 use Faker\Factory;
-
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Throwable;
 
 class UserTest extends AuthenticatedHTTPTestCase
 {

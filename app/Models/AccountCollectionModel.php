@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use DateTimeInterface;
-
-use CodeIgniter\Shield\Entities\User;
-use Faker\Generator;
-
 use App\Entities\AccountCollection;
+use CodeIgniter\Shield\Entities\User;
+use DateTimeInterface;
+use Faker\Generator;
 
 class AccountCollectionModel extends BaseResourceModel
 {
@@ -27,7 +25,8 @@ class AccountCollectionModel extends BaseResourceModel
         return [];
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         return $query_builder
             ->whereIn(
                 "collection_id",

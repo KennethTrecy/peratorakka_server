@@ -2,24 +2,24 @@
 
 namespace App\Controllers;
 
-use Exception;
-
+use App\Exceptions\InvalidRequest;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Shield\Authentication\Passwords;
 use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
 use CodeIgniter\Validation\Validation;
-
-use App\Exceptions\InvalidRequest;
+use Exception;
 
 class UserController extends BaseRegisterController
 {
     use ResponseTrait;
 
-    protected static function getIndividualName(): string {
+    protected static function getIndividualName(): string
+    {
         return "user";
     }
 
-    public function update() {
+    public function update()
+    {
         $current_user = auth()->user();
         $table_names = config("Auth")->tables;
         $validation = static::makeIdentityValidation($current_user->id, $table_names);
@@ -46,7 +46,8 @@ class UserController extends BaseRegisterController
         throw new InvalidRequest($validation);
     }
 
-    public function updatePassword() {
+    public function updatePassword()
+    {
         $current_user = auth()->user();
         $validation = static::makePasswordValidation();
 
@@ -109,7 +110,8 @@ class UserController extends BaseRegisterController
         return $validation;
     }
 
-    private static function makePasswordValidation(): Validation {
+    private static function makePasswordValidation(): Validation
+    {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 

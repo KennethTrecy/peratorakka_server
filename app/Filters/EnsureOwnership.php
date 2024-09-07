@@ -2,14 +2,13 @@
 
 namespace App\Filters;
 
+use App\Contracts\OwnedResource;
+use App\Exceptions\MissingResource;
+use App\Exceptions\ServerFailure;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-
-use App\Contracts\OwnedResource;
-use App\Exceptions\MissingResource;
-use App\Exceptions\ServerFailure;
 
 class EnsureOwnership implements FilterInterface
 {
@@ -17,7 +16,8 @@ class EnsureOwnership implements FilterInterface
 
     private $response;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->response = response();
     }
 

@@ -2,9 +2,8 @@
 
 namespace App\Database\Migrations;
 
-use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\Exceptions\DatabaseException;
-
+use CodeIgniter\Database\Migration;
 use Config\Database;
 
 class LinkModifiersToCashFlowActivities extends Migration
@@ -66,7 +65,8 @@ class LinkModifiersToCashFlowActivities extends Migration
         $this->downWithForeignKey(true);
     }
 
-    private function downWithForeignKey(bool $mustRemoveForeign) {
+    private function downWithForeignKey(bool $mustRemoveForeign)
+    {
         $database = Database::connect();
 
         if ($mustRemoveForeign && $database->DBDriver !== "SQLite3") {

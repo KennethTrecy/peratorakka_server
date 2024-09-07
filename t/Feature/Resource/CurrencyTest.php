@@ -2,14 +2,13 @@
 
 namespace Tests\Feature\Resource;
 
-use Throwable;
-
-use CodeIgniter\Test\Fabricator;
-
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
+
 use App\Models\CurrencyModel;
+use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Throwable;
 
 class CurrencyTest extends AuthenticatedHTTPTestCase
 {

@@ -2,10 +2,10 @@
 
 namespace App\Database\Migrations;
 
-use CodeIgniter\Database\Migration;
-use CodeIgniter\Database\Exceptions\DatabaseException;
 use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
+use CodeIgniter\Database\Exceptions\DatabaseException;
+use CodeIgniter\Database\Migration;
 
 class ExpandSummaryCalculations extends Migration
 {

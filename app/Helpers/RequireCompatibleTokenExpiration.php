@@ -4,8 +4,10 @@ namespace App\Helpers;
 
 use CodeIgniter\HTTP\RequestInterface;
 
-trait RequireCompatibleTokenExpiration {
-    public function hasCompatibleTokenExpirationType(RequestInterface $request): bool {
+trait RequireCompatibleTokenExpiration
+{
+    public function hasCompatibleTokenExpirationType(RequestInterface $request): bool
+    {
         $current_body = $request->getJSON(true);
 
         return

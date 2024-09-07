@@ -2,12 +2,12 @@
 
 namespace App\Validation;
 
-use InvalidArgumentException;
-
 use App\Contracts\OwnedResource;
 use App\Models\BaseResourceModel;
+use InvalidArgumentException;
 
-class DatabaseRules {
+class DatabaseRules
+{
     public function ensure_ownership(
         $value,
         string $parameters,
@@ -15,7 +15,9 @@ class DatabaseRules {
         ?string &$error = null
     ): bool {
         // Skip nullable fields
-        if ($value === null) return true;
+        if ($value === null) {
+            return true;
+        }
 
         $parameters = explode(",", $parameters);
 
@@ -103,7 +105,9 @@ class DatabaseRules {
         $model = model($parameters[0]);
         $id = dot_array_search($parameters[1], $data);
 
-        if ($id === null) return false;
+        if ($id === null) {
+            return false;
+        }
 
         $column = $parameters[2];
         $allowed_values = array_slice($parameters, 3);
@@ -185,7 +189,7 @@ class DatabaseRules {
                 $extra_parameter = explode("=", $composite_column_data);
 
                 array_push($extra_parameters, $extra_parameter);
-            } else if (
+            } elseif (
                 (
                     $position_of_equals === -1
                     && $position_of_pointer >= 0
@@ -209,7 +213,7 @@ class DatabaseRules {
 
         $query_builder = array_reduce(
             $extra_parameters,
-            function($builder, $extra_parameter) {
+            function ($builder, $extra_parameter) {
                 return $builder->where(
                     $extra_parameter[0],
                     $extra_parameter[1]

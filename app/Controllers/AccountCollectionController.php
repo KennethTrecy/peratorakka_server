@@ -2,28 +2,31 @@
 
 namespace App\Controllers;
 
+use App\Models\AccountCollectionModel;
+use App\Models\AccountModel;
+use App\Models\CollectionModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
-use App\Models\AccountModel;
-use App\Models\CollectionModel;
-use App\Models\AccountCollectionModel;
-
 class AccountCollectionController extends BaseOwnedResourceController
 {
-    protected static function getIndividualName(): string {
+    protected static function getIndividualName(): string
+    {
         return "account_collection";
     }
 
-    protected static function getCollectiveName(): string {
+    protected static function getCollectiveName(): string
+    {
         return "account_collections";
     }
 
-    protected static function getModelName(): string {
+    protected static function getModelName(): string
+    {
         return AccountCollectionModel::class;
     }
 
-    protected static function makeCreateValidation(User $owner): Validation {
+    protected static function makeCreateValidation(User $owner): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
@@ -47,19 +50,21 @@ class AccountCollectionController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation
+    {
         // There is no update validation because it is not possible to update an account collection.
         $validation = static::makeValidation();
 
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array {
+    protected static function enrichResponseDocument(array $initial_document): array
+    {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
         $main_documents = $is_single_main_document
             ? [ $initial_document[static::getIndividualName()] ]
-            : ($initial_document[static::getCollectiveName()] ?? [] );
+            : ($initial_document[static::getCollectiveName()] ?? []);
 
         $linked_accounts = [];
         foreach ($main_documents as $document) {
@@ -94,7 +99,8 @@ class AccountCollectionController extends BaseOwnedResourceController
         return $enriched_document;
     }
 
-    private static function makeValidation(): Validation {
+    private static function makeValidation(): Validation
+    {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 

@@ -212,7 +212,8 @@ class App extends BaseConfig
      */
     public int $userCountLimit = 0;
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
 
         if (!is_null(env("NF_POD_IP"))) {

@@ -2,23 +2,24 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\API\ResponseTrait;
+use App\Helpers\RequireCompatibleTokenExpiration;
 // use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
-use CodeIgniter\Shield\Controllers\LoginController as BaseLoginController;
 
 // use Config\App;
+use CodeIgniter\Shield\Controllers\LoginController as BaseLoginController;
 use Config\Services;
 
-use App\Helpers\RequireCompatibleTokenExpiration;
-
-class LoginController extends BaseLoginController {
+class LoginController extends BaseLoginController
+{
     use ResponseTrait;
     use RequireCompatibleTokenExpiration;
 
-    public function customLoginAction(): ResponseInterface {
+    public function customLoginAction(): ResponseInterface
+    {
         helper([ "auth", "setting", "session" ]);
 
         $session = session();
@@ -98,7 +99,8 @@ class LoginController extends BaseLoginController {
         return $new_response;
     }
 
-    public function customLogoutAction(): ResponseInterface {
+    public function customLogoutAction(): ResponseInterface
+    {
         helper([ "auth", "setting", "session" ]);
 
         $session = session();

@@ -2,21 +2,22 @@
 
 namespace App\Libraries\MathExpression\ExpressionFactory;
 
-use Closure;
-
 use App\Exceptions\ExpressionException;
 use App\Libraries\FlashCache;
 use App\Libraries\MathExpression\Context;
+use App\Libraries\MathExpression\ContextKeys;
 use App\Models\AccountCollectionModel;
-use App\Models\CollectionModel;
 use App\Models\AccountModel;
+use App\Models\CollectionModel;
+use Closure;
 use CodeIgniter\Database\BaseBuilder;
-use Xylemical\Expressions\Token;
 use Xylemical\Expressions\Procedure;
+use Xylemical\Expressions\Token;
 
 trait RegisterProcedures
 {
-    public function addProcedures() {
+    public function addProcedures()
+    {
         $this->addProcedure(
             "TOTAL_(OPENED|UNADJUSTED|CLOSED)_(DEBIT|CREDIT)_AMOUNT",
             1,
@@ -24,12 +25,14 @@ trait RegisterProcedures
         );
     }
 
-    private function addProcedure(string $name, int $arity, string $function_name) {
+    private function addProcedure(string $name, int $arity, string $function_name)
+    {
         $callback = Closure::fromCallable([ $this, $function_name ]);
         $this->addOperator(new Procedure($name, $arity, $callback));
     }
 
-    private function processTotalAmount(array $values, Context $context, Token $token) {
+    private function processTotalAmount(array $values, Context $context, Token $token)
+    {
         $function_name = $token->getValue();
 
         /**
@@ -80,7 +83,7 @@ trait RegisterProcedures
         /**
          * @var TimeGroupManager
          */
-        $time_group_manager = $context->timeGroupManager();
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
         $native_procedure_name = implode(
             "",
             explode(

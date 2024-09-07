@@ -2,16 +2,14 @@
 
 namespace App\Libraries;
 
-use Throwable;
-
-use CodeIgniter\Filters\Cors;
+use App\Contracts\APIException;
 use CodeIgniter\Debug\BaseExceptionHandler;
 use CodeIgniter\Debug\ExceptionHandlerInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
+use CodeIgniter\Filters\Cors;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-
-use App\Contracts\APIException;
+use Throwable;
 
 class HTTPExceptionHandler extends BaseExceptionHandler implements ExceptionHandlerInterface
 {

@@ -2,16 +2,13 @@
 
 namespace App\Exceptions;
 
-use Xylemical\Expressions\ExpressionException as BaseExpressionException;
-use Xylemical\Expressions\Operator;
+use App\Contracts\APIException;
 use CodeIgniter\Exceptions\ExceptionInterface;
 use CodeIgniter\Exceptions\HTTPExceptionInterface;
+use Xylemical\Expressions\ExpressionException as BaseExpressionException;
+use Xylemical\Expressions\Operator;
 
-use App\Contracts\APIException;
-
-class ExpressionException
-extends BaseExpressionException
-implements ExceptionInterface, HTTPExceptionInterface, APIException
+class ExpressionException extends BaseExpressionException implements ExceptionInterface, HTTPExceptionInterface, APIException
 {
     use SerializableException;
 

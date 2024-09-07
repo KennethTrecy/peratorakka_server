@@ -97,6 +97,7 @@ if (!function_exists("make_owned_resource_routes")) {
 }
 
 use App\Controllers\AccessTokenController;
+use App\Controllers\AccountCollectionController;
 use App\Controllers\AccountController;
 use App\Controllers\CashFlowActivityController;
 use App\Controllers\CollectionController;
@@ -104,7 +105,6 @@ use App\Controllers\CurrencyController;
 use App\Controllers\FinancialEntryController;
 use App\Controllers\FrozenPeriodController;
 use App\Controllers\ModifierController;
-use App\Controllers\AccountCollectionController;
 use App\Controllers\UserController;
 
 make_owned_resource_routes($routes, AccountController::class);

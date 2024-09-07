@@ -4,7 +4,8 @@ namespace App\Exceptions;
 
 trait SerializableException
 {
-    public function serialize(): array {
+    public function serialize(): array
+    {
         return [
             "errors" => [
                 [

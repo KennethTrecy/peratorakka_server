@@ -2,9 +2,8 @@
 
 namespace Tests\Feature\Authentication;
 
-use Tests\Feature\Helper\HTTPTestCase;
-
 use Faker\Factory;
+use Tests\Feature\Helper\HTTPTestCase;
 
 class RegisterTest extends HTTPTestCase
 {

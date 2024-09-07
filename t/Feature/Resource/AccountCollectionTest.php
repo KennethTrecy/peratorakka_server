@@ -2,18 +2,16 @@
 
 namespace Tests\Feature\Resource;
 
-use Throwable;
-
-use CodeIgniter\Exceptions\PageNotFoundException;
-use CodeIgniter\Test\Fabricator;
-
-use App\Exceptions\MissingResource;
 use App\Exceptions\InvalidRequest;
+use App\Exceptions\MissingResource;
+use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
 use App\Models\CurrencyModel;
-use App\Models\AccountCollectionModel;
+use CodeIgniter\Exceptions\PageNotFoundException;
+use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Throwable;
 
 class AccountCollectionTest extends AuthenticatedHTTPTestCase
 {

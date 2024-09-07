@@ -3,7 +3,6 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
-
 use Config\Database;
 
 class CreateFrozenPeriodsTable extends Migration

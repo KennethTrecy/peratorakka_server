@@ -2,17 +2,16 @@
 
 namespace Tests\Feature\Resource;
 
-use Throwable;
-
-use CodeIgniter\Test\Fabricator;
-
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
+
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
+use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Throwable;
 
 class ModifierTest extends AuthenticatedHTTPTestCase
 {
@@ -778,7 +777,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             $result = $authenticated_info
                 ->getRequest()
                 ->delete("/api/v1/modifiers/$modifier->id/force");
-                $this->assertTrue(false);
+            $this->assertTrue(false);
         } catch (MissingResource $error) {
             $this->seeNumRecords(0, "modifiers", []);
 

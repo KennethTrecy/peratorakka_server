@@ -2,14 +2,13 @@
 
 namespace Tests\Feature\Resource;
 
-use Throwable;
-
-use CodeIgniter\Test\Fabricator;
-
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
+
 use App\Models\CollectionModel;
+use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Throwable;
 
 class CollectionTest extends AuthenticatedHTTPTestCase
 {

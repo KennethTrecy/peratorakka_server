@@ -3,7 +3,6 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
-
 use Config\Database;
 
 class RenewModifierUniqueness extends Migration
@@ -12,7 +11,9 @@ class RenewModifierUniqueness extends Migration
     {
         $database = Database::connect();
 
-        if ($database->DBDriver === "SQLite3") return;
+        if ($database->DBDriver === "SQLite3") {
+            return;
+        }
 
         $this->forge->dropKey("modifiers", "modifiers_name_key", false);
         $this->forge->addUniqueKey(
@@ -30,7 +31,9 @@ class RenewModifierUniqueness extends Migration
     {
         $database = Database::connect();
 
-        if ($database->DBDriver === "SQLite3") return;
+        if ($database->DBDriver === "SQLite3") {
+            return;
+        }
 
         $this->forge->dropKey(
             "modifiers",

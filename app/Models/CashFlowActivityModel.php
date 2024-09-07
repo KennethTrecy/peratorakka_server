@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
+use App\Entities\CashFlowActivity;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
-
-use App\Entities\CashFlowActivity;
 
 class CashFlowActivityModel extends BaseResourceModel
 {
@@ -33,7 +32,8 @@ class CashFlowActivityModel extends BaseResourceModel
         ];
     }
 
-    public function limitSearchToUser(BaseResourceModel $query_builder, User $user) {
+    public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
+    {
         return $query_builder->where("user_id", $user->id);
     }
 }

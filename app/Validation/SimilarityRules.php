@@ -2,13 +2,13 @@
 
 namespace App\Validation;
 
-use InvalidArgumentException;
-
 use App\Models\AccountModel;
 use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
+use InvalidArgumentException;
 
-class SimilarityRules {
+class SimilarityRules
+{
     public function must_be_same_for_modifier(
         $debit_value,
         string $parameters,
@@ -32,7 +32,9 @@ class SimilarityRules {
         }
 
         $credit_value = dot_array_search($parameters[1], $data);
-        if ($credit_value === $debit_value) return true;
+        if ($credit_value === $debit_value) {
+            return true;
+        }
 
         $modifier_id = dot_array_search($parameters[0], $data);
 
@@ -60,7 +62,9 @@ class SimilarityRules {
         }
 
         $credit_value = dot_array_search($parameters[1], $data);
-        if ($credit_value === $debit_value) return true;
+        if ($credit_value === $debit_value) {
+            return true;
+        }
 
         $financial_entry_id = intval($parameters[0]);
         $financial_entry = model(FinancialEntryModel::class)->find($financial_entry_id);
@@ -79,7 +83,8 @@ class SimilarityRules {
         return $password_service->verify($given_password, $current_user->password_hash);
     }
 
-    private function mayAllowForDualCurrency(int $modifier_id): bool {
+    private function mayAllowForDualCurrency(int $modifier_id): bool
+    {
         $modifier = model(ModifierModel::class)->find($modifier_id);
         $accounts = model(AccountModel::class)
             ->whereIn("id", [ $modifier->debit_account_id, $modifier->credit_account_id ])

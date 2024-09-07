@@ -2,6 +2,7 @@
 
 namespace App\Libraries\MathExpression;
 
+use App\Casts\RationalNumber;
 use App\Exceptions\ExpressionException;
 use Brick\Math\BigRational;
 use Xylemical\Expressions\MathInterface;
@@ -10,11 +11,13 @@ class PeratorakkaMath implements MathInterface
 {
     private readonly int $scale;
 
-    public function __construct(int $scale = 0) {
+    public function __construct(int $scale = 0)
+    {
         $this->scale = $scale;
     }
 
-    public function add($rawAddend, $rawAdder, $overridenScale = 0) {
+    public function add($rawAddend, $rawAdder, $overridenScale = 0)
+    {
         $resolvedOperators = $this->resolveOperators($rawAddend, $rawAdder, $overridenScale);
         return json_encode(array_map(function ($operators) {
             [ $addend, $adder ] = $operators;
@@ -23,11 +26,12 @@ class PeratorakkaMath implements MathInterface
                 return $addend->plus($adder)->simplified();
             }
 
-            return $addend ?? $adder ?? BigRational::zero();
+            return $addend ?? $adder ?? RationalNumber::zero();
         }, $resolvedOperators));
     }
 
-    public function multiply($rawMultiplicand, $rawMultipier, $overridenScale = 0) {
+    public function multiply($rawMultiplicand, $rawMultipier, $overridenScale = 0)
+    {
         $resolvedOperators = $this->resolveOperators(
             $rawMultiplicand,
             $rawMultipier,
@@ -45,7 +49,8 @@ class PeratorakkaMath implements MathInterface
         }, $resolvedOperators));
     }
 
-    public function subtract($rawSubtrahend, $rawMinuend, $overridenScale = 0) {
+    public function subtract($rawSubtrahend, $rawMinuend, $overridenScale = 0)
+    {
         $resolvedOperators = $this->resolveOperators($rawSubtrahend, $rawMinuend, $overridenScale);
         return json_encode(array_map(function ($operators) {
             [ $subtrahend, $minuend ] = $operators;
@@ -54,41 +59,44 @@ class PeratorakkaMath implements MathInterface
                 return $subtrahend->minus($minuend)->simplified();
             }
 
-            return $subtrahend ?? $minuend->negated() ?? BigRational::zero();
+            return $subtrahend ?? $minuend->negated() ?? RationalNumber::zero();
         }, $resolvedOperators));
     }
 
-    public function divide($rawDividend, $rawDivisor, $overridenScale = 0) {
+    public function divide($rawDividend, $rawDivisor, $overridenScale = 0)
+    {
         $resolvedOperators = $this->resolveOperators($rawDividend, $rawDivisor, $overridenScale);
         return json_encode(array_map(function ($operators) {
             [ $dividend, $divisor ] = $operators;
 
             if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
                 return $dividend->dividedBy($divisor)->simplified();
-            } else if ($divisor instanceof BigRational) {
-                return BigRational::zero();
+            } elseif ($divisor instanceof BigRational) {
+                return RationalNumber::zero();
             }
 
             return null;
         }, $resolvedOperators));
     }
 
-    public function modulus($rawDividend, $rawDivisor, $overridenScale = 0) {
+    public function modulus($rawDividend, $rawDivisor, $overridenScale = 0)
+    {
         $resolvedOperators = $this->resolveOperators($rawDividend, $rawDivisor, $overridenScale);
         return json_encode(array_map(function ($operators) {
             [ $dividend, $divisor ] = $operators;
 
             if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
                 return $dividend->modulo($divisor);
-            } else if ($divisor instanceof BigRational) {
-                return BigRational::zero();
+            } elseif ($divisor instanceof BigRational) {
+                return RationalNumber::zero();
             }
 
             return null;
         }, $resolvedOperators));
     }
 
-    public function compare($rawOperandA, $rawOperandB, $overridenScale = 0) {
+    public function compare($rawOperandA, $rawOperandB, $overridenScale = 0)
+    {
         $resolvedOperators = $this->resolveOperators($rawOperandA, $rawOperandB, $overridenScale);
         return json_encode(array_map(function ($operators) {
             [ $operandA, $operandB ] = $operators;
@@ -101,8 +109,9 @@ class PeratorakkaMath implements MathInterface
         }, $resolvedOperators));
     }
 
-    public function native($value) {
-        $rationalValue = BigRational::of($value);
+    public function native($value)
+    {
+        $rationalValue = RationalNumber::get($value);
         $numerator = $rationalValue->getNumerator();
         $denominator = $rationalValue->getDenominator();
         $remainder = $numerator->remainder($denominator);
@@ -114,7 +123,8 @@ class PeratorakkaMath implements MathInterface
         return $rationalValue->toFloat();
     }
 
-    public function resolve(string $value, int $overridenScale = 0): mixed {
+    public function resolve(string $value, int $overridenScale = 0): mixed
+    {
         $scale = $this->getScale($overridenScale);
 
         if (str_starts_with($value, "[") && str_ends_with($value, "]")) {
@@ -152,11 +162,12 @@ class PeratorakkaMath implements MathInterface
                 return [ $leftHandElement, $rightHandElement ];
             }, $leftHand, $rightHand);
         } else {
-            throw new ExpressionException("Cannot resolve operators");
+            throw new ExpressionException("Cannot resolve operands: \"$rawLeftHand\" and \"$rawRightHand\"");
         }
     }
 
-    private function getScale(?int $defaultScale): int {
+    private function getScale(?int $defaultScale): int
+    {
         return $defaultScale ?? $this->scale;
     }
 }

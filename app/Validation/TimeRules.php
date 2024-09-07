@@ -2,12 +2,12 @@
 
 namespace App\Validation;
 
+use App\Models\FrozenPeriodModel;
 use CodeIgniter\I18n\Time;
 use InvalidArgumentException;
 
-use App\Models\FrozenPeriodModel;
-
-class TimeRules {
+class TimeRules
+{
     public function must_be_on_or_before_current_time(
         $value,
         ?string &$error = null
@@ -87,7 +87,8 @@ class TimeRules {
         return $is_not_frozen;
     }
 
-    private function isValidDate($value): bool {
+    private function isValidDate($value): bool
+    {
         try {
             Time::createFromFormat(DATE_TIME_STRING_FORMAT, $value, "Asia/Manila");
             return true;
@@ -97,7 +98,8 @@ class TimeRules {
         return false;
     }
 
-    private function isOnOrBeforeOtherTime(string $raw_subject_time, string $raw_other_time): bool {
+    private function isOnOrBeforeOtherTime(string $raw_subject_time, string $raw_other_time): bool
+    {
         $subject_time = Time::createFromFormat(DATE_TIME_STRING_FORMAT, $raw_subject_time);
         $other_time = Time::createFromFormat(DATE_TIME_STRING_FORMAT, $raw_other_time);
         return $subject_time->isBefore($other_time) || $subject_time->equals($other_time);

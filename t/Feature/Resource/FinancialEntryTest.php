@@ -2,20 +2,18 @@
 
 namespace Tests\Feature\Resource;
 
-use Throwable;
-
-use CodeIgniter\Test\Fabricator;
-use CodeIgniter\I18n\Time;
-
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
-use App\Models\ModifierModel;
 use App\Models\FrozenPeriodModel;
+use App\Models\ModifierModel;
+use CodeIgniter\I18n\Time;
+use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Throwable;
 
 class FinancialEntryTest extends AuthenticatedHTTPTestCase
 {
@@ -61,6 +59,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
                 "overall_filtered_count" => 10
             ],
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
+            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
             "currencies" => [ $currency ],
             "financial_entries" => json_decode(json_encode($financial_entries)),
             "modifiers" => json_decode(json_encode([ $modifier ])),
@@ -108,6 +107,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
+            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
             "currencies" => [ $currency ],
             "financial_entry" => json_decode(json_encode($financial_entry)),
             "modifier" => json_decode(json_encode($modifier)),
@@ -375,6 +375,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
                 "overall_filtered_count" => 0
             ],
             "accounts" => [],
+            "cash_flow_activities" => [],
             "currencies" => [],
             "financial_entries" => [],
             "modifiers" => [],
@@ -427,6 +428,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
                 "overall_filtered_count" => 10
             ],
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
+            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
             "currencies" => [ $currency ],
             "financial_entries" => json_decode(json_encode(array_slice($financial_entries, 0, 5))),
             "modifiers" => json_decode(json_encode([ $modifier ])),
@@ -489,6 +491,7 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
                 "overall_filtered_count" => 3
             ],
             "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
+            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
             "currencies" => [ $currency ],
             "financial_entries" => json_decode(json_encode($financial_entries_today)),
             "modifiers" => json_decode(json_encode([ $modifier ])),

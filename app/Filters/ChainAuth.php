@@ -2,13 +2,12 @@
 
 namespace App\Filters;
 
+use App\Contracts\OwnedResource;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Shield\Filters\ChainAuth as BaseAuth;
-
-use App\Contracts\OwnedResource;
 
 class ChainAuth extends BaseAuth implements FilterInterface
 {
@@ -16,7 +15,8 @@ class ChainAuth extends BaseAuth implements FilterInterface
 
     private $response;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->response = response();
     }
 
@@ -80,8 +80,7 @@ class ChainAuth extends BaseAuth implements FilterInterface
      *
      * @return mixed
      */
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
-    : void
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): void
     {
         //
     }

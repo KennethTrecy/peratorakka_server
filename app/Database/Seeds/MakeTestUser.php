@@ -2,12 +2,6 @@
 
 namespace App\Database\Seeds;
 
-use CodeIgniter\Database\Seeder;
-use CodeIgniter\HTTP\IncomingRequest;
-use CodeIgniter\Shield\Entities\User;
-use CodeIgniter\I18n\Time;
-use CodeIgniter\Test\Fabricator;
-
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
@@ -16,6 +10,11 @@ use App\Models\FlowCalculationModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
 use App\Models\SummaryCalculationModel;
+use CodeIgniter\Database\Seeder;
+use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\I18n\Time;
+use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\Test\Fabricator;
 
 class MakeTestUser extends Seeder
 {

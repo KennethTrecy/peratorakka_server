@@ -6,7 +6,8 @@ class FlashCache
 {
     private array $cache = [];
 
-    public function store(mixed $value): string {
+    public function store(mixed $value): string
+    {
         $key = '#'.uniqid();
 
         $this->cache[$key] = $value;
@@ -14,7 +15,8 @@ class FlashCache
         return $key;
     }
 
-    public function flash(string $key, mixed $default = null): mixed {
+    public function flash(string $key, mixed $default = null): mixed
+    {
         if (!isset($this->cache[$key])) {
             return $default;
         }

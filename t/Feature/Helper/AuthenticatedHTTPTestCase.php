@@ -10,7 +10,8 @@ class AuthenticatedHTTPTestCase extends HTTPTestCase
 {
     use AuthenticationTesting;
 
-    protected function makeAuthenticatedInfo($session_details = null): AuthenticatedInfo {
+    protected function makeAuthenticatedInfo($session_details = null): AuthenticatedInfo
+    {
         $user_info = $this->makeUserWithPlaintextPassword();
         $user_entity = $user_info["entity"];
         $password = $user_info["password"];
@@ -22,11 +23,13 @@ class AuthenticatedHTTPTestCase extends HTTPTestCase
         );
     }
 
-    protected function makeUser(): User {
+    protected function makeUser(): User
+    {
         return $this->makeUserWithPlaintextPassword()["entity"];
     }
 
-    private function makeUserWithPlaintextPassword(): array {
+    private function makeUserWithPlaintextPassword(): array
+    {
         $faker = Factory::create();
         $password = $faker->password();
         $user_data = [

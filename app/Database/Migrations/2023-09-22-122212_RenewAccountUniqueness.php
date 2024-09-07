@@ -3,7 +3,6 @@
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
-
 use Config\Database;
 
 class RenewAccountUniqueness extends Migration
@@ -12,7 +11,9 @@ class RenewAccountUniqueness extends Migration
     {
         $database = Database::connect();
 
-        if ($database->DBDriver === "SQLite3") return;
+        if ($database->DBDriver === "SQLite3") {
+            return;
+        }
 
         $this->forge->dropKey("accounts", "accounts_name_key", false);
         $this->forge->addUniqueKey([ "currency_id", "name" ], "accounts_currency_id_name");
@@ -23,7 +24,9 @@ class RenewAccountUniqueness extends Migration
     {
         $database = Database::connect();
 
-        if ($database->DBDriver === "SQLite3") return;
+        if ($database->DBDriver === "SQLite3") {
+            return;
+        }
 
         $this->forge->dropKey("accounts", "accounts_currency_id_name", false);
         $this->forge->addUniqueKey("name", "accounts_name_key");

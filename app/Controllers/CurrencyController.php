@@ -2,27 +2,30 @@
 
 namespace App\Controllers;
 
+use App\Contracts\OwnedResource;
+use App\Models\CurrencyModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
-use App\Contracts\OwnedResource;
-use App\Models\CurrencyModel;
-
 class CurrencyController extends BaseOwnedResourceController
 {
-    protected static function getIndividualName(): string {
+    protected static function getIndividualName(): string
+    {
         return "currency";
     }
 
-    protected static function getCollectiveName(): string {
+    protected static function getCollectiveName(): string
+    {
         return "currencies";
     }
 
-    protected static function getModelName(): string {
+    protected static function getModelName(): string
+    {
         return CurrencyModel::class;
     }
 
-    protected static function makeCreateValidation(User $owner): Validation {
+    protected static function makeCreateValidation(User $owner): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -59,7 +62,8 @@ class CurrencyController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation {
+    protected static function makeUpdateValidation(User $owner, int $resource_id): Validation
+    {
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
@@ -98,7 +102,8 @@ class CurrencyController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function prepareRequestData(array $raw_request_data): array {
+    protected static function prepareRequestData(array $raw_request_data): array
+    {
         $current_user = auth()->user();
 
         return array_merge(
@@ -107,7 +112,8 @@ class CurrencyController extends BaseOwnedResourceController
         );
     }
 
-    private static function makeValidation(): Validation {
+    private static function makeValidation(): Validation
+    {
         $validation = single_service("validation");
         $individual_name = static::getIndividualName();
 

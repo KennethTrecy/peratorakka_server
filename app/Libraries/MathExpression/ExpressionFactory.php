@@ -2,16 +2,11 @@
 
 namespace App\Libraries\MathExpression;
 
-use App\Exceptions\ExpressionException;
+use App\Casts\RationalNumber;
 use App\Libraries\FlashCache;
 use App\Libraries\MathExpression\ExpressionFactory\RegisterProcedures;
 use App\Libraries\MathExpression\ExpressionFactory\RegisterValues;
 use App\Libraries\MathExpression\PeratorakkaMath;
-use App\Models\AccountCollectionModel;
-use App\Models\CollectionModel;
-use App\Models\FrozenPeriodModel;
-use App\Models\SummaryCalculationModel;
-use Brick\Math\BigRational;
 use CodeIgniter\Database\BaseBuilder;
 use Xylemical\Expressions\ExpressionFactory as BaseExpressionFactory;
 use Xylemical\Expressions\Operator;
@@ -26,7 +21,8 @@ class ExpressionFactory extends BaseExpressionFactory
 
     private readonly FlashCache $cache;
 
-    public function __construct(FlashCache $cache, PeratorakkaMath $math) {
+    public function __construct(FlashCache $cache, PeratorakkaMath $math)
+    {
         parent::__construct($math);
 
         $this->cache = $cache;

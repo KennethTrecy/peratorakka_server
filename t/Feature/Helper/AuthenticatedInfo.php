@@ -12,21 +12,25 @@ class AuthenticatedInfo
     private User $user;
     private string $password;
 
-    public function __construct($request, User $user, string $password) {
+    public function __construct($request, User $user, string $password)
+    {
         $this->request = $request;
         $this->user = $user;
         $this->password = $password;
     }
 
-    public function getRequest() {
+    public function getRequest()
+    {
         return $this->request;
     }
 
-    public function getUser(): User {
+    public function getUser(): User
+    {
         return $this->user;
     }
 
-    public function getPassword(): string {
+    public function getPassword(): string
+    {
         return $this->password;
     }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Config;
 
-use CodeIgniter\Shield\Config\AuthRoutes as ShieldAuthRoutes;
-
-use App\Controllers\RegisterController;
 use App\Controllers\LoginController;
+use App\Controllers\RegisterController;
+use CodeIgniter\Shield\Config\AuthRoutes as ShieldAuthRoutes;
 
 class AuthRoutes extends ShieldAuthRoutes
 {

@@ -2,12 +2,12 @@
 
 namespace App\Validation;
 
-use InvalidArgumentException;
-
 use App\Models\AccountModel;
 use App\Models\ModifierModel;
+use InvalidArgumentException;
 
-class EnumerationRules {
+class EnumerationRules
+{
     public function may_allow_exchange_action(
         $value,
         string $parameters,

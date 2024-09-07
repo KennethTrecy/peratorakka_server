@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use App\Contracts\OwnedResource;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Shield\Models\TokenLoginModel;
 use Faker\Generator;
-
-use App\Contracts\OwnedResource;
 
 class AccessTokenModel extends TokenLoginModel implements OwnedResource
 {
@@ -21,20 +20,26 @@ class AccessTokenModel extends TokenLoginModel implements OwnedResource
     ];
 
 
-    public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool {
+    public function isOwnedBy(User $user, string $search_mode, int $resource_id): bool
+    {
         $match = $this
             ->limitSearchToUser($this->getSearchQuery($search_mode), $user)
             ->find($resource_id);
         return !is_null($match);
     }
 
-    public function limitSearchToUser(OwnedResource $query_builder, User $user) {
+    public function limitSearchToUser(OwnedResource $query_builder, User $user)
+    {
         return $query_builder->where("user_id", $user->id);
     }
 
-    private function getSearchQuery(string $search_mode) {
-        if ($search_mode === SEARCH_WITH_DELETED) return $this->withDeleted();
-        else if ($search_mode === SEARCH_ONLY_DELETED) return $this->onlyDeleted();
+    private function getSearchQuery(string $search_mode)
+    {
+        if ($search_mode === SEARCH_WITH_DELETED) {
+            return $this->withDeleted();
+        } elseif ($search_mode === SEARCH_ONLY_DELETED) {
+            return $this->onlyDeleted();
+        }
 
         return $this;
     }

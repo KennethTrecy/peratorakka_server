@@ -2,17 +2,16 @@
 
 namespace Config;
 
+use App\Validation\DatabaseRules;
+use App\Validation\EnumerationRules;
+use App\Validation\FractionRules;
+use App\Validation\SimilarityRules;
+use App\Validation\TimeRules;
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Validation\StrictRules\CreditCardRules;
 use CodeIgniter\Validation\StrictRules\FileRules;
 use CodeIgniter\Validation\StrictRules\FormatRules;
 use CodeIgniter\Validation\StrictRules\Rules;
-
-use App\Validation\DatabaseRules;
-use App\Validation\SimilarityRules;
-use App\Validation\TimeRules;
-use App\Validation\EnumerationRules;
-use App\Validation\FractionRules;
 
 class Validation extends BaseConfig
 {

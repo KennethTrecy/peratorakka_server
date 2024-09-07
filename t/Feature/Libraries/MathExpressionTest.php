@@ -2,15 +2,16 @@
 
 namespace Tests\Feature\Libraries;
 
-use CodeIgniter\I18n\Time;
-use CodeIgniter\Test\Fabricator;
-use Brick\Math\BigRational;
-
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
-
+use App\Casts\RationalNumber;
 use App\Exceptions\ExpressionException;
-use App\Models\AccountModel;
+use App\Libraries\MathExpression;
+
+use App\Libraries\MathExpression\Context;
+use App\Libraries\MathExpression\ContextKeys;
+use App\Libraries\TimeGroup\PeriodicTimeGroup;
+use App\Libraries\TimeGroupManager;
 use App\Models\AccountCollectionModel;
+use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
 use App\Models\CurrencyModel;
@@ -18,10 +19,9 @@ use App\Models\FinancialEntryModel;
 use App\Models\FlowCalculationModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
-use App\Libraries\MathExpression;
-use App\Libraries\MathExpression\Context;
-use App\Libraries\TimeGroup\PeriodicTimeGroup;
-use App\Libraries\TimeGroupManager;
+use CodeIgniter\I18n\Time;
+use CodeIgniter\Test\Fabricator;
+use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
 
 class MathExpressionTest extends AuthenticatedHTTPTestCase
 {
@@ -185,15 +185,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS)";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("500"),
-            BigRational::of("500")
+            RationalNumber::get("500"),
+            RationalNumber::get("500")
         ]);
     }
 
@@ -357,15 +357,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_OPENED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("0"),
-            BigRational::of("2000")
+            RationalNumber::get("0"),
+            RationalNumber::get("2000")
         ]);
     }
 
@@ -529,15 +529,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_OPENED_CREDIT_AMOUNT(COLLECTION[$equity_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("0"),
-            BigRational::of("2000")
+            RationalNumber::get("0"),
+            RationalNumber::get("2000")
         ]);
     }
 
@@ -701,15 +701,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(COLLECTION[$expense_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("500"),
-            BigRational::of("500")
+            RationalNumber::get("500"),
+            RationalNumber::get("500")
         ]);
     }
 
@@ -873,15 +873,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_UNADJUSTED_CREDIT_AMOUNT(COLLECTION[$equity_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("2500"),
-            BigRational::of("4000")
+            RationalNumber::get("2500"),
+            RationalNumber::get("4000")
         ]);
     }
     public function testTotalClosedDebitAmountForAssetCollection()
@@ -1044,15 +1044,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("2000"),
-            BigRational::of("3500")
+            RationalNumber::get("2000"),
+            RationalNumber::get("3500")
         ]);
     }
 
@@ -1216,15 +1216,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_CREDIT_AMOUNT(COLLECTION[$equity_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("2000"),
-            BigRational::of("3500")
+            RationalNumber::get("2000"),
+            RationalNumber::get("3500")
         ]);
     }
 
@@ -1388,7 +1388,7 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $this->expectException(ExpressionException::class);
@@ -1552,15 +1552,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_CREDIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("0"),
-            BigRational::of("0")
+            RationalNumber::get("0"),
+            RationalNumber::get("0")
         ]);
     }
 
@@ -1724,15 +1724,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id]) + 1";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("2001"),
-            BigRational::of("3501")
+            RationalNumber::get("2001"),
+            RationalNumber::get("3501")
         ]);
     }
 
@@ -1896,15 +1896,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "2 + TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("2002"),
-            BigRational::of("3502")
+            RationalNumber::get("2002"),
+            RationalNumber::get("3502")
         ]);
     }
 
@@ -2068,15 +2068,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id]) - 1";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("1999"),
-            BigRational::of("3499")
+            RationalNumber::get("1999"),
+            RationalNumber::get("3499")
         ]);
     }
 
@@ -2240,15 +2240,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "2 - TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("-1998"),
-            BigRational::of("-3498")
+            RationalNumber::get("-1998"),
+            RationalNumber::get("-3498")
         ]);
     }
 
@@ -2412,15 +2412,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id]) * 2";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("4000"),
-            BigRational::of("7000")
+            RationalNumber::get("4000"),
+            RationalNumber::get("7000")
         ]);
     }
 
@@ -2584,15 +2584,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "2 * TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("4000"),
-            BigRational::of("7000")
+            RationalNumber::get("4000"),
+            RationalNumber::get("7000")
         ]);
     }
 
@@ -2756,15 +2756,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id]) / 2";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("1000"),
-            BigRational::of("1750")
+            RationalNumber::get("1000"),
+            RationalNumber::get("1750")
         ]);
     }
 
@@ -2928,15 +2928,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "2 / TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("0.001"),
-            BigRational::of("1/1750")
+            RationalNumber::get("0.001"),
+            RationalNumber::get("1/1750")
         ]);
     }
 
@@ -3100,15 +3100,15 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
             new PeriodicTimeGroup($first_frozen_period),
             new PeriodicTimeGroup($second_frozen_period)
         ];
-        $time_group_manager = new TimeGroupManager($time_groups);
+        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
         $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id]) / TOTAL_CLOSED_CREDIT_AMOUNT(COLLECTION[$equity_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            BigRational::of("1"),
-            BigRational::of("1")
+            RationalNumber::get("1"),
+            RationalNumber::get("1")
         ]);
     }
 }

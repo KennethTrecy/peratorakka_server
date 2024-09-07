@@ -2,8 +2,8 @@
 
 namespace App\Entities;
 
-use App\Casts\ModifierKind;
 use App\Casts\ModifierAction;
+use App\Casts\ModifierKind;
 
 class Modifier extends BaseResourceEntity
 {

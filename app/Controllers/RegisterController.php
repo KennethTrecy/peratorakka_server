@@ -3,21 +3,21 @@
 namespace App\Controllers;
 
 // use CodeIgniter\HTTP\IncomingRequest;
+use App\Helpers\RequireCompatibleTokenExpiration;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Controllers\RegisterController as BaseRegisterController;
-
 use Config\App;
 use Config\Database;
 use Config\Services;
 
-use App\Helpers\RequireCompatibleTokenExpiration;
-
-class RegisterController extends BaseRegisterController {
+class RegisterController extends BaseRegisterController
+{
     use RequireCompatibleTokenExpiration;
 
-    public function customRegisterAction(): ResponseInterface {
+    public function customRegisterAction(): ResponseInterface
+    {
         helper([ "auth", "setting", "session" ]);
 
         $session = session();
