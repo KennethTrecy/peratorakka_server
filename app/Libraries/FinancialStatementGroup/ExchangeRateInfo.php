@@ -26,4 +26,15 @@ class ExchangeRateInfo
         $this->destination_value = $destination_value;
         $this->updated_at = $updated_at;
     }
+
+    public function reverse(): ExchangeRateInfo
+    {
+        return new ExchangeRateInfo(
+            $this->destination_currency_id,
+            $this->destination_value,
+            $this->source_currency_id,
+            $this->source_value,
+            $this->updated_at
+        );
+    }
 }
