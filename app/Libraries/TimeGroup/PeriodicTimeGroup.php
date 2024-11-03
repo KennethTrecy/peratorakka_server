@@ -36,9 +36,19 @@ class PeriodicTimeGroup extends GranularTimeGroup
         return false;
     }
 
+    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool
+    {
+        return $this->frozen_period->id === $summary_calculation->frozen_period_id;
+    }
+
+    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool
+    {
+        return $this->frozen_period->id === $flow_calculation->frozen_period_id;
+    }
+
     public function addSummaryCalculation(SummaryCalculation $summary_calculation): bool
     {
-        $does_own_resource = $this->frozen_period->id === $summary_calculation->frozen_period_id;
+        $does_own_resource = $this->doesOwnSummaryCalculation($summary_calculation);
         if ($does_own_resource) {
             $this->summary_calculations[$summary_calculation->account_id] = $summary_calculation;
         }
@@ -48,7 +58,7 @@ class PeriodicTimeGroup extends GranularTimeGroup
 
     public function addFlowCalculation(FlowCalculation $flow_calculation): bool
     {
-        $does_own_resource = $this->frozen_period->id === $flow_calculation->frozen_period_id;
+        $does_own_resource = $this->doesOwnFlowCalculation($flow_calculation);
         if ($does_own_resource) {
             $this->flow_calculations[$flow_calculation->account_id] = $flow_calculation;
         }

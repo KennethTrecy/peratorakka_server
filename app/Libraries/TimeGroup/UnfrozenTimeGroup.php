@@ -21,22 +21,22 @@ class UnfrozenTimeGroup extends GranularTimeGroup
 
     public static function make(
         Time $inclusive_start_date,
-        Time $inclusive_end_date
+        Time $inclusive_finish_date
     ): UnfrozenTimeGroup {
         if (self::$instance === null) {
-            self::$instance = new self($inclusive_start_date, $inclusive_end_date);
+            self::$instance = new self($inclusive_start_date, $inclusive_finish_date);
         }
 
         return self::$instance;
     }
 
     private readonly Time $inclusive_start_date;
-    private readonly Time $inclusive_end_date;
+    private readonly Time $inclusive_finish_date;
 
-    private function __construct(Time $inclusive_start_date, Time $inclusive_end_date)
+    private function __construct(Time $inclusive_start_date, Time $inclusive_finish_date)
     {
         $this->inclusive_start_date = $inclusive_start_date;
-        $this->inclusive_end_date = $inclusive_end_date;
+        $this->inclusive_finish_date = $inclusive_finish_date;
     }
 
     public function startedAt(): Time
@@ -46,7 +46,7 @@ class UnfrozenTimeGroup extends GranularTimeGroup
 
     public function finishedAt(): Time
     {
-        return $this->inclusive_end_date;
+        return $this->inclusive_finish_date;
     }
 
     public function hasSomeUnfrozenDetails(): bool
@@ -54,9 +54,19 @@ class UnfrozenTimeGroup extends GranularTimeGroup
         return true;
     }
 
+    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool
+    {
+        return $summary_calculation->frozen_period_id === 0;
+    }
+
+    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool
+    {
+        return $flow_calculation->frozen_period_id === 0;
+    }
+
     public function addSummaryCalculation(SummaryCalculation $summary_calculation): bool
     {
-        $does_own_resource = $summary_calculation->frozen_period_id === 0;
+        $does_own_resource = $this->doesOwnSummaryCalculation($summary_calculation);
         if ($does_own_resource) {
             $this->summary_calculations[$summary_calculation->account_id] = $summary_calculation;
         }
@@ -66,7 +76,7 @@ class UnfrozenTimeGroup extends GranularTimeGroup
 
     public function addFlowCalculation(FlowCalculation $flow_calculation): bool
     {
-        $does_own_resource = $flow_calculation->frozen_period_id === 0;
+        $does_own_resource = $this->doesOwnFlowCalculation($flow_calculation);
         if ($does_own_resource) {
             $this->flow_calculations[$flow_calculation->account_id] = $flow_calculation;
         }

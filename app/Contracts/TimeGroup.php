@@ -32,9 +32,25 @@ interface TimeGroup
     /**
      * Returns true if the time group came from unfrozen period, partially or as a whole.
      *
-     * @return boolean
+     * @return bool
      */
     public function hasSomeUnfrozenDetails(): bool;
+
+    /**
+     * Returns true if summary calculation belongs to the group.
+     *
+     * @param SummaryCalculation $summary_calculation
+     * @return bool
+     */
+    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool;
+
+    /**
+     * Returns true if flow calculation belongs to the group.
+     *
+     * @param FlowCalculation $flow_calculation
+     * @return bool
+     */
+    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool;
 
     /**
      * Adds summary calculation only if it belongs to the time group.

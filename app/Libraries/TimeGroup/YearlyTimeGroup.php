@@ -91,6 +91,28 @@ class YearlyTimeGroup implements TimeGroup
         return false;
     }
 
+    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool
+    {
+        foreach ($this->time_groups as $time_group) {
+            if ($time_group->doesOwnSummaryCalculation($summary_calculation)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool
+    {
+        foreach ($this->time_groups as $time_group) {
+            if ($time_group->doesOwnFlowCalculation($flow_calculation)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function addSummaryCalculation(SummaryCalculation $summary_calculation): bool
     {
         foreach ($this->time_groups as $time_group) {
