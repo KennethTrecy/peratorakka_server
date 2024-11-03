@@ -22,7 +22,7 @@ class MathExpression
     public function evaluate(string $formula): array
     {
         $manager = $this->manager;
-        $cache = $manager->context->getVariable(ContextKeys::CACHE);
+        $cache = $manager->context->getVariable(ContextKeys::FLASH_CACHE);
         $math = new PeratorakkaMath();
         $expression_factory = new ExpressionFactory($cache, $math);
         $lexer = new Lexer($expression_factory);
