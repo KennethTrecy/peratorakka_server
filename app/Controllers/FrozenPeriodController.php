@@ -7,6 +7,8 @@ use App\Contracts\OwnedResource;
 use App\Entities\FlowCalculation;
 use App\Entities\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
+use App\Libraries\FinancialStatementGroup;
+use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
@@ -95,7 +97,6 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $enriched_document["@meta"] = [
             "statements" => static::makeStatements(
                 $currencies,
-                $cash_flow_activities,
                 $accounts,
                 $summary_calculations,
                 $flow_calculations
@@ -222,10 +223,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     );
 
                     $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
-                    $currencies = model(CurrencyModel::class)->selectUsingMultipleIDs($linked_currencies);
+                    $currencies = model(CurrencyModel::class)
+                        ->selectUsingMultipleIDs($linked_currencies);
                     $statements = static::makeStatements(
                         $currencies,
-                        $cash_flow_activities,
                         $accounts,
                         $raw_summary_calculations,
                         $raw_flow_calculations
@@ -282,303 +283,30 @@ class FrozenPeriodController extends BaseOwnedResourceController
     }
 
     private static function makeStatements(
-        $currencies,
-        $cash_flow_activities,
-        $accounts,
-        $summary_calculations,
-        $flow_calculations
+        array $currencies,
+        array $accounts,
+        array $summary_calculations,
+        array $flow_calculations
     ): array {
-        $keyed_summary_calculations = static::keyCalculationsWithAccounts($summary_calculations);
-        $keyed_accounts = array_reduce(
+        $financial_statement_group = new FinancialStatementGroup(
             $accounts,
-            function ($keyed_items, $account) {
-                $keyed_items[$account->id] = $account;
-
-                return $keyed_items;
-            },
-            []
-        );
-        $keyed_cash_flow_activities = array_reduce(
-            $cash_flow_activities,
-            function ($keyed_items, $cash_flow_activity) {
-                $keyed_items[$cash_flow_activity->id] = $cash_flow_activity;
-
-                return $keyed_items;
-            },
-            []
-        );
-
-        $grouped_summary_calculation = array_reduce(
-            $accounts,
-            function ($groups, $account) use ($keyed_summary_calculations) {
-                if (!isset($groups[$account->currency_id])) {
-                    $groups[$account->currency_id] = array_fill_keys(
-                        [ ...ACCEPTABLE_ACCOUNT_KINDS ],
-                        []
-                    );
-                }
-
-                // Some accounts are temporary and exist only for closing other accounts.
-                // Therefore, they would not have any summary calculations.
-                if (isset($keyed_summary_calculations[$account->id])) {
-                    array_push(
-                        $groups[$account->currency_id][$account->kind],
-                        $keyed_summary_calculations[$account->id]
-                    );
-                }
-
-                return $groups;
-            },
-            []
-        );
-        $grouped_flow_calculation = array_reduce(
+            $summary_calculations,
             $flow_calculations,
-            function ($groups, $calculation) use ($keyed_accounts) {
-                $account = $keyed_accounts[$calculation->account_id];
-
-                if (!isset($groups[$account->currency_id])) {
-                    $groups[$account->currency_id] = [];
-                }
-
-                if (!isset($groups[$account->currency_id][$calculation->cash_flow_activity_id])) {
-                    $groups[$account->currency_id][$calculation->cash_flow_activity_id] = [];
-                }
-
-                array_push(
-                    $groups[$account->currency_id][$calculation->cash_flow_activity_id],
-                    $calculation
-                );
-
-                return $groups;
-            },
-            []
+            new ExchangeRateDerivator([])
         );
 
         $statements = array_reduce(
             $currencies,
-            function ($statements, $currency) use (
-                $keyed_cash_flow_activities,
-                $keyed_accounts,
-                $keyed_summary_calculations,
-                $grouped_summary_calculation,
-                $grouped_flow_calculation,
-            ) {
-                if (!isset($grouped_summary_calculation[$currency->id])) {
+            function ($statements, $currency) use ($financial_statement_group) {
+                $statement_set = $financial_statement_group
+                    ->generateFinancialStatements($currency, $currency);
+
+                if ($statement_set === null) {
                     // Include currencies only used in statements
                     return $statements;
                 }
 
-                // Compute for income statement and balance sheet
-                $summaries = $grouped_summary_calculation[$currency->id];
-
-                $unadjusted_total_income = array_reduce(
-                    $summaries[INCOME_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->unadjusted_credit_amount)
-                            ->minus($summary->unadjusted_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $unadjusted_total_expenses = array_reduce(
-                    $summaries[EXPENSE_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->unadjusted_debit_amount)
-                            ->minus($summary->unadjusted_credit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $unadjusted_total_assets = array_reduce(
-                    array_merge(
-                        $summaries[GENERAL_ASSET_ACCOUNT_KIND],
-                        $summaries[LIQUID_ASSET_ACCOUNT_KIND],
-                        $summaries[DEPRECIATIVE_ASSET_ACCOUNT_KIND]
-                    ),
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->unadjusted_debit_amount)
-                            ->minus($summary->unadjusted_credit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $unadjusted_total_liabilities = array_reduce(
-                    $summaries[LIABILITY_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->unadjusted_credit_amount)
-                            ->minus($summary->unadjusted_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $unadjusted_total_equities = array_reduce(
-                    $summaries[EQUITY_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->unadjusted_credit_amount)
-                            ->minus($summary->unadjusted_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-
-                $adjusted_total_income = array_reduce(
-                    $summaries[INCOME_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->closed_credit_amount)
-                            ->minus($summary->closed_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $adjusted_total_expenses = array_reduce(
-                    $summaries[EXPENSE_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->closed_debit_amount)
-                            ->minus($summary->closed_credit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $adjusted_total_assets = array_reduce(
-                    array_merge(
-                        $summaries[GENERAL_ASSET_ACCOUNT_KIND],
-                        $summaries[LIQUID_ASSET_ACCOUNT_KIND],
-                        $summaries[DEPRECIATIVE_ASSET_ACCOUNT_KIND]
-                    ),
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->closed_debit_amount)
-                            ->minus($summary->closed_credit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $adjusted_total_liabilities = array_reduce(
-                    $summaries[LIABILITY_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->closed_credit_amount)
-                            ->minus($summary->closed_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $adjusted_total_equities = array_reduce(
-                    $summaries[EQUITY_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total
-                            ->plus($summary->closed_credit_amount)
-                            ->minus($summary->closed_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-
-                $unadjusted_trial_balance_debit_total = $unadjusted_total_expenses
-                    ->plus($unadjusted_total_assets);
-                $unadjusted_trial_balance_credit_total = $unadjusted_total_equities
-                    ->plus($unadjusted_total_liabilities)
-                    ->plus($unadjusted_total_income);
-                $income_statement_total = $unadjusted_total_income
-                    ->minus($unadjusted_total_expenses);
-                $adjusted_trial_balance_debit_total = $adjusted_total_expenses
-                    ->plus($adjusted_total_assets);
-                $adjusted_trial_balance_credit_total = $adjusted_total_equities
-                    ->plus($adjusted_total_liabilities)
-                    ->plus($adjusted_total_income);
-
-                // Compute for cash flow statement
-                $opened_liquid_amount = array_reduce(
-                    $summaries[LIQUID_ASSET_ACCOUNT_KIND],
-                    function ($previous_total, $summary) {
-                        return $previous_total->plus($summary->opened_debit_amount);
-                    },
-                    RationalNumber::zero()
-                );
-                $closed_liquid_amount = $opened_liquid_amount;
-                $illiquid_cash_flow_activity_subtotals = [];
-
-                if (isset($grouped_flow_calculation[$currency->id])) {
-                    $categorized_flows = $grouped_flow_calculation[$currency->id];
-
-                    foreach ($categorized_flows as $cash_flow_activity_id => $flows) {
-                        $activity = $keyed_cash_flow_activities[$cash_flow_activity_id];
-
-                        if (!isset($illiquid_cash_flow_activity_subtotals[$activity->id])) {
-                            $illiquid_cash_flow_activity_subtotals[$activity->id] = [
-                                "cash_flow_activity_id" => $activity->id,
-                                "net_income" => RationalNumber::zero(),
-                                "subtotal" => RationalNumber::zero()
-                            ];
-                        }
-
-                        foreach ($flows as $flow_info) {
-                            $account = $keyed_accounts[$flow_info->account_id];
-
-                            $closed_liquid_amount = $closed_liquid_amount
-                                ->plus($flow_info->net_amount);
-
-                            $illiquid_cash_flow_activity_subtotals[$activity->id]["subtotal"]
-                                = $illiquid_cash_flow_activity_subtotals[$activity->id]["subtotal"]
-                                    ->plus($flow_info->net_amount);
-
-                            if (
-                                !(
-                                    $account->kind === EXPENSE_ACCOUNT_KIND
-                                    || $account->kind === INCOME_ACCOUNT_KIND
-                                )
-                            ) {
-                                continue;
-                            }
-
-                            $illiquid_cash_flow_activity_subtotals[$activity->id]["net_income"]
-                                = $illiquid_cash_flow_activity_subtotals[$activity->id]["net_income"]
-                                    ->plus($flow_info->net_amount);
-                        }
-                    }
-
-                    $illiquid_cash_flow_activity_subtotals = array_map(
-                        function ($subtotal_info) {
-                            return array_merge($subtotal_info, [
-                                "net_income" => $subtotal_info["net_income"]->simplified(),
-                                "subtotal" => $subtotal_info["subtotal"]->simplified()
-                            ]);
-                        },
-                        array_filter(
-                            array_values($illiquid_cash_flow_activity_subtotals),
-                            function ($cash_flow_activity_subtotal) {
-                                return $cash_flow_activity_subtotal["subtotal"]->getSign() !== 0;
-                            }
-                        )
-                    );
-                }
-
-                array_push($statements, [
-                    "currency_id" => $currency->id,
-                    "unadjusted_trial_balance" => [
-                        "debit_total" => $unadjusted_trial_balance_debit_total->simplified(),
-                        "credit_total" => $unadjusted_trial_balance_credit_total->simplified()
-                    ],
-                    "income_statement" => [
-                        "net_total" => $income_statement_total->simplified()
-                    ],
-                    "balance_sheet" => [
-                        "total_assets" => $unadjusted_total_assets->simplified(),
-                        "total_liabilities" => $unadjusted_total_liabilities->simplified(),
-                        "total_equities" => $unadjusted_total_equities
-                            ->plus($income_statement_total)
-                            ->simplified()
-                    ],
-                    "cash_flow_statement" => [
-                        "opened_liquid_amount" => $opened_liquid_amount->simplified(),
-                        "closed_liquid_amount" => $closed_liquid_amount->simplified(),
-                        "liquid_amount_difference" => $closed_liquid_amount->minus(
-                            $opened_liquid_amount
-                        )->simplified(),
-                        "subtotals" => $illiquid_cash_flow_activity_subtotals
-                    ],
-                    "adjusted_trial_balance" => [
-                        "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
-                        "credit_total" => $adjusted_trial_balance_credit_total->simplified()
-                    ]
-                ]);
+                array_push($statements, $statement_set);
 
                 return $statements;
             },
@@ -586,20 +314,5 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
 
         return $statements;
-    }
-
-    private static function keyCalculationsWithAccounts(array $calculations): array
-    {
-        $keyed_calculations = array_reduce(
-            $calculations,
-            function ($keyed_collection, $calculation) {
-                $keyed_collection[$calculation->account_id] = $calculation;
-
-                return $keyed_collection;
-            },
-            []
-        );
-
-        return $keyed_calculations;
     }
 }
