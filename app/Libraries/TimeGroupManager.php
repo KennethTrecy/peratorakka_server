@@ -9,6 +9,7 @@ use App\Entities\SummaryCalculation;
 use App\Libraries\MathExpression\Context;
 use App\Libraries\MathExpression\ContextKeys;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
+use App\Libraries\TimeGroupManager\ExchangeRateCache;
 use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
 
@@ -17,6 +18,7 @@ class TimeGroupManager
     public readonly Context $context;
 
     private readonly array $time_groups;
+    private readonly ExchangeRateCache $exchange_rate_cache;
 
     private array $loaded_summary_calculations_by_account_id = [];
 
@@ -31,6 +33,10 @@ class TimeGroupManager
     {
         $this->context = $context;
         $this->time_groups = $time_groups;
+        $this->exchange_rate_cache = new ExchangeRateCache(
+            $this->context,
+            $this->time_groups[count($this->time_groups) - 1]->finishedAt()
+        );
 
         $this->context->setVariable(ContextKeys::TIME_GROUP_MANAGER, $this);
     }
@@ -145,19 +151,59 @@ class TimeGroupManager
         );
 
         if (count($missing_account_IDs) > 0) {
+            $this->exchange_rate_cache->loadAccounts($missing_account_IDs);
+
             $summary_calculations = model(SummaryCalculationModel::class)
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
-            // TODO: Convert values of calculations first according to the needs of numerical tool.
+            foreach ($this->time_groups as $time_group) {
+                $derivator = $this->exchange_rate_cache->buildDerivator($time_group->finishedAt());
+                $destination_currency_id = $this->context->getVariable(
+                    ContextKeys::DESTINATION_CURRENCY_ID,
+                    null
+                );
 
-            foreach ($summary_calculations as $summary_calculation) {
-                foreach ($this->time_groups as $time_group) {
-                    $is_added = $time_group->addSummaryCalculation($summary_calculation);
-                    if ($is_added) {
+                foreach ($summary_calculations as $summary_calculation) {
+                    $is_owned = $time_group->doesOwnSummaryCalculation($summary_calculation);
+                    if ($is_owned) {
                         $account_id = $summary_calculation->account_id;
+                        $source_currency_id = $this->exchange_rate_cache
+                            ->determineCurrencyIDUsingAccountID(
+                                $account_id
+                            );
+                        $derived_exchange_rate = is_null($source_currency_id)
+                            ? RationalNumber::get("0/1")
+                            : (
+                                is_null($destination_currency_id)
+                                    ? RationalNumber::get("1")
+                                    : $derivator->deriveExchangeRate(
+                                        $source_currency_id,
+                                        $destination_currency_id
+                                    )
+                            );
+
+                        $summary_calculation->opened_debit_amount
+                            = $summary_calculation->opened_debit_amount
+                                ->multipliedBy($derived_exchange_rate)->simplified();
+                        $summary_calculation->opened_credit_amount
+                            = $summary_calculation->opened_credit_amount
+                                ->multipliedBy($derived_exchange_rate)->simplified();
+                        $summary_calculation->unadjusted_debit_amount
+                            = $summary_calculation->unadjusted_debit_amount
+                                ->multipliedBy($derived_exchange_rate)->simplified();
+                        $summary_calculation->unadjusted_credit_amount
+                            = $summary_calculation->unadjusted_credit_amount
+                                ->multipliedBy($derived_exchange_rate)->simplified();
+                        $summary_calculation->closed_debit_amount
+                            = $summary_calculation->closed_debit_amount
+                                ->multipliedBy($derived_exchange_rate)->simplified();
+                        $summary_calculation->closed_credit_amount
+                            = $summary_calculation->closed_credit_amount
+                                ->multipliedBy($derived_exchange_rate)->simplified();
+
+                        $time_group->addSummaryCalculation($summary_calculation);
                         $this->loaded_summary_calculations_by_account_id[] = $account_id;
-                        continue 2;
                     }
                 }
             }
