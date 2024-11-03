@@ -643,7 +643,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">user_id</td>
+					<td align="left">currency_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -652,6 +652,7 @@ digraph {
 						name<br align="left"/>
 						description<br align="left"/>
 						output_format<br align="left"/><br align="left"/>
+						exchange_rate_basis<br align="left"/>
 						presentational_precision<br align="left"/>
 						formula<br align="left"/>
 					</td>
@@ -659,6 +660,7 @@ digraph {
 						name<br align="left"/>
 						nullable text<br align="left"/>
 						enum(unknown,raw,<br align="left"/>percentage,currency)<br align="left"/>
+						enum(unknown,periodic,latest)<br align="left"/>
 						int<br align="left"/>
 						text<br align="left"/>
 					</td>
@@ -710,43 +712,6 @@ digraph {
 			</table>
 			>
 		]
-		formula_currencies [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Formula Currencies
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">formula_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">currency_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						exchange_rate_basis<br align="left"/>
-					</td>
-					<td align="left">
-						enum(unknown,periodic,latest)<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
 	}
 
 	edge [ dir = "both" len = 0.1 ]
@@ -761,7 +726,6 @@ digraph {
 		events -> interval_events
 		modifiers -> reactive_modifiers
 		modifiers -> dependent_modifiers
-		formulae -> formula_currencies
 	}
 
 	{
@@ -770,8 +734,6 @@ digraph {
 			arrowhead = noneteetee
 			arrowtail = noneteeodot
 		]
-
-		formula_currencies -> currencies
 	}
 
 	{
@@ -800,6 +762,7 @@ digraph {
 		accounts -> flow_calculations
 		accounts -> account_collections
 		collections -> account_collections
+		currencies -> formulae
 	}
 
 	{
@@ -846,8 +809,6 @@ digraph {
 			arrowhead = noneteetee
 			arrowtail = nonecrowtee
 		]
-
-		users -> formulae
 	}
 
 	{
@@ -866,7 +827,6 @@ digraph {
 
 	{
 		rank = same;
-		formula_currencies
 		collections
 		events
 		cash_flow_activities
