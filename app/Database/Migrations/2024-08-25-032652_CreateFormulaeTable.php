@@ -18,8 +18,8 @@ class CreateFormulaeTable extends Migration
                 "unsigned" => true,
                 "auto_increment" => true,
             ],
-            "user_id" => [
-                "type" => "INT",
+            "currency_id" => [
+                "type" => "BIGINT",
                 "unsigned" => true,
             ],
             "name" => [
@@ -31,6 +31,10 @@ class CreateFormulaeTable extends Migration
                 "null" => true,
             ],
             "output_format" => [
+                "type" => "INT",
+                "unsigned" => true,
+            ],
+            "exchange_rate_basis" => [
                 "type" => "INT",
                 "unsigned" => true,
             ],
@@ -58,12 +62,12 @@ class CreateFormulaeTable extends Migration
         $this->forge->addUniqueKey("name", "formulae_name_key");
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
-                "user_id",
-                "users",
+                "currency_id",
+                "currency",
                 "id",
                 "CASCADE",
                 "CASCADE",
-                "formulae_user_id_foreign"
+                "formulae_currency_id_foreign"
             );
         }
         $this->forge->createTable("formulae");
