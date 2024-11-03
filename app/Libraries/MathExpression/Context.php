@@ -9,7 +9,7 @@ class Context extends BaseContext
 {
     public function __construct()
     {
-        $this->setVariable(ContextKeys::CACHE, new FlashCache());
+        $this->setVariable(ContextKeys::FLASH_CACHE, new FlashCache());
     }
 
     public function getVariable($name, $default = null)
