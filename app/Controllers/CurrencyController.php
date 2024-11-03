@@ -98,6 +98,13 @@ class CurrencyController extends BaseOwnedResourceController
                 "id=$resource_id"
             ])."]"
         ]);
+        $validation->setRule(
+            "$individual_name.presentational_precision",
+            "presentational precision", [
+                "required",
+                "is_natural"
+            ]
+        );
 
         return $validation;
     }
