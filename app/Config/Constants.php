@@ -220,27 +220,28 @@ define("MODIFIER_KINDS", [
  | --------------------------------------------------------------------------
  |
  | There are different output formats for formulae that the system can handle.
- | - UNKNOWN_OUTPUT_FORMAT. A formula with this output format is not supported by the system at
- |   the current version. This case may happen when the system downgraded.
- | - RAW_OUTPUT_FORMAT. A formula with this output format outputs raw calculated results.
- | - PERCENTAGE_OUTPUT_FORMAT. A formula with this output format multiplies the result with 100.
- | - CURRENCY_OUTPUT_FORMAT. A formula with this output format converts the output into target
- |   currency.
+ | - UNKNOWN_FORMULA_OUTPUT_FORMAT. A formula with this output format is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - RAW_FORMULA_OUTPUT_FORMAT. A formula with this output format outputs raw calculated results.
+ | - PERCENTAGE_FORMULA_OUTPUT_FORMAT. A formula with this output format multiplies the result with
+ |   100.
+ | - CURRENCY_FORMULA_OUTPUT_FORMAT. A formula with this output format converts the output into
+ |   target currency.
  */
-define("UNKNOWN_OUTPUT_FORMAT", "unknown");
-define("RAW_OUTPUT_FORMAT", "raw");
-define("PERCENTAGE_OUTPUT_FORMAT", "percentage");
-define("CURRENCY_OUTPUT_FORMAT", "currency");
+define("UNKNOWN_FORMULA_OUTPUT_FORMAT", "unknown");
+define("RAW_FORMULA_OUTPUT_FORMAT", "raw");
+define("PERCENTAGE_FORMULA_OUTPUT_FORMAT", "percentage");
+define("CURRENCY_FORMULA_OUTPUT_FORMAT", "currency");
 
-define("ACCEPTABLE_OUTPUT_FORMATS", [
-    RAW_OUTPUT_FORMAT,
-    PERCENTAGE_OUTPUT_FORMAT,
-    CURRENCY_OUTPUT_FORMAT,
+define("ACCEPTABLE_FORMULA_OUTPUT_FORMATS", [
+    RAW_FORMULA_OUTPUT_FORMAT,
+    PERCENTAGE_FORMULA_OUTPUT_FORMAT,
+    CURRENCY_FORMULA_OUTPUT_FORMAT,
 ]);
 
 define("OUTPUT_FORMATS", [
-    UNKNOWN_OUTPUT_FORMAT,
-    ...ACCEPTABLE_OUTPUT_FORMATS
+    UNKNOWN_FORMULA_OUTPUT_FORMAT,
+    ...ACCEPTABLE_FORMULA_OUTPUT_FORMATS
 ]);
 
 /*
@@ -249,25 +250,25 @@ define("OUTPUT_FORMATS", [
  | --------------------------------------------------------------------------
  |
  | There are different bases for exchange rates that the system can handle.
- | - UNKNOWN_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis is not supported by the
- |   system at the current version. This case may happen when the system downgraded.
- | - PERIODIC_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis outputs uses the
+ | - UNKNOWN_FORMULA_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis is not supported
+ |   by the system at the current version. This case may happen when the system downgraded.
+ | - PERIODIC_FORMULA_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis outputs uses the
  |   exchange rates with respect to the period.
- | - LATEST_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis uses the latest exchange
- |   rate regardless of the exchange rate during the respective period.into .
+ | - LATEST_FORMULA_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis uses the latest
+ |   exchange rate regardless of the exchange rate during the respective period.
  */
-define("UNKNOWN_EXCHANGE_RATE_BASIS", "unknown");
-define("PERIODIC_EXCHANGE_RATE_BASIS", "periodic");
-define("LATEST_EXCHANGE_RATE_BASIS", "latest");
+define("UNKNOWN_FORMULA_EXCHANGE_RATE_BASIS", "unknown");
+define("PERIODIC_FORMULA_EXCHANGE_RATE_BASIS", "periodic");
+define("LATEST_FORMULA_EXCHANGE_RATE_BASIS", "latest");
 
-define("ACCEPTABLE_EXCHANGE_RATE_BASES", [
-    PERIODIC_EXCHANGE_RATE_BASIS,
-    LATEST_EXCHANGE_RATE_BASIS
+define("ACCEPTABLE_FORMULA_EXCHANGE_RATE_BASES", [
+    PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+    LATEST_FORMULA_EXCHANGE_RATE_BASIS
 ]);
 
-define("EXCHANGE_RATE_BASES", [
-    UNKNOWN_EXCHANGE_RATE_BASIS,
-    ...ACCEPTABLE_EXCHANGE_RATE_BASES
+define("FORMULA_EXCHANGE_RATE_BASES", [
+    UNKNOWN_FORMULA_EXCHANGE_RATE_BASIS,
+    ...ACCEPTABLE_FORMULA_EXCHANGE_RATE_BASES
 ]);
 
 /*
@@ -295,6 +296,72 @@ define("ACCEPTABLE_RECURRENCE_PERIODS", [
 define("RECURRENCE_PERIODS", [
     UNKNOWN_RECURRENCE_PERIOD,
     ...ACCEPTABLE_RECURRENCE_PERIODS
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Numerical Tool Amount Stage Basis
+ | --------------------------------------------------------------------------
+ |
+ | There are different amounts that numerical tools may use as basis.
+ | - UNKNOWN_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - OPENED_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   opened.
+ | - UNADJUSTED_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   not yet closed.
+ | - CLOSED_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   closed.
+ */
+define("UNKNOWN_AMOUNT_STAGE_BASIS", "unknown");
+define("OPENED_AMOUNT_STAGE_BASIS", "opened");
+define("UNADJUSTED_AMOUNT_STAGE_BASIS", "unadjusted");
+define("CLOSED_AMOUNT_STAGE_BASIS", "closed");
+
+define("ACCEPTABLE_AMOUNT_STAGE_BASES", [
+    OPENED_AMOUNT_STAGE_BASIS,
+    UNADJUSTED_AMOUNT_STAGE_BASIS,
+    CLOSED_AMOUNT_STAGE_BASIS
+]);
+
+define("AMOUNT_STAGE_BASES", [
+    UNKNOWN_AMOUNT_STAGE_BASIS,
+    ...ACCEPTABLE_AMOUNT_STAGE_BASES
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Numerical Tool Amount Side Basis
+ | --------------------------------------------------------------------------
+ |
+ | There are different amounts that numerical tools may use as basis.
+ | - UNKNOWN_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - DEBIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   in debit side.
+ | - CREDIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   in credit side.
+ | - NET_DEBIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   in debit side after deducting the amounts in credit side.
+ | - NET_CREDIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
+ |   in credit side after deducting the amounts in debit side.
+ */
+define("UNKNOWN_AMOUNT_SIDE_BASIS", "unknown");
+define("DEBIT_AMOUNT_SIDE_BASIS", "debit");
+define("CREDIT_AMOUNT_SIDE_BASIS", "credit");
+define("NET_DEBIT_AMOUNT_SIDE_BASIS", "net_debit");
+define("NET_CREDIT_AMOUNT_SIDE_BASIS", "net_credit");
+
+define("ACCEPTABLE_AMOUNT_SIDE_BASES", [
+    DEBIT_AMOUNT_SIDE_BASIS,
+    CREDIT_AMOUNT_SIDE_BASIS,
+    NET_DEBIT_AMOUNT_SIDE_BASIS,
+    NET_CREDIT_AMOUNT_SIDE_BASIS
+]);
+
+define("AMOUNT_SIDE_BASES", [
+    UNKNOWN_AMOUNT_SIDE_BASIS,
+    ...ACCEPTABLE_AMOUNT_SIDE_BASES
 ]);
 
 /*
