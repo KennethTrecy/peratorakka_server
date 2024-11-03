@@ -273,6 +273,72 @@ define("FORMULA_EXCHANGE_RATE_BASES", [
 
 /*
  | --------------------------------------------------------------------------
+ | Formula Amount Stage Basis
+ | --------------------------------------------------------------------------
+ |
+ | There are different amounts that formulae may use as basis.
+ | - UNKNOWN_AMOUNT_STAGE_BASIS. A formula with this amount basis is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - OPENED_AMOUNT_STAGE_BASIS. A formula with this amount basis only considers amounts
+ |   opened.
+ | - UNADJUSTED_AMOUNT_STAGE_BASIS. A formula with this amount basis only considers amounts
+ |   not yet closed.
+ | - CLOSED_AMOUNT_STAGE_BASIS. A formula with this amount basis only considers amounts
+ |   closed.
+ */
+define("UNKNOWN_AMOUNT_STAGE_BASIS", "unknown");
+define("OPENED_AMOUNT_STAGE_BASIS", "opened");
+define("UNADJUSTED_AMOUNT_STAGE_BASIS", "unadjusted");
+define("CLOSED_AMOUNT_STAGE_BASIS", "closed");
+
+define("ACCEPTABLE_AMOUNT_STAGE_BASES", [
+    OPENED_AMOUNT_STAGE_BASIS,
+    UNADJUSTED_AMOUNT_STAGE_BASIS,
+    CLOSED_AMOUNT_STAGE_BASIS
+]);
+
+define("AMOUNT_STAGE_BASES", [
+    UNKNOWN_AMOUNT_STAGE_BASIS,
+    ...ACCEPTABLE_AMOUNT_STAGE_BASES
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Formula Amount Side Basis
+ | --------------------------------------------------------------------------
+ |
+ | There are different amounts that formulae may use as basis.
+ | - UNKNOWN_AMOUNT_SIDE_BASIS. A formula with this amount basis is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - DEBIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
+ |   in debit side.
+ | - CREDIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
+ |   in credit side.
+ | - NET_DEBIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
+ |   in debit side after deducting the amounts in credit side.
+ | - NET_CREDIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
+ |   in credit side after deducting the amounts in debit side.
+ */
+define("UNKNOWN_AMOUNT_SIDE_BASIS", "unknown");
+define("DEBIT_AMOUNT_SIDE_BASIS", "debit");
+define("CREDIT_AMOUNT_SIDE_BASIS", "credit");
+define("NET_DEBIT_AMOUNT_SIDE_BASIS", "net_debit");
+define("NET_CREDIT_AMOUNT_SIDE_BASIS", "net_credit");
+
+define("ACCEPTABLE_AMOUNT_SIDE_BASES", [
+    DEBIT_AMOUNT_SIDE_BASIS,
+    CREDIT_AMOUNT_SIDE_BASIS,
+    NET_DEBIT_AMOUNT_SIDE_BASIS,
+    NET_CREDIT_AMOUNT_SIDE_BASIS
+]);
+
+define("AMOUNT_SIDE_BASES", [
+    UNKNOWN_AMOUNT_SIDE_BASIS,
+    ...ACCEPTABLE_AMOUNT_SIDE_BASES
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Recurrence Period
  | --------------------------------------------------------------------------
  |
@@ -300,68 +366,33 @@ define("RECURRENCE_PERIODS", [
 
 /*
  | --------------------------------------------------------------------------
- | Numerical Tool Amount Stage Basis
+ | Numerical Tool Kind
  | --------------------------------------------------------------------------
  |
- | There are different amounts that numerical tools may use as basis.
- | - UNKNOWN_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis is not supported by the
+ | There are different kinds that numerical tools may be shown.
+ | - UNKNOWN_NUMERICAL_TOOL_KIND. A numerical tool with this kind is not supported by the
  |   system at the current version. This case may happen when the system downgraded.
- | - OPENED_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis only considers amounts
- |   opened.
- | - UNADJUSTED_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis only considers amounts
- |   not yet closed.
- | - CLOSED_AMOUNT_STAGE_BASIS. A numerical tool with this amount basis only considers amounts
- |   closed.
+ | - NUMBER_NUMERICAL_TOOL_KIND. A numerical tool with this kind would be shown using numbers.
+ | - TABLE_NUMERICAL_TOOL_KIND. A numerical tool with this kind would be shown using a table.
+ | - PIE_NUMERICAL_TOOL_KIND. A numerical tool with this kind would be shown using a pie chart.
+ | - LINE_NUMERICAL_TOOL_KIND. A numerical tool with this kind would be shown using a line chart.
  */
-define("UNKNOWN_AMOUNT_STAGE_BASIS", "unknown");
-define("OPENED_AMOUNT_STAGE_BASIS", "opened");
-define("UNADJUSTED_AMOUNT_STAGE_BASIS", "unadjusted");
-define("CLOSED_AMOUNT_STAGE_BASIS", "closed");
+define("UNKNOWN_NUMERICAL_TOOL_KIND", "unknown");
+define("NUMBER_NUMERICAL_TOOL_KIND", "number");
+define("TABLE_NUMERICAL_TOOL_KIND", "table");
+define("PIE_NUMERICAL_TOOL_KIND", "pie");
+define("LINE_NUMERICAL_TOOL_KIND", "line");
 
-define("ACCEPTABLE_AMOUNT_STAGE_BASES", [
-    OPENED_AMOUNT_STAGE_BASIS,
-    UNADJUSTED_AMOUNT_STAGE_BASIS,
-    CLOSED_AMOUNT_STAGE_BASIS
+define("ACCEPTABLE_NUMERICAL_TOOL_KINDS", [
+    NUMBER_NUMERICAL_TOOL_KIND,
+    TABLE_NUMERICAL_TOOL_KIND,
+    PIE_NUMERICAL_TOOL_KIND,
+    LINE_NUMERICAL_TOOL_KIND
 ]);
 
-define("AMOUNT_STAGE_BASES", [
-    UNKNOWN_AMOUNT_STAGE_BASIS,
-    ...ACCEPTABLE_AMOUNT_STAGE_BASES
-]);
-
-/*
- | --------------------------------------------------------------------------
- | Numerical Tool Amount Side Basis
- | --------------------------------------------------------------------------
- |
- | There are different amounts that numerical tools may use as basis.
- | - UNKNOWN_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis is not supported by the
- |   system at the current version. This case may happen when the system downgraded.
- | - DEBIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
- |   in debit side.
- | - CREDIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
- |   in credit side.
- | - NET_DEBIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
- |   in debit side after deducting the amounts in credit side.
- | - NET_CREDIT_AMOUNT_SIDE_BASIS. A numerical tool with this amount basis only considers amounts
- |   in credit side after deducting the amounts in debit side.
- */
-define("UNKNOWN_AMOUNT_SIDE_BASIS", "unknown");
-define("DEBIT_AMOUNT_SIDE_BASIS", "debit");
-define("CREDIT_AMOUNT_SIDE_BASIS", "credit");
-define("NET_DEBIT_AMOUNT_SIDE_BASIS", "net_debit");
-define("NET_CREDIT_AMOUNT_SIDE_BASIS", "net_credit");
-
-define("ACCEPTABLE_AMOUNT_SIDE_BASES", [
-    DEBIT_AMOUNT_SIDE_BASIS,
-    CREDIT_AMOUNT_SIDE_BASIS,
-    NET_DEBIT_AMOUNT_SIDE_BASIS,
-    NET_CREDIT_AMOUNT_SIDE_BASIS
-]);
-
-define("AMOUNT_SIDE_BASES", [
-    UNKNOWN_AMOUNT_SIDE_BASIS,
-    ...ACCEPTABLE_AMOUNT_SIDE_BASES
+define("NUMERICAL_TOOL_KINDS", [
+    UNKNOWN_NUMERICAL_TOOL_KIND,
+    ...ACCEPTABLE_NUMERICAL_TOOL_KINDS
 ]);
 
 /*
