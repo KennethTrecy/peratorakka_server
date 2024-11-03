@@ -339,29 +339,30 @@ define("AMOUNT_SIDE_BASES", [
 
 /*
  | --------------------------------------------------------------------------
- | Recurrence Period
+ | Numerical Tool Recurrence Period
  | --------------------------------------------------------------------------
  |
  | There are different recurrence periods that numerical tools may consider.
- | - UNKNOWN_RECURRENCE_PERIOD. A numerical tool with this recurrence period is not supported by the
- |   system at the current version. This case may happen when the system downgraded.
- | - PERIODIC_RECURRENCE_PERIOD. A numerical tool with this recurrence period only considers
- |   the data on a periodic basis.
- | - YEARLY_RECURRENCE_PERIOD. A numerical tool with this recurrence period only considers
- |   the data on a yearly basis.
+ | - UNKNOWN_NUMERICAL_TOOL_RECURRENCE_PERIOD. A numerical tool with this recurrence period is not
+ |   supported by the system at the current version. This case may happen when the system
+ |   downgraded.
+ | - PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD. A numerical tool with this recurrence period only
+ |   considers the data on a periodic basis.
+ | - YEARLY_NUMERICAL_TOOL_RECURRENCE_PERIOD. A numerical tool with this recurrence period only
+ |   considers the data on a yearly basis.
  */
-define("UNKNOWN_RECURRENCE_PERIOD", "unknown");
-define("PERIODIC_RECURRENCE_PERIOD", "periodic");
-define("YEARLY_RECURRENCE_PERIOD", "yearly");
+define("UNKNOWN_NUMERICAL_TOOL_RECURRENCE_PERIOD", "unknown");
+define("PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD", "periodic");
+define("YEARLY_NUMERICAL_TOOL_RECURRENCE_PERIOD", "yearly");
 
-define("ACCEPTABLE_RECURRENCE_PERIODS", [
-    PERIODIC_RECURRENCE_PERIOD,
-    YEARLY_RECURRENCE_PERIOD
+define("ACCEPTABLE_NUMERICAL_TOOL_RECURRENCE_PERIODS", [
+    PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+    YEARLY_NUMERICAL_TOOL_RECURRENCE_PERIOD
 ]);
 
-define("RECURRENCE_PERIODS", [
-    UNKNOWN_RECURRENCE_PERIOD,
-    ...ACCEPTABLE_RECURRENCE_PERIODS
+define("NUMERICAL_TOOL_RECURRENCE_PERIODS", [
+    UNKNOWN_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+    ...ACCEPTABLE_NUMERICAL_TOOL_RECURRENCE_PERIODS
 ]);
 
 /*
