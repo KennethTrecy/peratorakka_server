@@ -30,13 +30,17 @@ class ExchangeRateCache {
         $this->context->setVariable(ContextKeys::EXCHANGE_RATE_CACHE, $this);
     }
 
-    public function buildDerivator(Time $targetTime): ExchangeRateDerivator
+    public function buildDerivator(Time $target_time): ExchangeRateDerivator
     {
+        if (isset($built_derivators[$target_time])) {
+            return $built_derivators[$target_time];
+        }
+
         $qualified_exchange_rates = array_filter(
             $this->exchange_entries,
-            function ($exchange_entry) use ($targetTime) {
-                return $exchange_entry->updated_at->isBefore($targetTime)
-                    || $exchange_entry->updated_at->equals($targetTime);
+            function ($exchange_entry) use ($target_time) {
+                return $exchange_entry->updated_at->isBefore($target_time)
+                    || $exchange_entry->updated_at->equals($target_time);
             }
         );
         $updated_exchange_rates = [];
@@ -55,7 +59,10 @@ class ExchangeRateCache {
             }
         }
 
-        return new ExchangeRateDerivator(array_values($updated_exchange_rates));
+        $new_derivator = new ExchangeRateDerivator(array_values($updated_exchange_rates));
+        $built_derivators[$target_time] = $new_derivator;
+
+        return $new_derivator;
     }
 
     public function loadExchangeRatesForAccounts(array $missing_account_IDs): void {
