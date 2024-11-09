@@ -32,8 +32,9 @@ class ExchangeRateCache {
 
     public function buildDerivator(Time $target_time): ExchangeRateDerivator
     {
-        if (isset($built_derivators[$target_time])) {
-            return $built_derivators[$target_time];
+        $target_timestamp = $target_time->getTimestamp();
+        if (isset($built_derivators[$target_timestamp])) {
+            return $built_derivators[$target_timestamp];
         }
 
         $qualified_exchange_rates = array_filter(
@@ -60,7 +61,7 @@ class ExchangeRateCache {
         }
 
         $new_derivator = new ExchangeRateDerivator(array_values($updated_exchange_rates));
-        $built_derivators[$target_time] = $new_derivator;
+        $built_derivators[$target_timestamp] = $new_derivator;
 
         return $new_derivator;
     }
