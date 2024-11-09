@@ -2,11 +2,12 @@
 
 namespace App\Libraries\Context\TimeGroupManager;
 
-use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
 use App\Libraries\Resource;
 use App\Models\CurrencyModel;
 use Brick\Math\BigRational;
+use Brick\Math\RoundingMode;
 
 class CurrencyCache {
     public readonly Context $context;
@@ -19,9 +20,12 @@ class CurrencyCache {
         $this->context->setVariable(ContextKeys::CURRENCY_CACHE, $this);
     }
 
-    public function formatValue(int $currency_id): ?string {
-        return isset($this->currencies[$account_id])
-            ? $this->currencies[$account_id]->currency_id
+    public function formatValue(int $currency_id, BigRational $value): ?string {
+        return isset($this->currencies[$currency_id])
+            ? $value->toScale(
+                $this->currencies[$currency_id]->presentational_precision,
+                RoundingMode::HALF_EVEN
+            )
             : null;
     }
 
