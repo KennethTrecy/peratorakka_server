@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Libraries\MathExpression;
+namespace App\Libraries;
 
-use App\Libraries\FlashCache;
+use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\FlashCache;
 use Xylemical\Expressions\Context as BaseContext;
 
 class Context extends BaseContext
