@@ -43,4 +43,11 @@ interface NumericalToolSource
      * @return array
      */
     public function calculate(): array;
+
+    /**
+     * Serializes the object into an array
+     *
+     * @return array
+     */
+    public function __serialize(): array;
 }

@@ -307,4 +307,19 @@ class CollectionSource implements NumericalToolSource
 
         return $constellations;
     }
+
+
+    public function __serialize(): array {
+        return [
+            "type" => static::sourceType(),
+            "collection_id" => $this->collection_id,
+            "currency_id" => $this->currency_id,
+            "exchange_rate_basis" => $this->exchange_rate_basis,
+            "stage_basis" => $this->stage_basis,
+            "side_basis" => $this->side_basis,
+            "must_show_individual_amounts" => $this->must_show_individual_amounts,
+            "must_show_collective_sum" => $this->must_show_collective_sum,
+            "must_show_collective_average" => $this->must_show_collective_average
+        ];
+    }
 }
