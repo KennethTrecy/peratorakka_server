@@ -19,6 +19,7 @@ class NumericalTool extends BaseResourceEntity
     protected $casts = [
         "id" => "integer",
         "user_id" => "integer",
+        "name" => "string",
         "kind" => "numerical_tool_kind",
         "recurrence" => "numerical_tool_recurrence_period",
         "recency" => "integer",
