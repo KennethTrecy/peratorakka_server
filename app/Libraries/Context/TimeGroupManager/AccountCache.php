@@ -2,18 +2,11 @@
 
 namespace App\Libraries\Context\TimeGroupManager;
 
-use App\Casts\ModifierAction;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context;
-use App\Libraries\FinancialStatementGroup\ExchangeRateInfo;
-use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
-use App\Models\CurrencyModel;
-use App\Models\ModifierModel;
-use App\Models\FinancialEntryModel;
 use Brick\Math\BigRational;
-use CodeIgniter\I18n\Time;
 
 class AccountCache {
     public readonly Context $context;
@@ -44,7 +37,11 @@ class AccountCache {
             : null;
     }
 
-    public function loadAccounts(array $missing_account_IDs): void {
+    public function loadAccounts(array $target_account_IDs): void {
+        $missing_account_IDs = array_diff($target_account_IDs, array_keys($this->accounts));
+
+        if (count($missing_account_IDs) === 0) return;
+
         $new_accounts = model(AccountModel::class, false)
             ->whereIn("id", array_unique($missing_account_IDs))
             ->findAll();
