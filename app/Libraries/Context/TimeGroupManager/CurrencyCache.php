@@ -16,7 +16,7 @@ class CurrencyCache {
     {
         $this->context = $context;
 
-        $this->context->setVariable(ContextKeys::ACCOUNT_CACHE, $this);
+        $this->context->setVariable(ContextKeys::CURRENCY_CACHE, $this);
     }
 
     public function formatValue(int $currency_id): ?string {
