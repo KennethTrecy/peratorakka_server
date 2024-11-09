@@ -3,7 +3,7 @@
 namespace App\Libraries\MathExpression;
 
 use App\Casts\RationalNumber;
-use App\Libraries\FlashCache;
+use App\Libraries\Context\FlashCache;
 use App\Libraries\MathExpression\ExpressionFactory\RegisterProcedures;
 use App\Libraries\MathExpression\ExpressionFactory\RegisterValues;
 use App\Libraries\MathExpression\PeratorakkaMath;

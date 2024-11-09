@@ -2,8 +2,9 @@
 
 namespace App\Libraries;
 
-use App\Libraries\MathExpression\Context;
-use App\Libraries\MathExpression\ContextKeys;
+use App\Libraries\Context;
+use App\Libraries\Context\TimeGroupManager;
+use App\Libraries\Context\ContextKeys;
 use App\Libraries\MathExpression\ExpressionFactory;
 use App\Libraries\MathExpression\PeratorakkaMath;
 use Xylemical\Expressions\Evaluator;
