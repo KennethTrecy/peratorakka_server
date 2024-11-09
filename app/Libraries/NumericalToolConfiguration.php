@@ -29,12 +29,7 @@ class NumericalToolConfiguration
             $parsed_sources = [];
             foreach ($sources as $i => $source) {
                 if (isset($source["type"])) {
-                    if (
-                        !(
-                            $source["type"] === CollectionSource::sourceType()
-                            && !is_null()
-                        )
-                    ) {
+                    if ($source["type"] === CollectionSource::sourceType()) {
                         $parsed_source = CollectionSource::parseConfiguration($context, $source);
 
                         if (is_null($parsed_source)) {
@@ -44,23 +39,21 @@ class NumericalToolConfiguration
                             );
                         }
 
-                        $output_format_code = $parsed_source->outputFormatCode();
-
-                        if (
-                            count($parsed_sources) > 0
-                            && $parsed_sources[0]->outputFormatCode() !== $output_format_code
-                        ) {
-                            throw new NumericalToolConfigurationException(
-                                "Source #".($i+1)+" has different output format."
-                                ." Every source must have same output format."
-                            );
-                        }
 
                         array_push($parsed_sources, $parsed_source);
                     }
                 } else {
                     throw new NumericalToolConfigurationException(
                         "Missing type for source #".($i+1)
+                    );
+                }
+
+                $output_format_code = $parsed_sources[i]->outputFormatCode();
+
+                if ($parsed_sources[0]->outputFormatCode() !== $output_format_code) {
+                    throw new NumericalToolConfigurationException(
+                        "Source #".($i+1)+" has different output format."
+                        ." Every source must have same output format."
                     );
                 }
             }
