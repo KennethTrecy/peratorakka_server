@@ -47,8 +47,7 @@ class CreateNumericalToolTable extends Migration
                 "null" => true,
             ],
             "configuration" => [
-                "type" => "TEXT",
-                "null" => true,
+                "type" => "TEXT"
             ],
             "created_at" => [
                 "type" => "DATETIME",
