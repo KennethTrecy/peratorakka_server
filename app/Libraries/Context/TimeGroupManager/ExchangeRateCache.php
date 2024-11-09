@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Libraries\TimeGroupManager;
+namespace App\Libraries\Context\TimeGroupManager;
 
 use App\Casts\ModifierAction;
-use App\Libraries\MathExpression\ContextKeys;
-use App\Libraries\MathExpression\Context;
+use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context;
 use App\Libraries\FinancialStatementGroup\ExchangeRateInfo;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\Resource;
@@ -17,7 +17,6 @@ use CodeIgniter\I18n\Time;
 
 class ExchangeRateCache {
     public readonly Context $context;
-    private array $accounts = [];
     private array $exchange_entries = [];
     private array $known_currency_IDs = [];
     private array $built_derivators = [];
@@ -59,27 +58,14 @@ class ExchangeRateCache {
         return new ExchangeRateDerivator(array_values($updated_exchange_rates));
     }
 
-    public function determineCurrencyIDUsingAccountID(int $account_id): ?int {
-        return isset($this->accounts[$account_id])
-            ? $this->accounts[$account_id]->currency_id
-            : null;
-    }
+    public function loadExchangeRatesForAccounts(array $missing_account_IDs): void {
+        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
 
-    public function loadAccounts(array $missing_account_IDs): void {
-        $new_accounts = model(AccountModel::class, false)
-            ->whereIn("id", array_unique($missing_account_IDs))
-            ->findAll();
+        $account_cache->loadAccounts($missing_account_IDs);
 
-        $this->accounts = array_replace(
-            $this->accounts,
-            Resource::key($new_accounts, function ($account) {
-                return $account->id;
-            })
-        );
-
-        $target_currency_IDs = array_unique(array_map(function ($account) {
-            return $account->currency_id;
-        }, $new_accounts));
+        $target_currency_IDs = array_unique(array_map(function ($account_id) use ($account_cache) {
+            return $account_cache->determineCurrencyID($account_id);
+        }, $missing_account_IDs));
 
         $new_currency_IDs = array_diff($target_currency_IDs, $this->known_currency_IDs);
         $all_known_IDs = array_unique(array_merge($this->known_currency_IDs, $new_currency_IDs));
@@ -138,16 +124,17 @@ class ExchangeRateCache {
 
             foreach ($new_exchange_entries as $financial_entry) {
                 $modifier = $new_exchange_modifiers[$financial_entry->modifier_id];
-                $debit_account = $this->accounts[$modifier->debit_account_id];
-                $credit_account = $this->accounts[$modifier->credit_account_id];
+                $debit_account_id = $modifier->debit_account_id;
+                $debit_account_kind = $account_cache->determineAccountKind($debit_account_id);
+                $credit_account_id = $modifier->credit_account_id;
 
                 $may_use_debit_account_as_destination
-                    = $debit_account->kind === GENERAL_ASSET_ACCOUNT_KIND
-                        || $debit_account->kind === LIQUID_ASSET_ACCOUNT_KIND
-                        || $debit_account->kind === DEPRECIATIVE_ASSET_ACCOUNT_KIND
-                        || $debit_account->kind === EXPENSE_ACCOUNT_KIND;
-                $debit_currency_id = $debit_account->currency_id;
-                $credit_currency_id = $credit_account->currency_id;
+                    = $debit_account_kind === GENERAL_ASSET_ACCOUNT_KIND
+                        || $debit_account_kind === LIQUID_ASSET_ACCOUNT_KIND
+                        || $debit_account_kind === DEPRECIATIVE_ASSET_ACCOUNT_KIND
+                        || $debit_account_kind === EXPENSE_ACCOUNT_KIND;
+                $debit_currency_id = $account_cache->determineCurrencyID($debit_account_id);
+                $credit_currency_id = $account_cache->determineCurrencyID($credit_account_id);
                 $debit_value = $financial_entry->debit_amount;
                 $credit_value = $financial_entry->credit_amount;
 

@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Libraries;
+namespace App\Libraries\Context;
 
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
 use App\Entities\FrozenPeriod;
 use App\Entities\SummaryCalculation;
-use App\Libraries\MathExpression\Context;
-use App\Libraries\MathExpression\ContextKeys;
+use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
-use App\Libraries\TimeGroupManager\ExchangeRateCache;
+use App\Libraries\Context\TimeGroupManager\AccountCache;
+use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
 use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
 
@@ -19,6 +20,7 @@ class TimeGroupManager
 
     private readonly array $time_groups;
     private readonly ExchangeRateCache $exchange_rate_cache;
+    private readonly AccountCache $account_cache;
 
     private array $loaded_summary_calculations_by_account_id = [];
 
@@ -37,8 +39,17 @@ class TimeGroupManager
             $this->context,
             $this->time_groups[count($this->time_groups) - 1]->finishedAt()
         );
+        $this->account_cache = new AccountCache($this->context);
 
         $this->context->setVariable(ContextKeys::TIME_GROUP_MANAGER, $this);
+
+        [
+            $earliest_start_date,
+            $latest_finish_date,
+            $last_frozen_finished_date
+        ] = $this->identifyDates();
+
+        $this->context->setVariable(ContextKeys::LATEST_FINISHED_DATE, $latest_finish_date);
     }
 
     /**
@@ -50,9 +61,12 @@ class TimeGroupManager
     public function totalOpenedDebitAmount(array $selected_account_ids): array
     {
         $this->loadSummaryCalculations($selected_account_ids);
+
+        $context = $this->context;
+
         return array_map(
-            function ($time_group) use ($selected_account_ids) {
-                return $time_group->totalOpenedDebitAmount($selected_account_ids);
+            function ($time_group) use ($context, $selected_account_ids) {
+                return $time_group->totalOpenedDebitAmount($context, $selected_account_ids);
             },
             $this->time_groups
         );
@@ -67,9 +81,12 @@ class TimeGroupManager
     public function totalOpenedCreditAmount(array $selected_account_ids): array
     {
         $this->loadSummaryCalculations($selected_account_ids);
+
+        $context = $this->context;
+
         return array_map(
-            function ($time_group) use ($selected_account_ids) {
-                return $time_group->totalOpenedCreditAmount($selected_account_ids);
+            function ($time_group) use ($context, $selected_account_ids) {
+                return $time_group->totalOpenedCreditAmount($context, $selected_account_ids);
             },
             $this->time_groups
         );
@@ -84,9 +101,12 @@ class TimeGroupManager
     public function totalUnadjustedDebitAmount(array $selected_account_ids): array
     {
         $this->loadSummaryCalculations($selected_account_ids);
+
+        $context = $this->context;
+
         return array_map(
-            function ($time_group) use ($selected_account_ids) {
-                return $time_group->totalUnadjustedDebitAmount($selected_account_ids);
+            function ($time_group) use ($context, $selected_account_ids) {
+                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_ids);
             },
             $this->time_groups
         );
@@ -101,9 +121,12 @@ class TimeGroupManager
     public function totalUnadjustedCreditAmount(array $selected_account_ids): array
     {
         $this->loadSummaryCalculations($selected_account_ids);
+
+        $context = $this->context;
+
         return array_map(
-            function ($time_group) use ($selected_account_ids) {
-                return $time_group->totalUnadjustedCreditAmount($selected_account_ids);
+            function ($time_group) use ($context, $selected_account_ids) {
+                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_ids);
             },
             $this->time_groups
         );
@@ -118,9 +141,12 @@ class TimeGroupManager
     public function totalClosedDebitAmount(array $selected_account_ids): array
     {
         $this->loadSummaryCalculations($selected_account_ids);
+
+        $context = $this->context;
+
         return array_map(
-            function ($time_group) use ($selected_account_ids) {
-                return $time_group->totalClosedDebitAmount($selected_account_ids);
+            function ($time_group) use ($context, $selected_account_ids) {
+                return $time_group->totalClosedDebitAmount($context, $selected_account_ids);
             },
             $this->time_groups
         );
@@ -135,9 +161,12 @@ class TimeGroupManager
     public function totalClosedCreditAmount(array $selected_account_ids): array
     {
         $this->loadSummaryCalculations($selected_account_ids);
+
+        $context = $this->context;
+
         return array_map(
-            function ($time_group) use ($selected_account_ids) {
-                return $time_group->totalClosedCreditAmount($selected_account_ids);
+            function ($time_group) use ($context, $selected_account_ids) {
+                return $time_group->totalClosedCreditAmount($context, $selected_account_ids);
             },
             $this->time_groups
         );
@@ -151,7 +180,7 @@ class TimeGroupManager
         );
 
         if (count($missing_account_IDs) > 0) {
-            $this->exchange_rate_cache->loadAccounts($missing_account_IDs);
+            $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
 
             $summary_calculations = model(SummaryCalculationModel::class)
                 ->whereIn("account_id", array_unique($missing_account_IDs))
@@ -168,39 +197,6 @@ class TimeGroupManager
                     $is_owned = $time_group->doesOwnSummaryCalculation($summary_calculation);
                     if ($is_owned) {
                         $account_id = $summary_calculation->account_id;
-                        $source_currency_id = $this->exchange_rate_cache
-                            ->determineCurrencyIDUsingAccountID(
-                                $account_id
-                            );
-                        $derived_exchange_rate = is_null($source_currency_id)
-                            ? RationalNumber::get("0/1")
-                            : (
-                                is_null($destination_currency_id)
-                                    ? RationalNumber::get("1")
-                                    : $derivator->deriveExchangeRate(
-                                        $source_currency_id,
-                                        $destination_currency_id
-                                    )
-                            );
-
-                        $summary_calculation->opened_debit_amount
-                            = $summary_calculation->opened_debit_amount
-                                ->multipliedBy($derived_exchange_rate)->simplified();
-                        $summary_calculation->opened_credit_amount
-                            = $summary_calculation->opened_credit_amount
-                                ->multipliedBy($derived_exchange_rate)->simplified();
-                        $summary_calculation->unadjusted_debit_amount
-                            = $summary_calculation->unadjusted_debit_amount
-                                ->multipliedBy($derived_exchange_rate)->simplified();
-                        $summary_calculation->unadjusted_credit_amount
-                            = $summary_calculation->unadjusted_credit_amount
-                                ->multipliedBy($derived_exchange_rate)->simplified();
-                        $summary_calculation->closed_debit_amount
-                            = $summary_calculation->closed_debit_amount
-                                ->multipliedBy($derived_exchange_rate)->simplified();
-                        $summary_calculation->closed_credit_amount
-                            = $summary_calculation->closed_credit_amount
-                                ->multipliedBy($derived_exchange_rate)->simplified();
 
                         $time_group->addSummaryCalculation($summary_calculation);
                         $this->loaded_summary_calculations_by_account_id[] = $account_id;
@@ -292,7 +288,6 @@ class TimeGroupManager
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
 
-        // TODO: Convert to destination currency first before calculations.
         foreach ($raw_summary_calculations as $raw_summary_calculation) {
             $incomplete_frozen_group->addSummaryCalculation($raw_summary_calculation);
         }
