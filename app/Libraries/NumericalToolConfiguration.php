@@ -18,7 +18,11 @@ class NumericalToolConfiguration
 {
     public static function parseConfiguration(array $configuration): NumericalToolConfiguration
     {
-        if (isset($configuration["sources"]) && is_array($configuration["sources"])) {
+        if (
+            isset($configuration["sources"])
+            && is_array($configuration["sources"])
+            && count($configuration["sources"])
+        ) {
             $context = new Context();
 
             $sources = $configuration["sources"];
@@ -37,6 +41,18 @@ class NumericalToolConfiguration
                             throw new NumericalToolConfigurationException(
                                 "Incorrect configuration for source #".($i+1)
                                 ." which is a ". $source["type"] . " source."
+                            );
+                        }
+
+                        $output_format_code = $parsed_source->outputFormatCode();
+
+                        if (
+                            count($parsed_sources) > 0
+                            && $parsed_sources[0]->outputFormatCode() !== $output_format_code
+                        ) {
+                            throw new NumericalToolConfigurationException(
+                                "Source #".($i+1)+" has different output format."
+                                ." Every source must have same output format."
                             );
                         }
 
