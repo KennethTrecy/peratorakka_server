@@ -15,5 +15,6 @@ enum ContextKeys: string
     case FLASH_CACHE = "flash_cache";
     case CURRENCY_CACHE = "currency_cache";
     case ACCOUNT_CACHE = "account_cache";
+    case COLLECTION_CACHE = "collection_cache";
     case EXCHANGE_RATE_CACHE = "exchange_rate_cache";
 }
