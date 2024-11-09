@@ -1555,7 +1555,7 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
-        $formula = "TOTAL_CLOSED_CREDIT_AMOUNT(COLLECTION[$asset_collection->id])";
+        $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
