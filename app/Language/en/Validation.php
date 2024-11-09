@@ -9,6 +9,8 @@ return [
     'must_be_same_as_password_of_current_user' => 'The "{field}" must be same to the current'
         .' password of the current user.',
 
+    'valid_numerical_tool_configuration' => 'The "{field}" is not a valid numerical tool'
+        .' configuration.',
     'may_allow_exchange_action' => 'The "{field}" modifier only allows same values in debit side'
         .' and credit side.',
 

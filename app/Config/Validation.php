@@ -5,6 +5,7 @@ namespace Config;
 use App\Validation\DatabaseRules;
 use App\Validation\EnumerationRules;
 use App\Validation\FractionRules;
+use App\Validation\NumericalToolRules;
 use App\Validation\SimilarityRules;
 use App\Validation\TimeRules;
 use CodeIgniter\Config\BaseConfig;
@@ -34,7 +35,8 @@ class Validation extends BaseConfig
         SimilarityRules::class,
         TimeRules::class,
         EnumerationRules::class,
-        FractionRules::class
+        FractionRules::class,
+        NumericalToolRules::class
     ];
 
     /**
