@@ -2,6 +2,7 @@
 
 namespace App\Entities;
 
+use App\Casts\NumericalToolConfiguration;
 use App\Casts\NumericalToolKind;
 use App\Casts\NumericalToolRecurrencePeriod;
 
@@ -23,11 +24,12 @@ class NumericalTool extends BaseResourceEntity
         "recency" => "integer",
         "order" => "integer",
         "notes" => "?string",
-        "configuration" => "?string"
+        "configuration" => "numerical_tool_configuration"
     ];
 
     protected $castHandlers = [
         "numerical_tool_kind" => NumericalToolKind::class,
-        "numerical_tool_recurrence_period" => NumericalToolRecurrencePeriod::class
+        "numerical_tool_recurrence_period" => NumericalToolRecurrencePeriod::class,
+        "numerical_tool_configuration" => NumericalToolConfiguration::class
     ];
 }
