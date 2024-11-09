@@ -2,6 +2,7 @@
 
 namespace App\Validation;
 
+use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\NumericalToolConfiguration;
 
 class NumericalToolRules
@@ -10,8 +11,13 @@ class NumericalToolRules
         $value,
         ?string &$error = null
     ): bool {
-        $configuration = NumericalToolConfiguration::parseConfiguration($value);
+        try {
+            $configuration = NumericalToolConfiguration::parseConfiguration($value);
 
-        return !is_null($configuration);
+            return !is_null($configuration);
+        } catch (NumericalToolConfigurationException $exception) {
+            $error = $exception->getMessage();
+            return false;
+        }
     }
 }
