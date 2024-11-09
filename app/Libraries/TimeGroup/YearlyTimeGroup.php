@@ -6,6 +6,8 @@ use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
 use App\Entities\FlowCalculation;
 use App\Entities\SummaryCalculation;
+use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
 use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 
@@ -135,69 +137,91 @@ class YearlyTimeGroup implements TimeGroup
         return false;
     }
 
-    public function totalOpenedDebitAmount(array $selected_account_IDs): BigRational
-    {
+    public function totalOpenedDebitAmount(
+        Context $context,
+        array $selected_account_IDs
+    ): BigRational {
         return array_reduce(
             $this->time_groups,
-            function ($total, $time_group) use ($selected_account_IDs) {
-                return $total->plus($time_group->totalOpenedDebitAmount($selected_account_IDs));
-            },
-            RationalNumber::zero()
-        );
-    }
-
-    public function totalOpenedCreditAmount(array $selected_account_IDs): BigRational
-    {
-        return array_reduce(
-            $this->time_groups,
-            function ($total, $time_group) use ($selected_account_IDs) {
-                return $total->plus($time_group->totalOpenedCreditAmount($selected_account_IDs));
-            },
-            RationalNumber::zero()
-        );
-    }
-
-    public function totalUnadjustedDebitAmount(array $selected_account_IDs): BigRational
-    {
-        return array_reduce(
-            $this->time_groups,
-            function ($total, $time_group) use ($selected_account_IDs) {
-                return $total->plus($time_group->totalUnadjustedDebitAmount($selected_account_IDs));
-            },
-            RationalNumber::zero()
-        );
-    }
-
-    public function totalUnadjustedCreditAmount(array $selected_account_IDs): BigRational
-    {
-        return array_reduce(
-            $this->time_groups,
-            function ($total, $time_group) use ($selected_account_IDs) {
+            function ($total, $time_group) use ($context, $selected_account_IDs) {
                 return $total->plus(
-                    $time_group->totalUnadjustedCreditAmount($selected_account_IDs)
+                    $time_group->totalOpenedDebitAmount($context, $selected_account_IDs)
                 );
             },
             RationalNumber::zero()
         );
     }
 
-    public function totalClosedDebitAmount(array $selected_account_IDs): BigRational
-    {
+    public function totalOpenedCreditAmount(
+        Context $context,
+        array $selected_account_IDs
+    ): BigRational {
         return array_reduce(
             $this->time_groups,
-            function ($total, $time_group) use ($selected_account_IDs) {
-                return $total->plus($time_group->totalClosedDebitAmount($selected_account_IDs));
+            function ($total, $time_group) use ($context, $selected_account_IDs) {
+                return $total->plus(
+                    $time_group->totalOpenedCreditAmount($context, $selected_account_IDs)
+                );
             },
             RationalNumber::zero()
         );
     }
 
-    public function totalClosedCreditAmount(array $selected_account_IDs): BigRational
-    {
+    public function totalUnadjustedDebitAmount(
+        Context $context,
+        array $selected_account_IDs
+    ): BigRational {
         return array_reduce(
             $this->time_groups,
-            function ($total, $time_group) use ($selected_account_IDs) {
-                return $total->plus($time_group->totalClosedCreditAmount($selected_account_IDs));
+            function ($total, $time_group) use ($context, $selected_account_IDs) {
+                return $total->plus(
+                    $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs)
+                );
+            },
+            RationalNumber::zero()
+        );
+    }
+
+    public function totalUnadjustedCreditAmount(
+        Context $context,
+        array $selected_account_IDs
+    ): BigRational {
+        return array_reduce(
+            $this->time_groups,
+            function ($total, $time_group) use ($context, $selected_account_IDs) {
+                return $total->plus(
+                    $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs)
+                );
+            },
+            RationalNumber::zero()
+        );
+    }
+
+    public function totalClosedDebitAmount(
+        Context $context,
+        array $selected_account_IDs
+    ): BigRational {
+        return array_reduce(
+            $this->time_groups,
+            function ($total, $time_group) use ($context, $selected_account_IDs) {
+                return $total->plus(
+                    $time_group->totalClosedDebitAmount($context, $selected_account_IDs)
+                );
+            },
+            RationalNumber::zero()
+        );
+    }
+
+    public function totalClosedCreditAmount(
+        Context $context,
+        array $selected_account_IDs
+    ): BigRational {
+        return array_reduce(
+            $this->time_groups,
+            function ($total, $time_group) use ($context, $selected_account_IDs) {
+                return $total->plus(
+                    $time_group->totalClosedCreditAmount($context, $selected_account_IDs)
+                );
                 ;
             },
             RationalNumber::zero()
