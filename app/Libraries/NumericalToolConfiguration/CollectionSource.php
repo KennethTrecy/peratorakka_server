@@ -163,6 +163,7 @@ class CollectionSource implements NumericalToolSource
                 if (
                     $this->side_basis === DEBIT_AMOUNT_SIDE_BASIS
                     || $this->side_basis === NET_DEBIT_AMOUNT_SIDE_BASIS
+                    || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
                 ) {
                     $debit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
                         ? "totalOpenedDebitAmount"
@@ -177,6 +178,7 @@ class CollectionSource implements NumericalToolSource
 
                 if (
                     $this->side_basis === CREDIT_AMOUNT_SIDE_BASIS
+                    || $this->side_basis === NET_DEBIT_AMOUNT_SIDE_BASIS
                     || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
                 ) {
                     $credit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
