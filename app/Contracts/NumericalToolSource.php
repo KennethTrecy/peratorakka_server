@@ -31,6 +31,13 @@ interface NumericalToolSource
     public static function parseConfiguration(Context $context, array $array): ?Self;
 
     /**
+     * Makes the output format code to determine if all sources have same output format.
+     *
+     * @return string
+     */
+    public function outputFormatCode(): string;
+
+    /**
      * Returns the data points to be shown.
      *
      * @return array

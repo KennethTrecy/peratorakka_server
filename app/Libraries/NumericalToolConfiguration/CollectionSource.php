@@ -98,6 +98,10 @@ class CollectionSource implements NumericalToolSource
         $this->must_show_collective_average = $must_show_collective_average;
     }
 
+    public function outputFormatCode(): string {
+        return CURRENCY_FORMULA_OUTPUT_FORMAT."#$this->currency_id";
+    }
+
     public function calculate(): array
     {
         $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $this->currency_id);
