@@ -9,6 +9,7 @@ use App\Entities\SummaryCalculation;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
+use App\Libraries\Context\TimeGroupManager\CurrencyCache;
 use App\Libraries\Context\TimeGroupManager\AccountCache;
 use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
 use App\Models\FrozenPeriodModel;
@@ -20,6 +21,7 @@ class TimeGroupManager
 
     private readonly array $time_groups;
     private readonly ExchangeRateCache $exchange_rate_cache;
+    private readonly CurrencyCache $currency_cache;
     private readonly AccountCache $account_cache;
 
     private array $loaded_summary_calculations_by_account_id = [];
@@ -35,11 +37,12 @@ class TimeGroupManager
     {
         $this->context = $context;
         $this->time_groups = $time_groups;
+        $this->currency_cache = new CurrencyCache($this->context);
+        $this->account_cache = new AccountCache($this->context);
         $this->exchange_rate_cache = new ExchangeRateCache(
             $this->context,
             $this->time_groups[count($this->time_groups) - 1]->finishedAt()
         );
-        $this->account_cache = new AccountCache($this->context);
 
         $this->context->setVariable(ContextKeys::TIME_GROUP_MANAGER, $this);
 
