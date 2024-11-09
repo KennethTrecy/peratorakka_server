@@ -72,4 +72,11 @@ class NumericalToolConfiguration
         $this->context = $context;
         $this->sources = $sources;
     }
+
+    public function __serialize(): array
+    {
+        return [
+            "sources" => $this->sources
+        ];
+    }
 }
