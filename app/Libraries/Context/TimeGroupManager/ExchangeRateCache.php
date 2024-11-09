@@ -66,6 +66,7 @@ class ExchangeRateCache {
     }
 
     public function loadExchangeRatesForAccounts(array $missing_account_IDs): void {
+        $currency_cache = $this->context->getVariable(ContextKeys::CURRENCY_CACHE);
         $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
 
         $account_cache->loadAccounts($missing_account_IDs);
@@ -78,6 +79,8 @@ class ExchangeRateCache {
         $all_known_IDs = array_unique(array_merge($this->known_currency_IDs, $new_currency_IDs));
 
         if (count($new_currency_IDs) > 0 && $this->last_exchange_rate_time->getTimestamp() > 0) {
+            $currency_cache->loadCurrencies($new_currency_IDs);
+
             $this->known_currency_IDs = $all_known_IDs;
 
             $all_account_subquery = model(AccountModel::class, false)
