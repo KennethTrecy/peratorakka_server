@@ -33,7 +33,6 @@ class NumericalToolModel extends BaseResourceModel
     {
         return [
             "name"  => $faker->unique()->firstName(),
-            "description"  => $faker->paragraph(),
             "kind"  => $faker->randomElement(ACCEPTABLE_NUMERICAL_TOOL_KINDS),
             "recurrence"  => $faker->randomElement(ACCEPTABLE_NUMERICAL_TOOL_RECURRENCE_PERIODS),
             "recency"  => $faker->numberBetween(-100, 100),
