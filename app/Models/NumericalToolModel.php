@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Entities\NumericalTool;
+use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
@@ -42,6 +43,7 @@ class NumericalToolModel extends BaseResourceModel
             "configuration"  => json_encode([
                 "sources" => [
                     [
+                        "type" => CollectionSource::sourceType(),
                         "collection_id" => 1,
                         "currency_id" => 1,
                         "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
