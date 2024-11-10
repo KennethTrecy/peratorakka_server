@@ -25,7 +25,7 @@ class NumericalToolConfiguration
             foreach ($sources as $i => $source) {
                 if (isset($source["type"])) {
                     if ($source["type"] === CollectionSource::sourceType()) {
-                        $parsed_source = CollectionSource::parseConfiguration($context, $source);
+                        $parsed_source = CollectionSource::parseConfiguration($source);
 
                         if (is_null($parsed_source)) {
                             throw new NumericalToolConfigurationException(
@@ -42,7 +42,7 @@ class NumericalToolConfiguration
                     );
                 }
 
-                $output_format_code = $parsed_sources[i]->outputFormatCode();
+                $output_format_code = $parsed_sources[$i]->outputFormatCode();
 
                 if ($parsed_sources[0]->outputFormatCode() !== $output_format_code) {
                     throw new NumericalToolConfigurationException(
@@ -60,7 +60,7 @@ class NumericalToolConfiguration
 
     public readonly array $sources;
 
-    private function __construct(Context $context, array $sources)
+    private function __construct(array $sources)
     {
         $this->sources = $sources;
     }
