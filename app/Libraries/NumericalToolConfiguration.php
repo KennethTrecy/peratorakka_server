@@ -34,7 +34,6 @@ class NumericalToolConfiguration
                             );
                         }
 
-
                         array_push($parsed_sources, $parsed_source);
                     }
                 } else {
