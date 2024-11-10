@@ -302,7 +302,7 @@ class CollectionSource implements NumericalToolSource
     }
 
 
-    public function __serialize(): array {
+    public function toArray(): array {
         return [
             "type" => static::sourceType(),
             "collection_id" => $this->collection_id,

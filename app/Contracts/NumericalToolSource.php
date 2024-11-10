@@ -24,7 +24,7 @@ interface NumericalToolSource
      * @param array $array
      * @return Self|null
      */
-    public static function parseConfiguration(Context $context, array $array): ?Self;
+    public static function parseConfiguration(array $array): ?Self;
 
     /**
      * Makes the output format code to determine if all sources have same output format.
@@ -41,9 +41,9 @@ interface NumericalToolSource
     public function calculate(Context $context): array;
 
     /**
-     * Serializes the object into an array
+     * Serializes the object into an array.
      *
      * @return array
      */
-    public function __serialize(): array;
+    public function toArray(): array;
 }
