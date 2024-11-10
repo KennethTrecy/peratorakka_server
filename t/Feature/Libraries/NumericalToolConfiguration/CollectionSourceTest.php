@@ -1705,10 +1705,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
 
         $currency_fabricator = new Fabricator(CurrencyModel::class);
         $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+            "user_id" => $authenticated_info->getUser()->id,
+            "presentational_precision" => 2
         ])->create();
         $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+            "user_id" => $authenticated_info->getUser()->id,
+            "presentational_precision" => 2
         ])->create();
         $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
         $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
