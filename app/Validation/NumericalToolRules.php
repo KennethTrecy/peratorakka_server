@@ -12,7 +12,9 @@ class NumericalToolRules
         ?string &$error = null
     ): bool {
         try {
-            $configuration = NumericalToolConfiguration::parseConfiguration($value);
+            $configuration = NumericalToolConfiguration::parseConfiguration(
+                json_decode($value, true)
+            );
 
             return !is_null($configuration);
         } catch (NumericalToolConfigurationException $exception) {

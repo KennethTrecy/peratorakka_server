@@ -137,6 +137,7 @@ class NumericalToolController extends BaseOwnedResourceController
         $validation->setRule("$individual_name.configuration", "configuration", [
             "required",
             "string",
+            "valid_json",
             "valid_numerical_tool_configuration"
         ]);
 
