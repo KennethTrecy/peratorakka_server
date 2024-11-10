@@ -11,6 +11,7 @@ class NumericalToolModel extends BaseResourceModel
     protected $table = "numerical_tools";
     protected $returnType = NumericalTool::class;
     protected $allowedFields = [
+        "user_id",
         "name",
         "kind",
         "recurrence",
