@@ -103,6 +103,16 @@ class NumericalToolController extends BaseOwnedResourceController
         return $enriched_document;
     }
 
+    protected static function prepareRequestData(array $raw_request_data): array
+    {
+        $current_user = auth()->user();
+
+        return array_merge(
+            [ "user_id" => $current_user->id ],
+            $raw_request_data
+        );
+    }
+
     private static function makeValidation(): Validation
     {
         $validation = single_service("validation");
