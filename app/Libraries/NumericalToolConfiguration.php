@@ -74,10 +74,15 @@ class NumericalToolConfiguration
         return $results;
     }
 
-    public function __serialize(): array
+    public function __toString(): string
     {
-        return [
-            "sources" => $this->sources
-        ];
+        return json_encode([
+            "sources" => array_map(
+                function (NumericalToolSource $source) {
+                    return $source->toArray();
+                },
+                $this->sources
+            )
+        ]);
     }
 }
