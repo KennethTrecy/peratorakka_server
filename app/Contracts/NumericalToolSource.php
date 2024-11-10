@@ -2,11 +2,7 @@
 
 namespace App\Contracts;
 
-use App\Entities\FlowCalculation;
-use App\Entities\SummaryCalculation;
 use App\Libraries\Context;
-use Brick\Math\BigRational;
-use CodeIgniter\I18n\Time;
 
 /**
  * Representation of a numerical tool.
@@ -42,7 +38,7 @@ interface NumericalToolSource
      *
      * @return array
      */
-    public function calculate(): array;
+    public function calculate(Context $context): array;
 
     /**
      * Serializes the object into an array

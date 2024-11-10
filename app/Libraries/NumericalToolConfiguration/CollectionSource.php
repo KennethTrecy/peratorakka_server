@@ -21,10 +21,7 @@ class CollectionSource implements NumericalToolSource
         return "collection";
     }
 
-    public static function parseConfiguration(
-        Context $context,
-        array $configuration
-    ): ?CollectionSource {
+    public static function parseConfiguration(array $configuration): ?CollectionSource {
         if (
             isset($configuration["collection_id"])
             && isset($configuration["currency_id"])
@@ -49,7 +46,6 @@ class CollectionSource implements NumericalToolSource
             )
         ) {
             return new CollectionSource(
-                $context,
                 $configuration["currency_id"],
                 $configuration["exchange_rate_basis"],
 
@@ -65,7 +61,6 @@ class CollectionSource implements NumericalToolSource
         return null;
     }
 
-    private readonly Context $context;
     private readonly int $currency_id;
     private readonly string $exchange_rate_basis;
 
@@ -77,7 +72,6 @@ class CollectionSource implements NumericalToolSource
     public readonly bool $must_show_collective_average;
 
     private function __construct(
-        Context $context,
         int $currency_id,
         string $exchange_rate_basis,
         int $collection_id,
@@ -87,7 +81,6 @@ class CollectionSource implements NumericalToolSource
         bool $must_show_collective_sum,
         bool $must_show_collective_average
     ) {
-        $this->context = $context;
         $this->currency_id = $currency_id;
         $this->exchange_rate_basis = $exchange_rate_basis;
         $this->collection_id = $collection_id;
@@ -102,35 +95,35 @@ class CollectionSource implements NumericalToolSource
         return CURRENCY_FORMULA_OUTPUT_FORMAT."#$this->currency_id";
     }
 
-    public function calculate(): array
+    public function calculate(Context $context): array
     {
-        $this->context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $this->currency_id);
-        $this->context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, $this->exchange_rate_basis);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $this->currency_id);
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, $this->exchange_rate_basis);
 
         /**
          * @var TimeGroupManager
          */
-        $time_group_manager = $this->context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
 
         /**
          * @var ExchangeRateCache
          */
-        $exchange_rate_cache = $this->context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
+        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
 
         /**
          * @var AccountCache
          */
-        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
 
         /**
          * @var CurrencyCache
          */
-        $currency_cache = $this->context->getVariable(ContextKeys::CURRENCY_CACHE);
+        $currency_cache = $context->getVariable(ContextKeys::CURRENCY_CACHE);
 
         /**
          * @var CurrencyCache
          */
-        $collection_cache = $this->context->getVariable(ContextKeys::COLLECTION_CACHE);
+        $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
 
         $account_collections = model(AccountCollectionModel::class, false)
             ->where("collection_id", $this->collection_id)
