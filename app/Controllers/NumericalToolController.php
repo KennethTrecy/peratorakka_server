@@ -94,9 +94,11 @@ class NumericalToolController extends BaseOwnedResourceController
         }, $main_documents), function ($currency_id) {
             return $currency_id !== null;
         });
-        $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
-
-        $enriched_document["currencies"] = $currencies;
+        if (count($linked_currencies) > 0) {
+            $currencies = model(CurrencyModel::class)
+                ->selectUsingMultipleIDs($linked_currencies);
+            $enriched_document["currencies"] = $currencies;
+        }
 
         return $enriched_document;
     }
