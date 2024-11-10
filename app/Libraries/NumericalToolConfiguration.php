@@ -10,9 +10,6 @@ use App\Libraries\Context\ContextKeys;
 use App\Libraries\MathExpression\ExpressionFactory;
 use App\Libraries\MathExpression\PeratorakkaMath;
 use App\Libraries\Context\TimeGroupManager;
-use Xylemical\Expressions\Evaluator;
-use Xylemical\Expressions\Lexer;
-use Xylemical\Expressions\Parser;
 
 class NumericalToolConfiguration
 {
@@ -23,8 +20,6 @@ class NumericalToolConfiguration
             && is_array($configuration["sources"])
             && count($configuration["sources"])
         ) {
-            $context = new Context();
-
             $sources = $configuration["sources"];
             $parsed_sources = [];
             foreach ($sources as $i => $source) {
@@ -58,19 +53,26 @@ class NumericalToolConfiguration
                 }
             }
 
-            return new NumericalToolConfiguration($context, $parsed_sources);
+            return new NumericalToolConfiguration($parsed_sources);
         } else {
             throw new NumericalToolConfigurationException("Missing sources");
         }
     }
 
-    public readonly Context $context;
     public readonly array $sources;
 
     private function __construct(Context $context, array $sources)
     {
-        $this->context = $context;
         $this->sources = $sources;
+    }
+
+    public function calculate(Context $context): array
+    {
+        $results = [];
+        foreach ($this->sources as $source) {
+            $results = array_merge($results, $source->calculate($context));
+        }
+        return $results;
     }
 
     public function __serialize(): array
