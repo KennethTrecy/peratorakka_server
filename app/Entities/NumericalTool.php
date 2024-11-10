@@ -33,4 +33,14 @@ class NumericalTool extends BaseResourceEntity
         "numerical_tool_recurrence_period" => NumericalToolRecurrencePeriod::class,
         "numerical_tool_configuration" => NumericalToolConfiguration::class
     ];
+
+    public function toArray(
+        bool $onlyChanged = false,
+        bool $cast = true,
+        bool $recursive = false
+    ) : array {
+        $raw_result = parent::toArray($onlyChanged, $cast, $recursive);
+        $raw_result["configuration"] = strval($raw_result["configuration"]);
+        return $raw_result;
+    }
 }
