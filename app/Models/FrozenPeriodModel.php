@@ -42,6 +42,13 @@ class FrozenPeriodModel extends BaseResourceModel
         return $query_builder->where("user_id", $user->id);
     }
 
+    public static function findLatestPeriod(string $latest_time): ?FrozenPeriod {
+        return model(FrozenPeriodModel::class, false)
+            ->where("finished_at <", $latest_time)
+            ->orderBy("finished_at", "DESC")
+            ->first();
+    }
+
     public static function makeRawCalculations(string $started_at, string $finished_at): array
     {
         $financial_entries = model(FinancialEntryModel::class)
@@ -264,10 +271,7 @@ class FrozenPeriodModel extends BaseResourceModel
         string $earliest_transacted_time,
         array $keyed_raw_summary_calculations
     ): array {
-        $previous_frozen_period = model(FrozenPeriodModel::class, false)
-            ->where("finished_at <", $earliest_transacted_time)
-            ->orderBy("finished_at", "DESC")
-            ->first();
+        $previous_frozen_period = FrozenPeriodModel::findLatestPeriod($earliest_transacted_time);
 
         $missing_accounts = [];
 
