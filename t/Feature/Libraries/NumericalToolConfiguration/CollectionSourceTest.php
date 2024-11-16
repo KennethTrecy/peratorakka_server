@@ -197,7 +197,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $expense_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $expense_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -207,7 +207,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($expense_account->name, [
@@ -410,7 +410,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $asset_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -420,7 +420,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($asset_account->name, [
@@ -623,7 +623,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $equity_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -633,7 +633,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($equity_account->name, [
@@ -836,7 +836,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $asset_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -846,7 +846,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($asset_account->name, [
@@ -1049,7 +1049,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $asset_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -1059,7 +1059,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($asset_account->name, [
@@ -1262,7 +1262,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $asset_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -1272,7 +1272,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($asset_account->name, [
@@ -1475,7 +1475,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $equity_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -1485,7 +1485,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($equity_account->name, [
@@ -1684,7 +1684,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $asset_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -1694,7 +1694,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, []);
     }
@@ -1951,7 +1951,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ->getVariable(ContextKeys::COLLECTION_CACHE)
             ->loadCollections([ $asset_collection->id ]);
 
-        $collection_source = CollectionSource::parseConfiguration($context, [
+        $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency_a->id,
             "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
@@ -1961,7 +1961,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
         ]);
-        $constellations = $collection_source->calculate();
+        $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
             new Constellation($asset_a_account->name, [
