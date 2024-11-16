@@ -3,18 +3,15 @@
 namespace App\Models;
 
 use App\Entities\NumericalTool;
-use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\Context;
-use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
-use App\Libraries\MathExpression\ExpressionFactory;
+use App\Libraries\NumericalToolConfiguration\CollectionSource;
+use App\Libraries\Resource;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
-use App\Libraries\Resource;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
-use App\Libraries\MathExpression\PeratorakkaMath;
-use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
 class NumericalToolModel extends BaseResourceModel
@@ -73,11 +70,15 @@ class NumericalToolModel extends BaseResourceModel
         return $query_builder->where("user_id", $user->id);
     }
 
-    public static function showConstellation(NumericalTool $tool): array {
-        $time_groups = [];
-
+    public static function showConstellations(NumericalTool $tool): array {
         $context = new Context();
-        $configuration = $tool->configuration;
+        $time_groups = new TimeGroupManager(
+            $context,
+            $this->makeTimeGroups($tool->recurrence, $tool->recency)
+        );
+        $constellations = $tool->configuration->calculate($context);
+
+        return $constellations;
     }
 
     private static function makeTimeGroups(string $recurrence, int $recency): array {
