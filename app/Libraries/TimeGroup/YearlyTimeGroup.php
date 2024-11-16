@@ -12,7 +12,7 @@ use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 
 /**
- * Yearly time groups are time groups composed periodic time groups and/or unfrozen time group.
+ * Yearly time groups are time groups composed of periodic time groups and/or unfrozen time group.
  *
  * There can be multiple instances of yearly time group.
  */
