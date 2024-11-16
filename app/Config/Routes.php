@@ -139,6 +139,13 @@ $routes->post(
         "dry_run_create"
     ]
 );
+$routes->get(
+    "api/v1/".NumericalToolController::getInfo()->getCollectiveName()."/calculate/(:num)",
+    [
+        NumericalToolController::class,
+        "calculate"
+    ]
+);
 $routes->patch(
     "api/v1/user",
     [

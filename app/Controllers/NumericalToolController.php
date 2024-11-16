@@ -113,7 +113,7 @@ class NumericalToolController extends BaseOwnedResourceController
         );
     }
 
-    public function show_constellation(int $id)
+    public function calculate(int $id)
     {
         helper("auth");
 
