@@ -144,6 +144,12 @@ $routes->get(
     [
         NumericalToolController::class,
         "calculate"
+    ],
+    [
+        "filter" => "ensure_ownership:".implode(",", [
+            NumericalToolController::getInfo()->getModelName(),
+            SEARCH_NORMALLY
+        ])
     ]
 );
 $routes->patch(
