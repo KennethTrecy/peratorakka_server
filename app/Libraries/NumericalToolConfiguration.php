@@ -6,10 +6,6 @@ use App\Exceptions\NumericalToolConfigurationException;
 use App\Contracts\NumericalToolSource;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\Context;
-use App\Libraries\Context\ContextKeys;
-use App\Libraries\MathExpression\ExpressionFactory;
-use App\Libraries\MathExpression\PeratorakkaMath;
-use App\Libraries\Context\TimeGroupManager;
 
 class NumericalToolConfiguration
 {

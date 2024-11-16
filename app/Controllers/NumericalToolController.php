@@ -113,6 +113,32 @@ class NumericalToolController extends BaseOwnedResourceController
         );
     }
 
+    public function show_constellation(int $id)
+    {
+        helper("auth");
+
+        $current_user = auth()->user();
+        $model = static::getModel();
+        $data = $model->find($id);
+
+        $is_success = !is_null($data);
+
+        if ($is_success) {
+            $constellations = NumericalTool::showConstellations($data);
+            $response_document = [
+                static::getIndividualName() => $data,
+                "@meta" => [
+                    "constellations" => $constellations
+                ]
+            ];
+            $response_document = static::enrichAndOrganizeResponseDocument($response_document);
+
+            return $this->response->setJSON($response_document);
+        } else {
+            throw new MissingResource();
+        }
+    }
+
     private static function makeValidation(): Validation
     {
         $validation = single_service("validation");
