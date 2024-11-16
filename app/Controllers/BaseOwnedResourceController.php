@@ -140,7 +140,7 @@ abstract class BaseOwnedResourceController extends BaseController
 
         if ($is_success) {
             $response_document = [
-                static::getIndividualName() => $model->find($id)
+                static::getIndividualName() => $data
             ];
             $response_document = static::enrichAndOrganizeResponseDocument($response_document);
 
