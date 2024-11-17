@@ -57,6 +57,17 @@ class FrozenPeriodModel extends BaseResourceModel
             ->withDeleted()
             ->findAll();
 
+        // Happens for new users
+        if (count($financial_entries) === 0) {
+            return [
+                [], // cash flow activities
+                [], // accounts
+                [], // summary calculations
+                [], // flow calculations
+                [] // raw exchange rates
+            ];
+        }
+
         [
             $modifiers,
             $accounts,
