@@ -7,6 +7,7 @@ use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
+use App\Libraries\NumericalToolConfiguration\FormulaSource;
 
 class NumericalToolConfiguration
 {
@@ -21,17 +22,42 @@ class NumericalToolConfiguration
             $parsed_sources = [];
             foreach ($sources as $i => $source) {
                 if (isset($source["type"])) {
-                    if ($source["type"] === CollectionSource::sourceType()) {
-                        $parsed_source = CollectionSource::parseConfiguration($source);
+                    switch ($source["type"]) {
+                        case CollectionSource::sourceType(): {
+                            $parsed_source = CollectionSource::parseConfiguration($source);
 
-                        if (is_null($parsed_source)) {
-                            throw new NumericalToolConfigurationException(
-                                "Incorrect configuration for source #".($i+1)
-                                ." which is a ". $source["type"] . " source."
-                            );
+                            if (is_null($parsed_source)) {
+                                throw new NumericalToolConfigurationException(
+                                    "Incorrect configuration for source #".($i+1)
+                                    ." which is a ". $source["type"] . " source."
+                                );
+                            }
+
+                            array_push($parsed_sources, $parsed_source);
+
+                            break;
                         }
 
-                        array_push($parsed_sources, $parsed_source);
+                        case FormulaSource::sourceType(): {
+                            $parsed_source = FormulaSource::parseConfiguration($source);
+
+                            if (is_null($parsed_source)) {
+                                throw new NumericalToolConfigurationException(
+                                    "Incorrect configuration for source #".($i+1)
+                                    ." which is a ". $source["type"] . " source."
+                                );
+                            }
+
+                            array_push($parsed_sources, $parsed_source);
+
+                            break;
+                        }
+
+                        default:
+                            throw new NumericalToolConfigurationException(
+                                "Unknown source type: ".$source["type"] .
+                                " for source #".($i+1)
+                            );
                     }
                 } else {
                     throw new NumericalToolConfigurationException(
