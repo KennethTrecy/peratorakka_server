@@ -124,9 +124,13 @@ class NumericalToolController extends BaseOwnedResourceController
         $is_success = !is_null($data);
 
         if ($is_success) {
-            $constellations = NumericalToolModel::showConstellations($data);
+            [
+                $time_tags,
+                $constellations
+            ] = NumericalToolModel::showConstellations($data);
             $response_document = [
                 "@meta" => [
+                    "time_tags" => $time_tags,
                     "constellations" => $constellations
                 ],
                 static::getIndividualName() => $data,

@@ -178,6 +178,16 @@ class TimeGroupManager
         );
     }
 
+    public function timeTags(): array
+    {
+        return array_map(
+            function ($time_group) {
+                return $time_group->timeTag();
+            },
+            $this->time_groups
+        );
+    }
+
     private function loadSummaryCalculations(array $selected_account_IDs): void
     {
         $missing_account_IDs = array_diff(

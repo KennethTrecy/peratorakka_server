@@ -78,7 +78,7 @@ class NumericalToolModel extends BaseResourceModel
         );
         $constellations = $tool->configuration->calculate($context);
 
-        return $constellations;
+        return [ $time_groups->timeTags(), $constellations ];
     }
 
     private static function makeTimeGroups(string $recurrence, int $recency): array {
