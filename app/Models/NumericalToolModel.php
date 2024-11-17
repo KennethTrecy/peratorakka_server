@@ -87,11 +87,35 @@ class NumericalToolModel extends BaseResourceModel
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
             $maxed_current_date->toDateTimeString()
         );
+
+        $frozen_time_group_limit = abs($recency);
+        $time_groups = $frozen_time_group_limit > 0
+            ? [ new PeriodicTimeGroup($last_frozen_period) ]
+            : [];
+
+        // Happens for new users and there is no frozen period yet
+        if ($recency < 1 && is_null($last_frozen_period)) {
+            $last_financial_entry = model(FinancialEntryModel::class)
+                ->orderBy("transacted_at", "ASC")
+                ->withDeleted()
+                ->first();
+
+            $possible_unfrozen_date = is_null($last_financial_entry)
+                ? $current_date
+                : $last_financial_entry->transacted_at;
+
+            array_push($time_groups, UnfrozenTimeGroup::make(
+                $possible_unfrozen_date,
+                $maxed_current_date
+            ));
+
+            return $time_groups;
+        }
+
         $possible_unfrozen_date = $last_frozen_period->finished_at
             ->addDays(1)
             ->setHour(0)->setMinute(0)->setSecond(0);
         $frozen_time_group_limit = abs($recency);
-        $time_groups = [ new PeriodicTimeGroup($last_frozen_period) ];
 
         if ($recency < 1 && $current_date->isAfter($possible_unfrozen_date)) {
             array_push($time_groups, UnfrozenTimeGroup::make(
