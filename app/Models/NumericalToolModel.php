@@ -84,7 +84,7 @@ class NumericalToolModel extends BaseResourceModel
     private static function makeTimeGroups(string $recurrence, int $recency): array {
         $current_date = Time::today();
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
-            $current_date->toDateTimeString()
+            $current_date->setHour(23)->setMinute(59)->setSecond(59)->toDateTimeString()
         );
         $frozen_time_group_limit = abs($recency);
         $time_groups = [ new PeriodicTimeGroup($last_frozen_period) ];
@@ -100,12 +100,12 @@ class NumericalToolModel extends BaseResourceModel
 
         switch ($recurrence) {
             case PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD:
-                if ($frozen_time_group_limit === 0) break;
+                if ($frozen_time_group_limit < 2) break;
 
                 $frozen_periods = model(FrozenPeriodModel::class, false)
-                    ->where("finished_at <", $last_frozen_period->started_at->toDateTimeString())
+                    ->where("finished_at <=", $last_frozen_period->started_at->toDateTimeString())
                     ->orderBy("finished_at", "DESC")
-                    ->limit($frozen_time_group_limit)
+                    ->limit($frozen_time_group_limit - 1)
                     ->findAll();
 
                 array_unshift($time_groups, ...array_map(function ($frozen_period) {
