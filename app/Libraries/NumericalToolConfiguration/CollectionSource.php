@@ -9,6 +9,7 @@ use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
 use App\Libraries\Context\TimeGroupManager\AccountCache;
+use App\Libraries\Context\TimeGroupManager\CollectionCache;
 use App\Libraries\Context\TimeGroupManager\CurrencyCache;
 use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
 use App\Models\AccountCollectionModel;
@@ -121,7 +122,7 @@ class CollectionSource implements NumericalToolSource
         $currency_cache = $context->getVariable(ContextKeys::CURRENCY_CACHE);
 
         /**
-         * @var CurrencyCache
+         * @var CollectionCache
          */
         $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
 
