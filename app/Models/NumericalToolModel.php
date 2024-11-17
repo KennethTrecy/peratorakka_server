@@ -88,8 +88,8 @@ class NumericalToolModel extends BaseResourceModel
         $time_groups = [ new PeriodicTimeGroup($last_frozen_period) ];
 
         if ($recency < 1) {
-            array_push($time_groups, new UnfrozenTimeGroup(
-                $last_frozen_period->finished_date
+            array_push($time_groups, UnfrozenTimeGroup::make(
+                $last_frozen_period->finished_at
                     ->addDays(1)
                     ->setHour(0)->setMinute(0)->setSecond(0),
                 $current_date->setHour(23)->setMinute(59)->setSecond(59)
