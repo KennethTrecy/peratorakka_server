@@ -124,14 +124,15 @@ class NumericalToolController extends BaseOwnedResourceController
         $is_success = !is_null($data);
 
         if ($is_success) {
-            $constellations = NumericalTool::showConstellations($data);
+            $constellations = NumericalToolModel::showConstellations($data);
             $response_document = [
-                static::getIndividualName() => $data,
                 "@meta" => [
                     "constellations" => $constellations
-                ]
+                ],
+                static::getIndividualName() => $data,
             ];
-            $response_document = static::enrichAndOrganizeResponseDocument($response_document);
+            $response_document = static::enrichResponseDocument($response_document);
+            ksort($response_document);
 
             return $this->response->setJSON($response_document);
         } else {
