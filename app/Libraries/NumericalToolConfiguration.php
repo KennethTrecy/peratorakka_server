@@ -2,10 +2,11 @@
 
 namespace App\Libraries;
 
-use App\Exceptions\NumericalToolConfigurationException;
 use App\Contracts\NumericalToolSource;
-use App\Libraries\NumericalToolConfiguration\CollectionSource;
+use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
+use App\Libraries\NumericalToolConfiguration\CollectionSource;
 
 class NumericalToolConfiguration
 {
@@ -63,6 +64,17 @@ class NumericalToolConfiguration
 
     public function calculate(Context $context): array
     {
+        $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
+
+        $collection_IDs = [];
+        foreach ($this->sources as $source) {
+            if ($source instanceof CollectionSource) {
+                array_push($collection_IDs, $source->collection_id);
+            }
+        }
+
+        $collection_cache->loadCollections($collection_IDs);
+
         $results = [];
         foreach ($this->sources as $source) {
             $results = array_merge($results, $source->calculate($context));

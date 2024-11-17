@@ -254,7 +254,6 @@ class CollectionSource implements NumericalToolSource
                     $account_id,
                     $account_cache,
                     $currency_cache,
-                    $collection_cache
                 ) {
                     $currency_id = $account_cache->determineCurrencyID($account_id);
                     $display_value = $currency_cache->formatValue(
@@ -284,8 +283,7 @@ class CollectionSource implements NumericalToolSource
                 function ($average) use (
                     $account_id,
                     $account_cache,
-                    $currency_cache,
-                    $collection_cache
+                    $currency_cache
                 ) {
                     $currency_id = $account_cache->determineCurrencyID($account_id);
                     $display_value = $currency_cache->formatValue(
