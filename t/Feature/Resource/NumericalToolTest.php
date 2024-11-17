@@ -660,7 +660,9 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "constellations" => [
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
                     new Constellation($asset_a_account->name, [
                         new Star(
                             "2000.00",
@@ -701,7 +703,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             RationalNumber::get("3250")
                         )
                     ])
-                ]
+                ])
             ],
             "currencies" => [ $currency_a ],
             "numerical_tool" => $numerical_tool
@@ -979,7 +981,9 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "constellations" => [
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
                     new Constellation($asset_a_account->name, [
                         new Star(
                             "2000.00",
@@ -1020,7 +1024,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             RationalNumber::get("3250")
                         )
                     ])
-                ]
+                ])
             ],
             "currencies" => [ $currency_a ],
             "numerical_tool" => $numerical_tool
@@ -1334,7 +1338,9 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "constellations" => [
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
                     new Constellation($asset_a_account->name, [
                         new Star(
                             "2000.00",
@@ -1391,7 +1397,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             RationalNumber::get("3625")
                         )
                     ])
-                ]
+                ])
             ],
             "currencies" => [ $currency_a ],
             "numerical_tool" => $numerical_tool
@@ -1690,7 +1696,9 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "constellations" => [
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
                     new Constellation($asset_a_account->name, [
                         new Star(
                             "4250.00",
@@ -1715,7 +1723,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             RationalNumber::get("3625")
                         )
                     ])
-                ]
+                ])
             ],
             "currencies" => [ $currency_a ],
             "numerical_tool" => $numerical_tool
@@ -1858,7 +1866,9 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "constellations" => [
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
                     new Constellation($asset_a_account->name, [
                         new Star(
                             "4250.00",
@@ -1883,7 +1893,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             RationalNumber::get("3625")
                         )
                     ])
-                ]
+                ])
             ],
             "currencies" => [ $currency_a ],
             "numerical_tool" => $numerical_tool
@@ -2210,7 +2220,9 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "constellations" => [
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
                     new Constellation($asset_a_account->name, [
                         new Star(
                             "2000.00",
@@ -2281,7 +2293,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             RationalNumber::get("7500")
                         )
                     ])
-                ]
+                ])
             ],
             "currencies" => [ $currency_a ],
             "numerical_tool" => $numerical_tool
