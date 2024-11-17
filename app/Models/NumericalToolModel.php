@@ -83,7 +83,9 @@ class NumericalToolModel extends BaseResourceModel
 
     private static function makeTimeGroups(string $recurrence, int $recency): array {
         $current_date = Time::today();
-        $last_frozen_period = FrozenPeriod::findLatestPeriod($current_date);
+        $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
+            $current_date->toDateTimeString()
+        );
         $frozen_time_group_limit = abs($recency);
         $time_groups = [ new PeriodicTimeGroup($last_frozen_period) ];
 
@@ -100,7 +102,7 @@ class NumericalToolModel extends BaseResourceModel
             case PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD:
                 if ($frozen_time_group_limit === 0) break;
 
-                $frozen_periods = model(FrozenPeriod::class, false)
+                $frozen_periods = model(FrozenPeriodModel::class, false)
                     ->where("finished_at <", $last_frozen_period->started_at->toDateTimeString())
                     ->orderBy("finished_at", "DESC")
                     ->limit($frozen_time_group_limit)
@@ -116,7 +118,7 @@ class NumericalToolModel extends BaseResourceModel
                 $earliest_year = $last_frozen_period_year - $frozen_time_group_limit;
                 $earliest_date_of_earliest_year = Time::createFromDate($earliest_year, 1, 1);
 
-                $frozen_periods = model(FrozenPeriod::class, false)
+                $frozen_periods = model(FrozenPeriodModel::class, false)
                     ->where("started_at <", $earliest_date_of_earliest_year->toDateTimeString())
                     ->where("finished_at <", $last_frozen_period->started_at->toDateTimeString())
                     ->orderBy("finished_at", "DESC")
