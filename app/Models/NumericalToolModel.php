@@ -74,7 +74,7 @@ class NumericalToolModel extends BaseResourceModel
         $context = new Context();
         $time_groups = new TimeGroupManager(
             $context,
-            $this->makeTimeGroups($tool->recurrence, $tool->recency)
+            static::makeTimeGroups($tool->recurrence, $tool->recency)
         );
         $constellations = $tool->configuration->calculate($context);
 
