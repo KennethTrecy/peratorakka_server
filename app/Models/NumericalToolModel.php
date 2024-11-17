@@ -132,9 +132,11 @@ class NumericalToolModel extends BaseResourceModel
 
                 $time_groups = [];
                 for ($year = $earliest_year; $year <= $last_frozen_period_year; $year++) {
-                    $yearly_time_group = new YearlyTimeGroup($i);
-                    foreach ($specific_time_groups[$year] as $time_group) {
-                        $yearly_time_group->addTimeGroup($time_group);
+                    $yearly_time_group = new YearlyTimeGroup($year, true);
+                    if (isset($specific_time_groups[$year])) {
+                        foreach ($specific_time_groups[$year] as $time_group) {
+                            $yearly_time_group->addTimeGroup($time_group);
+                        }
                     }
                     array_push($time_groups, $yearly_time_group);
                 }
