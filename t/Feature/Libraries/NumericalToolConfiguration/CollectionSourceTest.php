@@ -3,10 +3,6 @@
 namespace Tests\Feature\Libraries;
 
 use App\Casts\RationalNumber;
-// TODO: Remove math expression tests once migration is completed.
-use App\Exceptions\ExpressionException;
-use App\Libraries\MathExpression;
-
 use App\Libraries\Constellation;
 use App\Libraries\Constellation\Star;
 use App\Libraries\Context;
