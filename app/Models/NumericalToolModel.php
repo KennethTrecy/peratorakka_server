@@ -83,18 +83,20 @@ class NumericalToolModel extends BaseResourceModel
 
     private static function makeTimeGroups(string $recurrence, int $recency): array {
         $current_date = Time::today();
+        $maxed_current_date = $current_date->setHour(23)->setMinute(59)->setSecond(59);
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
-            $current_date->setHour(23)->setMinute(59)->setSecond(59)->toDateTimeString()
+            $maxed_current_date->toDateTimeString()
         );
+        $possible_unfrozen_date = $last_frozen_period->finished_at
+            ->addDays(1)
+            ->setHour(0)->setMinute(0)->setSecond(0);
         $frozen_time_group_limit = abs($recency);
         $time_groups = [ new PeriodicTimeGroup($last_frozen_period) ];
 
-        if ($recency < 1) {
+        if ($recency < 1 && $current_date->isAfter($possible_unfrozen_date)) {
             array_push($time_groups, UnfrozenTimeGroup::make(
-                $last_frozen_period->finished_at
-                    ->addDays(1)
-                    ->setHour(0)->setMinute(0)->setSecond(0),
-                $current_date->setHour(23)->setMinute(59)->setSecond(59)
+                $possible_unfrozen_date,
+                $maxed_current_date
             ));
         }
 
