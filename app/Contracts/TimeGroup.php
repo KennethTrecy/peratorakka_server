@@ -31,6 +31,13 @@ interface TimeGroup
     public function finishedAt(): Time;
 
     /**
+     * Returns a human-readable time tag useful for displaying the name of time group.
+     *
+     * @return string
+     */
+    public function timeTag(): string;
+
+    /**
      * Returns true if the time group came from unfrozen period, partially or as a whole.
      *
      * @return bool

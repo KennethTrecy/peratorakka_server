@@ -82,6 +82,12 @@ class YearlyTimeGroup implements TimeGroup
         return $time_group->finishedAt();
     }
 
+    public function timeTag(): string {
+        $finishedDate = $this->finishedAt();
+
+        return $finishedDate->toLocalizedString("YYYY");
+    }
+
     public function hasSomeUnfrozenDetails(): bool
     {
         foreach ($this->time_groups as $time_group) {

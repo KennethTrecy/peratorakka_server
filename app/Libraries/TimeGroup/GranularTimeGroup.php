@@ -27,6 +27,12 @@ abstract class GranularTimeGroup implements TimeGroup
      */
     protected array $flow_calculations = [];
 
+    public function timeTag(): string {
+        $finishedDate = $this->finishedAt();
+
+        return $finishedDate->toLocalizedString("MMMM");
+    }
+
     public function totalOpenedDebitAmount(
         Context $context,
         array $selected_account_IDs
