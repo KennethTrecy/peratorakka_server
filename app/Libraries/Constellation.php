@@ -18,4 +18,11 @@ class Constellation
         $this->name = $name;
         $this->stars = $stars;
     }
+
+    public function toArray(): array {
+        return [
+            "name" => $this->name,
+            "stars" => array_map(function ($star) { return $star->toArray(); }, $this->stars)
+        ];
+    }
 }

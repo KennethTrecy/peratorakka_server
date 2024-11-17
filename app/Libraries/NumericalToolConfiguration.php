@@ -105,6 +105,10 @@ class NumericalToolConfiguration
         foreach ($this->sources as $source) {
             $results = array_merge($results, $source->calculate($context));
         }
+
+        $results = array_map(function ($result) {
+            return $result->toArray();
+        }, $results);
         return $results;
     }
 

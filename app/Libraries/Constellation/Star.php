@@ -17,4 +17,11 @@ class Star
         $this->display_value = $display_value;
         $this->numerical_value = $numerical_value;
     }
+
+    public function toArray(): array {
+        return [
+            "display_value" => $this->display_value,
+            "numerical_value" => $this->numerical_value->toFloat()
+        ];
+    }
 }
