@@ -15,9 +15,9 @@
 	],
 	"require": {
 		"php": "^7.4 || ^8.0",
-		"brick/math": "^0.11.0",
+		"brick/math": "^0.12.1",
 		"codeigniter4/framework": "^4.0",
-		"codeigniter4/shield": "^1.0@beta",
+		"codeigniter4/shield": "^1.0",
 		"xylemical/php-expressions": "^1.1"
 	},
 	"require-dev": {
