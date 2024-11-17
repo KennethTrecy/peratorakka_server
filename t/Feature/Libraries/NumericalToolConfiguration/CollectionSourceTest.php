@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Libraries;
+namespace Tests\Feature\Libraries\NumericalToolConfiguration;
 
 use App\Casts\RationalNumber;
 use App\Libraries\Constellation;
