@@ -63,25 +63,39 @@ class LoginController extends BaseLoginController
         $raw_error = $session->getFlashdata("errors");
         if (is_null($raw_error)) {
             $current_user = auth("session")->user();
-            $token = $current_user->generateAccessToken(
-                Time::now("Asia/Manila")->toDateTimeString()
-            );
 
-            $new_response = $new_response
-                ->setStatusCode(200)
-                ->setJSON([
-                    "meta" => [
-                        "id" => $current_user->id,
-                        "username" => $current_user->username,
-                        "token" => [
-                            "data" => $token->raw_token,
-                            "expiration" => [
-                                "type" => MAINTENANCE_TOKEN_EXPIRATION_TYPE,
-                                "data" => YEAR
+            if (is_null($current_user)) {
+                $new_response = $new_response
+                    ->setStatusCode(401)
+                    ->setJSON([
+                        "errors" => [
+                            [
+                                "field" => "email",
+                                "message" => "Email is not registered in the server."
                             ]
                         ]
-                    ]
-                ]);
+                    ]);
+            } else {
+                $token = $current_user->generateAccessToken(
+                    Time::now("Asia/Manila")->toDateTimeString()
+                );
+
+                $new_response = $new_response
+                    ->setStatusCode(200)
+                    ->setJSON([
+                        "meta" => [
+                            "id" => $current_user->id,
+                            "username" => $current_user->username,
+                            "token" => [
+                                "data" => $token->raw_token,
+                                "expiration" => [
+                                    "type" => MAINTENANCE_TOKEN_EXPIRATION_TYPE,
+                                    "data" => YEAR
+                                ]
+                            ]
+                        ]
+                    ]);
+            }
         } else {
             $formalized_errors = [
                 [
