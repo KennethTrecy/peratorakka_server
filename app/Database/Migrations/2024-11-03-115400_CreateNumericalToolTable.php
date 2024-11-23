@@ -62,7 +62,7 @@ class CreateNumericalToolTable extends Migration
                 "null" => true,
             ]
         ]);
-        $this->forge->addPrimaryKey("id", "pk_collections");
+        $this->forge->addPrimaryKey("id", "pk_numerical_tools");
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
                 "user_id",
