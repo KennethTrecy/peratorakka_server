@@ -19,4 +19,10 @@ class Account extends BaseResourceEntity
     protected $castHandlers = [
         "account_kind" => AccountKind::class,
     ];
+
+    protected $dates = [
+        "created_at",
+        "updated_at",
+        "deleted_at",
+    ];
 }
