@@ -59,11 +59,11 @@ class CreateFormulaeTable extends Migration
             ]
         ]);
         $this->forge->addPrimaryKey("id", "pk_formulae");
-        $this->forge->addUniqueKey("name", "formulae_name_key");
         if ($database->DBDriver !== "SQLite3") {
+            $this->forge->addUniqueKey([ "user_id", "name" ], "formulae_user_id_name");
             $this->forge->addForeignKey(
                 "currency_id",
-                "currency",
+                "currencies",
                 "id",
                 "CASCADE",
                 "CASCADE",
