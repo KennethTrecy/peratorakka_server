@@ -9,6 +9,8 @@ return [
     'must_be_same_as_password_of_current_user' => 'The "{field}" must be same to the current'
         .' password of the current user.',
 
+    'permit_empty_if_column_value_matches' => 'The "{field}" must have selected existing item.',
+
     'valid_numerical_tool_configuration' => 'The "{field}" is not a valid numerical tool'
         .' configuration.',
     'may_allow_exchange_action' => 'The "{field}" modifier only allows same values in debit side'
