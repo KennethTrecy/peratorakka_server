@@ -51,6 +51,38 @@ class ModifierController extends BaseOwnedResourceController
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_MODIFIER_KINDS)."]"
         ]);
+        $validation->setRule(
+            "$individual_name.debit_cash_flow_activity_id",
+            "debit cash flow activity",
+            [
+                "permit_empty_if_column_value_matches[".implode(",", [
+                    AccountModel::class,
+                    "$individual_name.debit_account_id",
+                    "kind",
+                    LIQUID_ASSET_ACCOUNT_KIND
+                ])."]",
+                "ensure_ownership[".implode(",", [
+                    CashFlowActivityModel::class,
+                    SEARCH_NORMALLY
+                ])."]"
+            ]
+        );
+        $validation->setRule(
+            "$individual_name.credit_cash_flow_activity_id",
+            "credit cash flow activity",
+            [
+                "permit_empty_if_column_value_matches[".implode(",", [
+                    AccountModel::class,
+                    "$individual_name.credit_account_id",
+                    "kind",
+                    LIQUID_ASSET_ACCOUNT_KIND
+                ])."]",
+                "ensure_ownership[".implode(",", [
+                    CashFlowActivityModel::class,
+                    SEARCH_NORMALLY
+                ])."]"
+            ]
+        );
         $validation->setRule("$individual_name.action", "action", [
             "required",
             "min_length[3]",
@@ -132,38 +164,6 @@ class ModifierController extends BaseOwnedResourceController
                 SEARCH_NORMALLY
             ])."]"
         ]);
-        $validation->setRule(
-            "$individual_name.debit_cash_flow_activity_id",
-            "debit cash flow activity",
-            [
-                "permit_empty_if_column_value_matches[".implode(",", [
-                    AccountModel::class,
-                    "$individual_name.debit_account_id",
-                    "kind",
-                    LIQUID_ASSET_ACCOUNT_KIND
-                ])."]",
-                "ensure_ownership[".implode(",", [
-                    CashFlowActivityModel::class,
-                    SEARCH_NORMALLY
-                ])."]"
-            ]
-        );
-        $validation->setRule(
-            "$individual_name.credit_cash_flow_activity_id",
-            "credit cash flow activity",
-            [
-                "permit_empty_if_column_value_matches[".implode(",", [
-                    AccountModel::class,
-                    "$individual_name.credit_account_id",
-                    "kind",
-                    LIQUID_ASSET_ACCOUNT_KIND
-                ])."]",
-                "ensure_ownership[".implode(",", [
-                    CashFlowActivityModel::class,
-                    SEARCH_NORMALLY
-                ])."]"
-            ]
-        );
         $validation->setRule("$individual_name.description", "description", [
             "permit_empty",
             "max_length[500]",
