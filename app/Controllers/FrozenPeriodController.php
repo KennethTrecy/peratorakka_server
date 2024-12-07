@@ -250,6 +250,67 @@ class FrozenPeriodController extends BaseOwnedResourceController
             );
     }
 
+    public function recalculate()
+    {
+        helper("auth");
+
+        $current_user = auth()->user();
+        $controller = $this;
+        $validation = $this->makeRecalculationValidation();
+        return $this
+            ->useValidInputsOnly(
+                $validation,
+                function ($request_data) use ($controller, $current_user) {
+                    $model = static::getModel();
+                    $info = static::prepareRequestData($request_data);
+                    [
+                        $cash_flow_activities,
+                        $accounts,
+                        $raw_summary_calculations,
+                        $raw_flow_calculations,
+                        $raw_exchange_rates
+                    ] = static::calculateValidSummaryCalculations(
+                        $info,
+                        false
+                    );
+
+                    $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
+                    if (isset($info["source_currency_id"])) {
+                        $linked_currencies = [ ...$linked_currencies, $info["source_currency_id"] ];
+                    }
+                    $linked_currencies = [ ...$linked_currencies, $info["target_currency_id"] ];
+                    $currencies = model(CurrencyModel::class)
+                        ->selectUsingMultipleIDs(array_unique($linked_currencies));
+
+                    $financial_statement_group = new FinancialStatementGroup(
+                        $accounts,
+                        $raw_summary_calculations,
+                        $raw_flow_calculations,
+                        new ExchangeRateDerivator([])
+                    );
+
+                    $keyed_currencies = Resource::key($currencies, function ($currency) {
+                        return $currency->id;
+                    });
+                    $source_currency = isset($info["source_currency_id"])
+                        ? $keyed_currencies[$info["source_currency_id"]]
+                        : null;
+                    $target_currency = $keyed_currencies[$info["target_currency_id"]];
+
+                    $statement = $financial_statement_group
+                        ->generateFinancialStatements($source_currency, $target_currency);
+
+                    $response_document = [
+                        "@meta" => [
+                            "statement" => $statement
+                        ]
+                    ];
+
+                    return $controller->response->setJSON($response_document);
+                }
+            );
+    }
+
     protected static function prepareRequestData(array $raw_request_data): array
     {
         $current_user = auth()->user();
@@ -314,5 +375,29 @@ class FrozenPeriodController extends BaseOwnedResourceController
         );
 
         return $statements;
+    }
+
+    private static function makeRecalculationValidation(User $owner): Validation
+    {
+        $validation = static::makeValidation();
+
+        $validation->setRule("$individual_name.source_currency_id", "source currency", [
+            "sometimes",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                CurrencyModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
+        $validation->setRule("$individual_name.target_currency_id", "target currency", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                CurrencyModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
+
+        return $validation;
     }
 }

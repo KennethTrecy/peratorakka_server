@@ -139,6 +139,13 @@ $routes->post(
         "dry_run_create"
     ]
 );
+$routes->post(
+    "api/v1/".FrozenPeriodController::getInfo()->getCollectiveName()."/recalculate",
+    [
+        FrozenPeriodController::class,
+        "recalculate"
+    ]
+);
 $routes->get(
     "api/v1/".NumericalToolController::getInfo()->getCollectiveName()."/calculate/(:num)",
     [
