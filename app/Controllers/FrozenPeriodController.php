@@ -377,16 +377,17 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $statements;
     }
 
-    private static function makeRecalculationValidation(User $owner): Validation
+    private static function makeRecalculationValidation(): Validation
     {
         $validation = static::makeValidation();
+        $individual_name = static::getIndividualName();
 
         $validation->setRule("$individual_name.source_currency_id", "source currency", [
-            "sometimes",
+            "permit_empty",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
                 CurrencyModel::class,
-                SEARCH_NORMALLY
+                SEARCH_WITH_DELETED
             ])."]"
         ]);
         $validation->setRule("$individual_name.target_currency_id", "target currency", [
@@ -394,7 +395,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
                 CurrencyModel::class,
-                SEARCH_NORMALLY
+                SEARCH_WITH_DELETED
             ])."]"
         ]);
 
