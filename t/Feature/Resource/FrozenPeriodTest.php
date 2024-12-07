@@ -912,6 +912,180 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $this->seeNumRecords(2, "flow_calculations", []);
     }
 
+    public function testDefaultRecalculate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $currency_fabricator = new Fabricator(CurrencyModel::class);
+        $currency = $currency_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
+        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id
+        ])->create();
+        $account_fabricator = new Fabricator(AccountModel::class);
+        $equity_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => EQUITY_ACCOUNT_KIND
+        ])->create();
+        $asset_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => LIQUID_ASSET_ACCOUNT_KIND
+        ])->create();
+        $expense_account = $account_fabricator->setOverrides([
+            "currency_id" => $currency->id,
+            "kind" => EXPENSE_ACCOUNT_KIND
+        ])->create();
+        $modifier_fabricator = new Fabricator(ModifierModel::class);
+        $normal_record_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $asset_account->id,
+            "credit_account_id" => $equity_account->id,
+            "debit_cash_flow_activity_id" => null,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $expense_record_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $expense_account->id,
+            "credit_account_id" => $asset_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => null,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $close_modifier = $modifier_fabricator->setOverrides([
+            "debit_account_id" => $equity_account->id,
+            "credit_account_id" => $expense_account->id,
+            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
+            "action" => CLOSE_MODIFIER_ACTION
+        ])->create();
+        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $normal_record_modifier->id,
+            "debit_amount" => "1000",
+            "credit_amount" => "1000"
+        ])->create();
+        $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $expense_record_modifier->id,
+            "debit_amount" => "250",
+            "credit_amount" => "250"
+        ])->create();
+        $closed_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $close_modifier->id,
+            "debit_amount" => $recorded_expense_financial_entry->credit_amount,
+            "credit_amount" => $recorded_expense_financial_entry->debit_amount
+        ])->create();
+        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
+        $first_frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "started_at" => Time::parse("-3 day")->toDateTimeString(),
+            "finished_at" => Time::parse("-2 day")->toDateTimeString()
+        ])->create();
+        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
+        $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id
+        ]);
+        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "account_id" => $equity_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => "2500",
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => "2000"
+        ])->create();
+        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "account_id" => $asset_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => "2500",
+            "unadjusted_credit_amount" => "0",
+            "closed_debit_amount" => "2000",
+            "closed_credit_amount" => "0"
+        ])->create();
+        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "account_id" => $expense_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => "0",
+            "unadjusted_credit_amount" => "0",
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => "0"
+        ])->create();
+        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
+        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "cash_flow_activity_id" => $cash_flow_activity->id,
+            "account_id" => $equity_account->id,
+            "net_amount" => "0"
+        ])->create();
+        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $first_frozen_period->id,
+            "cash_flow_activity_id" => $cash_flow_activity->id,
+            "account_id" => $expense_account->id,
+            "net_amount" => "0"
+        ])->create();
+        $second_frozen_period = $frozen_period_fabricator->setOverrides([
+            "user_id" => $authenticated_info->getUser()->id,
+            "started_at" => Time::yesterday()->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ])->make();
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v1/frozen_periods/recalculate", [
+                "frozen_period" => [
+                    ...$second_frozen_period->toArray(),
+                    "source_currency_id" => null,
+                    "target_currency_id" => $currency->id
+                ]
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statement" => [
+                    "currency_id" => $currency->id,
+                    "unadjusted_trial_balance" => [
+                        "debit_total" => "3000",
+                        "credit_total" => "3000"
+                    ],
+                    "income_statement" => [
+                        "net_total" => "-250"
+                    ],
+                    "balance_sheet" => [
+                        "total_assets" => "2750",
+                        "total_liabilities" => "0",
+                        "total_equities" => "2750"
+                    ],
+                    "cash_flow_statement" => [
+                        "opened_liquid_amount" => "2000",
+                        "closed_liquid_amount" => "2750",
+                        "liquid_amount_difference" => "750",
+                        "subtotals" => [
+                            [
+                                "cash_flow_activity_id" => $cash_flow_activity->id,
+                                "net_income" => "-250",
+                                "subtotal" => "750"
+                            ]
+                        ]
+                    ],
+                    "adjusted_trial_balance" => [
+                        "debit_total" => "2750",
+                        "credit_total" => "2750"
+                    ]
+                ]
+            ]
+        ]);
+        $this->seeNumRecords(1, "frozen_periods", []);
+        $this->seeNumRecords(3, "summary_calculations", []);
+        $this->seeNumRecords(2, "flow_calculations", []);
+    }
+
     public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
