@@ -107,7 +107,7 @@ class FinancialStatementGroup
         // Compute for cash flow statement
         $target_currency_id = $target_currency->id;
         $opened_liquid_amount = array_reduce(
-            $this->summary_calculations,
+            $target_summary_calculations,
             function ($previous_total, $summary_calculation) use ($target_currency_id) {
                 $account = $this->accounts[$summary_calculation->account_id];
 
