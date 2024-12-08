@@ -149,6 +149,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
         array $main_document,
         bool $must_be_strict
     ): array {
+        $current_user = auth()->user();
+
         [
             $cash_flow_activities,
             $accounts,
@@ -156,6 +158,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $raw_flow_calculations,
             $raw_exchange_rates
         ] = FrozenPeriodModel::makeRawCalculations(
+            $current_user,
             $main_document["started_at"],
             $main_document["finished_at"]
         );

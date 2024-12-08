@@ -49,9 +49,14 @@ class FrozenPeriodModel extends BaseResourceModel
             ->first();
     }
 
-    public static function makeRawCalculations(string $started_at, string $finished_at): array
-    {
-        $financial_entries = model(FinancialEntryModel::class)
+    public static function makeRawCalculations(
+        User $user,
+        string $started_at,
+        string $finished_at
+    ): array {
+        $financial_entry_model = model(FinancialEntryModel::class);
+        $financial_entries = $financial_entry_model
+            ->limitSearchToUser($financial_entry_model, $user)
             ->where("transacted_at >=", $started_at)
             ->where("transacted_at <=", $finished_at)
             ->withDeleted()

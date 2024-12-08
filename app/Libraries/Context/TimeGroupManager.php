@@ -293,6 +293,8 @@ class TimeGroupManager
             $last_frozen_finished_date
         ] = $this->identifyDates();
 
+        $current_user = auth()->user();
+
         [
             $cash_flow_activities,
             $accounts,
@@ -300,6 +302,7 @@ class TimeGroupManager
             $raw_flow_calculations,
             $raw_exchange_rates
         ] = FrozenPeriodModel::makeRawCalculations(
+            $current_user,
             $last_frozen_finished_date->setHour(0)->setMinute(0)->setSecond(0),
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
