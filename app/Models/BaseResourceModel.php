@@ -120,6 +120,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
             $resources = $this
                 ->whereIn("id", array_unique($IDs))
                 ->withDeleted()
+                ->orderBy("created_at", "ASC")
                 ->findAll();
         }
 
