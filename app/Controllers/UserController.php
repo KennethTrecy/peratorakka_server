@@ -20,6 +20,8 @@ class UserController extends BaseRegisterController
 
     public function update()
     {
+        helper([ "auth", "setting", "session" ]);
+
         $current_user = auth()->user();
         $table_names = config("Auth")->tables;
         $validation = static::makeIdentityValidation($current_user->id, $table_names);
@@ -48,6 +50,8 @@ class UserController extends BaseRegisterController
 
     public function updatePassword()
     {
+        helper([ "auth", "setting", "session" ]);
+
         $current_user = auth()->user();
         $validation = static::makePasswordValidation();
 
