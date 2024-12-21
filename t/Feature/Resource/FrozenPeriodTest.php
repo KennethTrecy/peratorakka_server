@@ -1049,7 +1049,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
         $result->assertJSONFragment([
             "@meta" => [
                 "statement" => [
-                    "currency_id" => $currency->id,
+                    "currency_id" => null,
                     "unadjusted_trial_balance" => [
                         "debit_total" => "3000",
                         "credit_total" => "3000"
