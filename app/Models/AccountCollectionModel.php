@@ -18,7 +18,9 @@ class AccountCollectionModel extends BaseResourceModel
     protected $useTimestamps = false;
     protected $useSoftDeletes = false;
 
-    protected $sortable_fields = [];
+    protected $sortable_fields = [
+        "id"
+    ];
 
     public function fake(Generator &$faker)
     {
