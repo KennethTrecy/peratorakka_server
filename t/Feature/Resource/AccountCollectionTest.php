@@ -41,9 +41,17 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
         ]);
         $account_collection = $account_collection_fabricator->create();
 
-        $this->expectException(PageNotFoundException::class);
-        $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/account_collections");
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 1
+            ],
+            "collections" => json_decode(json_encode([ $collection ])),
+            "accounts" => json_decode(json_encode([ $account ])),
+            "account_collections" => json_decode(json_encode([ $account_collection ]))
+        ]);
     }
 
     public function testDefaultShow()
@@ -72,16 +80,11 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
         ]);
         $account_collection = $account_collection_fabricator->create();
 
+        $this->expectException(PageNotFoundException::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
             ->get("/api/v1/account_collections/$account_collection->id");
-
-        $result->assertOk();
-        $result->assertJSONExact([
-            "collections" => json_decode(json_encode([ $collection ])),
-            "accounts" => json_decode(json_encode([ $account ])),
-            "account_collection" => json_decode(json_encode($account_collection))
-        ]);
     }
 
     public function testDefaultCreate()
@@ -268,7 +271,7 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/account_collections/$collection->id/force");
+            ->delete("/api/v1/account_collections/$account_collection->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "account_collections", []);
@@ -278,9 +281,16 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $this->expectException(PageNotFoundException::class);
-        $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/account_collections");
+
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 0
+            ],
+            "collections" => [],
+            "accounts" => [],
+            "account_collections" => []
+        ]);
     }
 
     public function testQueriedIndex()
@@ -309,12 +319,18 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
         ]);
         $account_collection = $account_collection_fabricator->create();
 
-        $this->expectException(PageNotFoundException::class);
-        $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/account_collections", [
             "page" => [
                 "limit" => 5
             ]
+        ]);
+        $result->assertJSONExact([
+            "meta" => [
+                "overall_filtered_count" => 1
+            ],
+            "collections" => json_decode(json_encode([ $collection ])),
+            "accounts" => json_decode(json_encode([ $account ])),
+            "account_collections" => json_decode(json_encode([ $account_collection ]))
         ]);
     }
 
@@ -329,7 +345,7 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
         $collection = $collection_fabricator->create();
         $collection->id = $collection->id + 1;
 
-        $this->expectException(MissingResource::class);
+        $this->expectException(PageNotFoundException::class);
         $this->expectExceptionCode(404);
         $result = $authenticated_info->getRequest()->get("/api/v1/account_collections/$collection->id");
     }
