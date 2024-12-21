@@ -41,10 +41,10 @@ abstract class GranularTimeGroup implements TimeGroup
         $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
         $exchange_rate_basis = $context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_FORMULA_EXCHANGE_RATE_BASIS
+            PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_FORMULA_EXCHANGE_RATE_BASIS
+             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? $this->finishedAt()
                 : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
         );
@@ -91,10 +91,10 @@ abstract class GranularTimeGroup implements TimeGroup
         $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
         $exchange_rate_basis = $context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_FORMULA_EXCHANGE_RATE_BASIS
+            PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_FORMULA_EXCHANGE_RATE_BASIS
+             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? $this->finishedAt()
                 : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
         );
@@ -140,10 +140,10 @@ abstract class GranularTimeGroup implements TimeGroup
         $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
         $exchange_rate_basis = $context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_FORMULA_EXCHANGE_RATE_BASIS
+            PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_FORMULA_EXCHANGE_RATE_BASIS
+             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? $this->finishedAt()
                 : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
         );
@@ -189,10 +189,10 @@ abstract class GranularTimeGroup implements TimeGroup
         $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
         $exchange_rate_basis = $context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_FORMULA_EXCHANGE_RATE_BASIS
+            PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_FORMULA_EXCHANGE_RATE_BASIS
+             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? $this->finishedAt()
                 : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
         );
@@ -238,10 +238,10 @@ abstract class GranularTimeGroup implements TimeGroup
         $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
         $exchange_rate_basis = $context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_FORMULA_EXCHANGE_RATE_BASIS
+            PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_FORMULA_EXCHANGE_RATE_BASIS
+             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? $this->finishedAt()
                 : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
         );
@@ -287,10 +287,10 @@ abstract class GranularTimeGroup implements TimeGroup
         $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
         $exchange_rate_basis = $context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_FORMULA_EXCHANGE_RATE_BASIS
+            PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_FORMULA_EXCHANGE_RATE_BASIS
+             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? $this->finishedAt()
                 : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
         );

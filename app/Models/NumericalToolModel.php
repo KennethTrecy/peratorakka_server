@@ -53,7 +53,7 @@ class NumericalToolModel extends BaseResourceModel
                         "type" => CollectionSource::sourceType(),
                         "collection_id" => 1,
                         "currency_id" => 1,
-                        "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
                         "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
                         "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
                         "must_show_individual_amounts" => true,

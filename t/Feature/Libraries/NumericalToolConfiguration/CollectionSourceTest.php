@@ -196,7 +196,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $expense_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -409,7 +409,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => OPENED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -622,7 +622,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => OPENED_AMOUNT_STAGE_BASIS,
             "side_basis" => CREDIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -835,7 +835,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
             "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1048,7 +1048,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
             "side_basis" => NET_CREDIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1261,7 +1261,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1474,7 +1474,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
             "side_basis" => CREDIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1683,7 +1683,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1950,7 +1950,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
             "currency_id" => $currency_a->id,
-            "exchange_rate_basis" => PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
             "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,

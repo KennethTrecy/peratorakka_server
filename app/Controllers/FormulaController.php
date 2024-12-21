@@ -114,7 +114,7 @@ class FormulaController extends BaseOwnedResourceController
             "required",
             "min_length[3]",
             "max_length[255]",
-            "in_list[".implode(",", ACCEPTABLE_FORMULA_EXCHANGE_RATE_BASES)."]"
+            "in_list[".implode(",", ACCEPTABLE_EXCHANGE_RATE_BASES)."]"
         ]);
         $validation->setRule(
             "$individual_name.presentational_precision",

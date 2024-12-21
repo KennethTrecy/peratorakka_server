@@ -2,7 +2,7 @@
 
 namespace App\Entities;
 
-use App\Casts\FormulaExchangeRateBasis;
+use App\Casts\ExchangeRateBasis;
 use App\Casts\FormulaOutputFormat;
 
 class Formula extends BaseResourceEntity
@@ -27,7 +27,7 @@ class Formula extends BaseResourceEntity
     ];
 
     protected $castHandlers = [
-        "formula_exchange_rate_basis" => FormulaExchangeRateBasis::class,
+        "formula_exchange_rate_basis" => ExchangeRateBasis::class,
         "formula_output_format" => FormulaOutputFormat::class
     ];
 }

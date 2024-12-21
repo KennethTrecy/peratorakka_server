@@ -34,7 +34,7 @@ class FormulaModel extends BaseResourceModel
             "name"  => $faker->unique()->firstName(),
             "description"  => $faker->paragraph(),
             "output_format"  => $faker->randomElement(ACCEPTABLE_FORMULA_OUTPUT_FORMATS),
-            "exchange_rate_basis"  => $faker->randomElement(ACCEPTABLE_FORMULA_EXCHANGE_RATE_BASES),
+            "exchange_rate_basis"  => $faker->randomElement(ACCEPTABLE_EXCHANGE_RATE_BASES),
             "presentational_precision"  => $faker->randomElement([ 0, 1, 2, 3, 4, 12 ]),
             "formula"  => " 1 + 1"
         ];

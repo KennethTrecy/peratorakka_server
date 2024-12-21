@@ -250,41 +250,41 @@ define("OUTPUT_FORMATS", [
  | --------------------------------------------------------------------------
  |
  | There are different bases for exchange rates that the system can handle.
- | - UNKNOWN_FORMULA_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis is not supported
+ | - UNKNOWN_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis is not supported
  |   by the system at the current version. This case may happen when the system downgraded.
- | - PERIODIC_FORMULA_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis outputs uses the
+ | - PERIODIC_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis outputs uses the
  |   exchange rates with respect to the period.
- | - LATEST_FORMULA_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis uses the latest
+ | - LATEST_EXCHANGE_RATE_BASIS. A formula with this exchange rate basis uses the latest
  |   exchange rate regardless of the exchange rate during the respective period.
  */
-define("UNKNOWN_FORMULA_EXCHANGE_RATE_BASIS", "unknown");
-define("PERIODIC_FORMULA_EXCHANGE_RATE_BASIS", "periodic");
-define("LATEST_FORMULA_EXCHANGE_RATE_BASIS", "latest");
+define("UNKNOWN_EXCHANGE_RATE_BASIS", "unknown");
+define("PERIODIC_EXCHANGE_RATE_BASIS", "periodic");
+define("LATEST_EXCHANGE_RATE_BASIS", "latest");
 
-define("ACCEPTABLE_FORMULA_EXCHANGE_RATE_BASES", [
-    PERIODIC_FORMULA_EXCHANGE_RATE_BASIS,
-    LATEST_FORMULA_EXCHANGE_RATE_BASIS
+define("ACCEPTABLE_EXCHANGE_RATE_BASES", [
+    PERIODIC_EXCHANGE_RATE_BASIS,
+    LATEST_EXCHANGE_RATE_BASIS
 ]);
 
-define("FORMULA_EXCHANGE_RATE_BASES", [
-    UNKNOWN_FORMULA_EXCHANGE_RATE_BASIS,
-    ...ACCEPTABLE_FORMULA_EXCHANGE_RATE_BASES
+define("EXCHANGE_RATE_BASES", [
+    UNKNOWN_EXCHANGE_RATE_BASIS,
+    ...ACCEPTABLE_EXCHANGE_RATE_BASES
 ]);
 
 /*
  | --------------------------------------------------------------------------
- | Formula Amount Stage Basis
+ | Numerical Tool Source Amount Stage Basis
  | --------------------------------------------------------------------------
  |
- | There are different amounts that formulae may use as basis.
- | - UNKNOWN_AMOUNT_STAGE_BASIS. A formula with this amount basis is not supported by the
- |   system at the current version. This case may happen when the system downgraded.
- | - OPENED_AMOUNT_STAGE_BASIS. A formula with this amount basis only considers amounts
- |   opened.
- | - UNADJUSTED_AMOUNT_STAGE_BASIS. A formula with this amount basis only considers amounts
- |   not yet closed.
- | - CLOSED_AMOUNT_STAGE_BASIS. A formula with this amount basis only considers amounts
- |   closed.
+ | There are different amounts that numerical tool sources may use as basis.
+ | - UNKNOWN_AMOUNT_STAGE_BASIS. A numerical tool source with this amount basis is not supported by
+ |   the system at the current version. This case may happen when the system downgraded.
+ | - OPENED_AMOUNT_STAGE_BASIS. A numerical tool source with this amount basis only considers
+ |   amounts opened.
+ | - UNADJUSTED_AMOUNT_STAGE_BASIS. A numerical tool source with this amount basis only considers
+ |   amounts not yet closed.
+ | - CLOSED_AMOUNT_STAGE_BASIS. A numerical tool source with this amount basis only considers
+ |   amounts closed.
  */
 define("UNKNOWN_AMOUNT_STAGE_BASIS", "unknown");
 define("OPENED_AMOUNT_STAGE_BASIS", "opened");
@@ -304,20 +304,20 @@ define("AMOUNT_STAGE_BASES", [
 
 /*
  | --------------------------------------------------------------------------
- | Formula Amount Side Basis
+ | Numerical Tool Source Amount Side Basis
  | --------------------------------------------------------------------------
  |
- | There are different amounts that formulae may use as basis.
- | - UNKNOWN_AMOUNT_SIDE_BASIS. A formula with this amount basis is not supported by the
- |   system at the current version. This case may happen when the system downgraded.
- | - DEBIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
+ | There are different amounts that numerical tool sources may use as basis.
+ | - UNKNOWN_AMOUNT_SIDE_BASIS. A numerical tool source with this amount basis is not supported by
+ |   the system at the current version. This case may happen when the system downgraded.
+ | - DEBIT_AMOUNT_SIDE_BASIS. A numerical tool source with this amount basis only considers amounts
  |   in debit side.
- | - CREDIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
+ | - CREDIT_AMOUNT_SIDE_BASIS. A numerical tool source with this amount basis only considers amounts
  |   in credit side.
- | - NET_DEBIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
- |   in debit side after deducting the amounts in credit side.
- | - NET_CREDIT_AMOUNT_SIDE_BASIS. A formula with this amount basis only considers amounts
- |   in credit side after deducting the amounts in debit side.
+ | - NET_DEBIT_AMOUNT_SIDE_BASIS. A numerical tool source with this amount basis only considers
+ |   amounts in debit side after deducting the amounts from credit side.
+ | - NET_CREDIT_AMOUNT_SIDE_BASIS. A numerical tool source with this amount basis only considers
+ |   amounts in credit side after deducting the amounts from debit side.
  */
 define("UNKNOWN_AMOUNT_SIDE_BASIS", "unknown");
 define("DEBIT_AMOUNT_SIDE_BASIS", "debit");
