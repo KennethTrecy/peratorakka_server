@@ -125,7 +125,7 @@ make_owned_resource_routes($routes, FrozenPeriodController::class, [
 ]);
 make_owned_resource_routes($routes, AccountCollectionController::class, [
     "forceDelete",
-    "show",
+    "index",
     "create"
 ]);
 make_owned_resource_routes($routes, AccessTokenController::class, [
