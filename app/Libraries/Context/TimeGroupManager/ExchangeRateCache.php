@@ -122,16 +122,18 @@ class ExchangeRateCache {
                 }
             );
 
-            $new_exchange_entries = model(FinancialEntryModel::class, false)
-                ->where(
-                    "transacted_at <=",
-                    $this->last_exchange_rate_time
-                )
-                ->whereIn(
-                    "modifier_id",
-                    array_keys($new_exchange_modifiers)
-                )
-                ->findAll();
+            $new_exchange_entries = count($new_exchange_modifiers) > 0
+                ? model(FinancialEntryModel::class, false)
+                    ->where(
+                        "transacted_at <=",
+                        $this->last_exchange_rate_time
+                    )
+                    ->whereIn(
+                        "modifier_id",
+                        array_keys($new_exchange_modifiers)
+                    )
+                    ->findAll()
+                : [];
 
             foreach ($new_exchange_entries as $financial_entry) {
                 $modifier = $new_exchange_modifiers[$financial_entry->modifier_id];
