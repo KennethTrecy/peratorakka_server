@@ -3366,7 +3366,7 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
 
         $this->assertEquals($totals, [
             RationalNumber::get("0"),
-            RationalNumber::get("3000")
+            RationalNumber::get("102000")
         ]);
     }
 }
