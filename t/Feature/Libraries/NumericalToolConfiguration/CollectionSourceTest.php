@@ -5,6 +5,7 @@ namespace Tests\Feature\Libraries\NumericalToolConfiguration;
 use App\Casts\RationalNumber;
 use App\Libraries\Constellation;
 use App\Libraries\Constellation\Star;
+use App\Libraries\Constellation\AcceptableConstellationKind;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
@@ -206,7 +207,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($expense_account->name, [
+            new Constellation($expense_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "500.00",
                     RationalNumber::get("500")
@@ -216,26 +217,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("500")
                 )
             ]),
-            new Constellation("Total of $expense_collection->name", [
-                new Star(
-                    "500.00",
-                    RationalNumber::get("500")
-                ),
-                new Star(
-                    "500.00",
-                    RationalNumber::get("500")
-                )
-            ]),
-            new Constellation("Average of $expense_collection->name", [
-                new Star(
-                    "500.00",
-                    RationalNumber::get("500")
-                ),
-                new Star(
-                    "500.00",
-                    RationalNumber::get("500")
-                )
-            ])
+            new Constellation(
+                "Total of $expense_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "500.00",
+                        RationalNumber::get("500")
+                    ),
+                    new Star(
+                        "500.00",
+                        RationalNumber::get("500")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $expense_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "500.00",
+                        RationalNumber::get("500")
+                    ),
+                    new Star(
+                        "500.00",
+                        RationalNumber::get("500")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -419,7 +428,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($asset_account->name, [
+            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "0.00",
                     RationalNumber::get("0")
@@ -429,26 +438,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("2000")
                 )
             ]),
-            new Constellation("Total of $asset_collection->name", [
-                new Star(
-                    "0.00",
-                    RationalNumber::get("0")
-                ),
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                )
-            ]),
-            new Constellation("Average of $asset_collection->name", [
-                new Star(
-                    "0.00",
-                    RationalNumber::get("0")
-                ),
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                )
-            ])
+            new Constellation(
+                "Total of $asset_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "0.00",
+                        RationalNumber::get("0")
+                    ),
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $asset_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "0.00",
+                        RationalNumber::get("0")
+                    ),
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -632,7 +649,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($equity_account->name, [
+            new Constellation($equity_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "0.00",
                     RationalNumber::get("0")
@@ -642,26 +659,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("2000")
                 )
             ]),
-            new Constellation("Total of $equity_collection->name", [
-                new Star(
-                    "0.00",
-                    RationalNumber::get("0")
-                ),
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                )
-            ]),
-            new Constellation("Average of $equity_collection->name", [
-                new Star(
-                    "0.00",
-                    RationalNumber::get("0")
-                ),
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                )
-            ])
+            new Constellation(
+                "Total of $equity_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "0.00",
+                        RationalNumber::get("0")
+                    ),
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $equity_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "0.00",
+                        RationalNumber::get("0")
+                    ),
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -845,7 +870,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($asset_account->name, [
+            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "2000.00",
                     RationalNumber::get("2000")
@@ -855,26 +880,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("3500")
                 )
             ]),
-            new Constellation("Total of $asset_collection->name", [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ]),
-            new Constellation("Average of $asset_collection->name", [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ])
+            new Constellation(
+                "Total of $asset_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    ),
+                    new Star(
+                        "3500.00",
+                        RationalNumber::get("3500")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $asset_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    ),
+                    new Star(
+                        "3500.00",
+                        RationalNumber::get("3500")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -1058,7 +1091,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($asset_account->name, [
+            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "-2000.00",
                     RationalNumber::get("-2000")
@@ -1068,26 +1101,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("-3500")
                 )
             ]),
-            new Constellation("Total of $asset_collection->name", [
-                new Star(
-                    "-2000.00",
-                    RationalNumber::get("-2000")
-                ),
-                new Star(
-                    "-3500.00",
-                    RationalNumber::get("-3500")
-                )
-            ]),
-            new Constellation("Average of $asset_collection->name", [
-                new Star(
-                    "-2000.00",
-                    RationalNumber::get("-2000")
-                ),
-                new Star(
-                    "-3500.00",
-                    RationalNumber::get("-3500")
-                )
-            ])
+            new Constellation(
+                "Total of $asset_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "-2000.00",
+                        RationalNumber::get("-2000")
+                    ),
+                    new Star(
+                        "-3500.00",
+                        RationalNumber::get("-3500")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $asset_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "-2000.00",
+                        RationalNumber::get("-2000")
+                    ),
+                    new Star(
+                        "-3500.00",
+                        RationalNumber::get("-3500")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -1271,7 +1312,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($asset_account->name, [
+            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "2000.00",
                     RationalNumber::get("2000")
@@ -1281,26 +1322,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("3500")
                 )
             ]),
-            new Constellation("Total of $asset_collection->name", [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ]),
-            new Constellation("Average of $asset_collection->name", [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ])
+            new Constellation(
+                "Total of $asset_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    ),
+                    new Star(
+                        "3500.00",
+                        RationalNumber::get("3500")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $asset_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    ),
+                    new Star(
+                        "3500.00",
+                        RationalNumber::get("3500")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -1484,7 +1533,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($equity_account->name, [
+            new Constellation($equity_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "2000.00",
                     RationalNumber::get("2000")
@@ -1494,26 +1543,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("3500")
                 )
             ]),
-            new Constellation("Total of $equity_collection->name", [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ]),
-            new Constellation("Average of $equity_collection->name", [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ])
+            new Constellation(
+                "Total of $equity_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    ),
+                    new Star(
+                        "3500.00",
+                        RationalNumber::get("3500")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $equity_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "2000.00",
+                        RationalNumber::get("2000")
+                    ),
+                    new Star(
+                        "3500.00",
+                        RationalNumber::get("3500")
+                    )
+                ]
+            )
         ]);
     }
 
@@ -1960,7 +2017,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($asset_a_account->name, [
+            new Constellation($asset_a_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "2000.00",
                     RationalNumber::get("2000")
@@ -1970,7 +2027,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("3500")
                 )
             ]),
-            new Constellation($asset_b_account->name, [
+            new Constellation($asset_b_account->name, AcceptableConstellationKind::Account, [
                 new Star(
                     "1000.00",
                     RationalNumber::get("1000")
@@ -1980,26 +2037,34 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("3000")
                 )
             ]),
-            new Constellation("Total of $asset_collection->name", [
-                new Star(
-                    "3000.00",
-                    RationalNumber::get("3000")
-                ),
-                new Star(
-                    "6500.00",
-                    RationalNumber::get("6500")
-                )
-            ]),
-            new Constellation("Average of $asset_collection->name", [
-                new Star(
-                    "1500.00",
-                    RationalNumber::get("1500")
-                ),
-                new Star(
-                    "3250.00",
-                    RationalNumber::get("3250")
-                )
-            ])
+            new Constellation(
+                "Total of $asset_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "3000.00",
+                        RationalNumber::get("3000")
+                    ),
+                    new Star(
+                        "6500.00",
+                        RationalNumber::get("6500")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $asset_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "1500.00",
+                        RationalNumber::get("1500")
+                    ),
+                    new Star(
+                        "3250.00",
+                        RationalNumber::get("3250")
+                    )
+                ]
+            )
         ]);
     }
 }

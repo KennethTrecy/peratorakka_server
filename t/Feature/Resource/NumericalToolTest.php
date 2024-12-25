@@ -8,6 +8,7 @@ use App\Casts\RationalNumber;
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Libraries\Constellation;
+use App\Libraries\Constellation\AcceptableConstellationKind;
 use App\Libraries\Constellation\Star;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\NumericalToolConfiguration\FormulaSource;
@@ -664,27 +665,38 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
-                    new Constellation($asset_a_account->name, [
-                        new Star(
-                            "2000.00",
-                            RationalNumber::get("2000")
-                        ),
-                        new Star(
-                            "3500.00",
-                            RationalNumber::get("3500")
-                        )
-                    ]),
-                    new Constellation($asset_b_account->name, [
-                        new Star(
-                            "1000.00",
-                            RationalNumber::get("1000")
-                        ),
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        )
-                    ]),
-                    new Constellation("Total of $asset_collection->name", [
+                    new Constellation(
+                        $asset_a_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "2000.00",
+                                RationalNumber::get("2000")
+                            ),
+                            new Star(
+                                "3500.00",
+                                RationalNumber::get("3500")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $asset_b_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            ),
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
                         new Star(
                             "3000.00",
                             RationalNumber::get("3000")
@@ -693,17 +705,22 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             "6500.00",
                             RationalNumber::get("6500")
                         )
-                    ]),
-                    new Constellation("Average of $asset_collection->name", [
-                        new Star(
-                            "1500.00",
-                            RationalNumber::get("1500")
-                        ),
-                        new Star(
-                            "3250.00",
-                            RationalNumber::get("3250")
-                        )
-                    ])
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "1500.00",
+                                RationalNumber::get("1500")
+                            ),
+                            new Star(
+                                "3250.00",
+                                RationalNumber::get("3250")
+                            )
+                        ]
+                    )
                 ])
             ],
             "currencies" => [ $currency_a ],
@@ -986,27 +1003,38 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
-                    new Constellation($asset_a_account->name, [
-                        new Star(
-                            "2000.00",
-                            RationalNumber::get("2000")
-                        ),
-                        new Star(
-                            "3500.00",
-                            RationalNumber::get("3500")
-                        )
-                    ]),
-                    new Constellation($asset_b_account->name, [
-                        new Star(
-                            "1000.00",
-                            RationalNumber::get("1000")
-                        ),
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        )
-                    ]),
-                    new Constellation("Total of $asset_collection->name", [
+                    new Constellation(
+                        $asset_a_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "2000.00",
+                                RationalNumber::get("2000")
+                            ),
+                            new Star(
+                                "3500.00",
+                                RationalNumber::get("3500")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $asset_b_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            ),
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
                         new Star(
                             "3000.00",
                             RationalNumber::get("3000")
@@ -1015,8 +1043,12 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             "6500.00",
                             RationalNumber::get("6500")
                         )
-                    ]),
-                    new Constellation("Average of $asset_collection->name", [
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
                         new Star(
                             "1500.00",
                             RationalNumber::get("1500")
@@ -1344,62 +1376,78 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
-                    new Constellation($asset_a_account->name, [
-                        new Star(
-                            "2000.00",
-                            RationalNumber::get("2000")
-                        ),
-                        new Star(
-                            "3500.00",
-                            RationalNumber::get("3500")
-                        ),
-                        new Star(
-                            "4250.00",
-                            RationalNumber::get("4250")
-                        )
-                    ]),
-                    new Constellation($asset_b_account->name, [
-                        new Star(
-                            "1000.00",
-                            RationalNumber::get("1000")
-                        ),
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        ),
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        )
-                    ]),
-                    new Constellation("Total of $asset_collection->name", [
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        ),
-                        new Star(
-                            "6500.00",
-                            RationalNumber::get("6500")
-                        ),
-                        new Star(
-                            "7250.00",
-                            RationalNumber::get("7250")
-                        )
-                    ]),
-                    new Constellation("Average of $asset_collection->name", [
-                        new Star(
-                            "1500.00",
-                            RationalNumber::get("1500")
-                        ),
-                        new Star(
-                            "3250.00",
-                            RationalNumber::get("3250")
-                        ),
-                        new Star(
-                            "3625.00",
-                            RationalNumber::get("3625")
-                        )
-                    ])
+                    new Constellation(
+                        $asset_a_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "2000.00",
+                                RationalNumber::get("2000")
+                            ),
+                            new Star(
+                                "3500.00",
+                                RationalNumber::get("3500")
+                            ),
+                            new Star(
+                                "4250.00",
+                                RationalNumber::get("4250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $asset_b_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            ),
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            ),
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            ),
+                            new Star(
+                                "6500.00",
+                                RationalNumber::get("6500")
+                            ),
+                            new Star(
+                                "7250.00",
+                                RationalNumber::get("7250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "1500.00",
+                                RationalNumber::get("1500")
+                            ),
+                            new Star(
+                                "3250.00",
+                                RationalNumber::get("3250")
+                            ),
+                            new Star(
+                                "3625.00",
+                                RationalNumber::get("3625")
+                            )
+                        ]
+                    )
                 ])
             ],
             "currencies" => [ $currency_a ],
@@ -1703,30 +1751,46 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
-                    new Constellation($asset_a_account->name, [
-                        new Star(
-                            "4250.00",
-                            RationalNumber::get("4250")
-                        )
-                    ]),
-                    new Constellation($asset_b_account->name, [
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        )
-                    ]),
-                    new Constellation("Total of $asset_collection->name", [
-                        new Star(
-                            "7250.00",
-                            RationalNumber::get("7250")
-                        )
-                    ]),
-                    new Constellation("Average of $asset_collection->name", [
-                        new Star(
-                            "3625.00",
-                            RationalNumber::get("3625")
-                        )
-                    ])
+                    new Constellation(
+                        $asset_a_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "4250.00",
+                                RationalNumber::get("4250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $asset_b_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
+                            new Star(
+                                "7250.00",
+                                RationalNumber::get("7250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "3625.00",
+                                RationalNumber::get("3625")
+                            )
+                        ]
+                    )
                 ])
             ],
             "currencies" => [ $currency_a ],
@@ -1874,30 +1938,46 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
-                    new Constellation($asset_a_account->name, [
-                        new Star(
-                            "4250.00",
-                            RationalNumber::get("4250")
-                        )
-                    ]),
-                    new Constellation($asset_b_account->name, [
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        )
-                    ]),
-                    new Constellation("Total of $asset_collection->name", [
-                        new Star(
-                            "7250.00",
-                            RationalNumber::get("7250")
-                        )
-                    ]),
-                    new Constellation("Average of $asset_collection->name", [
-                        new Star(
-                            "3625.00",
-                            RationalNumber::get("3625")
-                        )
-                    ])
+                    new Constellation(
+                        $asset_a_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "4250.00",
+                                RationalNumber::get("4250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $asset_b_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
+                            new Star(
+                                "7250.00",
+                                RationalNumber::get("7250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "3625.00",
+                                RationalNumber::get("3625")
+                            )
+                        ]
+                    )
                 ])
             ],
             "currencies" => [ $currency_a ],
@@ -2229,7 +2309,10 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
-                    new Constellation($asset_a_account->name, [
+                    new Constellation(
+                        $asset_a_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
                         new Star(
                             "2000.00",
                             RationalNumber::get("2000")
@@ -2242,63 +2325,80 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             "4250.00",
                             RationalNumber::get("4250")
                         )
-                    ]),
-                    new Constellation($asset_b_account->name, [
-                        new Star(
-                            "1000.00",
-                            RationalNumber::get("1000")
-                        ),
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        ),
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        )
-                    ]),
-                    new Constellation("Total of $asset_collection->name", [
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        ),
-                        new Star(
-                            "6500.00",
-                            RationalNumber::get("6500")
-                        ),
-                        new Star(
-                            "7250.00",
-                            RationalNumber::get("7250")
-                        )
-                    ]),
-                    new Constellation("Average of $asset_collection->name", [
-                        new Star(
-                            "1500.00",
-                            RationalNumber::get("1500")
-                        ),
-                        new Star(
-                            "3250.00",
-                            RationalNumber::get("3250")
-                        ),
-                        new Star(
-                            "3625.00",
-                            RationalNumber::get("3625")
-                        )
-                    ]),
-                    new Constellation($formula->name, [
-                        new Star(
-                            "3500.00",
-                            RationalNumber::get("3500")
-                        ),
-                        new Star(
-                            "7000.00",
-                            RationalNumber::get("7000")
-                        ),
-                        new Star(
-                            "7500.00",
-                            RationalNumber::get("7500")
-                        )
-                    ])
+                        ]
+                    ),
+                    new Constellation(
+                        $asset_b_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            ),
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            ),
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
+                            new Star(
+                                "3000.00",
+                                RationalNumber::get("3000")
+                            ),
+                            new Star(
+                                "6500.00",
+                                RationalNumber::get("6500")
+                            ),
+                            new Star(
+                                "7250.00",
+                                RationalNumber::get("7250")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "1500.00",
+                                RationalNumber::get("1500")
+                            ),
+                            new Star(
+                                "3250.00",
+                                RationalNumber::get("3250")
+                            ),
+                            new Star(
+                                "3625.00",
+                                RationalNumber::get("3625")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $formula->name,
+                        AcceptableConstellationKind::Formula,
+                        [
+                            new Star(
+                                "3500.00",
+                                RationalNumber::get("3500")
+                            ),
+                            new Star(
+                                "7000.00",
+                                RationalNumber::get("7000")
+                            ),
+                            new Star(
+                                "7500.00",
+                                RationalNumber::get("7500")
+                            )
+                        ]
+                    )
                 ])
             ],
             "currencies" => [ $currency_a ],
