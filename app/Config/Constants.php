@@ -398,6 +398,38 @@ define("NUMERICAL_TOOL_KINDS", [
 
 /*
  | --------------------------------------------------------------------------
+ | Constellation Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different kinds that constellations may be belong.
+ | - UNKNOWN_CONSTELLATION_KIND. A constellation with this kind represents not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - ACCOUNT_CONSTELLATION_KIND. A constellation with this kind represents value from an account.
+ | - SUM_CONSTELLATION_KIND. A constellation with this kind represents a total of a collection.
+ | - AVERAGE_CONSTELLATION_KIND. A constellation with this kind represents an average of a
+ |   collection.
+ | - FORMULA_CONSTELLATION_KIND. A constellation with this kind represents a result form a formula.
+ */
+define("UNKNOWN_CONSTELLATION_KIND", "unknown");
+define("ACCOUNT_CONSTELLATION_KIND", "account");
+define("SUM_CONSTELLATION_KIND", "sum");
+define("AVERAGE_CONSTELLATION_KIND", "average");
+define("FORMULA_CONSTELLATION_KIND", "formula");
+
+define("ACCEPTABLE_CONSTELLATION_KINDS", [
+    ACCOUNT_CONSTELLATION_KIND,
+    SUM_CONSTELLATION_KIND,
+    AVERAGE_CONSTELLATION_KIND,
+    FORMULA_CONSTELLATION_KIND
+]);
+
+define("CONSTELLATION_KINDS", [
+    UNKNOWN_CONSTELLATION_KIND,
+    ...ACCEPTABLE_CONSTELLATION_KINDS
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Token Expiration Types
  | --------------------------------------------------------------------------
  |
