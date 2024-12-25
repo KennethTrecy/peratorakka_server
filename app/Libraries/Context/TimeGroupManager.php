@@ -203,16 +203,60 @@ class TimeGroupManager
                 ->findAll();
 
             foreach ($this->time_groups as $time_group) {
-                $derivator = $this->exchange_rate_cache->buildDerivator($time_group->finishedAt());
+                $exchangeRateBasis = $this->context->getVariable(
+                    ContextKeys::EXCHANGE_RATE_BASIS,
+                    PERIODIC_EXCHANGE_RATE_BASIS
+                );
                 $destination_currency_id = $this->context->getVariable(
                     ContextKeys::DESTINATION_CURRENCY_ID,
                     null
+                );
+                if (is_null($destination_currency_id)) {
+                    $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+                        $destination_currency_id
+                    ]);
+                }
+                $derivator = $this->exchange_rate_cache->buildDerivator(
+                    $exchangeRateBasis === LATEST_EXCHANGE_RATE_BASIS
+                        ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                        : $time_group->finishedAt()
                 );
 
                 foreach ($summary_calculations as $summary_calculation) {
                     $is_owned = $time_group->doesOwnSummaryCalculation($summary_calculation);
                     if ($is_owned) {
                         $account_id = $summary_calculation->account_id;
+                        $source_currency_id = $this->account_cache->determineCurrencyID(
+                            $account_id
+                        );
+                        $derived_exchange_rate = $derivator->deriveExchangeRate(
+                            $source_currency_id,
+                            $destination_currency_id ?? $source_currency_id
+                        );
+                        $summary_calculation->opened_debit_amount
+                            = $summary_calculation->opened_debit_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+                        $summary_calculation->opened_credit_amount
+                            = $summary_calculation->opened_credit_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+                        $summary_calculation->unadjusted_debit_amount
+                            = $summary_calculation->unadjusted_debit_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+                        $summary_calculation->unadjusted_credit_amount
+                            = $summary_calculation->unadjusted_credit_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+                        $summary_calculation->closed_debit_amount
+                            = $summary_calculation->closed_debit_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+                        $summary_calculation->closed_credit_amount
+                            = $summary_calculation->closed_credit_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
 
                         $time_group->addSummaryCalculation($summary_calculation);
                         $this->loaded_summary_calculations_by_account_id[] = $account_id;
@@ -307,11 +351,77 @@ class TimeGroupManager
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
 
+        $account_IDs = array_unique(array_map(function ($account) {
+            return $account->id;
+        }, array_values($accounts)));
+        $this->account_cache->loadAccounts($account_IDs);
+        $this->exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
+
+        $destination_currency_id = $this->context->getVariable(
+            ContextKeys::DESTINATION_CURRENCY_ID,
+            null
+        );
+        if (is_null($destination_currency_id)) {
+            $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+                $destination_currency_id
+            ]);
+        }
+
+        $exchangeRateBasis = $this->context->getVariable(
+            ContextKeys::EXCHANGE_RATE_BASIS,
+            PERIODIC_EXCHANGE_RATE_BASIS
+        );
+        $derivator = $this->exchange_rate_cache->buildDerivator(
+            $exchangeRateBasis === LATEST_EXCHANGE_RATE_BASIS
+                ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                : $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
+        );
+
         foreach ($raw_summary_calculations as $raw_summary_calculation) {
+            $account_id = $raw_summary_calculation->account_id;
+            $source_currency_id = $this->account_cache->determineCurrencyID($account_id);
+            $derived_exchange_rate = $derivator->deriveExchangeRate(
+                $source_currency_id,
+                $destination_currency_id ?? $source_currency_id
+            );
+            $raw_summary_calculation->opened_debit_amount
+                = $raw_summary_calculation->opened_debit_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
+            $raw_summary_calculation->opened_credit_amount
+                = $raw_summary_calculation->opened_credit_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
+            $raw_summary_calculation->unadjusted_debit_amount
+                = $raw_summary_calculation->unadjusted_debit_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
+            $raw_summary_calculation->unadjusted_credit_amount
+                = $raw_summary_calculation->unadjusted_credit_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
+            $raw_summary_calculation->closed_debit_amount
+                = $raw_summary_calculation->closed_debit_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
+            $raw_summary_calculation->closed_credit_amount
+                = $raw_summary_calculation->closed_credit_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
             $incomplete_frozen_group->addSummaryCalculation($raw_summary_calculation);
         }
 
         foreach ($raw_flow_calculations as $raw_flow_calculation) {
+            $account_id = $raw_flow_calculation->account_id;
+            $source_currency_id = $this->account_cache->determineCurrencyID($account_id);
+            $derived_exchange_rate = $derivator->deriveExchangeRate(
+                $source_currency_id,
+                $destination_currency_id ?? $source_currency_id
+            );
+            $raw_flow_calculation->net_amount
+                = $raw_flow_calculation->net_amount
+                    ->multipliedBy($derived_exchange_rate)
+                    ->simplified();
             $incomplete_frozen_group->addFlowCalculation($raw_flow_calculation);
         }
 

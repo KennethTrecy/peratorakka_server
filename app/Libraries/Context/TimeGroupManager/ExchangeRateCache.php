@@ -67,7 +67,6 @@ class ExchangeRateCache {
     }
 
     public function loadExchangeRatesForAccounts(array $missing_account_IDs): void {
-        $currency_cache = $this->context->getVariable(ContextKeys::CURRENCY_CACHE);
         $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
 
         $account_cache->loadAccounts($missing_account_IDs);
@@ -77,6 +76,14 @@ class ExchangeRateCache {
         }, $missing_account_IDs));
 
         $new_currency_IDs = array_diff($target_currency_IDs, $this->known_currency_IDs);
+
+        $this->loadExchangeRatesForCurrencies($new_currency_IDs);
+    }
+
+    public function loadExchangeRatesForCurrencies(array $new_currency_IDs): void {
+        $currency_cache = $this->context->getVariable(ContextKeys::CURRENCY_CACHE);
+        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+
         $all_known_IDs = array_unique(array_merge($this->known_currency_IDs, $new_currency_IDs));
 
         if (count($new_currency_IDs) > 0 && $this->last_exchange_rate_time->getTimestamp() > 0) {
@@ -138,8 +145,12 @@ class ExchangeRateCache {
             foreach ($new_exchange_entries as $financial_entry) {
                 $modifier = $new_exchange_modifiers[$financial_entry->modifier_id];
                 $debit_account_id = $modifier->debit_account_id;
-                $debit_account_kind = $account_cache->determineAccountKind($debit_account_id);
                 $credit_account_id = $modifier->credit_account_id;
+                $account_cache->loadAccounts(array_unique(
+                    [ $debit_account_id, $credit_account_id ]
+                ));
+
+                $debit_account_kind = $account_cache->determineAccountKind($debit_account_id);
 
                 $may_use_debit_account_as_destination
                     = $debit_account_kind === GENERAL_ASSET_ACCOUNT_KIND

@@ -38,12 +38,16 @@ class AccountCache {
     }
 
     public function loadAccounts(array $target_account_IDs): void {
-        $missing_account_IDs = array_diff($target_account_IDs, array_keys($this->accounts));
+        $missing_account_IDs = array_values(array_diff(
+            array_values($target_account_IDs),
+            array_values(array_keys($this->accounts))
+        ));
 
         if (count($missing_account_IDs) === 0) return;
 
         $new_accounts = model(AccountModel::class, false)
             ->whereIn("id", array_unique($missing_account_IDs))
+            ->withDeleted()
             ->findAll();
 
         $this->accounts = array_replace(
