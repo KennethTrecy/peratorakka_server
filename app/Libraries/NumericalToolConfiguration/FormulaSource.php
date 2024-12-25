@@ -8,6 +8,7 @@ use App\Entities\Formula;
 use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\Constellation;
 use App\Libraries\Constellation\Star;
+use App\Libraries\Constellation\AcceptableConstellationKind;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
@@ -86,6 +87,7 @@ class FormulaSource implements NumericalToolSource
         $constellations = [
             new Constellation(
                 $this->formula_info->name,
+                AcceptableConstellationKind::Formula,
                 array_map(function ($result) use ($formula_presentational_precision) {
                     $display_value = $result->toScale(
                         $formula_presentational_precision,

@@ -133,7 +133,7 @@ class NumericalToolController extends BaseOwnedResourceController
                     "time_tags" => $time_tags,
                     "constellations" => $constellations
                 ],
-                static::getIndividualName() => $data,
+                static::getIndividualName() => $data
             ];
             $response_document = static::enrichResponseDocument($response_document);
             ksort($response_document);

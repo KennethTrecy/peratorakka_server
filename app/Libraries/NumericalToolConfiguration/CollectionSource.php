@@ -5,6 +5,7 @@ namespace App\Libraries\NumericalToolConfiguration;
 use App\Contracts\NumericalToolSource;
 use App\Libraries\Constellation;
 use App\Libraries\Constellation\Star;
+use App\Libraries\Constellation\AcceptableConstellationKind;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
@@ -212,22 +213,26 @@ class CollectionSource implements NumericalToolSource
 
                 $account_name = $account_cache->determineAccountName($account_id);
 
-                $constellation = new Constellation($account_name, array_map(
-                    function ($time_group_value) use (
-                        $account_id,
-                        $account_cache,
-                        $currency_cache,
-                        $collection_cache
-                    ) {
-                        $currency_id = $account_cache->determineCurrencyID($account_id);
-                        $display_value = $currency_cache->formatValue(
-                            $currency_id,
-                            $time_group_value
-                        );
-                        return new Star($display_value, $time_group_value);
-                    },
-                    $account_totals[$account_id]
-                ));
+                $constellation = new Constellation(
+                    $account_name,
+                    AcceptableConstellationKind::Account,
+                    array_map(
+                        function ($time_group_value) use (
+                            $account_id,
+                            $account_cache,
+                            $currency_cache,
+                            $collection_cache
+                        ) {
+                            $currency_id = $account_cache->determineCurrencyID($account_id);
+                            $display_value = $currency_cache->formatValue(
+                                $currency_id,
+                                $time_group_value
+                            );
+                            return new Star($display_value, $time_group_value);
+                        },
+                        $account_totals[$account_id]
+                    )
+                );
 
                 array_push($constellations, $constellation);
             }
@@ -250,21 +255,25 @@ class CollectionSource implements NumericalToolSource
             $collection_name = $collection_cache->determineCollectionName($this->collection_id)
                 ?? "Collection #$this->collection_id";
 
-            array_push($constellations, new Constellation("Total of $collection_name", array_map(
-                function ($sum) use (
-                    $account_id,
-                    $account_cache,
-                    $currency_cache,
-                ) {
-                    $currency_id = $account_cache->determineCurrencyID($account_id);
-                    $display_value = $currency_cache->formatValue(
-                        $currency_id,
-                        $sum
-                    );
-                    return new Star($display_value, $sum);
-                },
-                $collective_sum
-            )));
+            array_push($constellations, new Constellation(
+                "Total of $collection_name",
+                AcceptableConstellationKind::Sum,
+                array_map(
+                    function ($sum) use (
+                        $account_id,
+                        $account_cache,
+                        $currency_cache,
+                    ) {
+                        $currency_id = $account_cache->determineCurrencyID($account_id);
+                        $display_value = $currency_cache->formatValue(
+                            $currency_id,
+                            $sum
+                        );
+                        return new Star($display_value, $sum);
+                    },
+                    $collective_sum
+                )
+            ));
         }
 
         if ($this->must_show_collective_average) {
@@ -280,21 +289,25 @@ class CollectionSource implements NumericalToolSource
             $collection_name = $collection_cache->determineCollectionName($this->collection_id)
                 ?? "Collection #$this->collection_id";
 
-            array_push($constellations, new Constellation("Average of $collection_name", array_map(
-                function ($average) use (
-                    $account_id,
-                    $account_cache,
-                    $currency_cache
-                ) {
-                    $currency_id = $account_cache->determineCurrencyID($account_id);
-                    $display_value = $currency_cache->formatValue(
-                        $currency_id,
-                        $average
-                    );
-                    return new Star($display_value, $average);
-                },
-                $collective_average
-            )));
+            array_push($constellations, new Constellation(
+                "Average of $collection_name",
+                AcceptableConstellationKind::Average,
+                array_map(
+                    function ($average) use (
+                        $account_id,
+                        $account_cache,
+                        $currency_cache
+                    ) {
+                        $currency_id = $account_cache->determineCurrencyID($account_id);
+                        $display_value = $currency_cache->formatValue(
+                            $currency_id,
+                            $average
+                        );
+                        return new Star($display_value, $average);
+                    },
+                    $collective_average
+                )
+            ));
         }
 
         return $constellations;
