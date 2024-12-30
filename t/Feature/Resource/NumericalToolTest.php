@@ -661,7 +661,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM")),
+                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
@@ -999,7 +999,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM")),
+                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
@@ -1373,7 +1373,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 3, Time::now()->toLocalizedString("MMMM")),
+                "time_tags" => array_fill(0, 3, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
@@ -1748,7 +1748,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 1, Time::now()->toLocalizedString("MMMM")),
+                "time_tags" => array_fill(0, 1, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
@@ -1935,7 +1935,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 1, Time::now()->toLocalizedString("MMMM")),
+                "time_tags" => array_fill(0, 1, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
@@ -2306,7 +2306,7 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 3, Time::now()->toLocalizedString("MMMM")),
+                "time_tags" => array_fill(0, 3, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
