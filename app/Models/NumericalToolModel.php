@@ -134,9 +134,9 @@ class NumericalToolModel extends BaseResourceModel
                     ->limit($frozen_time_group_limit - 1)
                     ->findAll();
 
-                array_unshift($time_groups, ...array_map(function ($frozen_period) {
+                array_unshift($time_groups, ...array_reverse(array_map(function ($frozen_period) {
                     return new PeriodicTimeGroup($frozen_period);
-                }, $frozen_periods));
+                }, $frozen_periods)));
 
                 break;
             case YEARLY_NUMERICAL_TOOL_RECURRENCE_PERIOD:
@@ -166,7 +166,7 @@ class NumericalToolModel extends BaseResourceModel
                             $yearly_time_group->addTimeGroup($time_group);
                         }
                     }
-                    array_push($time_groups, $yearly_time_group);
+                    array_unshift($time_groups, $yearly_time_group);
                 }
 
                 break;
