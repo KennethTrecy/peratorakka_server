@@ -292,7 +292,7 @@ class TimeGroupManager
         }
 
         if ($last_frozen_finished_date === null) {
-            $last_frozen_finished_date = $latest_finish_date;
+            $last_frozen_finished_date = $earliest_start_date;
         }
 
         return [
@@ -347,7 +347,7 @@ class TimeGroupManager
             $raw_exchange_rates
         ] = FrozenPeriodModel::makeRawCalculations(
             $current_user,
-            $last_frozen_finished_date->setHour(0)->setMinute(0)->setSecond(0),
+            $last_frozen_finished_date->addDays(1)->setHour(0)->setMinute(0)->setSecond(0),
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
 
