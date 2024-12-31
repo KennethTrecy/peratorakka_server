@@ -37,7 +37,8 @@ class MakeTestUser extends Seeder
         $peso_currency = $currency_fabricator->setOverrides([
             "user_id" => $user_id,
             "name" => "Philippine Peso",
-            "code" => "PHP"
+            "code" => "PHP",
+            "presentational_precision" => 2
         ])->create();
 
         $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
@@ -57,12 +58,17 @@ class MakeTestUser extends Seeder
             "currency_id" => $peso_currency->id,
             "name" => "Cash",
             "description" => "This is an example account.",
-            "description" => "This is an example account.",
             "kind" => LIQUID_ASSET_ACCOUNT_KIND,
         ])->create();
-        $expense_account = $account_fabricator->setOverrides([
+        $expense_a_account = $account_fabricator->setOverrides([
             "currency_id" => $peso_currency->id,
             "name" => "Fare",
+            "description" => "This is an example account.",
+            "kind" => EXPENSE_ACCOUNT_KIND
+        ])->create();
+        $expense_b_account = $account_fabricator->setOverrides([
+            "currency_id" => $peso_currency->id,
+            "name" => "Food and Beverage",
             "description" => "This is an example account.",
             "kind" => EXPENSE_ACCOUNT_KIND
         ])->create();
@@ -110,10 +116,19 @@ class MakeTestUser extends Seeder
             "credit_cash_flow_activity_id" => $financing_cash_flow_activity->id,
             "action" => RECORD_MODIFIER_ACTION
         ])->create();
-        $expense_record_modifier = $modifier_fabricator->setOverrides([
+        $expense_a_record_modifier = $modifier_fabricator->setOverrides([
             "name" => "Pay fare",
             "description" => "This is an example modifier.",
-            "debit_account_id" => $expense_account->id,
+            "debit_account_id" => $expense_a_account->id,
+            "credit_account_id" => $asset_account->id,
+            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => null,
+            "action" => RECORD_MODIFIER_ACTION
+        ])->create();
+        $expense_b_record_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Buy food and beverage",
+            "description" => "This is an example modifier.",
+            "debit_account_id" => $expense_b_account->id,
             "credit_account_id" => $asset_account->id,
             "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "credit_cash_flow_activity_id" => null,
@@ -137,11 +152,20 @@ class MakeTestUser extends Seeder
             "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "action" => CLOSE_MODIFIER_ACTION
         ])->create();
-        $close_expense_modifier = $modifier_fabricator->setOverrides([
+        $close_expense_a_modifier = $modifier_fabricator->setOverrides([
             "name" => "Close fare",
             "description" => "This is an example modifier.",
             "debit_account_id" => $closing_account->id,
-            "credit_account_id" => $expense_account->id,
+            "credit_account_id" => $expense_a_account->id,
+            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "action" => CLOSE_MODIFIER_ACTION
+        ])->create();
+        $close_expense_b_modifier = $modifier_fabricator->setOverrides([
+            "name" => "Close food and beverage",
+            "description" => "This is an example modifier.",
+            "debit_account_id" => $closing_account->id,
+            "credit_account_id" => $expense_b_account->id,
             "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
             "action" => CLOSE_MODIFIER_ACTION
@@ -167,10 +191,15 @@ class MakeTestUser extends Seeder
             "debit_amount" => "500",
             "credit_amount" => "500"
         ])->create();
-        $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $expense_record_modifier->id,
-            "debit_amount" => "1250",
-            "credit_amount" => "1250"
+        $recorded_expense_a_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $expense_a_record_modifier->id,
+            "debit_amount" => "1000",
+            "credit_amount" => "1000"
+        ])->create();
+        $recorded_expense_b_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $expense_b_record_modifier->id,
+            "debit_amount" => "250",
+            "credit_amount" => "250"
         ])->create();
         $recorded_income_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $income_record_modifier->id,
@@ -182,10 +211,15 @@ class MakeTestUser extends Seeder
             "debit_amount" => "1500",
             "credit_amount" => "1500"
         ])->create();
-        $closed_expense_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_expense_modifier->id,
-            "debit_amount" => "1250",
-            "credit_amount" => "1250"
+        $closed_expense_a_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $close_expense_a_modifier->id,
+            "debit_amount" => "1000",
+            "credit_amount" => "1000"
+        ])->create();
+        $closed_expense_b_financial_entry = $financial_entry_fabricator->setOverrides([
+            "modifier_id" => $close_expense_b_modifier->id,
+            "debit_amount" => "250",
+            "credit_amount" => "250"
         ])->create();
         $closed_equity_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $close_equity_modifier->id,
@@ -208,12 +242,12 @@ class MakeTestUser extends Seeder
                 ->debit_amount
                 ->plus($recorded_income_financial_entry->debit_amount)
                 ->plus($recorded_loan_financial_entry->debit_amount),
-            "unadjusted_credit_amount" => $recorded_expense_financial_entry->credit_amount,
+            "unadjusted_credit_amount" => $recorded_expense_a_financial_entry->credit_amount,
             "closed_debit_amount" => $recorded_normal_financial_entry
                 ->debit_amount
                 ->plus($recorded_loan_financial_entry->debit_amount)
                 ->plus($recorded_income_financial_entry->debit_amount)
-                ->minus($recorded_expense_financial_entry->credit_amount),
+                ->minus($recorded_expense_a_financial_entry->credit_amount),
             "closed_credit_amount" => "0"
         ])->create();
         $equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
@@ -238,12 +272,22 @@ class MakeTestUser extends Seeder
             "closed_debit_amount" => "0",
             "closed_credit_amount" => $recorded_loan_financial_entry->credit_amount
         ])->create();
-        $expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
+        $expense_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
-            "account_id" => $expense_account->id,
+            "account_id" => $expense_a_account->id,
             "opened_debit_amount" => "0",
             "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => $recorded_expense_financial_entry->debit_amount,
+            "unadjusted_debit_amount" => $recorded_expense_a_financial_entry->debit_amount,
+            "unadjusted_credit_amount" => "0",
+            "closed_debit_amount" => "0",
+            "closed_credit_amount" => "0"
+        ])->create();
+        $expense_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "account_id" => $expense_b_account->id,
+            "opened_debit_amount" => "0",
+            "opened_credit_amount" => "0",
+            "unadjusted_debit_amount" => $recorded_expense_b_financial_entry->debit_amount,
             "unadjusted_credit_amount" => "0",
             "closed_debit_amount" => "0",
             "closed_credit_amount" => "0"
@@ -276,7 +320,8 @@ class MakeTestUser extends Seeder
                 ->debit_amount
                 ->plus($recorded_loan_financial_entry->debit_amount)
                 ->plus($recorded_income_financial_entry->debit_amount)
-                ->minus($recorded_expense_financial_entry->credit_amount)
+                ->minus($recorded_expense_a_financial_entry->credit_amount)
+                ->minus($recorded_expense_b_financial_entry->credit_amount)
         ])->create();
         $liability_flow_calculation = $flow_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
@@ -284,11 +329,17 @@ class MakeTestUser extends Seeder
             "account_id" => $liability_account->id,
             "net_amount" => $recorded_loan_financial_entry->credit_amount
         ])->create();
-        $expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
+        $expense_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
             "cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => $recorded_expense_financial_entry->debit_amount->negated()
+            "account_id" => $expense_a_account->id,
+            "net_amount" => $recorded_expense_a_financial_entry->debit_amount->negated()
+        ])->create();
+        $expense_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
+            "frozen_period_id" => $frozen_period->id,
+            "cash_flow_activity_id" => $operating_cash_flow_activity->id,
+            "account_id" => $expense_b_account->id,
+            "net_amount" => $recorded_expense_b_financial_entry->debit_amount->negated()
         ])->create();
         $income_flow_calculation = $flow_calculation_fabricator->setOverrides([
             "frozen_period_id" => $frozen_period->id,
