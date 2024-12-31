@@ -15,6 +15,7 @@ use App\Libraries\Context\TimeGroupManager\CollectionCache;
 use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
 use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
+use CodeIgniter\I18n\Time;
 
 class TimeGroupManager
 {
@@ -44,7 +45,9 @@ class TimeGroupManager
         $this->collection_cache = new CollectionCache($this->context);
         $this->exchange_rate_cache = new ExchangeRateCache(
             $this->context,
-            $this->time_groups[count($this->time_groups) - 1]->finishedAt()
+            count($this->time_groups) > 0
+                ? $this->time_groups[count($this->time_groups) - 1]->finishedAt()
+                : Time::today()->setHour(23)->setMinute(59)->setSecond(59)
         );
 
         $this->context->setVariable(ContextKeys::TIME_GROUP_MANAGER, $this);
