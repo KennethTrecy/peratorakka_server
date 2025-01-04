@@ -295,7 +295,7 @@ class TimeGroupManager
         }
 
         if ($last_frozen_finished_date === null) {
-            $last_frozen_finished_date = $earliest_start_date;
+            $last_frozen_finished_date = $earliest_start_date->subDays(1);
         }
 
         return [
