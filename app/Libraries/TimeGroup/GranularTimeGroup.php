@@ -37,47 +37,10 @@ abstract class GranularTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-        $exchange_rate_basis = $context->getVariable(
-            ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_EXCHANGE_RATE_BASIS
-        );
-        $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                ? $this->finishedAt()
-                : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
-        );
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
-        );
-
         return array_reduce(
             $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) use (
-                $account_cache,
-                $derivator,
-                $destination_currency_id
-            ) {
-                $account_id = $summary_calculation->account_id;
-                $source_currency_id = $account_cache->determineCurrencyID($account_id);
-                $derived_exchange_rate = is_null($source_currency_id)
-                    ? RationalNumber::get("0/1")
-                    : (
-                        is_null($destination_currency_id)
-                            ? RationalNumber::get("1")
-                            : $derivator->deriveExchangeRate(
-                                $source_currency_id,
-                                $destination_currency_id
-                            )
-                    );
-
-                return $total->plus(
-                    $summary_calculation
-                        ->opened_debit_amount
-                        ->multipliedBy($derived_exchange_rate)
-                );
+            function ($total, $summary_calculation) {
+                return $total->plus($summary_calculation->opened_debit_amount);
             },
             RationalNumber::zero()
         );
@@ -87,46 +50,10 @@ abstract class GranularTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-        $exchange_rate_basis = $context->getVariable(
-            ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_EXCHANGE_RATE_BASIS
-        );
-        $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                ? $this->finishedAt()
-                : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
-        );
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
-        );
         return array_reduce(
             $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) use (
-                $account_cache,
-                $derivator,
-                $destination_currency_id
-            ) {
-                $account_id = $summary_calculation->account_id;
-                $source_currency_id = $account_cache->determineCurrencyID($account_id);
-                $derived_exchange_rate = is_null($source_currency_id)
-                    ? RationalNumber::get("0/1")
-                    : (
-                        is_null($destination_currency_id)
-                            ? RationalNumber::get("1")
-                            : $derivator->deriveExchangeRate(
-                                $source_currency_id,
-                                $destination_currency_id
-                            )
-                    );
-
-                return $total->plus(
-                    $summary_calculation
-                        ->opened_credit_amount
-                        ->multipliedBy($derived_exchange_rate)
-                );
+            function ($total, $summary_calculation) {
+                return $total->plus($summary_calculation->opened_credit_amount);
             },
             RationalNumber::zero()
         );
@@ -136,46 +63,10 @@ abstract class GranularTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-        $exchange_rate_basis = $context->getVariable(
-            ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_EXCHANGE_RATE_BASIS
-        );
-        $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                ? $this->finishedAt()
-                : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
-        );
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
-        );
         return array_reduce(
             $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) use (
-                $account_cache,
-                $derivator,
-                $destination_currency_id
-            ) {
-                $account_id = $summary_calculation->account_id;
-                $source_currency_id = $account_cache->determineCurrencyID($account_id);
-                $derived_exchange_rate = is_null($source_currency_id)
-                    ? RationalNumber::get("0/1")
-                    : (
-                        is_null($destination_currency_id)
-                            ? RationalNumber::get("1")
-                            : $derivator->deriveExchangeRate(
-                                $source_currency_id,
-                                $destination_currency_id
-                            )
-                    );
-
-                return $total->plus(
-                    $summary_calculation
-                        ->unadjusted_debit_amount
-                        ->multipliedBy($derived_exchange_rate)
-                );
+            function ($total, $summary_calculation) {
+                return $total->plus($summary_calculation->unadjusted_debit_amount);
             },
             RationalNumber::zero()
         );
@@ -185,46 +76,10 @@ abstract class GranularTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-        $exchange_rate_basis = $context->getVariable(
-            ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_EXCHANGE_RATE_BASIS
-        );
-        $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                ? $this->finishedAt()
-                : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
-        );
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
-        );
         return array_reduce(
             $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) use (
-                $account_cache,
-                $derivator,
-                $destination_currency_id
-            ) {
-                $account_id = $summary_calculation->account_id;
-                $source_currency_id = $account_cache->determineCurrencyID($account_id);
-                $derived_exchange_rate = is_null($source_currency_id)
-                    ? RationalNumber::get("0/1")
-                    : (
-                        is_null($destination_currency_id)
-                            ? RationalNumber::get("1")
-                            : $derivator->deriveExchangeRate(
-                                $source_currency_id,
-                                $destination_currency_id
-                            )
-                    );
-
-                return $total->plus(
-                    $summary_calculation
-                        ->unadjusted_credit_amount
-                        ->multipliedBy($derived_exchange_rate)
-                );
+            function ($total, $summary_calculation) {
+                return $total->plus($summary_calculation->unadjusted_credit_amount);
             },
             RationalNumber::zero()
         );
@@ -234,46 +89,10 @@ abstract class GranularTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-        $exchange_rate_basis = $context->getVariable(
-            ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_EXCHANGE_RATE_BASIS
-        );
-        $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                ? $this->finishedAt()
-                : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
-        );
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
-        );
         return array_reduce(
             $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) use (
-                $account_cache,
-                $derivator,
-                $destination_currency_id
-            ) {
-                $account_id = $summary_calculation->account_id;
-                $source_currency_id = $account_cache->determineCurrencyID($account_id);
-                $derived_exchange_rate = is_null($source_currency_id)
-                    ? RationalNumber::get("0/1")
-                    : (
-                        is_null($destination_currency_id)
-                            ? RationalNumber::get("1")
-                            : $derivator->deriveExchangeRate(
-                                $source_currency_id,
-                                $destination_currency_id
-                            )
-                    );
-
-                return $total->plus(
-                    $summary_calculation
-                        ->closed_debit_amount
-                        ->multipliedBy($derived_exchange_rate)
-                );
+            function ($total, $summary_calculation) {
+                return $total->plus($summary_calculation->closed_debit_amount);
             },
             RationalNumber::zero()
         );
@@ -283,46 +102,10 @@ abstract class GranularTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-        $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-        $exchange_rate_basis = $context->getVariable(
-            ContextKeys::EXCHANGE_RATE_BASIS,
-            PERIODIC_EXCHANGE_RATE_BASIS
-        );
-        $derivator = $exchange_rate_cache->buildDerivator(
-             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                ? $this->finishedAt()
-                : $context->getVariable(ContextKeys::LATEST_FINISHED_DATE)
-        );
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
-        );
         return array_reduce(
             $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) use (
-                $account_cache,
-                $derivator,
-                $destination_currency_id
-            ) {
-                $account_id = $summary_calculation->account_id;
-                $source_currency_id = $account_cache->determineCurrencyID($account_id);
-                $derived_exchange_rate = is_null($source_currency_id)
-                    ? RationalNumber::get("0/1")
-                    : (
-                        is_null($destination_currency_id)
-                            ? RationalNumber::get("1")
-                            : $derivator->deriveExchangeRate(
-                                $source_currency_id,
-                                $destination_currency_id
-                            )
-                    );
-
-                return $total->plus(
-                    $summary_calculation
-                        ->closed_credit_amount
-                        ->multipliedBy($derived_exchange_rate)
-                );
+            function ($total, $summary_calculation) {
+                return $total->plus($summary_calculation->closed_credit_amount);
             },
             RationalNumber::zero()
         );
