@@ -151,89 +151,88 @@ class CollectionSource implements NumericalToolSource
         $collective_sum = [];
         $collective_average = [];
 
-        if ($this->must_show_individual_amounts) {
-            foreach ($linked_accounts as $account_id) {
-                $account_debit_totals = [];
-                $account_credit_totals = [];
-                if (
-                    $this->side_basis === DEBIT_AMOUNT_SIDE_BASIS
-                    || $this->side_basis === NET_DEBIT_AMOUNT_SIDE_BASIS
-                    || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
-                ) {
-                    $debit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
-                        ? "totalOpenedDebitAmount"
-                        : (
-                            $this->stage_basis === UNADJUSTED_AMOUNT_STAGE_BASIS
-                                ? "totalUnadjustedDebitAmount"
-                                : "totalClosedDebitAmount"
+        foreach ($linked_accounts as $account_id) {
+            $account_debit_totals = [];
+            $account_credit_totals = [];
+            if (
+                $this->side_basis === DEBIT_AMOUNT_SIDE_BASIS
+                || $this->side_basis === NET_DEBIT_AMOUNT_SIDE_BASIS
+                || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
+            ) {
+                $debit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
+                    ? "totalOpenedDebitAmount"
+                    : (
+                        $this->stage_basis === UNADJUSTED_AMOUNT_STAGE_BASIS
+                            ? "totalUnadjustedDebitAmount"
+                            : "totalClosedDebitAmount"
+                    );
+
+                $account_debit_totals = $time_group_manager->$debit_function([ $account_id ]);
+            }
+
+            if (
+                $this->side_basis === CREDIT_AMOUNT_SIDE_BASIS
+                || $this->side_basis === NET_DEBIT_AMOUNT_SIDE_BASIS
+                || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
+            ) {
+                $credit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
+                    ? "totalOpenedCreditAmount"
+                    : (
+                        $this->stage_basis === UNADJUSTED_AMOUNT_STAGE_BASIS
+                            ? "totalUnadjustedCreditAmount"
+                            : "totalClosedCreditAmount"
+                    );
+                $account_credit_totals = $time_group_manager->$credit_function([ $account_id ]);
+            }
+
+            switch ($this->side_basis) {
+                case DEBIT_AMOUNT_SIDE_BASIS:
+                    $account_totals[$account_id] = $account_debit_totals;
+                    break;
+                case CREDIT_AMOUNT_SIDE_BASIS:
+                    $account_totals[$account_id] = $account_credit_totals;
+                    break;
+                case NET_DEBIT_AMOUNT_SIDE_BASIS:
+                    $account_totals[$account_id]
+                        = array_map(function ($debit_total, $credit_total) {
+                            return $debit_total
+                                ->minus($credit_total)
+                                ->simplified();
+                        }, $account_debit_totals, $account_credit_totals);
+                    break;
+                case NET_CREDIT_AMOUNT_SIDE_BASIS:
+                    $account_totals[$account_id]
+                        = array_map(function ($debit_total, $credit_total) {
+                            return $credit_total
+                                ->minus($debit_total)
+                                ->simplified();
+                        }, $account_debit_totals, $account_credit_totals);
+                    break;
+            }
+
+            $account_name = $account_cache->determineAccountName($account_id);
+
+            $constellation = new Constellation(
+                $account_name,
+                AcceptableConstellationKind::Account,
+                array_map(
+                    function ($time_group_value) use (
+                        $account_id,
+                        $account_cache,
+                        $currency_cache
+                    ) {
+                        $currency_id = $account_cache->determineCurrencyID($account_id);
+                        $display_value = $currency_cache->formatValue(
+                            $currency_id,
+                            $time_group_value
                         );
+                        return new Star($display_value, $time_group_value);
+                    },
+                    $account_totals[$account_id]
+                )
+            );
 
-                    $account_debit_totals = $time_group_manager->$debit_function([ $account_id ]);
-                }
-
-                if (
-                    $this->side_basis === CREDIT_AMOUNT_SIDE_BASIS
-                    || $this->side_basis === NET_DEBIT_AMOUNT_SIDE_BASIS
-                    || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
-                ) {
-                    $credit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
-                        ? "totalOpenedCreditAmount"
-                        : (
-                            $this->stage_basis === UNADJUSTED_AMOUNT_STAGE_BASIS
-                                ? "totalUnadjustedCreditAmount"
-                                : "totalClosedCreditAmount"
-                        );
-                    $account_credit_totals = $time_group_manager->$credit_function([ $account_id ]);
-                }
-
-                switch ($this->side_basis) {
-                    case DEBIT_AMOUNT_SIDE_BASIS:
-                        $account_totals[$account_id] = $account_debit_totals;
-                        break;
-                    case CREDIT_AMOUNT_SIDE_BASIS:
-                        $account_totals[$account_id] = $account_credit_totals;
-                        break;
-                    case NET_DEBIT_AMOUNT_SIDE_BASIS:
-                        $account_totals[$account_id]
-                            = array_map(function ($debit_total, $credit_total) {
-                                return $debit_total
-                                    ->minus($credit_total)
-                                    ->simplified();
-                            }, $account_debit_totals, $account_credit_totals);
-                        break;
-                    case NET_CREDIT_AMOUNT_SIDE_BASIS:
-                        $account_totals[$account_id]
-                            = array_map(function ($debit_total, $credit_total) {
-                                return $credit_total
-                                    ->minus($debit_total)
-                                    ->simplified();
-                            }, $account_debit_totals, $account_credit_totals);
-                        break;
-                }
-
-                $account_name = $account_cache->determineAccountName($account_id);
-
-                $constellation = new Constellation(
-                    $account_name,
-                    AcceptableConstellationKind::Account,
-                    array_map(
-                        function ($time_group_value) use (
-                            $account_id,
-                            $account_cache,
-                            $currency_cache,
-                            $collection_cache
-                        ) {
-                            $currency_id = $account_cache->determineCurrencyID($account_id);
-                            $display_value = $currency_cache->formatValue(
-                                $currency_id,
-                                $time_group_value
-                            );
-                            return new Star($display_value, $time_group_value);
-                        },
-                        $account_totals[$account_id]
-                    )
-                );
-
+            if ($this->must_show_individual_amounts) {
                 array_push($constellations, $constellation);
             }
         }
@@ -312,7 +311,6 @@ class CollectionSource implements NumericalToolSource
 
         return $constellations;
     }
-
 
     public function toArray(): array {
         return [
