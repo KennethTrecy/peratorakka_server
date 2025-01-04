@@ -43,7 +43,7 @@ class AccountCollectionController extends BaseOwnedResourceController
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
                 AccountModel::class,
-                SEARCH_NORMALLY
+                SEARCH_WITH_DELETED
             ])."]"
         ]);
 
