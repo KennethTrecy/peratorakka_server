@@ -2,10 +2,14 @@
 
 namespace App\Libraries\Constellation;
 
+/**
+ * Note: Update the constellation kind constants in App\Config\Constants if some values were
+ * changed.
+ */
 enum AcceptableConstellationKind: string
 {
-    case Account = ACCOUNT_CONSTELLATION_KIND;
-    case Sum = SUM_CONSTELLATION_KIND;
-    case Average = AVERAGE_CONSTELLATION_KIND;
-    case Formula = FORMULA_CONSTELLATION_KIND;
+    case Account = "account";
+    case Sum = "sum";
+    case Average = "average";
+    case Formula = "formula";
 }

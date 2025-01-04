@@ -409,6 +409,9 @@ define("NUMERICAL_TOOL_KINDS", [
  | - AVERAGE_CONSTELLATION_KIND. A constellation with this kind represents an average of a
  |   collection.
  | - FORMULA_CONSTELLATION_KIND. A constellation with this kind represents a result form a formula.
+ |
+ | Note: Update the values in App\Libraries\Constellation\AcceptableConstellationKind if some
+ | values were changed.
  */
 define("UNKNOWN_CONSTELLATION_KIND", "unknown");
 define("ACCOUNT_CONSTELLATION_KIND", "account");
