@@ -462,7 +462,7 @@ class MakeTestUser extends Seeder
             "name" => "Credit Growth",
             "kind" => LINE_NUMERICAL_TOOL_KIND,
             "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => 1,
+            "recency" => -2,
             "configuration" => json_encode([
                 "sources" => [
                     [
