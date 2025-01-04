@@ -2029,12 +2029,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
             ]),
             new Constellation($asset_b_account->name, AcceptableConstellationKind::Account, [
                 new Star(
-                    "100000.00",
-                    RationalNumber::get("100000")
+                    "1000.00",
+                    RationalNumber::get("1000")
                 ),
                 new Star(
-                    "300000.00",
-                    RationalNumber::get("300000")
+                    "3000.00",
+                    RationalNumber::get("3000")
                 )
             ]),
             new Constellation(
@@ -2042,12 +2042,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Sum,
                 [
                     new Star(
-                        "102000.00",
-                        RationalNumber::get("102000")
+                        "3000.00",
+                        RationalNumber::get("3000")
                     ),
                     new Star(
-                        "303500.00",
-                        RationalNumber::get("303500")
+                        "6500.00",
+                        RationalNumber::get("6500")
                     )
                 ]
             ),
@@ -2056,12 +2056,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Average,
                 [
                     new Star(
-                        "51000.00",
-                        RationalNumber::get("51000")
+                        "1500.00",
+                        RationalNumber::get("1500")
                     ),
                     new Star(
-                        "151750.00",
-                        RationalNumber::get("151750")
+                        "3250.00",
+                        RationalNumber::get("3250")
                     )
                 ]
             )

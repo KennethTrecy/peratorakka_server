@@ -684,12 +684,12 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "100000.00",
-                                RationalNumber::get("100000")
+                                "1000.00",
+                                RationalNumber::get("1000")
                             ),
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             )
                         ]
                     ),
@@ -697,14 +697,14 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         "Total of $asset_collection->name",
                         AcceptableConstellationKind::Sum,
                         [
-                            new Star(
-                                "102000.00",
-                                RationalNumber::get("102000")
-                            ),
-                            new Star(
-                                "303500.00",
-                                RationalNumber::get("303500")
-                            )
+                        new Star(
+                            "3000.00",
+                            RationalNumber::get("3000")
+                        ),
+                        new Star(
+                            "6500.00",
+                            RationalNumber::get("6500")
+                        )
                         ]
                     ),
                     new Constellation(
@@ -712,12 +712,12 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "51000.00",
-                                RationalNumber::get("51000")
+                                "1500.00",
+                                RationalNumber::get("1500")
                             ),
                             new Star(
-                                "151750.00",
-                                RationalNumber::get("151750")
+                                "3250.00",
+                                RationalNumber::get("3250")
                             )
                         ]
                     )
@@ -1022,12 +1022,12 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "100000.00",
-                                RationalNumber::get("100000")
+                                "1000.00",
+                                RationalNumber::get("1000")
                             ),
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             )
                         ]
                     ),
@@ -1035,30 +1035,29 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         "Total of $asset_collection->name",
                         AcceptableConstellationKind::Sum,
                         [
-                            new Star(
-                                "102000.00",
-                                RationalNumber::get("102000")
-                            ),
-                            new Star(
-                                "303500.00",
-                                RationalNumber::get("303500")
-                            )
+                        new Star(
+                            "3000.00",
+                            RationalNumber::get("3000")
+                        ),
+                        new Star(
+                            "6500.00",
+                            RationalNumber::get("6500")
+                        )
                         ]
                     ),
                     new Constellation(
                         "Average of $asset_collection->name",
                         AcceptableConstellationKind::Average,
                         [
-                            new Star(
-                                "51000.00",
-                                RationalNumber::get("51000")
-                            ),
-                            new Star(
-                                "151750.00",
-                                RationalNumber::get("151750")
-                            )
-                        ]
-                    )
+                        new Star(
+                            "1500.00",
+                            RationalNumber::get("1500")
+                        ),
+                        new Star(
+                            "3250.00",
+                            RationalNumber::get("3250")
+                        )
+                    ])
                 ])
             ],
             "currencies" => [ $currency_a ],
@@ -1400,16 +1399,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "100000.00",
-                                RationalNumber::get("100000")
+                                "1000.00",
+                                RationalNumber::get("1000")
                             ),
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             ),
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             )
                         ]
                     ),
@@ -1418,16 +1417,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Sum,
                         [
                             new Star(
-                                "102000.00",
-                                RationalNumber::get("102000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             ),
                             new Star(
-                                "303500.00",
-                                RationalNumber::get("303500")
+                                "6500.00",
+                                RationalNumber::get("6500")
                             ),
                             new Star(
-                                "304250.00",
-                                RationalNumber::get("304250")
+                                "7250.00",
+                                RationalNumber::get("7250")
                             )
                         ]
                     ),
@@ -1436,16 +1435,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "51000.00",
-                                RationalNumber::get("51000")
+                                "1500.00",
+                                RationalNumber::get("1500")
                             ),
                             new Star(
-                                "151750.00",
-                                RationalNumber::get("151750")
+                                "3250.00",
+                                RationalNumber::get("3250")
                             ),
                             new Star(
-                                "152125.00",
-                                RationalNumber::get("152125")
+                                "3625.00",
+                                RationalNumber::get("3625")
                             )
                         ]
                     )
@@ -1767,8 +1766,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             )
                         ]
                     ),
@@ -1777,8 +1776,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Sum,
                         [
                             new Star(
-                                "304250.00",
-                                RationalNumber::get("304250")
+                                "7250.00",
+                                RationalNumber::get("7250")
                             )
                         ]
                     ),
@@ -1787,8 +1786,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "152125.00",
-                                RationalNumber::get("152125")
+                                "3625.00",
+                                RationalNumber::get("3625")
                             )
                         ]
                     )
@@ -1954,8 +1953,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             )
                         ]
                     ),
@@ -1964,8 +1963,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Sum,
                         [
                             new Star(
-                                "304250.00",
-                                RationalNumber::get("304250")
+                                "7250.00",
+                                RationalNumber::get("7250")
                             )
                         ]
                     ),
@@ -1974,8 +1973,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "152125.00",
-                                RationalNumber::get("152125")
+                                "3625.00",
+                                RationalNumber::get("3625")
                             )
                         ]
                     )
@@ -2333,16 +2332,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "100000.00",
-                                RationalNumber::get("100000")
+                                "1000.00",
+                                RationalNumber::get("1000")
                             ),
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             ),
                             new Star(
-                                "300000.00",
-                                RationalNumber::get("300000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             )
                         ]
                     ),
@@ -2351,16 +2350,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Sum,
                         [
                             new Star(
-                                "102000.00",
-                                RationalNumber::get("102000")
+                                "3000.00",
+                                RationalNumber::get("3000")
                             ),
                             new Star(
-                                "303500.00",
-                                RationalNumber::get("303500")
+                                "6500.00",
+                                RationalNumber::get("6500")
                             ),
                             new Star(
-                                "304250.00",
-                                RationalNumber::get("304250")
+                                "7250.00",
+                                RationalNumber::get("7250")
                             )
                         ]
                     ),
@@ -2369,16 +2368,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "51000.00",
-                                RationalNumber::get("51000")
+                                "1500.00",
+                                RationalNumber::get("1500")
                             ),
                             new Star(
-                                "151750.00",
-                                RationalNumber::get("151750")
+                                "3250.00",
+                                RationalNumber::get("3250")
                             ),
                             new Star(
-                                "152125.00",
-                                RationalNumber::get("152125")
+                                "3625.00",
+                                RationalNumber::get("3625")
                             )
                         ]
                     ),
@@ -2387,16 +2386,16 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Formula,
                         [
                             new Star(
-                                "102500.00",
-                                RationalNumber::get("102500")
+                                "3500.00",
+                                RationalNumber::get("3500")
                             ),
                             new Star(
-                                "304000.00",
-                                RationalNumber::get("304000")
+                                "7000.00",
+                                RationalNumber::get("7000")
                             ),
                             new Star(
-                                "304500.00",
-                                RationalNumber::get("304500")
+                                "7500.00",
+                                RationalNumber::get("7500")
                             )
                         ]
                     )
