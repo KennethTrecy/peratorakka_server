@@ -45,18 +45,19 @@ class ExchangeRateCache {
             }
         );
         $updated_exchange_rates = [];
-        foreach ($qualified_exchange_rates as $exchange_entry) {
-            $exchange_id = $exchange_entry->source_currency_id
+        foreach ($qualified_exchange_rates as $qualified_exchange_entry) {
+            $exchange_id = $qualified_exchange_entry->source_currency_id
                 ."_"
-                .$exchange_entry->destination_currency_id;
+                .$qualified_exchange_entry->destination_currency_id;
 
             if (
                 !isset($updated_exchange_rates[$exchange_id])
-                || $exchange_entry->updated_at->isBefore(
+                || $qualified_exchange_entry->updated_at->isAfter(
                     $updated_exchange_rates[$exchange_id]->updated_at
                 )
             ) {
-                $updated_exchange_rates[$exchange_id] = $exchange_entry;
+                // Choose the newer exchange entry.
+                $updated_exchange_rates[$exchange_id] = $qualified_exchange_entry;
             }
         }
 
