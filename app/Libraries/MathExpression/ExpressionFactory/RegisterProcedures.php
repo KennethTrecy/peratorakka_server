@@ -9,9 +9,11 @@ use App\Libraries\Context\ContextKeys;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
+use Brick\Math\BigRational;
 use Closure;
 use CodeIgniter\Database\BaseBuilder;
 use Xylemical\Expressions\Procedure;
+use Xylemical\Expressions\Operator;
 use Xylemical\Expressions\Token;
 
 trait RegisterProcedures
@@ -29,6 +31,17 @@ trait RegisterProcedures
     {
         $callback = Closure::fromCallable([ $this, $function_name ]);
         $this->addOperator(new Procedure($name, $arity, $callback));
+    }
+
+    private function addCustomOperator(
+        string $regex,
+        int $precedence,
+        int $associativity,
+        int $arity,
+        string $function_name
+    ) {
+        $callback = Closure::fromCallable([ $this, $function_name ]);
+        $this->addOperator(new Operator($regex, $precedence, $associativity, $arity, $callback));
     }
 
     private function processTotalAmount(array $values, Context $context, Token $token)
