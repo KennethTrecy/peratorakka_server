@@ -25,6 +25,7 @@ trait RegisterProcedures
             1,
             "processTotalAmount"
         );
+        $this->addCustomOperator("\*\*", 7, Operator::RIGHT_ASSOCIATIVE, 2, "exponentiate");
     }
 
     private function addProcedure(string $name, int $arity, string $function_name)
@@ -109,5 +110,12 @@ trait RegisterProcedures
             $time_group_manager->$native_procedure_name($linked_accounts)
         );
         return $result;
+    }
+
+    private function exponentiate(array $values, Context $context, Token $token) {
+        $base = $values[0];
+        $exponent = $values[1];
+
+        return $this->math->power($base, $exponent);
     }
 }
