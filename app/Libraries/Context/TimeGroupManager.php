@@ -191,6 +191,18 @@ class TimeGroupManager
         );
     }
 
+    public function cycleRanges(): array
+    {
+        return array_map(
+            function ($time_group) {
+                $started_at = $time_group->startedAt();
+                $finished_at = $time_group->finishedAt();
+                return [ $started_at, $finished_at ];
+            },
+            $this->time_groups
+        );
+    }
+
     private function loadSummaryCalculations(array $selected_account_IDs): void
     {
         $missing_account_IDs = array_diff(
