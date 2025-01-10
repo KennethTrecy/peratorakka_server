@@ -20,6 +20,8 @@ trait RegisterValues
     public function addValues()
     {
         $this->addValue('CYCLE_DAY_COUNT', "evaluateCycleDayCount");
+        $this->addValue('CYCLE_DAY_PRECOUNT_PER_YEAR', "evaluateCycleDayPrecountPerYear");
+        $this->addValue('CYCLE_DAY_POSTCOUNT_PER_YEAR', "evaluateCycleDayPostcountPerYear");
         $this->addValue('COLLECTION\[\d+\]', "evaluateCollection");
         $this->addValue(
             '('.join('|', ACCEPTABLE_ACCOUNT_KINDS).')_ACCOUNTS',
@@ -68,6 +70,60 @@ trait RegisterValues
                     ->difference($finished_at->setHour(0)->setMinute(0)->setSecond(0));
                 $day_difference = $difference->getDays();
                 $duration = $day_difference + 1;
+                return $duration;
+            },
+            $cycle_ranges
+        );
+
+        return json_encode($day_counts);
+    }
+
+    private function evaluateCycleDayPrecountPerYear(
+        array $values,
+        Context $context,
+        Token $token
+    ): string {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $cycle_ranges = $time_group_manager->cycleRanges();
+        $day_counts = array_map(
+            function ($range) {
+                [ $started_at, $finished_at ] = $range;
+                $year_start = $started_at
+                    ->setMonth(1)->setDay(1)
+                    ->setHour(0)->setMinute(0)->setSecond(0);
+                $year_end = $year_start->setMonth(12)->setDay(31);
+
+                $difference = $year_start->difference($year_end);
+                $day_difference = $difference->getDays();
+                $duration = $day_difference + 1;
+
+                return $duration;
+            },
+            $cycle_ranges
+        );
+
+        return json_encode($day_counts);
+    }
+
+    private function evaluateCycleDayPostcountPerYear(
+        array $values,
+        Context $context,
+        Token $token
+    ): string {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $cycle_ranges = $time_group_manager->cycleRanges();
+        $day_counts = array_map(
+            function ($range) {
+                [ $started_at, $finished_at ] = $range;
+                $year_start = $finished_at
+                    ->setMonth(1)->setDay(1)
+                    ->setHour(0)->setMinute(0)->setSecond(0);
+                $year_end = $year_start->setMonth(12)->setDay(31);
+
+                $difference = $year_start->difference($year_end);
+                $day_difference = $difference->getDays();
+                $duration = $day_difference + 1;
+
                 return $duration;
             },
             $cycle_ranges
