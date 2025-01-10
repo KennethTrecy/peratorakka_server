@@ -6,6 +6,7 @@ use App\Casts\AccountKind;
 use App\Exceptions\ExpressionException;
 use App\Libraries\Context\FlashCache;
 use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
@@ -18,6 +19,7 @@ trait RegisterValues
 {
     public function addValues()
     {
+        $this->addValue('CYCLE_DAY_COUNT', "evaluateCycleDayCount");
         $this->addValue('COLLECTION\[\d+\]', "evaluateCollection");
         $this->addValue(
             '('.join('|', ACCEPTABLE_ACCOUNT_KINDS).')_ACCOUNTS',
@@ -52,6 +54,26 @@ trait RegisterValues
         $key = $this->cache->store($builder);
 
         return $key;
+    }
+
+    private function evaluateCycleDayCount(array $values, Context $context, Token $token): string
+    {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $cycle_ranges = $time_group_manager->cycleRanges();
+        $day_counts = array_map(
+            function ($range) {
+                [ $started_at, $finished_at ] = $range;
+                $difference = $started_at
+                    ->setHour(0)->setMinute(0)->setSecond(0)
+                    ->difference($finished_at->setHour(0)->setMinute(0)->setSecond(0));
+                $day_difference = $difference->getDays();
+                $duration = $day_difference + 1;
+                return $duration;
+            },
+            $cycle_ranges
+        );
+
+        return json_encode($day_counts);
     }
 
     private function addValue(string $name, string $function_name)
