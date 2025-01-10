@@ -2,6 +2,7 @@
 
 namespace App\Libraries\MathExpression;
 
+use Exception;
 use App\Casts\RationalNumber;
 use App\Exceptions\ExpressionException;
 use Brick\Math\BigRational;
@@ -121,6 +122,29 @@ class PeratorakkaMath implements MathInterface
         }
 
         return $rationalValue->toFloat();
+    }
+
+    public function power($base, $exponent, $overridenScale = 0)
+    {
+        $resolvedOperators = $this->resolveOperators(
+            $base,
+            $exponent,
+            $overridenScale
+        );
+
+        return json_encode(array_map(function ($operators) {
+            [ $base, $exponent ] = $operators;
+
+            if ($base instanceof BigRational && $exponent instanceof BigRational) {
+                try {
+                    return $base->power($exponent->toInt())->simplified();
+                } catch (Exception $error) {
+                    throw new ExpressionException("Ensure exponents are integer. Otherwise, the exponent is too big for the memory.");
+                }
+            }
+
+            return null;
+        }, $resolvedOperators));
     }
 
     public function resolve(string $value, int $overridenScale = 0): mixed
