@@ -4,6 +4,7 @@ namespace App\Libraries\MathExpression;
 
 use App\Casts\RationalNumber;
 use App\Libraries\Context\FlashCache;
+use App\Libraries\Context\Memoizer;
 use App\Libraries\MathExpression\ExpressionFactory\RegisterProcedures;
 use App\Libraries\MathExpression\ExpressionFactory\RegisterValues;
 use App\Libraries\MathExpression\PeratorakkaMath;
@@ -20,12 +21,14 @@ class ExpressionFactory extends BaseExpressionFactory
     use RegisterProcedures;
 
     private readonly FlashCache $cache;
+    private readonly Memoizer $memo;
 
-    public function __construct(FlashCache $cache, PeratorakkaMath $math)
+    public function __construct(FlashCache $cache, Memoizer $memo, PeratorakkaMath $math)
     {
         parent::__construct($math);
 
         $this->cache = $cache;
+        $this->memo = $memo;
 
         $this->addValues();
         $this->addProcedures();

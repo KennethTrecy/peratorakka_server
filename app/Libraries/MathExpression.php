@@ -24,8 +24,9 @@ class MathExpression
     {
         $manager = $this->manager;
         $cache = $manager->context->getVariable(ContextKeys::FLASH_CACHE);
+        $memo = $manager->context->getVariable(ContextKeys::MEMOIZER);
         $math = new PeratorakkaMath();
-        $expression_factory = new ExpressionFactory($cache, $math);
+        $expression_factory = new ExpressionFactory($cache, $memo, $math);
         $lexer = new Lexer($expression_factory);
         $parser = new Parser($lexer);
         $evaluator = new Evaluator();
