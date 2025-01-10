@@ -125,7 +125,7 @@ class FormulaController extends BaseOwnedResourceController
         );
         $validation->setRule("$individual_name.formula", "formula", [
             "required",
-            "max_length[500]",
+            "max_length[5000]",
             "string"
         ]);
 
