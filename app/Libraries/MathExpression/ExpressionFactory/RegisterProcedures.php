@@ -21,6 +21,11 @@ trait RegisterProcedures
     public function addProcedures()
     {
         $this->addProcedure(
+            "SHIFT_CYCLE",
+            3,
+            "processShiftCycle"
+        );
+        $this->addProcedure(
             "TOTAL_(OPENED|UNADJUSTED|CLOSED)_(DEBIT|CREDIT)_AMOUNT",
             1,
             "processTotalAmount"
@@ -122,6 +127,27 @@ trait RegisterProcedures
         $this->memo->write($memo_key, $result);
 
         return $result;
+    }
+
+    private function processShiftCycle(array $values, Context $context, Token $token)
+    {
+        if (!is_numeric($values[1]) || !is_int(+$values[1]) || +$values[1] < 1) {
+            throw new ExpressionException(
+                "SHIFT_CYCLE's second parameter must be a positive integer."
+            );
+        }
+
+        $current_result = $values[0];
+        $shift = +$values[1];
+        $default_shifted_value = $values[2];
+
+        $result = json_decode($current_result, false);
+        $shifted_result = array_fill(0, $shift, $default_shifted_value);
+        $shifted_result = array_merge(array_values($shifted_result), array_values($result));
+        $shifted_result = array_slice($shifted_result, 0, count($result));
+        $shifted_result = json_encode(array_values($shifted_result));
+
+        return $shifted_result;
     }
 
     private function exponentiate(array $values, Context $context, Token $token) {
