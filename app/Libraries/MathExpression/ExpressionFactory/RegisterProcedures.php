@@ -49,15 +49,24 @@ trait RegisterProcedures
     {
         $function_name = $token->getValue();
 
+        $builder_key = $values[0];
+
         /**
          * @var BaseBuilder
          */
-        $builder = $this->cache->flash($values[0]);
+        $builder = $this->cache->flash($builder_key);
 
         if ($builder === null) {
             throw new ExpressionException(
                 "A collection or account kind is expected for \"$function_name\" function."
             );
+        }
+
+        $compiled_select = base64_encode($builder->getCompiledSelect(false));
+        $memo_key = $function_name.'_'.$compiled_select;
+
+        if (!is_null($this->memo->read($memo_key, null))) {
+            return $this->memo->read($memo_key);
         }
 
         $linked_accounts = [];
@@ -109,6 +118,9 @@ trait RegisterProcedures
         $result = json_encode(
             $time_group_manager->$native_procedure_name($linked_accounts)
         );
+
+        $this->memo->write($memo_key, $result);
+
         return $result;
     }
 
