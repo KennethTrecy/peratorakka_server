@@ -151,7 +151,7 @@ class YearlyTimeGroup implements TimeGroup
         array $selected_account_IDs
     ): BigRational {
         return array_reduce(
-            $this->time_groups,
+            array_slice($this->time_groups, 0, 1),
             function ($total, $time_group) use ($context, $selected_account_IDs) {
                 return $total->plus(
                     $time_group->totalOpenedDebitAmount($context, $selected_account_IDs)
@@ -166,7 +166,7 @@ class YearlyTimeGroup implements TimeGroup
         array $selected_account_IDs
     ): BigRational {
         return array_reduce(
-            $this->time_groups,
+            array_slice($this->time_groups, 0, 1),
             function ($total, $time_group) use ($context, $selected_account_IDs) {
                 return $total->plus(
                     $time_group->totalOpenedCreditAmount($context, $selected_account_IDs)
@@ -180,30 +180,82 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        return array_reduce(
+        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $temporary_account_IDs = array_filter(
+            $selected_account_IDs,
+            function ($account_id) use ($account_cache) {
+                $kind = $account_cache->determineAccountKind($account_id);
+                return $kind === INCOME_ACCOUNT_KIND || $kind === EXPENSE_ACCOUNT_KIND;
+            }
+        );
+        $permanent_account_IDs = array_diff($selected_account_IDs, $temporary_account_IDs);
+
+        $sum_of_temporary_accounts = array_reduce(
             $this->time_groups,
-            function ($total, $time_group) use ($context, $selected_account_IDs) {
+            function ($total, $time_group) use ($context, $temporary_account_IDs) {
                 return $total->plus(
-                    $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs)
+                    $time_group->totalUnadjustedDebitAmount($context, $temporary_account_IDs)
                 );
             },
             RationalNumber::zero()
         );
+        $sum_of_permanent_accounts = array_reduce(
+            $this->time_groups,
+            function ($total, $time_group) use ($context, $permanent_account_IDs) {
+                return $total->plus(
+                    $time_group->totalUnadjustedDebitAmount($context, $permanent_account_IDs)
+                    ->minus(
+                        $time_group->totalOpenedDebitAmount($context, $permanent_account_IDs)
+                    )
+                );
+            },
+            count($this->time_groups) === 0
+                ? RationalNumber::zero()
+                : $this->time_groups[0]->totalOpenedDebitAmount($context, $permanent_account_IDs)
+        );
+
+        return $sum_of_temporary_accounts->plus($sum_of_permanent_accounts);
     }
 
     public function totalUnadjustedCreditAmount(
         Context $context,
         array $selected_account_IDs
     ): BigRational {
-        return array_reduce(
+        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $temporary_account_IDs = array_filter(
+            $selected_account_IDs,
+            function ($account_id) use ($account_cache) {
+                $kind = $account_cache->determineAccountKind($account_id);
+                return $kind === INCOME_ACCOUNT_KIND || $kind === EXPENSE_ACCOUNT_KIND;
+            }
+        );
+        $permanent_account_IDs = array_diff($selected_account_IDs, $temporary_account_IDs);
+
+        $sum_of_temporary_accounts = array_reduce(
             $this->time_groups,
-            function ($total, $time_group) use ($context, $selected_account_IDs) {
+            function ($total, $time_group) use ($context, $temporary_account_IDs) {
                 return $total->plus(
-                    $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs)
+                    $time_group->totalUnadjustedCreditAmount($context, $temporary_account_IDs)
                 );
             },
             RationalNumber::zero()
         );
+        $sum_of_permanent_accounts = array_reduce(
+            $this->time_groups,
+            function ($total, $time_group) use ($context, $permanent_account_IDs) {
+                return $total->plus(
+                    $time_group->totalUnadjustedCreditAmount($context, $permanent_account_IDs)
+                    ->minus(
+                        $time_group->totalOpenedCreditAmount($context, $permanent_account_IDs)
+                    )
+                );
+            },
+            count($this->time_groups) === 0
+                ? RationalNumber::zero()
+                : $this->time_groups[0]->totalOpenedCreditAmount($context, $permanent_account_IDs)
+        );
+
+        return $sum_of_temporary_accounts->plus($sum_of_permanent_accounts);
     }
 
     public function totalClosedDebitAmount(
@@ -211,7 +263,7 @@ class YearlyTimeGroup implements TimeGroup
         array $selected_account_IDs
     ): BigRational {
         return array_reduce(
-            $this->time_groups,
+            array_slice($this->time_groups, count($this->time_groups) - 1, 1),
             function ($total, $time_group) use ($context, $selected_account_IDs) {
                 return $total->plus(
                     $time_group->totalClosedDebitAmount($context, $selected_account_IDs)
@@ -226,7 +278,7 @@ class YearlyTimeGroup implements TimeGroup
         array $selected_account_IDs
     ): BigRational {
         return array_reduce(
-            $this->time_groups,
+            array_slice($this->time_groups, count($this->time_groups) - 1, 1),
             function ($total, $time_group) use ($context, $selected_account_IDs) {
                 return $total->plus(
                     $time_group->totalClosedCreditAmount($context, $selected_account_IDs)
