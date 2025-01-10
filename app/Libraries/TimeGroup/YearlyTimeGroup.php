@@ -39,22 +39,25 @@ class YearlyTimeGroup implements TimeGroup
         if ($does_belong) {
             $time_group_count = count($this->time_groups);
             if ($time_group_count === 0) {
-                $this->time_groups[] = $time_group;
+                array_push($this->time_groups, $time_group);
             } else {
-                $i = 0;
-                for (; $i < $time_group_count; ++$i) {
+                // Insert the new time group as if they would be sorted already from oldest.
+                for ($i = 0; $i < $time_group_count; $i++) {
                     $examined_time_group = $this->time_groups[$i];
                     $existing_time = $this->is_based_on_start_date
                         ? $examined_time_group->startedAt()
                         : $examined_time_group->finishedAt();
-                    if ($base_time->isBefore($existing_time)) {
-                        array_splice($this->time_groups, $i, 0, $time_group);
-                        break;
-                    }
-                }
+                    $is_before_examined_time_group = $base_time->isBefore($existing_time);
 
-                if ($i === $time_group_count) {
-                    $this->time_groups[] = $time_group;
+                    if ($is_before_examined_time_group) {
+                        array_splice($this->time_groups, $i, 0, [ $time_group ]);
+                        break;
+                    } else if (
+                        $i === $time_group_count - 1
+                        && $base_time->isAfter($existing_time)
+                    ) {
+                        array_push($this->time_groups, $time_group);
+                    }
                 }
             }
         }
