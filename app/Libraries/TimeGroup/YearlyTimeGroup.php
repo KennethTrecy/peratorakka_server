@@ -86,9 +86,9 @@ class YearlyTimeGroup implements TimeGroup
     }
 
     public function timeTag(): string {
-        $finishedDate = $this->finishedAt();
+        $finished_date = $this->finishedAt();
 
-        return $finishedDate->toLocalizedString("YYYY");
+        return "$finished_date->year";
     }
 
     public function hasSomeUnfrozenDetails(): bool
