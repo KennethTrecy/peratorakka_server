@@ -87,14 +87,18 @@ class NumericalToolModel extends BaseResourceModel
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
             $maxed_current_date->toDateTimeString()
         );
+        $latest_known_date = $last_frozen_period === null
+            ? $maxed_current_date
+            : $last_frozen_period->finished_at;
 
         $frozen_time_group_limit = abs($recency);
+        $must_include_unfrozen_period = $recency < 1;
         $time_groups = $frozen_time_group_limit > 0
             ? [ new PeriodicTimeGroup($last_frozen_period) ]
             : [];
 
         // Happens for new users and there is no frozen period yet
-        if ($recency < 1 && is_null($last_frozen_period)) {
+        if ($must_include_unfrozen_period && is_null($last_frozen_period)) {
             $last_financial_entry = model(FinancialEntryModel::class)
                 ->orderBy("transacted_at", "ASC")
                 ->withDeleted()
@@ -109,6 +113,8 @@ class NumericalToolModel extends BaseResourceModel
                 $maxed_current_date
             ));
 
+            $latest_known_date = $maxed_current_date;
+
             return $time_groups;
         }
 
@@ -117,11 +123,13 @@ class NumericalToolModel extends BaseResourceModel
             ->setHour(0)->setMinute(0)->setSecond(0);
         $frozen_time_group_limit = abs($recency);
 
-        if ($recency < 1 && $current_date->isAfter($possible_unfrozen_date)) {
+        if ($must_include_unfrozen_period && $current_date->isAfter($possible_unfrozen_date)) {
             array_push($time_groups, UnfrozenTimeGroup::make(
                 $possible_unfrozen_date,
                 $maxed_current_date
             ));
+
+            $latest_known_date = $maxed_current_date;
         }
 
         switch ($recurrence) {
@@ -140,13 +148,18 @@ class NumericalToolModel extends BaseResourceModel
 
                 break;
             case YEARLY_NUMERICAL_TOOL_RECURRENCE_PERIOD:
-                $last_frozen_period_year = $last_frozen_period->started_at->year;
-                $earliest_year = $last_frozen_period_year - $frozen_time_group_limit;
+                $last_known_year = $must_include_unfrozen_period
+                    ? $latest_known_date->year
+                    : $last_frozen_period->started_at->year;
+                $earliest_year = $last_known_year
+                    - $frozen_time_group_limit
+                    + ($must_include_unfrozen_period ? 0 : 1);
                 $earliest_date_of_earliest_year = Time::createFromDate($earliest_year, 1, 1);
+                $latest_date_of_latest_year = Time::createFromDate($last_known_year, 12, 31);
 
                 $frozen_periods = model(FrozenPeriodModel::class, false)
-                    ->where("started_at <", $earliest_date_of_earliest_year->toDateTimeString())
-                    ->where("finished_at <", $last_frozen_period->started_at->toDateTimeString())
+                    ->where("started_at >=", $earliest_date_of_earliest_year->toDateTimeString())
+                    ->where("finished_at <=", $latest_date_of_latest_year->toDateTimeString())
                     ->orderBy("finished_at", "DESC")
                     ->findAll();
 
@@ -155,18 +168,18 @@ class NumericalToolModel extends BaseResourceModel
                 }, $frozen_periods));
 
                 $specific_time_groups = Resource::group($time_groups, function ($time_group) {
-                    return $time_group->finishedAt()->year;
+                    return $time_group->startedAt()->year;
                 });
 
                 $time_groups = [];
-                for ($year = $earliest_year; $year <= $last_frozen_period_year; $year++) {
+                for ($year = $earliest_year; $year <= $last_known_year; $year++) {
                     $yearly_time_group = new YearlyTimeGroup($year, true);
                     if (isset($specific_time_groups[$year])) {
                         foreach ($specific_time_groups[$year] as $time_group) {
                             $yearly_time_group->addTimeGroup($time_group);
                         }
                     }
-                    array_unshift($time_groups, $yearly_time_group);
+                    array_push($time_groups, $yearly_time_group);
                 }
 
                 break;
