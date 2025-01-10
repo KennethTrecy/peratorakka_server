@@ -13,6 +13,7 @@ enum ContextKeys: string
 
     case TIME_GROUP_MANAGER = "manager";
     case FLASH_CACHE = "flash_cache";
+    case MEMOIZER = "memoizer";
     case CURRENCY_CACHE = "currency_cache";
     case ACCOUNT_CACHE = "account_cache";
     case COLLECTION_CACHE = "collection_cache";
