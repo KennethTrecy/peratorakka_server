@@ -27,6 +27,13 @@ abstract class GranularTimeGroup implements TimeGroup
      */
     protected array $flow_calculations = [];
 
+    public function granularTimeRanges(): array
+    {
+        $started_at = $this->startedAt();
+        $finished_at = $this->finishedAt();
+        return [ [ $started_at, $finished_at ] ];
+    }
+
     public function timeTag(): string {
         $finished_date = $this->finishedAt();
 

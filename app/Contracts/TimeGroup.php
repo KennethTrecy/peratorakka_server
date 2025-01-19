@@ -31,6 +31,13 @@ interface TimeGroup
     public function finishedAt(): Time;
 
     /**
+     * Returns all ranges of the smallest time groups.
+     *
+     * @return Time[][]
+     */
+    public function granularTimeRanges(): array;
+
+    /**
      * Returns a human-readable time tag useful for displaying the name of time group.
      *
      * @return string
