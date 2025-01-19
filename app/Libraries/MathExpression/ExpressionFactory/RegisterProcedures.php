@@ -33,6 +33,7 @@ trait RegisterProcedures
             "processTotalAmount"
         );
         $this->addProcedure("SOLVE", 2, "processSolve");
+        $this->addProcedure("SUBCYCLE_LITERAL", 1, "processSubcycleLiteral");
         $this->addCustomOperator("\*\*", 7, Operator::RIGHT_ASSOCIATIVE, 2, "exponentiate");
     }
 
@@ -210,6 +211,39 @@ trait RegisterProcedures
         );
 
         $this->memo->write($memo_key, $result);
+
+        return $result;
+    }
+
+    private function processSubcycleLiteral(array $values, Context $context, Token $token)
+    {
+        $function_name = $token->getValue();
+
+        $literal = $this->math->resolve($values[0]);
+
+        $result = $literal;
+
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        if ($literal instanceof BigRational) {
+            $subcycle_ranges = $time_group_manager->subcycleRanges();
+            $result = array_map(
+                function ($ranges) use ($literal) {
+                    return array_fill(0, count($ranges), $literal);
+                },
+                $subcycle_ranges
+            );
+        } else if ($literal[0] instanceof BigRational) {
+            $subcycle_ranges = $time_group_manager->subcycleRanges();
+            $result = array_map(
+                function ($ranges, $subliteral) {
+                    return array_fill(0, count($ranges), $subliteral);
+                },
+                $subcycle_ranges,
+                $literal
+            );
+        }
+
+        $result = json_encode($result);
 
         return $result;
     }

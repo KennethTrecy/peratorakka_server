@@ -48,7 +48,8 @@ class PeratorakkaMath implements MathInterface
                     function ($subaddend, $subadder) {
                         return $subaddend->plus($subadder);
                     },
-                    $addend, $adder
+                    $addend,
+                    $adder
                 );
             }
 
@@ -88,7 +89,8 @@ class PeratorakkaMath implements MathInterface
                     function ($submultiplicand, $submultiplier) {
                         return $submultiplicand->multipliedBy($submultiplier)->simplified();
                     },
-                    $multiplicand, $multiplier
+                    $multiplicand,
+                    $multiplier
                 );
             }
 
