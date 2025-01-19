@@ -194,8 +194,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("500"),
-            RationalNumber::get("500")
+            [ RationalNumber::get("500") ],
+            [ RationalNumber::get("500") ]
         ]);
     }
 
@@ -366,8 +366,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("0"),
-            RationalNumber::get("2000")
+            [ RationalNumber::get("0") ],
+            [ RationalNumber::get("2000") ]
         ]);
     }
 
@@ -538,8 +538,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("0"),
-            RationalNumber::get("2000")
+            [ RationalNumber::get("0") ],
+            [ RationalNumber::get("2000") ]
         ]);
     }
 
@@ -710,8 +710,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("500"),
-            RationalNumber::get("500")
+            [ RationalNumber::get("500") ],
+            [ RationalNumber::get("500") ]
         ]);
     }
 
@@ -882,8 +882,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("2500"),
-            RationalNumber::get("4000")
+            [ RationalNumber::get("2500") ],
+            [ RationalNumber::get("4000") ]
         ]);
     }
     public function testTotalClosedDebitAmountForAssetCollection()
@@ -1053,8 +1053,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("2000"),
-            RationalNumber::get("3500")
+            [ RationalNumber::get("2000") ],
+            [ RationalNumber::get("3500") ]
         ]);
     }
 
@@ -1225,8 +1225,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("2000"),
-            RationalNumber::get("3500")
+            [ RationalNumber::get("2000") ],
+            [ RationalNumber::get("3500") ]
         ]);
     }
 
@@ -1561,12 +1561,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("0"),
-            RationalNumber::get("0")
+            [ RationalNumber::get("0") ],
+            [ RationalNumber::get("0") ]
         ]);
     }
 
-    public function testRawRightHandAdditionToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralRightHandAdditionToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -1733,12 +1733,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("2001"),
-            RationalNumber::get("3501")
+            [ RationalNumber::get("2001") ],
+            [ RationalNumber::get("3501") ]
         ]);
     }
 
-    public function testRawLeftHandAdditionToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralLeftHandAdditionToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -1905,12 +1905,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("2002"),
-            RationalNumber::get("3502")
+            [ RationalNumber::get("2002") ],
+            [ RationalNumber::get("3502") ]
         ]);
     }
 
-    public function testRawRightHandSubtractionToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralRightHandSubtractionToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2077,12 +2077,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("1999"),
-            RationalNumber::get("3499")
+            [ RationalNumber::get("1999") ],
+            [ RationalNumber::get("3499") ]
         ]);
     }
 
-    public function testRawLeftHandSubtractionToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralLeftHandSubtractionToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2249,12 +2249,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("-1998"),
-            RationalNumber::get("-3498")
+            [ RationalNumber::get("-1998") ],
+            [ RationalNumber::get("-3498") ]
         ]);
     }
 
-    public function testRawRightHandMultiplicationToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralRightHandMultiplicationToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2421,12 +2421,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("4000"),
-            RationalNumber::get("7000")
+            [ RationalNumber::get("4000") ],
+            [ RationalNumber::get("7000") ]
         ]);
     }
 
-    public function testRawLeftHandMultiplicationToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralLeftHandMultiplicationToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2593,12 +2593,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("4000"),
-            RationalNumber::get("7000")
+            [ RationalNumber::get("4000") ],
+            [ RationalNumber::get("7000") ]
         ]);
     }
 
-    public function testRawRightHandDivisionToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralRightHandDivisionToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2765,12 +2765,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("1000"),
-            RationalNumber::get("1750")
+            [ RationalNumber::get("1000") ],
+            [ RationalNumber::get("1750") ]
         ]);
     }
 
-    public function testRawLeftHandDivisionToTotalClosedDebitAmountForAssetCollection()
+    public function testLiteralLeftHandDivisionToTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2937,8 +2937,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("0.001"),
-            RationalNumber::get("1/1750")
+            [ RationalNumber::get("0.001") ],
+            [ RationalNumber::get("1/1750") ]
         ]);
     }
 
@@ -3109,8 +3109,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("1"),
-            RationalNumber::get("1")
+            [ RationalNumber::get("1") ],
+            [ RationalNumber::get("1") ]
         ]);
     }
 
@@ -3367,8 +3367,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("0"),
-            RationalNumber::get("3000")
+            [ RationalNumber::get("0") ],
+            [ RationalNumber::get("3000") ]
         ]);
     }
 
@@ -3539,8 +3539,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("250"),
-            RationalNumber::get("250")
+            [ RationalNumber::get("250") ],
+            [ RationalNumber::get("250") ]
         ]);
     }
 
@@ -3718,7 +3718,7 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("250")
+            [ RationalNumber::get("125"), RationalNumber::get("125") ]
         ]);
     }
 
@@ -4057,12 +4057,12 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
-        $formula = "CYCLE_DAY_POSTCOUNT_PER_YEAR";
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * CYCLE_DAY_POSTCOUNT_PER_YEAR";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("365"),
-            RationalNumber::get("366")
+            [ RationalNumber::get("182500") ],
+            [ RationalNumber::get("183000") ]
         ]);
     }
 
@@ -4754,8 +4754,8 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            RationalNumber::get("500"),
-            RationalNumber::get("500")
+            [ RationalNumber::get("500") ],
+            [ RationalNumber::get("500") ]
         ]);
     }
 }
