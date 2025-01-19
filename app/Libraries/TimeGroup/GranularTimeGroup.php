@@ -36,79 +36,91 @@ abstract class GranularTimeGroup implements TimeGroup
     public function totalOpenedDebitAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational {
-        return array_reduce(
-            $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) {
-                return $total->plus($summary_calculation->opened_debit_amount);
-            },
-            RationalNumber::zero()
-        );
+    ): array {
+        return [
+            array_reduce(
+                $this->selectSummaryCalculations($selected_account_IDs),
+                function ($total, $summary_calculation) {
+                    return $total->plus($summary_calculation->opened_debit_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
     }
 
     public function totalOpenedCreditAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational {
-        return array_reduce(
-            $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) {
-                return $total->plus($summary_calculation->opened_credit_amount);
-            },
-            RationalNumber::zero()
-        );
+    ): array {
+        return [
+            array_reduce(
+                $this->selectSummaryCalculations($selected_account_IDs),
+                function ($total, $summary_calculation) {
+                    return $total->plus($summary_calculation->opened_credit_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
     }
 
     public function totalUnadjustedDebitAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational {
-        return array_reduce(
-            $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) {
-                return $total->plus($summary_calculation->unadjusted_debit_amount);
-            },
-            RationalNumber::zero()
-        );
+    ): array {
+        return [
+            array_reduce(
+                $this->selectSummaryCalculations($selected_account_IDs),
+                function ($total, $summary_calculation) {
+                    return $total->plus($summary_calculation->unadjusted_debit_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
     }
 
     public function totalUnadjustedCreditAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational {
-        return array_reduce(
-            $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) {
-                return $total->plus($summary_calculation->unadjusted_credit_amount);
-            },
-            RationalNumber::zero()
-        );
+    ): array {
+        return [
+            array_reduce(
+                $this->selectSummaryCalculations($selected_account_IDs),
+                function ($total, $summary_calculation) {
+                    return $total->plus($summary_calculation->unadjusted_credit_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
     }
 
     public function totalClosedDebitAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational {
-        return array_reduce(
-            $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) {
-                return $total->plus($summary_calculation->closed_debit_amount);
-            },
-            RationalNumber::zero()
-        );
+    ): array {
+        return [
+            array_reduce(
+                $this->selectSummaryCalculations($selected_account_IDs),
+                function ($total, $summary_calculation) {
+                    return $total->plus($summary_calculation->closed_debit_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
     }
 
     public function totalClosedCreditAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational {
-        return array_reduce(
-            $this->selectSummaryCalculations($selected_account_IDs),
-            function ($total, $summary_calculation) {
-                return $total->plus($summary_calculation->closed_credit_amount);
-            },
-            RationalNumber::zero()
-        );
+    ): array {
+        return [
+            array_reduce(
+                $this->selectSummaryCalculations($selected_account_IDs),
+                function ($total, $summary_calculation) {
+                    return $total->plus($summary_calculation->closed_credit_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
     }
 
     private function selectSummaryCalculations(array $selected_account_IDs): array

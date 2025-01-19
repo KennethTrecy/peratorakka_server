@@ -87,60 +87,60 @@ interface TimeGroup
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
-     * @return BigRational
+     * @return BigRational[]
      */
     public function totalOpenedDebitAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational;
+    ): array;
 
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
-     * @return BigRational
+     * @return BigRational[]
      */
     public function totalOpenedCreditAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational;
+    ): array;
 
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
-     * @return BigRational
+     * @return BigRational[]
      */
     public function totalUnadjustedDebitAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational;
+    ): array;
 
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
-     * @return BigRational
+     * @return BigRational[]
      */
     public function totalUnadjustedCreditAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational;
+    ): array;
 
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
-     * @return BigRational
+     * @return BigRational[]
      */
     public function totalClosedDebitAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational;
+    ): array;
 
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
-     * @return BigRational
+     * @return BigRational[]
      */
     public function totalClosedCreditAmount(
         Context $context,
         array $selected_account_IDs
-    ): BigRational;
+    ): array;
 }
