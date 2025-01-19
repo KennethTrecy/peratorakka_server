@@ -10,6 +10,7 @@ use App\Libraries\Context\ContextKeys;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
+use App\Models\FormulaModel;
 use Closure;
 use CodeIgniter\Database\BaseBuilder;
 use Xylemical\Expressions\Token;
@@ -19,12 +20,13 @@ trait RegisterValues
 {
     public function addValues()
     {
-        $this->addValue('CYCLE_DAY_COUNT', "evaluateCycleDayCount");
-        $this->addValue('CYCLE_DAY_PRECOUNT_PER_YEAR', "evaluateCycleDayPrecountPerYear");
-        $this->addValue('CYCLE_DAY_POSTCOUNT_PER_YEAR', "evaluateCycleDayPostcountPerYear");
-        $this->addValue('COLLECTION\[\d+\]', "evaluateCollection");
+        $this->addValue("CYCLE_DAY_COUNT", "evaluateCycleDayCount");
+        $this->addValue("CYCLE_DAY_PRECOUNT_PER_YEAR", "evaluateCycleDayPrecountPerYear");
+        $this->addValue("CYCLE_DAY_POSTCOUNT_PER_YEAR", "evaluateCycleDayPostcountPerYear");
+        $this->addValue("COLLECTION\[\d+\]", "evaluateCollection");
+        $this->addValue("FORMULA\[\d+\]", "evaluateFormula");
         $this->addValue(
-            '('.join('|', ACCEPTABLE_ACCOUNT_KINDS).')_ACCOUNTS',
+            "(".join("|", ACCEPTABLE_ACCOUNT_KINDS).")_ACCOUNTS",
             "evaluateAccountKind"
         );
     }
@@ -136,5 +138,20 @@ trait RegisterValues
     {
         $callback = Closure::fromCallable([ $this, $function_name ]);
         $this->addOperator(new Value($name, $callback));
+    }
+
+    private function evaluateFormula(array $values, Context $context, Token $token): string
+    {
+        $value = $token->getValue();
+        preg_match('/FORMULA\[(?P<formula_id>\d+)\]/', $value, $matches);
+        $formula_id = $matches["formula_id"];
+
+        $builder = model(FormulaModel::class, false)
+            ->builder()
+            ->where("id", $formula_id);
+
+        $key = $this->cache->store($builder);
+
+        return $key;
     }
 }
