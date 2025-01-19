@@ -3,9 +3,9 @@
 namespace App\Libraries\MathExpression\ExpressionFactory;
 
 use App\Exceptions\ExpressionException;
-use App\Libraries\Context\FlashCache;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\FlashCache;
 use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
@@ -14,8 +14,8 @@ use App\Models\FormulaModel;
 use Brick\Math\BigRational;
 use Closure;
 use CodeIgniter\Database\BaseBuilder;
-use Xylemical\Expressions\Procedure;
 use Xylemical\Expressions\Operator;
+use Xylemical\Expressions\Procedure;
 use Xylemical\Expressions\Token;
 
 trait RegisterProcedures
@@ -34,6 +34,7 @@ trait RegisterProcedures
         );
         $this->addProcedure("SOLVE", 2, "processSolve");
         $this->addProcedure("SUBCYCLE_LITERAL", 1, "processSubcycleLiteral");
+        $this->addProcedure("CYCLIC_PRODUCT", 1, "processCyclicProduct");
         $this->addCustomOperator("\*\*", 7, Operator::RIGHT_ASSOCIATIVE, 2, "exponentiate");
     }
 
@@ -240,6 +241,34 @@ trait RegisterProcedures
                 },
                 $subcycle_ranges,
                 $literal
+            );
+        }
+
+        $result = json_encode($result);
+
+        return $result;
+    }
+
+    private function processCyclicProduct(array $values, Context $context, Token $token)
+    {
+        $function_name = $token->getValue();
+
+        $operand = $this->math->resolve($values[0]);
+
+        $result = $operand;
+
+        if (is_array($operand) && is_array($operand[0])) {
+            $result = array_map(
+                function ($operand) {
+                    return array_reduce(
+                        $operand,
+                        function ($previous_product, $suboperand) {
+                            return $previous_product->multipliedBy($suboperand);
+                        },
+                        BigRational::one()
+                    )->simplified();
+                },
+                $operand
             );
         }
 
