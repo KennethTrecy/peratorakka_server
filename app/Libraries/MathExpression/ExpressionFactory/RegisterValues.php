@@ -7,6 +7,7 @@ use App\Exceptions\ExpressionException;
 use App\Libraries\Context\FlashCache;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Resource;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
@@ -20,6 +21,7 @@ trait RegisterValues
 {
     public function addValues()
     {
+        $this->addValue("SUBCYCLE_DAY_COUNT", "evaluateSubcycleDayCount");
         $this->addValue("CYCLE_DAY_COUNT", "evaluateCycleDayCount");
         $this->addValue("CYCLE_DAY_PRECOUNT_PER_YEAR", "evaluateCycleDayPrecountPerYear");
         $this->addValue("CYCLE_DAY_POSTCOUNT_PER_YEAR", "evaluateCycleDayPostcountPerYear");
@@ -58,6 +60,26 @@ trait RegisterValues
         $key = $this->cache->store($builder);
 
         return $key;
+    }
+
+    private function evaluateSubcycleDayCount(array $values, Context $context, Token $token): string
+    {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $subcycle_ranges = $time_group_manager->subcycleRanges();
+        $day_counts = array_map(
+            function ($ranges) {
+                return array_map(
+                    function ($range) {
+                        [ $started_at, $finished_at ] = $range;
+                        return Resource::duration($started_at, $finished_at);
+                    },
+                    $ranges
+                );
+            },
+            $subcycle_ranges
+        );
+
+        return json_encode($day_counts);
     }
 
     private function evaluateCycleDayCount(array $values, Context $context, Token $token): string

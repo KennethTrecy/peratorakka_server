@@ -203,6 +203,17 @@ class TimeGroupManager
         );
     }
 
+    public function subcycleRanges(): array
+    {
+        return array_map(
+            function ($time_group) {
+                $granular_time_ranges = $time_group->granularTimeRanges();
+                return $granular_time_ranges;
+            },
+            $this->time_groups
+        );
+    }
+
     private function loadSummaryCalculations(array $selected_account_IDs): void
     {
         $missing_account_IDs = array_diff(
