@@ -29,14 +29,14 @@ mechanism is dependent to the developer's preference.
      - General Asset
      - Liability
      - Equity
-     - Expense
-     - Income
+     - General Expense
+     - General Income
      - Liquid Asset
      - Depreciative Asset
      - Itemized Asset
      - Paper Gain
      - Paper Loss
-     - Revenue
+     - Gain
      - Loss
 4. An cash flow activity has the following information:
    - Primary ID
