@@ -14,6 +14,7 @@ use App\Models\FormulaModel;
 use Brick\Math\BigRational;
 use Closure;
 use CodeIgniter\Database\BaseBuilder;
+use Exception;
 use Xylemical\Expressions\Operator;
 use Xylemical\Expressions\Procedure;
 use Xylemical\Expressions\Token;
@@ -33,6 +34,7 @@ trait RegisterProcedures
             "processTotalAmount"
         );
         $this->addProcedure("SOLVE", 2, "processSolve");
+        $this->addProcedure("SELECT_CYCLE_VALUE", 2, "processSelectCycleValue");
         $this->addProcedure("SUBCYCLE_LITERAL", 1, "processSubcycleLiteral");
         $this->addProcedure("CYCLIC_PRODUCT", 1, "processCyclicProduct");
         $this->addCustomOperator("\*\*", 7, Operator::RIGHT_ASSOCIATIVE, 2, "exponentiate");
@@ -135,6 +137,41 @@ trait RegisterProcedures
                     );
             }
         }
+    }
+
+    private function processSelectCycleValue(array $values, Context $context, Token $token)
+    {
+        $result = $this->math->resolve($values[0]);
+        $index = $this->math->resolve($values[1]);
+        $indexes = is_array($index) ? (
+            count($index) === 1
+                ? array_fill(0, count($result), $index[0])
+                : $index
+        ): array_fill(0, count($result), $index);
+
+        try {
+            $indexes = array_map(function ($index) {
+                if (!($index instanceof BigRational && $index->isGreaterThanOrEqualTo(0))) {
+                    throw new ExpressionException(
+                        "SELECT_CYCLE_VALUE's second parameter must be a zero or positive integer."
+                    );
+                }
+
+                return $index->toInt();
+            }, $indexes);
+        } catch (Exception $error) {
+            throw new ExpressionException("SELECT_CYCLE_VALUE's second parameter must be a zero or positive integer.");
+        } catch (ExpressionException $error) {
+            throw $error;
+        }
+
+        if(is_array($result)) {
+            $result = array_map(function ($index) use ($result) {
+                return $result[$index];
+            }, $indexes);
+        }
+
+        return json_encode($result);
     }
 
     private function processTotalAmount(array $values, Context $context, Token $token)
