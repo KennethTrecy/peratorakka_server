@@ -67,12 +67,7 @@ trait RegisterValues
         $day_counts = array_map(
             function ($range) {
                 [ $started_at, $finished_at ] = $range;
-                $difference = $started_at
-                    ->setHour(0)->setMinute(0)->setSecond(0)
-                    ->difference($finished_at->setHour(0)->setMinute(0)->setSecond(0));
-                $day_difference = $difference->getDays();
-                $duration = $day_difference + 1;
-                return $duration;
+                return Resource::duration($started_at, $finished_at);
             },
             $cycle_ranges
         );
@@ -90,16 +85,9 @@ trait RegisterValues
         $day_counts = array_map(
             function ($range) {
                 [ $started_at, $finished_at ] = $range;
-                $year_start = $started_at
-                    ->setMonth(1)->setDay(1)
-                    ->setHour(0)->setMinute(0)->setSecond(0);
+                $year_start = $started_at->setMonth(1)->setDay(1);
                 $year_end = $year_start->setMonth(12)->setDay(31);
-
-                $difference = $year_start->difference($year_end);
-                $day_difference = $difference->getDays();
-                $duration = $day_difference + 1;
-
-                return $duration;
+                return Resource::duration($year_start, $year_end);
             },
             $cycle_ranges
         );
@@ -117,16 +105,9 @@ trait RegisterValues
         $day_counts = array_map(
             function ($range) {
                 [ $started_at, $finished_at ] = $range;
-                $year_start = $finished_at
-                    ->setMonth(1)->setDay(1)
-                    ->setHour(0)->setMinute(0)->setSecond(0);
+                $year_start = $finished_at->setMonth(1)->setDay(1);
                 $year_end = $year_start->setMonth(12)->setDay(31);
-
-                $difference = $year_start->difference($year_end);
-                $day_difference = $difference->getDays();
-                $duration = $day_difference + 1;
-
-                return $duration;
+                return Resource::duration($year_start, $year_end);
             },
             $cycle_ranges
         );

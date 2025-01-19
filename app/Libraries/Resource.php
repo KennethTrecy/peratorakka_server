@@ -2,6 +2,8 @@
 
 namespace App\Libraries;
 
+use CodeIgniter\I18n\Time;
+
 class Resource
 {
     public static function key(array $resources, callable $key_selector): array
@@ -38,5 +40,15 @@ class Resource
         );
 
         return $grouped_resource;
+    }
+
+    public static function duration(Time $started_time, Time $finished_time): int
+    {
+        $difference = $started_time
+            ->setHour(0)->setMinute(0)->setSecond(0)
+            ->difference($finished_time->setHour(0)->setMinute(0)->setSecond(0));
+        $day_difference = $difference->getDays();
+        $duration = $day_difference + 1;
+        return $duration;
     }
 }
