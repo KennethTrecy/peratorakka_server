@@ -65,7 +65,7 @@ class TimeGroupManager
      * Gets total opened debit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_ids
-     * @return BigRational[]
+     * @return BigRational[][]
      */
     public function totalOpenedDebitAmount(array $selected_account_ids): array
     {
@@ -85,7 +85,7 @@ class TimeGroupManager
      * Gets total opened credit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_ids
-     * @return BigRational[]
+     * @return BigRational[][]
      */
     public function totalOpenedCreditAmount(array $selected_account_ids): array
     {
@@ -105,7 +105,7 @@ class TimeGroupManager
      * Gets total unadjusted debit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_ids
-     * @return BigRational[]
+     * @return BigRational[][]
      */
     public function totalUnadjustedDebitAmount(array $selected_account_ids): array
     {
@@ -125,7 +125,7 @@ class TimeGroupManager
      * Gets total unadjusted credit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_ids
-     * @return BigRational[]
+     * @return BigRational[][]
      */
     public function totalUnadjustedCreditAmount(array $selected_account_ids): array
     {
@@ -145,7 +145,7 @@ class TimeGroupManager
      * Gets total closed debit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_ids
-     * @return BigRational[]
+     * @return BigRational[][]
      */
     public function totalClosedDebitAmount(array $selected_account_ids): array
     {
@@ -165,7 +165,7 @@ class TimeGroupManager
      * Gets total closed credit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_ids
-     * @return BigRational[]
+     * @return BigRational[][]
      */
     public function totalClosedCreditAmount(array $selected_account_ids): array
     {
