@@ -70,6 +70,8 @@ class FormulaSource implements NumericalToolSource
             ContextKeys::EXCHANGE_RATE_BASIS,
             $this->formula_info->exchange_rate_basis
         );
+        $context->setVariable(ContextKeys::CURRENT_STACK_COUNT_STATUS, 0);
+        $context->setVariable(ContextKeys::MAX_STACK_COUNT_STATUS, 0);
 
         /**
          * @var TimeGroupManager

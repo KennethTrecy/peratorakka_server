@@ -18,4 +18,7 @@ enum ContextKeys: string
     case ACCOUNT_CACHE = "account_cache";
     case COLLECTION_CACHE = "collection_cache";
     case EXCHANGE_RATE_CACHE = "exchange_rate_cache";
+
+    case CURRENT_STACK_COUNT_STATUS = "current_stack_count_status";
+    case MAX_STACK_COUNT_STATUS = "max_stack_count_status";
 }
