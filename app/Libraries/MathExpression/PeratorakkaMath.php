@@ -24,7 +24,32 @@ class PeratorakkaMath implements MathInterface
             [ $addend, $adder ] = $operators;
 
             if ($addend instanceof BigRational && $adder instanceof BigRational) {
-                return $addend->plus($adder)->simplified();
+                return $addend->plus($adder);
+            } elseif (is_array($addend) && $adder instanceof BigRational) {
+                $subelement_count = count($addend);
+                $subadder = $adder->dividedBy($subelement_count);
+                return array_map(
+                    function ($subaddend) use ($subadder) {
+                        return $subaddend->plus($subadder);
+                    },
+                    $addend
+                );
+            } elseif ($addend instanceof BigRational && is_array($adder)) {
+                $subelement_count = count($adder);
+                $subaddend = $addend->dividedBy($subelement_count);
+                return array_map(
+                    function ($subadder) use ($subaddend) {
+                        return $subaddend->plus($subadder);
+                    },
+                    $adder
+                );
+            } elseif (is_array($addend) && is_array($adder)) {
+                return array_map(
+                    function ($subaddend, $subadder) {
+                        return $subaddend->plus($subadder);
+                    },
+                    $addend, $adder
+                );
             }
 
             return $addend ?? $adder ?? RationalNumber::zero();
@@ -40,10 +65,31 @@ class PeratorakkaMath implements MathInterface
         );
 
         return json_encode(array_map(function ($operators) {
-            [ $multiplicand, $multipier ] = $operators;
+            [ $multiplicand, $multiplier ] = $operators;
 
-            if ($multiplicand instanceof BigRational && $multipier instanceof BigRational) {
-                return $multiplicand->multipliedBy($multipier)->simplified();
+            if ($multiplicand instanceof BigRational && $multiplier instanceof BigRational) {
+                return $multiplicand->multipliedBy($multiplier)->simplified();
+            } elseif (is_array($multiplicand) && $multiplier instanceof BigRational) {
+                return array_map(
+                    function ($submultiplicand) use ($multiplier) {
+                        return $submultiplicand->multipliedBy($multiplier)->simplified();
+                    },
+                    $multiplicand
+                );
+            } elseif ($multiplicand instanceof BigRational && is_array($multiplier)) {
+                return array_map(
+                    function ($submultiplier) use ($multiplicand) {
+                        return $multiplicand->multipliedBy($submultiplier)->simplified();
+                    },
+                    $multiplier
+                );
+            } elseif (is_array($multiplicand) && is_array($multiplier)) {
+                return array_map(
+                    function ($submultiplicand, $submultiplier) {
+                        return $submultiplicand->multipliedBy($submultiplier)->simplified();
+                    },
+                    $multiplicand, $multiplier
+                );
             }
 
             return null;
@@ -57,7 +103,32 @@ class PeratorakkaMath implements MathInterface
             [ $subtrahend, $minuend ] = $operators;
 
             if ($subtrahend instanceof BigRational && $minuend instanceof BigRational) {
-                return $subtrahend->minus($minuend)->simplified();
+                return $subtrahend->minus($minuend);
+            } elseif (is_array($subtrahend) && $minuend instanceof BigRational) {
+                $subelement_count = count($subtrahend);
+                $subminuend = $minuend->dividedBy($subelement_count);
+                return array_map(
+                    function ($subsubtrahend) use ($subminuend) {
+                        return $subsubtrahend->minus($subminuend);
+                    },
+                    $subtrahend
+                );
+            } elseif ($subtrahend instanceof BigRational && is_array($minuend)) {
+                $subelement_count = count($minuend);
+                $subsubtrahend = $subtrahend->dividedBy($subelement_count);
+                return array_map(
+                    function ($subminuend) use ($subsubtrahend) {
+                        return $subsubtrahend->minus($subminuend);
+                    },
+                    $minuend
+                );
+            } elseif (is_array($subtrahend) && is_array($minuend)) {
+                return array_map(
+                    function ($subsubtrahend, $subminuend) {
+                        return $subsubtrahend->minus($subminuend);
+                    },
+                    $subtrahend, $minuend
+                );
             }
 
             return $subtrahend ?? $minuend->negated() ?? RationalNumber::zero();
@@ -72,6 +143,27 @@ class PeratorakkaMath implements MathInterface
 
             if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
                 return $dividend->dividedBy($divisor)->simplified();
+            } elseif (is_array($dividend) && $divisor instanceof BigRational) {
+                return array_map(
+                    function ($subdividend) use ($divisor) {
+                        return $subdividend->dividedBy($divisor)->simplified();
+                    },
+                    $dividend
+                );
+            } elseif ($dividend instanceof BigRational && is_array($divisor)) {
+                return array_map(
+                    function ($subdivisor) use ($dividend) {
+                        return $dividend->dividedBy($subdivisor)->simplified();
+                    },
+                    $divisor
+                );
+            } elseif (is_array($dividend) && is_array($divisor)) {
+                return array_map(
+                    function ($subdividend, $subdivisor) {
+                        return $subdividend->dividedBy($subdivisor)->simplified();
+                    },
+                    $dividend, $divisor
+                );
             } elseif ($divisor instanceof BigRational) {
                 return RationalNumber::zero();
             }
@@ -141,6 +233,39 @@ class PeratorakkaMath implements MathInterface
                 } catch (Exception $error) {
                     throw new ExpressionException("Ensure exponents are integer. Otherwise, the exponent is too big for the memory.");
                 }
+            } elseif (is_array($base) && $exponent instanceof BigRational) {
+                return array_map(
+                    function ($subbase) use ($subexponent) {
+                        try {
+                            return $subbase->power($subexponent->toInt())->simplified();
+                        } catch (Exception $error) {
+                            throw new ExpressionException("Ensure exponents are integer. Otherwise, the exponent is too big for the memory.");
+                        }
+                    },
+                    $base
+                );
+            } elseif ($base instanceof BigRational && is_array($exponent)) {
+                return array_map(
+                    function ($subexponent) use ($subbase) {
+                        try {
+                            return $subbase->power($subexponent->toInt())->simplified();
+                        } catch (Exception $error) {
+                            throw new ExpressionException("Ensure exponents are integer. Otherwise, the exponent is too big for the memory.");
+                        }
+                    },
+                    $exponent
+                );
+            } elseif (is_array($base) && is_array($exponent)) {
+                return array_map(
+                    function ($subbase, $subexponent) {
+                        try {
+                            return $subbase->power($subexponent->toInt())->simplified();
+                        } catch (Exception $error) {
+                            throw new ExpressionException("Ensure exponents are integer. Otherwise, the exponent is too big for the memory.");
+                        }
+                    },
+                    $base, $exponent
+                );
             }
 
             return null;
@@ -153,8 +278,15 @@ class PeratorakkaMath implements MathInterface
 
         if (str_starts_with($value, "[") && str_ends_with($value, "]")) {
             return array_map(
-                function ($element) use ($scale) {
-                    return BigRational::of($element, $scale);
+                function ($elements) use ($scale) {
+                    return is_array($elements)
+                        ? array_map(
+                            function ($element) use ($scale) {
+                                return BigRational::of($element, $scale);
+                            },
+                            $elements
+                        )
+                        : BigRational::of($elements, $scale);
                 },
                 json_decode($value, true)
             );
