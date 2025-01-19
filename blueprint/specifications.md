@@ -74,6 +74,7 @@ mechanism is dependent to the developer's preference.
      - Record
      - Close
      - Exchange
+     - Fold
      - Bid
      - Ask
      - Transform
