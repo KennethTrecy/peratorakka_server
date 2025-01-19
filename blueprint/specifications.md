@@ -31,7 +31,12 @@ mechanism is dependent to the developer's preference.
      - Equity
      - Expense
      - Income
-4. An event has the following information:
+4. An cash flow activity has the following information:
+   - Primary ID
+   - User ID
+   - Name
+   - Description
+5. An event has the following information:
    - Primary ID
    - User ID
    - Name
@@ -41,21 +46,23 @@ mechanism is dependent to the developer's preference.
      - Timeout
      - Interval
      - Manual
-5. A timeout event has the following information:
+6. A timeout event has the following information:
    - Primary ID
    - Event ID
    - Expiration date and time
-6. An interval event has the following information:
+7. An interval event has the following information:
    - Primary ID
    - Event ID
    - Schedule as CRON expression
-7. An event started time has the following information:
+8. An event started time has the following information:
    - Primary ID
    - Event ID
    - Started time
-8. A modifier has the following information:
+9.  A modifier has the following information:
    - Primary ID
+   - Debit Cash Flow Activity ID
    - Debit Account ID
+   - Credit Cash Flow Activity ID
    - Credit account ID
    - Name
    - Description (optional)
@@ -69,7 +76,7 @@ mechanism is dependent to the developer's preference.
      - Reactive
      - Dependent
      - Manual Input
-9. A reactive modifier has the following special information:
+10. A reactive modifier has the following special information:
    - Primary ID
    - Modifier ID
    - Event ID
@@ -78,7 +85,7 @@ mechanism is dependent to the developer's preference.
      - Adder
      - Multiplier
      - Value
-10. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
+11. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
     following special information:
     - Primary ID
     - Modifier ID
@@ -88,21 +95,59 @@ mechanism is dependent to the developer's preference.
       - Adder
       - Multiplier
     - Value
-11. A financial entry has the following information:
+12. A financial entry has the following information:
     - Primary ID
     - Modifier ID
+    - Transaction Date
     - Debit Amount
     - Credit Amount
     - Remarks
-12. A frozen period has the following information:
+13. A frozen period has the following information:
     - Primary ID
     - User ID
     - Started date and time
     - Finished date and time
-13. A summary calculation has the following information:
+14. A summary calculation has the following information:
     - Primary ID
     - Frozen Period ID
+    - Account ID
+    - Opened Debit Amount
     - Unadjusted Debit Amount
-    - Adjusted Debit Amount
+    - Closed Debit Amount
+    - Opened Credit Amount
     - Unadjusted Credit Amount
-    - Adjusted Credit Amount
+    - Closed Credit Amount
+15. A flow calculation has the following information:
+    - Primary ID
+    - Frozen Period ID
+    - Cash Flow Activity ID
+    - Account ID
+    - Net amount
+16. A collection has the following information:
+    - Primary ID
+    - User ID
+    - Name
+    - Description
+17. An account collection has the following information:
+    - Primary ID
+    - Collection ID
+    - Account ID
+18. A formula has the following information:
+    - Primary ID
+    - Currency ID
+    - Name
+    - Description
+    - Output Format
+    - Exchange Rate Basis
+    - Presentational Precision
+    - Formula
+19. A numerical tool has the following information:
+    - Primary ID
+    - User ID
+    - Name
+    - Kind
+    - Recurrence
+    - Recency
+    - Order
+    - Notes
+    - Configuration
