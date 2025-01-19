@@ -6,9 +6,11 @@ use App\Exceptions\ExpressionException;
 use App\Libraries\Context\FlashCache;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
 use App\Models\CollectionModel;
+use App\Models\FormulaModel;
 use Brick\Math\BigRational;
 use Closure;
 use CodeIgniter\Database\BaseBuilder;
@@ -30,6 +32,7 @@ trait RegisterProcedures
             1,
             "processTotalAmount"
         );
+        $this->addProcedure("SOLVE", 2, "processSolve");
         $this->addCustomOperator("\*\*", 7, Operator::RIGHT_ASSOCIATIVE, 2, "exponentiate");
     }
 
@@ -48,6 +51,88 @@ trait RegisterProcedures
     ) {
         $callback = Closure::fromCallable([ $this, $function_name ]);
         $this->addOperator(new Operator($regex, $precedence, $associativity, $arity, $callback));
+    }
+
+    private function processSolve(array $values, Context $context, Token $token)
+    {
+        if (!is_numeric($values[1]) || !is_int(+$values[1]) || +$values[1] < 1) {
+            throw new ExpressionException(
+                "SOLVE's second parameter must be a positive integer."
+            );
+        }
+
+        $function_name = $token->getValue();
+        $builder_key = $values[0];
+        $specified_maximum_stack_count = +$values[1];
+
+        /**
+         * @var BaseBuilder
+         */
+        $builder = $this->cache->flash($builder_key);
+
+        if ($builder === null) {
+            throw new ExpressionException(
+                "A formula is expected for \"$function_name\" function."
+            );
+        }
+
+        $compiled_select = base64_encode($builder->getCompiledSelect(false));
+        $memo_key = $function_name.'_'.$compiled_select.'_'.$specified_maximum_stack_count;
+
+        if (!is_null($this->memo->read($memo_key, null))) {
+            return $this->memo->read($memo_key);
+        }
+
+        $current_stack_count = $context->getVariable(ContextKeys::CURRENT_STACK_COUNT_STATUS, 0);
+        $contextual_maximum_stack_count = $context->getVariable(
+            ContextKeys::MAX_STACK_COUNT_STATUS,
+            0
+        );
+
+        if (
+            $current_stack_count === $contextual_maximum_stack_count
+            && $contextual_maximum_stack_count > 0
+        ) {
+            throw new ExpressionException(
+                "Cannot call \"$function_name\" function because of stack overflow."
+            );
+        }
+
+        if ($builder instanceof BaseBuilder) {
+            $table = $builder->getTable();
+
+            switch ($table) {
+                case model(FormulaModel::class, false)->getTable():
+                    $formula_info = $builder->get()->getResult()[0];
+
+                    $context = $context->newScope(
+                        $contextual_maximum_stack_count > 0
+                            ? $contextual_maximum_stack_count
+                            : $specified_maximum_stack_count
+                    );
+
+                    /**
+                     * @var TimeGroupManager
+                     */
+                    $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+
+                    $math_expression = new MathExpression($time_group_manager);
+
+                    $totals = $math_expression->evaluate($formula_info->formula);
+
+                    $result = json_encode($totals);
+
+                    $this->memo->write($memo_key, $result);
+
+                    return $result;
+
+                    break;
+                default:
+                    throw new ExpressionException(
+                        "A formula is expected for \"$function_name\" function."
+                    );
+            }
+        }
     }
 
     private function processTotalAmount(array $values, Context $context, Token $token)
