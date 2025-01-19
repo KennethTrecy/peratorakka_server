@@ -1163,7 +1163,7 @@ class TimeGroupManagerTest extends AuthenticatedHTTPTestCase
         ]);
 
         $this->assertEquals($totals, [
-            [ RationalNumber::get("2750") ]
+            [ RationalNumber::get("2000"), RationalNumber::get("2750") ]
         ]);
     }
 
@@ -1314,7 +1314,7 @@ class TimeGroupManagerTest extends AuthenticatedHTTPTestCase
         ]);
 
         $this->assertEquals($totals, [
-            [ RationalNumber::get("3500") ]
+            [ RationalNumber::get("2000"), RationalNumber::get("3500") ]
         ]);
     }
 }
