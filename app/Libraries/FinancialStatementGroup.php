@@ -26,12 +26,14 @@ class FinancialStatementGroup
             $summary_calculations,
             function ($summary_calculation) {
                 return $summary_calculation->account_id;
-            });
-        $this->flow_calculations = Resource::key(
+            }
+        );
+        $this->flow_calculations = Resource::group(
             $flow_calculations,
             function ($flow_calculation) {
                 return $flow_calculation->account_id;
-            });
+            }
+        );
         $this->derivator = $derivator;
     }
 
@@ -59,7 +61,7 @@ class FinancialStatementGroup
             }
 
             if (isset($this->flow_calculations[$account->id])) {
-                array_push($target_flow_calculations, $this->flow_calculations[$account->id]);
+                array_push($target_flow_calculations, ...$this->flow_calculations[$account->id]);
             }
         }
 

@@ -417,8 +417,8 @@ class FrozenPeriodModel extends BaseResourceModel
                     $debit_activity_id = $modifier->debit_cash_flow_activity_id;
                     $debit_amount = $financial_entry->debit_amount;
 
-                    $credit_activity_id = $modifier->credit_cash_flow_activity_id;
                     $credit_account_id = $modifier->credit_account_id;
+                    $credit_activity_id = $modifier->credit_cash_flow_activity_id;
                     $credit_amount = $financial_entry->credit_amount;
 
                     if ($debit_activity_id !== null) {
