@@ -83,20 +83,7 @@ class FormulaSource implements NumericalToolSource
         $formula_presentational_precision = $this->formula_info->presentational_precision;
         $subtotals = $math_expression->evaluate($this->formula_info->formula);
 
-        $totals = array_map(
-            function (array $individual_results) {
-                return is_array($individual_results)
-                    ? array_reduce(
-                        $individual_results,
-                        function ($total, $individual_result) {
-                            return $total->plus($individual_result);
-                        },
-                        RationalNumber::zero()
-                    )->simplified()
-                    : $individual_results->simplified();
-            },
-            $subtotals
-        );
+        $totals = MathExpression::summatePeriodicResults($subtotals);
 
         /**
          * @var Constellation[]

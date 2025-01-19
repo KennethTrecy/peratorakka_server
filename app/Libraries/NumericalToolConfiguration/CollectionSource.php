@@ -13,6 +13,7 @@ use App\Libraries\Context\TimeGroupManager\AccountCache;
 use App\Libraries\Context\TimeGroupManager\CollectionCache;
 use App\Libraries\Context\TimeGroupManager\CurrencyCache;
 use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
+use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
 use App\Casts\RationalNumber;
 
@@ -167,7 +168,8 @@ class CollectionSource implements NumericalToolSource
                             : "totalClosedDebitAmount"
                     );
 
-                $account_debit_totals = $time_group_manager->$debit_function([ $account_id ]);
+                $totals = $time_group_manager->$debit_function([ $account_id ]);
+                $account_debit_totals = MathExpression::summatePeriodicResults($totals);
             }
 
             if (
@@ -182,7 +184,8 @@ class CollectionSource implements NumericalToolSource
                             ? "totalUnadjustedCreditAmount"
                             : "totalClosedCreditAmount"
                     );
-                $account_credit_totals = $time_group_manager->$credit_function([ $account_id ]);
+                $totals = $time_group_manager->$credit_function([ $account_id ]);
+                $account_credit_totals = MathExpression::summatePeriodicResults($totals);
             }
 
             switch ($this->side_basis) {
