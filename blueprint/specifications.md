@@ -14,14 +14,14 @@ mechanism is dependent to the developer's preference.
 1. A user has the following information:
    - Primary ID
    - Email
-2. A currency has the following information:
+2. A ticker has the following information:
    - Primary ID
    - User ID
    - Code
    - Name
 3. An account has the following information:
    - Primary ID
-   - Currency ID
+   - Ticker ID
    - Name
    - Description (optional)
    - Kind (enumeration)
@@ -33,6 +33,11 @@ mechanism is dependent to the developer's preference.
      - Income
      - Liquid Asset
      - Depreciative Asset
+     - Itemized Asset
+     - Paper Gain
+     - Paper Loss
+     - Revenue
+     - Loss
 4. An cash flow activity has the following information:
    - Primary ID
    - User ID
@@ -60,12 +65,8 @@ mechanism is dependent to the developer's preference.
    - Primary ID
    - Event ID
    - Started time
-9.  A modifier has the following information:
+9. A modifier has the following information:
    - Primary ID
-   - Debit Cash Flow Activity ID
-   - Debit Account ID
-   - Credit Cash Flow Activity ID
-   - Credit account ID
    - Name
    - Description (optional)
    - Action (enumeration)
@@ -73,12 +74,31 @@ mechanism is dependent to the developer's preference.
      - Record
      - Close
      - Exchange
+     - Bid
+     - Ask
+     - Transform
+     - Throw
+     - Catch
+     - Enrich
+     - Dilute
    - Kind (enumeration)
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - Reactive
      - Dependent
      - Manual Input
-10. A reactive modifier has the following special information:
+10. A modifier atom has the following information
+    - Primary ID
+    - Modifier ID
+    - Account ID
+    - Field Kind
+      - Debit
+      - Credit
+      - Item
+11. A modifier atom activity has the following information:
+    - Primary ID
+    - Modifier Atom ID
+    - Cash Flow Activity ID
+12. A reactive modifier has the following special information:
    - Primary ID
    - Modifier ID
    - Event ID
@@ -87,7 +107,7 @@ mechanism is dependent to the developer's preference.
      - Adder
      - Multiplier
      - Value
-11. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
+13. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
     following special information:
     - Primary ID
     - Modifier ID
@@ -97,60 +117,77 @@ mechanism is dependent to the developer's preference.
       - Adder
       - Multiplier
     - Value
-12. A financial entry has the following information:
+14. A financial entry has the following information
     - Primary ID
-    - Modifier ID
+    - User ID
     - Transaction Date
-    - Debit Amount
-    - Credit Amount
     - Remarks
-13. A frozen period has the following information:
+15. A frozen period has the following information:
     - Primary ID
     - User ID
     - Started date and time
     - Finished date and time
-14. A summary calculation has the following information:
+16. A financial entry atom has the following information
+    - Primary ID
+    - Financial Entry ID
+    - Modifier Atom ID
+    - Amount
+17. A unadjusted summary calculation has the following information:
+    - Primary ID
+    - Frozen Period ID
+    - Account ID
+    - Unadjusted Debit Amount
+    - Unadjusted Credit Amount
+18. A adjusted summary calculation has the following information
+    - Primary ID
+    - Frozen Period ID
+    - Account ID
+    - Opened Debit Amount
+    - Closed Debit Amount
+    - Opened Credit Amount
+    - Closed Credit Amount
+19. A papered summary calculation has the following information
     - Primary ID
     - Frozen Period ID
     - Account ID
     - Opened Debit Amount
     - Unadjusted Debit Amount
     - Closed Debit Amount
-    - Opened Credit Amount
+    - Opened Debit Amount
     - Unadjusted Credit Amount
     - Closed Credit Amount
-15. A flow calculation has the following information:
+20. A flow calculation has the following information:
     - Primary ID
     - Frozen Period ID
     - Cash Flow Activity ID
     - Account ID
     - Net amount
-16. A collection has the following information:
+21. A collection has the following information:
     - Primary ID
     - User ID
     - Name
     - Description
-17. An account collection has the following information:
+22. An account collection has the following information:
     - Primary ID
     - Collection ID
     - Account ID
-18. A formula has the following information:
+23. A formula has the following information:
     - Primary ID
-    - Currency ID
+    - Ticker ID
     - Name
     - Description
     - Output Format
       - Unknown (to represent kinds in later versions in case the user downgraded)
       - Raw
       - Percentage
-      - Currency
+      - Ticker
     - Exchange Rate Basis
       - Unknown (to represent kinds in later versions in case the user downgraded)
       - Periodic
       - Latest
     - Presentational Precision
     - Formula
-19. A numerical tool has the following information:
+24. A numerical tool has the following information:
     - Primary ID
     - User ID
     - Name
@@ -167,3 +204,41 @@ mechanism is dependent to the developer's preference.
     - Order
     - Notes
     - Configuration
+25. An itemized configuration has the following information:
+    - Primary ID
+    - Ticker ID
+    - Valuation Method
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Weighted Average
+      - FIFO
+      - LIFO
+26. An item count entry has the following information:
+    - Primary ID
+    - Financial Entry Atom ID
+    - Count
+27. A inventory calculation entry has the following information:
+    - Primary ID
+    - Summary Calculation ID
+    - Issued Date
+    - Remaining Count
+    - Cost
+
+### Migration Plan
+Next version would have a major upgrade.
+
+#### Migration Plan I
+- Make another table for modifier atoms
+- Make another table for modifier atom activity
+- Convert some columns of modifier to modifier atoms
+- Make another table for financial entry atoms
+- Convert some columns of financial entry to financial entry atoms
+- Make another table for unadjusted summary calculation
+- Make another table for adjusted summary calculation
+- Convert some columns of summary calculations to respective calculations
+
+#### Migration Plan II
+- Delete converted columns of modifier
+- Delete converted columns of financial entry
+
+#### Migration Plan III
+- Make another table for papered summary calculation
