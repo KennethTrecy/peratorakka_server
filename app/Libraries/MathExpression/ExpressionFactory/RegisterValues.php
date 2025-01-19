@@ -22,6 +22,8 @@ trait RegisterValues
     public function addValues()
     {
         $this->addValue("SUBCYCLE_DAY_COUNT", "evaluateSubcycleDayCount");
+        $this->addValue("SUBCYCLE_INDEX", "evaluateSubcycleIndex");
+        $this->addValue("SUBCYCLE_COUNT", "evaluateSubcycleCount");
         $this->addValue("CYCLE_DAY_COUNT", "evaluateCycleDayCount");
         $this->addValue("CYCLE_DAY_PRECOUNT_PER_YEAR", "evaluateCycleDayPrecountPerYear");
         $this->addValue("CYCLE_DAY_POSTCOUNT_PER_YEAR", "evaluateCycleDayPostcountPerYear");
@@ -80,6 +82,34 @@ trait RegisterValues
         );
 
         return json_encode($day_counts);
+    }
+
+    private function evaluateSubcycleIndex(array $values, Context $context, Token $token): string
+    {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $subcycle_ranges = $time_group_manager->subcycleRanges();
+        $indexes = array_map(
+            function ($ranges) {
+                return array_keys(array_values($ranges));
+            },
+            $subcycle_ranges
+        );
+
+        return json_encode($indexes);
+    }
+
+    private function evaluateSubcycleCount(array $values, Context $context, Token $token): string
+    {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $subcycle_ranges = $time_group_manager->subcycleRanges();
+        $subcycle_counts = array_map(
+            function ($ranges) {
+                return count($ranges);
+            },
+            $subcycle_ranges
+        );
+
+        return json_encode($subcycle_counts);
     }
 
     private function evaluateCycleDayCount(array $values, Context $context, Token $token): string
