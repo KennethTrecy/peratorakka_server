@@ -26,11 +26,13 @@ mechanism is dependent to the developer's preference.
    - Description (optional)
    - Kind (enumeration)
      - Unknown (to represent kinds in later versions in case the user downgraded)
-     - Asset
+     - General Asset
      - Liability
      - Equity
      - Expense
      - Income
+     - Liquid Asset
+     - Depreciative Asset
 4. An cash flow activity has the following information:
    - Primary ID
    - User ID
@@ -138,7 +140,14 @@ mechanism is dependent to the developer's preference.
     - Name
     - Description
     - Output Format
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Raw
+      - Percentage
+      - Currency
     - Exchange Rate Basis
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Periodic
+      - Latest
     - Presentational Precision
     - Formula
 19. A numerical tool has the following information:
@@ -146,7 +155,14 @@ mechanism is dependent to the developer's preference.
     - User ID
     - Name
     - Kind
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Number
+      - Pie
+      - Line
     - Recurrence
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Periodic
+      - Yearly
     - Recency
     - Order
     - Notes
