@@ -161,15 +161,11 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array {
-        return array_reduce(
-            array_slice($this->time_groups, 0, 1),
-            function ($subtotals, $time_group) use ($context, $selected_account_IDs) {
-                return [
-                    ...$subtotals,
-                    ...$time_group->totalOpenedDebitAmount($context, $selected_account_IDs)
-                ];
+        return array_map(
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalOpenedDebitAmount($context, $selected_account_IDs)[0];
             },
-            []
+            $this->time_groups
         );
     }
 
@@ -177,15 +173,11 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array {
-        return array_reduce(
-            array_slice($this->time_groups, 0, 1),
-            function ($subtotals, $time_group) use ($context, $selected_account_IDs) {
-                return [
-                    ...$subtotals,
-                    ...$time_group->totalOpenedCreditAmount($context, $selected_account_IDs)
-                ];
+        return array_map(
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalOpenedCreditAmount($context, $selected_account_IDs)[0];
             },
-            []
+            $this->time_groups
         );
     }
 
@@ -193,15 +185,11 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array {
-        return array_reduce(
-            $this->time_groups,
-            function ($subtotals, $time_group) use ($context, $selected_account_IDs) {
-                return [
-                    ...$subtotals,
-                    ...$time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs)
-                ];
+        return array_map(
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs)[0];
             },
-            []
+            $this->time_groups
         );
     }
 
@@ -209,15 +197,11 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array {
-        return array_reduce(
-            $this->time_groups,
-            function ($subtotals, $time_group) use ($context, $selected_account_IDs) {
-                return [
-                    ...$subtotals,
-                    ...$time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs)
-                ];
+        return array_map(
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs)[0];
             },
-            []
+            $this->time_groups
         );
     }
 
@@ -225,15 +209,11 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array {
-        return array_reduce(
-            array_slice($this->time_groups, count($this->time_groups) - 1, 1),
-            function ($subtotals, $time_group) use ($context, $selected_account_IDs) {
-                return [
-                    ...$subtotals,
-                    ...$time_group->totalClosedDebitAmount($context, $selected_account_IDs)
-                ];
+        return array_map(
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalClosedDebitAmount($context, $selected_account_IDs)[0];
             },
-            []
+            $this->time_groups
         );
     }
 
@@ -241,15 +221,11 @@ class YearlyTimeGroup implements TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array {
-        return array_reduce(
-            array_slice($this->time_groups, count($this->time_groups) - 1, 1),
-            function ($subtotals, $time_group) use ($context, $selected_account_IDs) {
-                return [
-                    ...$subtotals,
-                    ...$time_group->totalClosedCreditAmount($context, $selected_account_IDs)
-                ];
+        return array_map(
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalClosedCreditAmount($context, $selected_account_IDs)[0];
             },
-            []
+            $this->time_groups
         );
     }
 }
