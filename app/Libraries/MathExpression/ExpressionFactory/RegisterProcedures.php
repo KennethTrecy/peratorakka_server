@@ -201,36 +201,8 @@ trait RegisterProcedures
         $linked_accounts = [];
 
         if ($builder instanceof BaseBuilder) {
-            $table = $builder->getTable();
-
-            switch ($table) {
-                case model(CollectionModel::class, false)->getTable():
-                    $account_collections = model(AccountCollectionModel::class)
-                        ->whereIn("collection_id", $builder->select("id"))
-                        ->findAll();
-
-                    foreach ($account_collections as $document) {
-                        $account_id = $document->account_id;
-                        array_push($linked_accounts, $account_id);
-                    }
-                    break;
-                case model(AccountModel::class, false)->getTable():
-                    $account_collections = $builder->select("id")->get()->getResult();
-
-                    foreach ($account_collections as $document) {
-                        $account_id = $document->id;
-                        array_push($linked_accounts, $account_id);
-                    }
-
-                    break;
-                default:
-                    throw new ExpressionException(
-                        "A collection or account kind is expected for \"$function_name\" function."
-                    );
-            }
+            $linked_accounts = $this->extractAccountIDs($builder, $function_name);
         }
-
-        $linked_accounts = array_unique($linked_accounts);
 
         /**
          * @var TimeGroupManager
@@ -340,5 +312,39 @@ trait RegisterProcedures
         $exponent = $values[1];
 
         return $this->math->power($base, $exponent);
+    }
+
+    private function extractAccountIDs(BaseBuilder $builder, string $function_name): array {
+        $linked_accounts = [];
+
+        $table = $builder->getTable();
+
+        switch ($table) {
+            case model(CollectionModel::class, false)->getTable():
+                $account_collections = model(AccountCollectionModel::class)
+                    ->whereIn("collection_id", $builder->select("id"))
+                    ->findAll();
+
+                foreach ($account_collections as $document) {
+                    $account_id = $document->account_id;
+                    array_push($linked_accounts, $account_id);
+                }
+                break;
+            case model(AccountModel::class, false)->getTable():
+                $account_collections = $builder->select("id")->get()->getResult();
+
+                foreach ($account_collections as $document) {
+                    $account_id = $document->id;
+                    array_push($linked_accounts, $account_id);
+                }
+
+                break;
+            default:
+                throw new ExpressionException(
+                    "A collection or account is expected for \"$function_name\" function."
+                );
+        }
+
+        return array_unique($linked_accounts);
     }
 }
