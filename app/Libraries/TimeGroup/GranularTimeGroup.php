@@ -130,6 +130,22 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
+    public function totalNetCashFlowAmount(
+        Context $context,
+        int $cash_flow_activity_id,
+        array $selected_account_IDs
+    ): array {
+        return [
+            array_reduce(
+                $this->selectFlowCalculations($cash_flow_activity_id, $selected_account_IDs),
+                function ($total, $flow_calculation) {
+                    return $total->plus($flow_calculation->net_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
+    }
+
     private function selectSummaryCalculations(array $selected_account_IDs): array
     {
         $summary_calculations = $this->summary_calculations;
@@ -151,5 +167,30 @@ abstract class GranularTimeGroup implements TimeGroup
         );
 
         return $loaded_summary_calculations;
+    }
+
+    private function selectFlowCalculations(
+        int $cash_flow_activity_id,
+        array $selected_account_IDs
+    ): array {
+        $flow_calculations = $this->flow_calculations[$cash_flow_activity_id];
+
+        $raw_flow_calculations = array_map(
+            function ($account_id) use ($flow_calculations) {
+                // If flow calculation is not found because it does not exist yet during this
+                // period, return null.
+                return $flow_calculations[$account_id] ?? null;
+            },
+            $selected_account_IDs
+        );
+
+        $loaded_flow_calculations = array_filter(
+            $raw_flow_calculations,
+            function ($summary_calculation) {
+                return $summary_calculation !== null;
+            }
+        );
+
+        return $loaded_flow_calculations;
     }
 }
