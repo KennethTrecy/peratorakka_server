@@ -24,7 +24,7 @@
 		"fakerphp/faker": "^1.23",
 		"friendsofphp/php-cs-fixer": "^3.6",
 		"mikey179/vfsstream": "^1.6",
-		"phpunit/phpunit": "^9.5"
+		"phpunit/phpunit": "^11.5"
 	},
 	"autoload": {
 		"exclude-from-classmap": [
