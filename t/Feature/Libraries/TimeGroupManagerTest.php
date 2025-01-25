@@ -1454,7 +1454,7 @@ class TimeGroupManagerTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
 
         $totals = $time_group_manager->totalNetCashFlowAmount(
-            $cash_flow_activity->id,
+            [ $cash_flow_activity->id ],
             [
                 $equity_account->id,
                 $expense_account->id
@@ -1610,7 +1610,7 @@ class TimeGroupManagerTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
 
         $totals = $time_group_manager->totalNetCashFlowAmount(
-            $cash_flow_activity->id,
+            [ $cash_flow_activity->id ],
             [ $equity_account->id ]
         );
 
