@@ -257,20 +257,20 @@ class TimeGroupManager
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
+            $exchange_rate_basis = $this->context->getVariable(
+                ContextKeys::EXCHANGE_RATE_BASIS,
+                PERIODIC_EXCHANGE_RATE_BASIS
+            );
+            $destination_currency_id = $this->context->getVariable(
+                ContextKeys::DESTINATION_CURRENCY_ID,
+                null
+            );
+            if (!is_null($destination_currency_id)) {
+                $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+                    $destination_currency_id
+                ]);
+            }
             foreach ($this->time_groups as $time_group) {
-                $exchange_rate_basis = $this->context->getVariable(
-                    ContextKeys::EXCHANGE_RATE_BASIS,
-                    PERIODIC_EXCHANGE_RATE_BASIS
-                );
-                $destination_currency_id = $this->context->getVariable(
-                    ContextKeys::DESTINATION_CURRENCY_ID,
-                    null
-                );
-                if (!is_null($destination_currency_id)) {
-                    $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-                        $destination_currency_id
-                    ]);
-                }
                 $derivator = $this->exchange_rate_cache->buildDerivator(
                     $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
@@ -337,20 +337,20 @@ class TimeGroupManager
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
+            $exchange_rate_basis = $this->context->getVariable(
+                ContextKeys::EXCHANGE_RATE_BASIS,
+                PERIODIC_EXCHANGE_RATE_BASIS
+            );
+            $destination_currency_id = $this->context->getVariable(
+                ContextKeys::DESTINATION_CURRENCY_ID,
+                null
+            );
+            if (!is_null($destination_currency_id)) {
+                $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+                    $destination_currency_id
+                ]);
+            }
             foreach ($this->time_groups as $time_group) {
-                $exchange_rate_basis = $this->context->getVariable(
-                    ContextKeys::EXCHANGE_RATE_BASIS,
-                    PERIODIC_EXCHANGE_RATE_BASIS
-                );
-                $destination_currency_id = $this->context->getVariable(
-                    ContextKeys::DESTINATION_CURRENCY_ID,
-                    null
-                );
-                if (!is_null($destination_currency_id)) {
-                    $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-                        $destination_currency_id
-                    ]);
-                }
                 $derivator = $this->exchange_rate_cache->buildDerivator(
                     $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
