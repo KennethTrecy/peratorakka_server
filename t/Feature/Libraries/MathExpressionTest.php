@@ -7544,7 +7544,7 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
-        $formula = "TOTAL_NET_CASH_FLOW_AMOUNT(CASH_FLOW_ACTIVITY[$cash_flow_activity->id], COLLECTION[$asset_collection->id])";
+        $formula = "TOTAL_NET_CASH_FLOW_AMOUNT(CASH_FLOW_ACTIVITY[$cash_flow_activity->id], COLLECTION[$equity_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
@@ -7723,7 +7723,7 @@ class MathExpressionTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
-        $formula = "TOTAL_NET_CASH_FLOW_AMOUNT(CASH_FLOW_ACTIVITY[$cash_flow_activity->id], COLLECTION[$asset_collection->id])";
+        $formula = "TOTAL_NET_CASH_FLOW_AMOUNT(CASH_FLOW_ACTIVITY[$cash_flow_activity->id], COLLECTION[$equity_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
