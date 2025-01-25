@@ -192,7 +192,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $expense_collection->id ]);
+            ->loadCollectedAccounts([ $expense_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $expense_collection->id,
@@ -413,7 +413,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $asset_collection->id ]);
+            ->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
@@ -634,7 +634,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $equity_collection->id ]);
+            ->loadCollectedAccounts([ $equity_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
@@ -855,7 +855,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $asset_collection->id ]);
+            ->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
@@ -1076,7 +1076,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $asset_collection->id ]);
+            ->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
@@ -1297,7 +1297,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $asset_collection->id ]);
+            ->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
@@ -1518,7 +1518,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $equity_collection->id ]);
+            ->loadCollectedAccounts([ $equity_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
@@ -1735,7 +1735,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $asset_collection->id ]);
+            ->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
@@ -2002,7 +2002,7 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $context
             ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollections([ $asset_collection->id ]);
+            ->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
