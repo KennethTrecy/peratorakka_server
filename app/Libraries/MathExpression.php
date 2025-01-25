@@ -42,7 +42,7 @@ class MathExpression
     public static function summatePeriodicResults(array $periodic_results): array
     {
         return array_map(
-            function (array $individual_period_results) {
+            function ($individual_period_results) {
                 return is_array($individual_period_results)
                     ? array_reduce(
                         $individual_period_results,
