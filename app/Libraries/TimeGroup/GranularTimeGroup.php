@@ -193,8 +193,8 @@ abstract class GranularTimeGroup implements TimeGroup
 
         $loaded_flow_calculations = array_filter(
             $raw_flow_calculations,
-            function ($summary_calculation) {
-                return $summary_calculation !== null;
+            function ($flow_calculation) {
+                return $flow_calculation !== null;
             }
         );
 
