@@ -4,12 +4,13 @@ namespace App\Libraries\MathExpression\ExpressionFactory;
 
 use App\Casts\AccountKind;
 use App\Exceptions\ExpressionException;
-use App\Libraries\Context\FlashCache;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\FlashCache;
 use App\Libraries\Resource;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
+use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
 use App\Models\FormulaModel;
 use Closure;
@@ -30,6 +31,8 @@ trait RegisterValues
         $this->addValue("CYCLE_DAY_POSTCOUNT_PER_YEAR", "evaluateCycleDayPostcountPerYear");
         $this->addValue("COLLECTION\[\d+\]", "evaluateCollection");
         $this->addValue("FORMULA\[\d+\]", "evaluateFormula");
+        $this->addValue("CASH_FLOW_ACTIVITY\[\d+\]", "evaluateCashFlowActivity");
+        $this->addValue("ACCOUNT\[\d+\]", "evaluateAccount");
         $this->addValue(
             "(".join("|", ACCEPTABLE_ACCOUNT_KINDS).")_ACCOUNTS",
             "evaluateAccountKind"
@@ -191,6 +194,36 @@ trait RegisterValues
         $builder = model(FormulaModel::class, false)
             ->builder()
             ->where("id", $formula_id);
+
+        $key = $this->cache->store($builder);
+
+        return $key;
+    }
+
+    private function evaluateCashFlowActivity(array $values, Context $context, Token $token): string
+    {
+        $value = $token->getValue();
+        preg_match('/CASH_FLOW_ACTIVITY\[(?P<cash_flow_activity_id>\d+)\]/', $value, $matches);
+        $cash_flow_activity_id = $matches["cash_flow_activity_id"];
+
+        $builder = model(CashFlowActivityModel::class, false)
+            ->builder()
+            ->where("id", $cash_flow_activity_id);
+
+        $key = $this->cache->store($builder);
+
+        return $key;
+    }
+
+    private function evaluateAccount(array $values, Context $context, Token $token): string
+    {
+        $value = $token->getValue();
+        preg_match('/ACCOUNT\[(?P<account_id>\d+)\]/', $value, $matches);
+        $account_id = $matches["account_id"];
+
+        $builder = model(AccountModel::class, false)
+            ->builder()
+            ->where("id", $account_id);
 
         $key = $this->cache->store($builder);
 
