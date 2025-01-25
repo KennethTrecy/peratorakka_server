@@ -2,8 +2,8 @@
 
 namespace App\Libraries;
 
-use App\Libraries\Constellation\Star;
 use App\Libraries\Constellation\AcceptableConstellationKind;
+use App\Libraries\Constellation\Star;
 
 /**
  * A constellation is a group of stars finalized and ready for representation depending on the
@@ -22,7 +22,8 @@ class Constellation
         $this->stars = $stars;
     }
 
-    public function toArray(): array {
+    public function toArray(): array
+    {
         return [
             "name" => $this->name,
             "kind" => $this->kind->value,

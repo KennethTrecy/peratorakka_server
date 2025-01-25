@@ -3,8 +3,8 @@
 namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
-use App\Models\FormulaModel;
 use App\Models\CurrencyModel;
+use App\Models\FormulaModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
@@ -118,7 +118,8 @@ class FormulaController extends BaseOwnedResourceController
         ]);
         $validation->setRule(
             "$individual_name.presentational_precision",
-            "presentational precision", [
+            "presentational precision",
+            [
                 "required",
                 "is_natural"
             ]

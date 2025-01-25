@@ -9,7 +9,8 @@ use App\Models\CurrencyModel;
 use Brick\Math\BigRational;
 use Brick\Math\RoundingMode;
 
-class CurrencyCache {
+class CurrencyCache
+{
     public readonly Context $context;
     private array $currencies = [];
 
@@ -20,7 +21,8 @@ class CurrencyCache {
         $this->context->setVariable(ContextKeys::CURRENCY_CACHE, $this);
     }
 
-    public function formatValue(int $currency_id, BigRational $value): ?string {
+    public function formatValue(int $currency_id, BigRational $value): ?string
+    {
         return isset($this->currencies[$currency_id])
             ? $value->toScale(
                 $this->currencies[$currency_id]->presentational_precision,
@@ -29,10 +31,13 @@ class CurrencyCache {
             : null;
     }
 
-    public function loadCurrencies(array $target_currency_IDs): void {
+    public function loadCurrencies(array $target_currency_IDs): void
+    {
         $missing_currency_IDs = array_diff($target_currency_IDs, array_keys($this->currencies));
 
-        if (count($missing_currency_IDs) === 0) return;
+        if (count($missing_currency_IDs) === 0) {
+            return;
+        }
 
         $new_currencies = model(CurrencyModel::class, false)
             ->whereIn("id", array_unique($target_currency_IDs))

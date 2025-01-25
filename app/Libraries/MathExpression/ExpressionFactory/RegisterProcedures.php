@@ -9,6 +9,7 @@ use App\Libraries\Context\FlashCache;
 use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
+use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
 use App\Models\FormulaModel;
 use Brick\Math\BigRational;
@@ -33,6 +34,7 @@ trait RegisterProcedures
             1,
             "processTotalAmount"
         );
+        $this->addProcedure("TOTAL_NET_CASH_FLOW_AMOUNT", 2, "processTotalNetCashFlowAmount");
         $this->addProcedure("SOLVE", 2, "processSolve");
         $this->addProcedure("SELECT_CYCLE_VALUE", 2, "processSelectCycleValue");
         $this->addProcedure("SUBCYCLE_LITERAL", 1, "processSubcycleLiteral");
@@ -137,6 +139,10 @@ trait RegisterProcedures
                     );
             }
         }
+
+        throw new ExpressionException(
+            "A formula is expected for \"$function_name\" function."
+        );
     }
 
     private function processSelectCycleValue(array $values, Context $context, Token $token)
@@ -147,7 +153,7 @@ trait RegisterProcedures
             count($index) === 1
                 ? array_fill(0, count($result), $index[0])
                 : $index
-        ): array_fill(0, count($result), $index);
+        ) : array_fill(0, count($result), $index);
 
         try {
             $indexes = array_map(function ($index) {
@@ -165,7 +171,7 @@ trait RegisterProcedures
             throw $error;
         }
 
-        if(is_array($result)) {
+        if (is_array($result)) {
             $result = array_map(function ($index) use ($result) {
                 return $result[$index];
             }, $indexes);
@@ -201,36 +207,8 @@ trait RegisterProcedures
         $linked_accounts = [];
 
         if ($builder instanceof BaseBuilder) {
-            $table = $builder->getTable();
-
-            switch ($table) {
-                case model(CollectionModel::class, false)->getTable():
-                    $account_collections = model(AccountCollectionModel::class)
-                        ->whereIn("collection_id", $builder->select("id"))
-                        ->findAll();
-
-                    foreach ($account_collections as $document) {
-                        $account_id = $document->account_id;
-                        array_push($linked_accounts, $account_id);
-                    }
-                    break;
-                case model(AccountModel::class, false)->getTable():
-                    $account_collections = $builder->select("id")->get()->getResult();
-
-                    foreach ($account_collections as $document) {
-                        $account_id = $document->id;
-                        array_push($linked_accounts, $account_id);
-                    }
-
-                    break;
-                default:
-                    throw new ExpressionException(
-                        "A collection or account kind is expected for \"$function_name\" function."
-                    );
-            }
+            $linked_accounts = $this->extractAccountIDs($builder, $function_name);
         }
-
-        $linked_accounts = array_unique($linked_accounts);
 
         /**
          * @var TimeGroupManager
@@ -270,7 +248,7 @@ trait RegisterProcedures
                 },
                 $subcycle_ranges
             );
-        } else if ($literal[0] instanceof BigRational) {
+        } elseif ($literal[0] instanceof BigRational) {
             $subcycle_ranges = $time_group_manager->subcycleRanges();
             $result = array_map(
                 function ($ranges, $subliteral) {
@@ -335,10 +313,125 @@ trait RegisterProcedures
         return $shifted_result;
     }
 
-    private function exponentiate(array $values, Context $context, Token $token) {
+    private function processTotalNetCashFlowAmount(array $values, Context $context, Token $token)
+    {
+        $function_name = $token->getValue();
+        $cash_flow_activity_builder_key = $values[0];
+        $account_builder_key = $values[1];
+
+        /**
+         * @var BaseBuilder
+         */
+        $cash_flow_activity_builder = $this->cache->flash($cash_flow_activity_builder_key);
+        /**
+         * @var BaseBuilder
+         */
+        $account_builder = $this->cache->flash($account_builder_key);
+
+        if ($cash_flow_activity_builder === null || $account_builder === null) {
+            throw new ExpressionException(
+                "A cash flow activity and an account/collection are the needed parameters of \"$function_name\"."
+            );
+        }
+
+        $compiled_select = base64_encode(
+            $cash_flow_activity_builder->getCompiledSelect(false)
+            .$account_builder->getCompiledSelect(false)
+        );
+        $memo_key = $function_name.'_'.$compiled_select;
+
+        if (!is_null($this->memo->read($memo_key, null))) {
+            return $this->memo->read($memo_key);
+        }
+
+        $linked_cash_flow_activities = [];
+        $linked_accounts = [];
+
+        if (
+            $cash_flow_activity_builder instanceof BaseBuilder
+            && $cash_flow_activity_builder->getTable() === model(
+                CashFlowActivityModel::class,
+                false
+            )->getTable()
+        ) {
+            $cash_flow_activities = $cash_flow_activity_builder->select("id")->get()->getResult();
+
+            foreach ($cash_flow_activities as $document) {
+                $cash_flow_activity_id = $document->id;
+                array_push($linked_cash_flow_activities, $cash_flow_activity_id);
+            }
+
+            $linked_cash_flow_activities = array_unique($linked_cash_flow_activities);
+        }
+
+        if ($account_builder instanceof BaseBuilder) {
+            $linked_accounts = $this->extractAccountIDs($account_builder, $function_name);
+        }
+
+        /**
+         * @var TimeGroupManager
+         */
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $native_procedure_name = implode(
+            "",
+            explode(
+                "_",
+                lcfirst(ucwords($function_name, "_"))
+            )
+        );
+
+        $result = json_encode(
+            $time_group_manager->$native_procedure_name(
+                $linked_cash_flow_activities,
+                $linked_accounts
+            )
+        );
+
+        $this->memo->write($memo_key, $result);
+
+        return $result;
+    }
+
+    private function exponentiate(array $values, Context $context, Token $token)
+    {
         $base = $values[0];
         $exponent = $values[1];
 
         return $this->math->power($base, $exponent);
+    }
+
+    private function extractAccountIDs(BaseBuilder $builder, string $function_name): array
+    {
+        $linked_accounts = [];
+
+        $table = $builder->getTable();
+
+        switch ($table) {
+            case model(CollectionModel::class, false)->getTable():
+                $account_collections = model(AccountCollectionModel::class)
+                    ->whereIn("collection_id", $builder->select("id"))
+                    ->findAll();
+
+                foreach ($account_collections as $document) {
+                    $account_id = $document->account_id;
+                    array_push($linked_accounts, $account_id);
+                }
+                break;
+            case model(AccountModel::class, false)->getTable():
+                $account_collections = $builder->select("id")->get()->getResult();
+
+                foreach ($account_collections as $document) {
+                    $account_id = $document->id;
+                    array_push($linked_accounts, $account_id);
+                }
+
+                break;
+            default:
+                throw new ExpressionException(
+                    "A collection or account is expected for \"$function_name\" function."
+                );
+        }
+
+        return array_unique($linked_accounts);
     }
 }

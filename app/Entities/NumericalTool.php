@@ -38,7 +38,7 @@ class NumericalTool extends BaseResourceEntity
         bool $onlyChanged = false,
         bool $cast = true,
         bool $recursive = false
-    ) : array {
+    ): array {
         $raw_result = parent::toArray($onlyChanged, $cast, $recursive);
         $raw_result["configuration"] = strval($raw_result["configuration"]);
         return $raw_result;

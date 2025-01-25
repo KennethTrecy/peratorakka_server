@@ -5,14 +5,14 @@ namespace App\Libraries\Context;
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
 use App\Entities\FrozenPeriod;
-use App\Entities\SummaryCalculation;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
-use App\Libraries\TimeGroup\UnfrozenTimeGroup;
-use App\Libraries\Context\TimeGroupManager\CurrencyCache;
 use App\Libraries\Context\TimeGroupManager\AccountCache;
 use App\Libraries\Context\TimeGroupManager\CollectionCache;
+use App\Libraries\Context\TimeGroupManager\CurrencyCache;
 use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
+use App\Libraries\TimeGroup\UnfrozenTimeGroup;
+use App\Models\FlowCalculationModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\SummaryCalculationModel;
 use CodeIgniter\I18n\Time;
@@ -28,6 +28,7 @@ class TimeGroupManager
     private readonly CollectionCache $collection_cache;
 
     private array $loaded_summary_calculations_by_account_id = [];
+    private array $loaded_flow_calculations_by_account_id = [];
 
     private bool $has_loaded_for_unfrozen_time_group = false;
 
@@ -64,18 +65,18 @@ class TimeGroupManager
     /**
      * Gets total opened debit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalOpenedDebitAmount(array $selected_account_ids): array
+    public function totalOpenedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalOpenedDebitAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalOpenedDebitAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -84,18 +85,18 @@ class TimeGroupManager
     /**
      * Gets total opened credit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalOpenedCreditAmount(array $selected_account_ids): array
+    public function totalOpenedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalOpenedCreditAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalOpenedCreditAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -104,18 +105,18 @@ class TimeGroupManager
     /**
      * Gets total unadjusted debit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalUnadjustedDebitAmount(array $selected_account_ids): array
+    public function totalUnadjustedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -124,18 +125,18 @@ class TimeGroupManager
     /**
      * Gets total unadjusted credit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalUnadjustedCreditAmount(array $selected_account_ids): array
+    public function totalUnadjustedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -144,18 +145,18 @@ class TimeGroupManager
     /**
      * Gets total closed debit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalClosedDebitAmount(array $selected_account_ids): array
+    public function totalClosedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalClosedDebitAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalClosedDebitAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -164,18 +165,46 @@ class TimeGroupManager
     /**
      * Gets total closed credit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalClosedCreditAmount(array $selected_account_ids): array
+    public function totalClosedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalClosedCreditAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalClosedCreditAmount($context, $selected_account_IDs);
+            },
+            $this->time_groups
+        );
+    }
+
+    /**
+     * Gets total net cash flow amount for all selected accounts that participated in specific cash
+     * flow activity of every time group.
+     *
+     * @param int[] $cash_flow_activity_IDs
+     * @param int[] $selected_account_IDs
+     * @return BigRational[][]
+     */
+    public function totalNetCashFlowAmount(
+        array $cash_flow_activity_IDs,
+        array $selected_account_IDs
+    ): array {
+        $this->loadFlowCalculations($selected_account_IDs);
+
+        $context = $this->context;
+
+        return array_map(
+            function ($time_group) use ($context, $cash_flow_activity_IDs, $selected_account_IDs) {
+                return $time_group->totalNetCashFlowAmount(
+                    $context,
+                    $cash_flow_activity_IDs,
+                    $selected_account_IDs
+                );
             },
             $this->time_groups
         );
@@ -228,22 +257,22 @@ class TimeGroupManager
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
+            $exchange_rate_basis = $this->context->getVariable(
+                ContextKeys::EXCHANGE_RATE_BASIS,
+                PERIODIC_EXCHANGE_RATE_BASIS
+            );
+            $destination_currency_id = $this->context->getVariable(
+                ContextKeys::DESTINATION_CURRENCY_ID,
+                null
+            );
+            if (!is_null($destination_currency_id)) {
+                $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+                    $destination_currency_id
+                ]);
+            }
             foreach ($this->time_groups as $time_group) {
-                $exchangeRateBasis = $this->context->getVariable(
-                    ContextKeys::EXCHANGE_RATE_BASIS,
-                    PERIODIC_EXCHANGE_RATE_BASIS
-                );
-                $destination_currency_id = $this->context->getVariable(
-                    ContextKeys::DESTINATION_CURRENCY_ID,
-                    null
-                );
-                if (is_null($destination_currency_id)) {
-                    $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-                        $destination_currency_id
-                    ]);
-                }
                 $derivator = $this->exchange_rate_cache->buildDerivator(
-                    $exchangeRateBasis === LATEST_EXCHANGE_RATE_BASIS
+                    $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
                         : $time_group->finishedAt()
                 );
@@ -286,6 +315,66 @@ class TimeGroupManager
 
                         $time_group->addSummaryCalculation($summary_calculation);
                         $this->loaded_summary_calculations_by_account_id[] = $account_id;
+                    }
+                }
+            }
+        }
+
+        $this->loadPossibleLatestForUnfrozenGroup();
+    }
+
+    private function loadFlowCalculations(array $selected_account_IDs): void
+    {
+        $missing_account_IDs = array_diff(
+            $selected_account_IDs,
+            $this->loaded_flow_calculations_by_account_id
+        );
+
+        if (count($missing_account_IDs) > 0) {
+            $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
+
+            $flow_calculations = model(FlowCalculationModel::class)
+                ->whereIn("account_id", array_unique($missing_account_IDs))
+                ->findAll();
+
+            $exchange_rate_basis = $this->context->getVariable(
+                ContextKeys::EXCHANGE_RATE_BASIS,
+                PERIODIC_EXCHANGE_RATE_BASIS
+            );
+            $destination_currency_id = $this->context->getVariable(
+                ContextKeys::DESTINATION_CURRENCY_ID,
+                null
+            );
+            if (!is_null($destination_currency_id)) {
+                $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+                    $destination_currency_id
+                ]);
+            }
+            foreach ($this->time_groups as $time_group) {
+                $derivator = $this->exchange_rate_cache->buildDerivator(
+                    $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
+                        ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                        : $time_group->finishedAt()
+                );
+
+                foreach ($flow_calculations as $flow_calculation) {
+                    $is_owned = $time_group->doesOwnFlowCalculation($flow_calculation);
+                    if ($is_owned) {
+                        $account_id = $flow_calculation->account_id;
+                        $source_currency_id = $this->account_cache->determineCurrencyID(
+                            $account_id
+                        );
+                        $derived_exchange_rate = $derivator->deriveExchangeRate(
+                            $source_currency_id,
+                            $destination_currency_id ?? $source_currency_id
+                        );
+                        $flow_calculation->net_amount
+                            = $flow_calculation->net_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+
+                        $time_group->addFlowCalculation($flow_calculation);
+                        $this->loaded_flow_calculations_by_account_id[] = $account_id;
                     }
                 }
             }
@@ -387,18 +476,18 @@ class TimeGroupManager
             ContextKeys::DESTINATION_CURRENCY_ID,
             null
         );
-        if (is_null($destination_currency_id)) {
+        if (!is_null($destination_currency_id)) {
             $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
                 $destination_currency_id
             ]);
         }
 
-        $exchangeRateBasis = $this->context->getVariable(
+        $exchange_rate_basis = $this->context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
             PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $this->exchange_rate_cache->buildDerivator(
-            $exchangeRateBasis === LATEST_EXCHANGE_RATE_BASIS
+            $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
                 : $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );

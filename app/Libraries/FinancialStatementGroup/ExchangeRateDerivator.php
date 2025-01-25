@@ -11,6 +11,11 @@ class ExchangeRateDerivator
      */
     private readonly array $exchange_rate_infos;
 
+    /**
+     * @var ExchangeRateInfo[]
+     */
+    private array $processed_exchange_rate_infos = [];
+
     public function __construct(array $exchange_rate_infos)
     {
         $this->exchange_rate_infos = array_merge(
@@ -25,6 +30,22 @@ class ExchangeRateDerivator
     }
 
     public function deriveExchangeRate(
+        int $source_currency_id,
+        int $destination_currency_id
+    ): BigRational {
+        $exchange_rate_key = $source_currency_id."_".$destination_currency_id;
+
+        if (!isset($processed_exchange_rate_infos[$exchange_rate_key])) {
+            $processed_exchange_rate_infos[$exchange_rate_key] = $this->shortenExchangeRatePath(
+                $source_currency_id,
+                $destination_currency_id
+            );
+        }
+
+        return $processed_exchange_rate_infos[$exchange_rate_key];
+    }
+
+    private function shortenExchangeRatePath(
         int $source_currency_id,
         int $destination_currency_id
     ): BigRational {
@@ -78,7 +99,8 @@ class ExchangeRateDerivator
     }
 
 
-    public function findPaths(int $destination_currency_id, array $current_path): array {
+    public function findPaths(int $destination_currency_id, array $current_path): array
+    {
         $last_path_index = count($current_path) - 1;
         $last_exchange_rate = $current_path[$last_path_index];
         if ($last_exchange_rate->destination_currency_id === $destination_currency_id) {
@@ -114,7 +136,8 @@ class ExchangeRateDerivator
         return $found_paths;
     }
 
-    private function findLightestPath(array $paths, int $current_time): array {
+    private function findLightestPath(array $paths, int $current_time): array
+    {
         $last_average_weight = INF;
         $last_path = [];
 
@@ -152,7 +175,8 @@ class ExchangeRateDerivator
         return $last_path;
     }
 
-    private function weighPath(array $path, int $current_time): int {
+    private function weighPath(array $path, int $current_time): int
+    {
         $total_weight = 0;
 
         foreach ($path as $exchange_rate_info) {

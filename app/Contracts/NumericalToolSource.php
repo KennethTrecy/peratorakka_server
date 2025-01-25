@@ -24,7 +24,7 @@ interface NumericalToolSource
      * @param array $array
      * @return Self|null
      */
-    public static function parseConfiguration(array $array): ?Self;
+    public static function parseConfiguration(array $array): ?self;
 
     /**
      * Makes the output format code to determine if all sources have same output format.

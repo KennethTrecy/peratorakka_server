@@ -150,4 +150,16 @@ interface TimeGroup
         Context $context,
         array $selected_account_IDs
     ): array;
+
+    /**
+     * @param Context $context
+     * @param int[] $cash_flow_activity_IDs
+     * @param int[] $selected_account_IDs
+     * @return BigRational[]
+     */
+    public function totalNetCashFlowAmount(
+        Context $context,
+        array $cash_flow_activity_IDs,
+        array $selected_account_IDs
+    ): array;
 }

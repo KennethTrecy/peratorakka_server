@@ -70,7 +70,8 @@ class NumericalToolModel extends BaseResourceModel
         return $query_builder->where("user_id", $user->id);
     }
 
-    public static function showConstellations(NumericalTool $tool): array {
+    public static function showConstellations(NumericalTool $tool): array
+    {
         $context = new Context();
         $time_groups = new TimeGroupManager(
             $context,
@@ -81,7 +82,8 @@ class NumericalToolModel extends BaseResourceModel
         return [ $time_groups->timeTags(), $constellations ];
     }
 
-    private static function makeTimeGroups(string $recurrence, int $recency): array {
+    private static function makeTimeGroups(string $recurrence, int $recency): array
+    {
         $current_date = Time::today();
         $maxed_current_date = $current_date->setHour(23)->setMinute(59)->setSecond(59);
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
@@ -134,7 +136,9 @@ class NumericalToolModel extends BaseResourceModel
 
         switch ($recurrence) {
             case PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD:
-                if ($frozen_time_group_limit < 2) break;
+                if ($frozen_time_group_limit < 2) {
+                    break;
+                }
 
                 $frozen_periods = model(FrozenPeriodModel::class, false)
                     ->where("finished_at <=", $last_frozen_period->started_at->toDateTimeString())

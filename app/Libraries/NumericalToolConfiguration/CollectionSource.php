@@ -2,10 +2,11 @@
 
 namespace App\Libraries\NumericalToolConfiguration;
 
+use App\Casts\RationalNumber;
 use App\Contracts\NumericalToolSource;
 use App\Libraries\Constellation;
-use App\Libraries\Constellation\Star;
 use App\Libraries\Constellation\AcceptableConstellationKind;
+use App\Libraries\Constellation\Star;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
@@ -15,7 +16,6 @@ use App\Libraries\Context\TimeGroupManager\CurrencyCache;
 use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
 use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
-use App\Casts\RationalNumber;
 
 class CollectionSource implements NumericalToolSource
 {
@@ -24,7 +24,8 @@ class CollectionSource implements NumericalToolSource
         return "collection";
     }
 
-    public static function parseConfiguration(array $configuration): ?CollectionSource {
+    public static function parseConfiguration(array $configuration): ?CollectionSource
+    {
         if (
             isset($configuration["collection_id"])
             && isset($configuration["currency_id"])
@@ -51,7 +52,6 @@ class CollectionSource implements NumericalToolSource
             return new CollectionSource(
                 $configuration["currency_id"],
                 $configuration["exchange_rate_basis"],
-
                 $configuration["collection_id"],
                 $configuration["stage_basis"],
                 $configuration["side_basis"],
@@ -94,7 +94,8 @@ class CollectionSource implements NumericalToolSource
         $this->must_show_collective_average = $must_show_collective_average;
     }
 
-    public function outputFormatCode(): string {
+    public function outputFormatCode(): string
+    {
         return CURRENCY_FORMULA_OUTPUT_FORMAT."#$this->currency_id";
     }
 
@@ -128,20 +129,14 @@ class CollectionSource implements NumericalToolSource
          */
         $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
 
-        $account_collections = model(AccountCollectionModel::class, false)
-            ->where("collection_id", $this->collection_id)
-            ->findAll();
-
-        $linked_accounts = [];
-        foreach ($account_collections as $document) {
-            $account_id = $document->account_id;
-            array_push($linked_accounts, $account_id);
-        }
+        $linked_accounts = $collection_cache->determineAccountIDs($this->collection_id);
 
         $linked_accounts = array_unique($linked_accounts);
         $linked_account_count = count($linked_accounts);
 
-        if ($linked_account_count === 0) return [];
+        if ($linked_account_count === 0) {
+            return [];
+        }
 
         /**
          * @var Constellation[]
@@ -315,7 +310,8 @@ class CollectionSource implements NumericalToolSource
         return $constellations;
     }
 
-    public function toArray(): array {
+    public function toArray(): array
+    {
         return [
             "type" => static::sourceType(),
             "collection_id" => $this->collection_id,

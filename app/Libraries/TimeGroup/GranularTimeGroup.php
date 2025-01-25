@@ -23,7 +23,7 @@ abstract class GranularTimeGroup implements TimeGroup
     protected array $summary_calculations = [];
 
     /**
-     * @var FlowCalculation[]
+     * @var FlowCalculation[][]
      */
     protected array $flow_calculations = [];
 
@@ -34,7 +34,8 @@ abstract class GranularTimeGroup implements TimeGroup
         return [ [ $started_at, $finished_at ] ];
     }
 
-    public function timeTag(): string {
+    public function timeTag(): string
+    {
         $finished_date = $this->finishedAt();
 
         return $finished_date->toLocalizedString("MMMM yyyy");
@@ -130,6 +131,22 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
+    public function totalNetCashFlowAmount(
+        Context $context,
+        array $cash_flow_activity_IDs,
+        array $selected_account_IDs
+    ): array {
+        return [
+            array_reduce(
+                $this->selectFlowCalculations($cash_flow_activity_IDs, $selected_account_IDs),
+                function ($total, $flow_calculation) {
+                    return $total->plus($flow_calculation->net_amount);
+                },
+                RationalNumber::zero()
+            )
+        ];
+    }
+
     private function selectSummaryCalculations(array $selected_account_IDs): array
     {
         $summary_calculations = $this->summary_calculations;
@@ -151,5 +168,37 @@ abstract class GranularTimeGroup implements TimeGroup
         );
 
         return $loaded_summary_calculations;
+    }
+
+    private function selectFlowCalculations(
+        array $cash_flow_activity_IDs,
+        array $selected_account_IDs
+    ): array {
+        $raw_flow_calculations = [];
+
+        foreach ($this->flow_calculations as $cash_flow_activity_id => $flow_calculations) {
+            if (in_array($cash_flow_activity_id, $cash_flow_activity_IDs)) {
+                $raw_flow_calculations = [
+                    ...$raw_flow_calculations,
+                    ...array_map(
+                        function ($account_id) use ($flow_calculations) {
+                            // If flow calculation is not found because it does not exist yet during this
+                            // period, return null.
+                            return $flow_calculations[$account_id] ?? null;
+                        },
+                        $selected_account_IDs
+                    )
+                ];
+            }
+        }
+
+        $loaded_flow_calculations = array_filter(
+            $raw_flow_calculations,
+            function ($flow_calculation) {
+                return $flow_calculation !== null;
+            }
+        );
+
+        return $loaded_flow_calculations;
     }
 }

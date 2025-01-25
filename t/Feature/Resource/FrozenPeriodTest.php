@@ -7,7 +7,6 @@ use App\Exceptions\MissingResource;
 use App\Exceptions\UnprocessableRequest;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
-
 use App\Models\CurrencyModel;
 use App\Models\FinancialEntryModel;
 use App\Models\FlowCalculationModel;
@@ -564,7 +563,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                     "frozen_period" => $new_details->toArray()
                 ]);
             $this->assertTrue(false);
-        } catch(PageNotFoundException $error) {
+        } catch (PageNotFoundException $error) {
             $this->assertTrue(true);
         }
     }
@@ -606,7 +605,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                 ->getRequest()
                 ->delete("/api/v1/frozen_periods/$financial_entry->id");
             $this->assertTrue(false);
-        } catch(PageNotFoundException $error) {
+        } catch (PageNotFoundException $error) {
             $this->assertTrue(true);
         }
     }
@@ -649,7 +648,7 @@ class FrozenPeriodTest extends AuthenticatedHTTPTestCase
                 ->getRequest()
                 ->patch("/api/v1/frozen_periods/$financial_entry->id");
             $this->assertTrue(false);
-        } catch(PageNotFoundException $error) {
+        } catch (PageNotFoundException $error) {
             $this->assertTrue(true);
         }
     }

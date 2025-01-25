@@ -28,7 +28,7 @@ class NumericalToolConfiguration
 
                             if (is_null($parsed_source)) {
                                 throw new NumericalToolConfigurationException(
-                                    "Incorrect configuration for source #".($i+1)
+                                    "Incorrect configuration for source #".($i + 1)
                                     ." which is a ". $source["type"] . " source."
                                 );
                             }
@@ -43,7 +43,7 @@ class NumericalToolConfiguration
 
                             if (is_null($parsed_source)) {
                                 throw new NumericalToolConfigurationException(
-                                    "Incorrect configuration for source #".($i+1)
+                                    "Incorrect configuration for source #".($i + 1)
                                     ." which is a ". $source["type"] . " source."
                                 );
                             }
@@ -56,12 +56,12 @@ class NumericalToolConfiguration
                         default:
                             throw new NumericalToolConfigurationException(
                                 "Unknown source type: ".$source["type"] .
-                                " for source #".($i+1)
+                                " for source #".($i + 1)
                             );
                     }
                 } else {
                     throw new NumericalToolConfigurationException(
-                        "Missing type for source #".($i+1)
+                        "Missing type for source #".($i + 1)
                     );
                 }
 
@@ -69,7 +69,7 @@ class NumericalToolConfiguration
 
                 if ($parsed_sources[0]->outputFormatCode() !== $output_format_code) {
                     throw new NumericalToolConfigurationException(
-                        "Source #".($i+1)+" has different output format."
+                        "Source #".($i + 1) + " has different output format."
                         ." Every source must have same output format."
                     );
                 }
@@ -99,7 +99,20 @@ class NumericalToolConfiguration
             }
         }
 
-        $collection_cache->loadCollections($collection_IDs);
+        if (count($collection_IDs) > 0) {
+            $collection_cache->loadCollectedAccounts($collection_IDs);
+
+            $account_IDs = [];
+            foreach ($collection_IDs as $collection_id) {
+                $account_IDs = [
+                    ...$account_IDs,
+                    ...$collection_cache->determineAccountIDs($collection_id)
+                ];
+            }
+
+            $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
+            $account_cache->loadAccounts(array_unique($account_IDs));
+        }
 
         $results = [];
         foreach ($this->sources as $source) {

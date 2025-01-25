@@ -4,8 +4,8 @@ namespace App\Libraries;
 
 use App\Casts\RationalNumber;
 use App\Libraries\Context;
-use App\Libraries\Context\TimeGroupManager;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\TimeGroupManager;
 use App\Libraries\MathExpression\ExpressionFactory;
 use App\Libraries\MathExpression\PeratorakkaMath;
 use Xylemical\Expressions\Evaluator;
@@ -42,7 +42,7 @@ class MathExpression
     public static function summatePeriodicResults(array $periodic_results): array
     {
         return array_map(
-            function (array $individual_period_results) {
+            function ($individual_period_results) {
                 return is_array($individual_period_results)
                     ? array_reduce(
                         $individual_period_results,

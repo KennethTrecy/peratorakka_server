@@ -19,6 +19,7 @@ mechanism is dependent to the developer's preference.
    - User ID
    - Code
    - Name
+   - Presentational Precision
 3. An account has the following information:
    - Primary ID
    - Ticker ID

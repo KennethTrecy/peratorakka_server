@@ -7,8 +7,8 @@ use App\Contracts\NumericalToolSource;
 use App\Entities\Formula;
 use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\Constellation;
-use App\Libraries\Constellation\Star;
 use App\Libraries\Constellation\AcceptableConstellationKind;
+use App\Libraries\Constellation\Star;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;
@@ -23,7 +23,8 @@ class FormulaSource implements NumericalToolSource
         return "formula";
     }
 
-    public static function parseConfiguration(array $configuration): ?FormulaSource {
+    public static function parseConfiguration(array $configuration): ?FormulaSource
+    {
         if (isset($configuration["formula_id"])) {
             return new FormulaSource($configuration["formula_id"]);
         }
@@ -37,7 +38,8 @@ class FormulaSource implements NumericalToolSource
 
     public readonly int $formula_id;
 
-    private function __construct(int $formula_id) {
+    private function __construct(int $formula_id)
+    {
         $this->formula_id = $formula_id;
 
         if (!isset(static::$formulae[$formula_id])) {
@@ -52,7 +54,8 @@ class FormulaSource implements NumericalToolSource
         $this->formula_info = static::$formulae[$formula_id];
     }
 
-    public function outputFormatCode(): string {
+    public function outputFormatCode(): string
+    {
         if ($this->formula_info->output_format === CURRENCY_FORMULA_OUTPUT_FORMAT) {
             return CURRENCY_FORMULA_OUTPUT_FORMAT."#".$this->formula_info->currency_id;
         }
@@ -106,7 +109,8 @@ class FormulaSource implements NumericalToolSource
     }
 
 
-    public function toArray(): array {
+    public function toArray(): array
+    {
         return [
             "type" => static::sourceType(),
             "formula_id" => $this->formula_id

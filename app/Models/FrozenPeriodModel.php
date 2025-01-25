@@ -42,7 +42,8 @@ class FrozenPeriodModel extends BaseResourceModel
         return $query_builder->where("user_id", $user->id);
     }
 
-    public static function findLatestPeriod(string $latest_time): ?FrozenPeriod {
+    public static function findLatestPeriod(string $latest_time): ?FrozenPeriod
+    {
         return model(FrozenPeriodModel::class, false)
             ->where("finished_at <", $latest_time)
             ->orderBy("finished_at", "DESC")
