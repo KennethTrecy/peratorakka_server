@@ -23,7 +23,7 @@ abstract class GranularTimeGroup implements TimeGroup
     protected array $summary_calculations = [];
 
     /**
-     * @var FlowCalculation[]
+     * @var FlowCalculation[][]
      */
     protected array $flow_calculations = [];
 

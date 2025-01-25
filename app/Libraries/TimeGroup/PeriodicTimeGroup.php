@@ -60,7 +60,13 @@ class PeriodicTimeGroup extends GranularTimeGroup
     {
         $does_own_resource = $this->doesOwnFlowCalculation($flow_calculation);
         if ($does_own_resource) {
-            $this->flow_calculations[$flow_calculation->account_id] = $flow_calculation;
+            $activity_id = $flow_calculation->cash_flow_activity_id;
+            if (!isset($this->flow_calculations[$activity_id])) {
+                $this->flow_calculations[$activity_id] = [];
+            }
+
+            $account_id = $flow_calculation->account_id;
+            $this->flow_calculations[$activity_id][$account_id] = $flow_calculation;
         }
 
         return $does_own_resource;
