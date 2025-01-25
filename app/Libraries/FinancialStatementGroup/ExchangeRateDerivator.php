@@ -11,6 +11,11 @@ class ExchangeRateDerivator
      */
     private readonly array $exchange_rate_infos;
 
+    /**
+     * @var ExchangeRateInfo[]
+     */
+    private array $processed_exchange_rate_infos = [];
+
     public function __construct(array $exchange_rate_infos)
     {
         $this->exchange_rate_infos = array_merge(
@@ -25,6 +30,22 @@ class ExchangeRateDerivator
     }
 
     public function deriveExchangeRate(
+        int $source_currency_id,
+        int $destination_currency_id
+    ): BigRational {
+        $exchange_rate_key = $source_currency_id."_".$destination_currency_id;
+
+        if (!isset($processed_exchange_rate_infos[$exchange_rate_key])) {
+            $processed_exchange_rate_infos[$exchange_rate_key] = $this->shortenExchangeRatePath(
+                $source_currency_id,
+                $destination_currency_id
+            );
+        }
+
+        return $processed_exchange_rate_infos[$exchange_rate_key];
+    }
+
+    private function shortenExchangeRatePath(
         int $source_currency_id,
         int $destination_currency_id
     ): BigRational {
