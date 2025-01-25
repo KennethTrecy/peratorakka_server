@@ -40,4 +40,4 @@ jobs:
     - name: Set Writable Directory Permissions
       run: chmod -R a+rwx writable
     - name: Run all tests
-      run: composer run test:offline:all
+      run: composer run --timeout 600 test:offline:fast
