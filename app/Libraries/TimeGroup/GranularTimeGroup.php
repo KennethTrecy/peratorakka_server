@@ -132,12 +132,12 @@ abstract class GranularTimeGroup implements TimeGroup
 
     public function totalNetCashFlowAmount(
         Context $context,
-        int $cash_flow_activity_id,
+        array $cash_flow_activity_IDs,
         array $selected_account_IDs
     ): array {
         return [
             array_reduce(
-                $this->selectFlowCalculations($cash_flow_activity_id, $selected_account_IDs),
+                $this->selectFlowCalculations($cash_flow_activity_IDs, $selected_account_IDs),
                 function ($total, $flow_calculation) {
                     return $total->plus($flow_calculation->net_amount);
                 },
@@ -170,19 +170,26 @@ abstract class GranularTimeGroup implements TimeGroup
     }
 
     private function selectFlowCalculations(
-        int $cash_flow_activity_id,
+        array $cash_flow_activity_IDs,
         array $selected_account_IDs
     ): array {
-        $flow_calculations = $this->flow_calculations[$cash_flow_activity_id];
+        $raw_flow_calculations = [];
 
-        $raw_flow_calculations = array_map(
-            function ($account_id) use ($flow_calculations) {
-                // If flow calculation is not found because it does not exist yet during this
-                // period, return null.
-                return $flow_calculations[$account_id] ?? null;
-            },
-            $selected_account_IDs
-        );
+        foreach ($this->flow_calculations as $cash_flow_activity_id => $flow_calculations) {
+            if (in_array($cash_flow_activity_id, $cash_flow_activity_IDs)) {
+                $raw_flow_calculations = [
+                    ...$raw_flow_calculations,
+                    ...array_map(
+                        function ($account_id) use ($flow_calculations) {
+                            // If flow calculation is not found because it does not exist yet during this
+                            // period, return null.
+                            return $flow_calculations[$account_id] ?? null;
+                        },
+                        $selected_account_IDs
+                    )
+                ];
+            }
+        }
 
         $loaded_flow_calculations = array_filter(
             $raw_flow_calculations,

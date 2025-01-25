@@ -186,12 +186,12 @@ class TimeGroupManager
      * Gets total net cash flow amount for all selected accounts that participated in specific cash
      * flow activity of every time group.
      *
-     * @param int $cash_flow_activity
+     * @param int[] $cash_flow_activity_IDs
      * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
     public function totalNetCashFlowAmount(
-        int $cash_flow_activity_id,
+        array $cash_flow_activity_IDs,
         array $selected_account_IDs
     ): array {
         $this->loadFlowCalculations($selected_account_IDs);
@@ -199,10 +199,10 @@ class TimeGroupManager
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $cash_flow_activity_id, $selected_account_IDs) {
+            function ($time_group) use ($context, $cash_flow_activity_IDs, $selected_account_IDs) {
                 return $time_group->totalNetCashFlowAmount(
                     $context,
-                    $cash_flow_activity_id,
+                    $cash_flow_activity_IDs,
                     $selected_account_IDs
                 );
             },

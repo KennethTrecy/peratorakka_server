@@ -231,14 +231,14 @@ class YearlyTimeGroup implements TimeGroup
 
     public function totalNetCashFlowAmount(
         Context $context,
-        int $cash_flow_activity_id,
+        array $cash_flow_activity_IDs,
         array $selected_account_IDs
     ): array {
         return array_map(
-            function ($time_group) use ($context, $cash_flow_activity_id, $selected_account_IDs) {
+            function ($time_group) use ($context, $cash_flow_activity_IDs, $selected_account_IDs) {
                 return $time_group->totalNetCashFlowAmount(
                     $context,
-                    $cash_flow_activity_id,
+                    $cash_flow_activity_IDs,
                     $selected_account_IDs
                 )[0];
             },
