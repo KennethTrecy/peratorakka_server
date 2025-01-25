@@ -1,7 +1,6 @@
 <?php
-use CodeIgniter\CodeIgniter;
 use CodeIgniter\HTTP\Header;
-use Config\Services;
+use CodeIgniter\CodeIgniter;
 
 $errorId = uniqid('error', true);
 ?>
@@ -55,9 +54,9 @@ $errorId = uniqid('error', true);
         <?php
         $last = $exception;
 
-while ($prevException = $last->getPrevious()) {
-    $last = $prevException;
-    ?>
+        while ($prevException = $last->getPrevious()) {
+            $last = $prevException;
+            ?>
 
     <pre>
     Caused by:
@@ -70,8 +69,8 @@ while ($prevException = $last->getPrevious()) {
     </pre>
 
         <?php
-}
-?>
+        }
+        ?>
     </div>
 
     <?php if (defined('SHOW_DEBUG_BACKTRACE') && SHOW_DEBUG_BACKTRACE) : ?>
@@ -99,12 +98,12 @@ while ($prevException = $last->getPrevious()) {
                             <!-- Trace info -->
                             <?php if (isset($row['file']) && is_file($row['file'])) : ?>
                                 <?php
-                        if (isset($row['function']) && in_array($row['function'], ['include', 'include_once', 'require', 'require_once'], true)) {
-                            echo esc($row['function'] . ' ' . clean_path($row['file']));
-                        } else {
-                            echo esc(clean_path($row['file']) . ' : ' . $row['line']);
-                        }
-                    ?>
+                                if (isset($row['function']) && in_array($row['function'], ['include', 'include_once', 'require', 'require_once'], true)) {
+                                    echo esc($row['function'] . ' ' . clean_path($row['file']));
+                                } else {
+                                    echo esc(clean_path($row['file']) . ' : ' . $row['line']);
+                                }
+                                ?>
                             <?php else: ?>
                                 {PHP internal code}
                             <?php endif; ?>
@@ -119,14 +118,14 @@ while ($prevException = $last->getPrevious()) {
                                         <table cellspacing="0">
 
                                         <?php
-                            $params = null;
-                                    // Reflection by name is not available for closure function
-                                    if (! str_ends_with($row['function'], '}')) {
-                                        $mirror = isset($row['class']) ? new ReflectionMethod($row['class'], $row['function']) : new ReflectionFunction($row['function']);
-                                        $params = $mirror->getParameters();
-                                    }
+                                        $params = null;
+                                        // Reflection by name is not available for closure function
+                                        if (! str_ends_with($row['function'], '}')) {
+                                            $mirror = isset($row['class']) ? new ReflectionMethod($row['class'], $row['function']) : new ReflectionFunction($row['function']);
+                                            $params = $mirror->getParameters();
+                                        }
 
-                                    foreach ($row['args'] as $key => $value) : ?>
+                                        foreach ($row['args'] as $key => $value) : ?>
                                             <tr>
                                                 <td><code><?= esc(isset($params[$key]) ? '$' . $params[$key]->name : "#{$key}") ?></code></td>
                                                 <td><pre><?= esc(print_r($value, true)) ?></pre></td>
@@ -225,7 +224,7 @@ while ($prevException = $last->getPrevious()) {
 
             <!-- Request -->
             <div class="content" id="request">
-                <?php $request = Services::request(); ?>
+                <?php $request = service('request'); ?>
 
                 <table>
                     <tbody>
@@ -328,10 +327,10 @@ while ($prevException = $last->getPrevious()) {
                                     echo esc($value->getValueLine(), 'html');
                                 } else {
                                     foreach ($value as $i => $header) {
-                                        echo ' ('. $i + 1 . ') ' . esc($header->getValueLine(), 'html');
+                                        echo ' ('. $i+1 . ') ' . esc($header->getValueLine(), 'html');
                                     }
                                 }
-                            ?>
+                                ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -343,9 +342,9 @@ while ($prevException = $last->getPrevious()) {
 
             <!-- Response -->
             <?php
-                $response = Services::response();
-$response->setStatusCode(http_response_code());
-?>
+                $response = service('response');
+                $response->setStatusCode(http_response_code());
+            ?>
             <div class="content" id="response">
                 <table>
                     <tr>
@@ -371,14 +370,14 @@ $response->setStatusCode(http_response_code());
                                 <td><?= esc($name, 'html') ?></td>
                                 <td>
                                 <?php
-                    if ($value instanceof Header) {
-                        echo esc($response->getHeaderLine($name), 'html');
-                    } else {
-                        foreach ($value as $i => $header) {
-                            echo ' ('. $i + 1 . ') ' . esc($header->getValueLine(), 'html');
-                        }
-                    }
-                            ?>
+                                if ($value instanceof Header) {
+                                    echo esc($response->getHeaderLine($name), 'html');
+                                } else {
+                                    foreach ($value as $i => $header) {
+                                        echo ' ('. $i+1 . ') ' . esc($header->getValueLine(), 'html');
+                                    }
+                                }
+                                ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
