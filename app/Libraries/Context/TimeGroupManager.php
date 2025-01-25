@@ -65,18 +65,18 @@ class TimeGroupManager
     /**
      * Gets total opened debit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalOpenedDebitAmount(array $selected_account_ids): array
+    public function totalOpenedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalOpenedDebitAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalOpenedDebitAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -85,18 +85,18 @@ class TimeGroupManager
     /**
      * Gets total opened credit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalOpenedCreditAmount(array $selected_account_ids): array
+    public function totalOpenedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalOpenedCreditAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalOpenedCreditAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -105,18 +105,18 @@ class TimeGroupManager
     /**
      * Gets total unadjusted debit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalUnadjustedDebitAmount(array $selected_account_ids): array
+    public function totalUnadjustedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -125,18 +125,18 @@ class TimeGroupManager
     /**
      * Gets total unadjusted credit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalUnadjustedCreditAmount(array $selected_account_ids): array
+    public function totalUnadjustedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -145,18 +145,18 @@ class TimeGroupManager
     /**
      * Gets total closed debit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalClosedDebitAmount(array $selected_account_ids): array
+    public function totalClosedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalClosedDebitAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalClosedDebitAmount($context, $selected_account_IDs);
             },
             $this->time_groups
         );
@@ -165,18 +165,46 @@ class TimeGroupManager
     /**
      * Gets total closed credit amount for all selected accounts of every time group.
      *
-     * @param int[] $selected_account_ids
+     * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalClosedCreditAmount(array $selected_account_ids): array
+    public function totalClosedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_ids);
+        $this->loadSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_ids) {
-                return $time_group->totalClosedCreditAmount($context, $selected_account_ids);
+            function ($time_group) use ($context, $selected_account_IDs) {
+                return $time_group->totalClosedCreditAmount($context, $selected_account_IDs);
+            },
+            $this->time_groups
+        );
+    }
+
+    /**
+     * Gets total net cash flow amount for all selected accounts that participated in specific cash
+     * flow activity of every time group.
+     *
+     * @param int $cash_flow_activity
+     * @param int[] $selected_account_IDs
+     * @return BigRational[][]
+     */
+    public function totalNetCashFlowAmount(
+        int $cash_flow_activity_id,
+        array $selected_account_IDs
+    ): array {
+        $this->loadFlowCalculations($selected_account_IDs);
+
+        $context = $this->context;
+
+        return array_map(
+            function ($time_group) use ($context, $cash_flow_activity_id, $selected_account_IDs) {
+                return $time_group->totalNetCashFlowAmount(
+                    $context,
+                    $cash_flow_activity_id,
+                    $selected_account_IDs
+                );
             },
             $this->time_groups
         );
