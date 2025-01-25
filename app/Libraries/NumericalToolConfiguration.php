@@ -99,7 +99,20 @@ class NumericalToolConfiguration
             }
         }
 
-        $collection_cache->loadCollections($collection_IDs);
+        if (count($collection_IDs) > 0) {
+            $collection_cache->loadCollectedAccounts($collection_IDs);
+
+            $account_IDs = [];
+            foreach ($collection_IDs as $collection_id) {
+                $account_IDs = [
+                    ...$account_IDs,
+                    ...$collection_cache->determineAccountIDs($collection_id)
+                ];
+            }
+
+            $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
+            $account_cache->loadAccounts(array_unique($account_IDs));
+        }
 
         $results = [];
         foreach ($this->sources as $source) {

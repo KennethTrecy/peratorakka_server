@@ -128,15 +128,7 @@ class CollectionSource implements NumericalToolSource
          */
         $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
 
-        $account_collections = model(AccountCollectionModel::class, false)
-            ->where("collection_id", $this->collection_id)
-            ->findAll();
-
-        $linked_accounts = [];
-        foreach ($account_collections as $document) {
-            $account_id = $document->account_id;
-            array_push($linked_accounts, $account_id);
-        }
+        $linked_accounts = $collection_cache->determineAccountIDs($this->collection_id);
 
         $linked_accounts = array_unique($linked_accounts);
         $linked_account_count = count($linked_accounts);
