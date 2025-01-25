@@ -2,10 +2,10 @@
 
 namespace App\Libraries\MathExpression;
 
-use Exception;
 use App\Casts\RationalNumber;
 use App\Exceptions\ExpressionException;
 use Brick\Math\BigRational;
+use Exception;
 use Xylemical\Expressions\MathInterface;
 
 class PeratorakkaMath implements MathInterface
@@ -129,7 +129,8 @@ class PeratorakkaMath implements MathInterface
                     function ($subsubtrahend, $subminuend) {
                         return $subsubtrahend->minus($subminuend);
                     },
-                    $subtrahend, $minuend
+                    $subtrahend,
+                    $minuend
                 );
             }
 
@@ -164,7 +165,8 @@ class PeratorakkaMath implements MathInterface
                     function ($subdividend, $subdivisor) {
                         return $subdividend->dividedBy($subdivisor)->simplified();
                     },
-                    $dividend, $divisor
+                    $dividend,
+                    $divisor
                 );
             } elseif ($divisor instanceof BigRational) {
                 return RationalNumber::zero();
@@ -266,7 +268,8 @@ class PeratorakkaMath implements MathInterface
                             throw new ExpressionException("Ensure exponents are integer. Otherwise, the exponent is too big for the memory.");
                         }
                     },
-                    $base, $exponent
+                    $base,
+                    $exponent
                 );
             }
 

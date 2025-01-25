@@ -4,8 +4,8 @@ namespace Tests\Feature\Libraries\NumericalToolConfiguration;
 
 use App\Casts\RationalNumber;
 use App\Libraries\Constellation;
-use App\Libraries\Constellation\Star;
 use App\Libraries\Constellation\AcceptableConstellationKind;
+use App\Libraries\Constellation\Star;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\TimeGroupManager;

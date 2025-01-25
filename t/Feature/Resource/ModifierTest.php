@@ -4,7 +4,6 @@ namespace Tests\Feature\Resource;
 
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
-
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;

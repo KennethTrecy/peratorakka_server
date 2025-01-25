@@ -142,7 +142,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
             function () { return []; },
             array_flip($newly_discovered_ancestors)
         );
-        while(count($newly_discovered_ancestors) > 0) {
+        while (count($newly_discovered_ancestors) > 0) {
             $newly_discovered_ancestor = array_shift($newly_discovered_ancestors);
 
             $ancestor_model = model($newly_discovered_ancestor);
@@ -219,7 +219,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
                     break;
                 }
             }
-        } while(count($incomplete_ancestor_IDs) > 0);
+        } while (count($incomplete_ancestor_IDs) > 0);
 
         return array_values($resolved_ancestors);
     }

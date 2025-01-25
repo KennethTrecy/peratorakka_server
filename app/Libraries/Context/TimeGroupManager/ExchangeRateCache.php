@@ -3,19 +3,20 @@
 namespace App\Libraries\Context\TimeGroupManager;
 
 use App\Casts\ModifierAction;
-use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context;
-use App\Libraries\FinancialStatementGroup\ExchangeRateInfo;
+use App\Libraries\Context\ContextKeys;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
+use App\Libraries\FinancialStatementGroup\ExchangeRateInfo;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
-use App\Models\ModifierModel;
 use App\Models\FinancialEntryModel;
+use App\Models\ModifierModel;
 use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 
-class ExchangeRateCache {
+class ExchangeRateCache
+{
     public readonly Context $context;
     private array $exchange_entries = [];
     private array $known_currency_IDs = [];
@@ -67,7 +68,8 @@ class ExchangeRateCache {
         return $new_derivator;
     }
 
-    public function loadExchangeRatesForAccounts(array $missing_account_IDs): void {
+    public function loadExchangeRatesForAccounts(array $missing_account_IDs): void
+    {
         $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
 
         $account_cache->loadAccounts($missing_account_IDs);
@@ -81,7 +83,8 @@ class ExchangeRateCache {
         $this->loadExchangeRatesForCurrencies($new_currency_IDs);
     }
 
-    public function loadExchangeRatesForCurrencies(array $new_currency_IDs): void {
+    public function loadExchangeRatesForCurrencies(array $new_currency_IDs): void
+    {
         $currency_cache = $this->context->getVariable(ContextKeys::CURRENCY_CACHE);
         $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
 

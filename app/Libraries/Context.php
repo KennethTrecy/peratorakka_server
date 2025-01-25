@@ -33,7 +33,8 @@ class Context extends BaseContext
         return parent::setVariable($name, $value);
     }
 
-    public function newScope(int $max_stack_count): Context {
+    public function newScope(int $max_stack_count): Context
+    {
         $clone = new Context();
         $clone->setVariables($this->getVariables());
 

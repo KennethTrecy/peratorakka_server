@@ -1057,7 +1057,8 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                             "3250.00",
                             RationalNumber::get("3250")
                         )
-                    ])
+                    ]
+                    )
                 ])
             ],
             "currencies" => [ $currency_a ],

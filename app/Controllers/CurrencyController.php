@@ -100,7 +100,8 @@ class CurrencyController extends BaseOwnedResourceController
         ]);
         $validation->setRule(
             "$individual_name.presentational_precision",
-            "presentational precision", [
+            "presentational precision",
+            [
                 "required",
                 "is_natural"
             ]

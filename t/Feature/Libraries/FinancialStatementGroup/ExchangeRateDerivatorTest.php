@@ -8,8 +8,10 @@ use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 use PHPUnit\Framework\TestCase;
 
-class ExchangeRateDerivatorTest extends TestCase {
-    public function testSimpleDerivation() {
+class ExchangeRateDerivatorTest extends TestCase
+{
+    public function testSimpleDerivation()
+    {
         $exchange_rate_infos = [
             new ExchangeRateInfo(
                 1,
@@ -27,7 +29,8 @@ class ExchangeRateDerivatorTest extends TestCase {
         );
     }
 
-    public function testSimpleReverseDerivation() {
+    public function testSimpleReverseDerivation()
+    {
         $exchange_rate_infos = [
             new ExchangeRateInfo(
                 1,
@@ -45,7 +48,8 @@ class ExchangeRateDerivatorTest extends TestCase {
         );
     }
 
-    public function testIdentityDerivation() {
+    public function testIdentityDerivation()
+    {
         $exchange_rate_infos = [
             new ExchangeRateInfo(
                 1,
@@ -63,7 +67,8 @@ class ExchangeRateDerivatorTest extends TestCase {
         );
     }
 
-    public function testIndirectDerivation() {
+    public function testIndirectDerivation()
+    {
         $exchange_rate_infos = [
             new ExchangeRateInfo(
                 1,
@@ -88,7 +93,8 @@ class ExchangeRateDerivatorTest extends TestCase {
         );
     }
 
-    public function testLatestIndirectDerivation() {
+    public function testLatestIndirectDerivation()
+    {
         $exchange_rate_infos = [
             new ExchangeRateInfo(
                 1,
@@ -127,7 +133,8 @@ class ExchangeRateDerivatorTest extends TestCase {
         );
     }
 
-    public function testLatestIndirectOverDirectDerivation() {
+    public function testLatestIndirectOverDirectDerivation()
+    {
         $exchange_rate_infos = [
             new ExchangeRateInfo(
                 1,

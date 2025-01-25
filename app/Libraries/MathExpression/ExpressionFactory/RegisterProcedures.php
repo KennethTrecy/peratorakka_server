@@ -9,8 +9,8 @@ use App\Libraries\Context\FlashCache;
 use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
-use App\Models\CollectionModel;
 use App\Models\CashFlowActivityModel;
+use App\Models\CollectionModel;
 use App\Models\FormulaModel;
 use Brick\Math\BigRational;
 use Closure;
@@ -153,7 +153,7 @@ trait RegisterProcedures
             count($index) === 1
                 ? array_fill(0, count($result), $index[0])
                 : $index
-        ): array_fill(0, count($result), $index);
+        ) : array_fill(0, count($result), $index);
 
         try {
             $indexes = array_map(function ($index) {
@@ -171,7 +171,7 @@ trait RegisterProcedures
             throw $error;
         }
 
-        if(is_array($result)) {
+        if (is_array($result)) {
             $result = array_map(function ($index) use ($result) {
                 return $result[$index];
             }, $indexes);
@@ -248,7 +248,7 @@ trait RegisterProcedures
                 },
                 $subcycle_ranges
             );
-        } else if ($literal[0] instanceof BigRational) {
+        } elseif ($literal[0] instanceof BigRational) {
             $subcycle_ranges = $time_group_manager->subcycleRanges();
             $result = array_map(
                 function ($ranges, $subliteral) {
@@ -313,7 +313,8 @@ trait RegisterProcedures
         return $shifted_result;
     }
 
-    private function processTotalNetCashFlowAmount(array $values, Context $context, Token $token) {
+    private function processTotalNetCashFlowAmount(array $values, Context $context, Token $token)
+    {
         $function_name = $token->getValue();
         $cash_flow_activity_builder_key = $values[0];
         $account_builder_key = $values[1];
@@ -349,7 +350,8 @@ trait RegisterProcedures
         if (
             $cash_flow_activity_builder instanceof BaseBuilder
             && $cash_flow_activity_builder->getTable() === model(
-                CashFlowActivityModel::class, false
+                CashFlowActivityModel::class,
+                false
             )->getTable()
         ) {
             $cash_flow_activities = $cash_flow_activity_builder->select("id")->get()->getResult();
@@ -390,14 +392,16 @@ trait RegisterProcedures
         return $result;
     }
 
-    private function exponentiate(array $values, Context $context, Token $token) {
+    private function exponentiate(array $values, Context $context, Token $token)
+    {
         $base = $values[0];
         $exponent = $values[1];
 
         return $this->math->power($base, $exponent);
     }
 
-    private function extractAccountIDs(BaseBuilder $builder, string $function_name): array {
+    private function extractAccountIDs(BaseBuilder $builder, string $function_name): array
+    {
         $linked_accounts = [];
 
         $table = $builder->getTable();

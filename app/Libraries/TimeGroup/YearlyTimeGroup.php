@@ -51,7 +51,7 @@ class YearlyTimeGroup implements TimeGroup
                     if ($is_before_examined_time_group) {
                         array_splice($this->time_groups, $i, 0, [ $time_group ]);
                         break;
-                    } else if (
+                    } elseif (
                         $i === $time_group_count - 1
                         && $base_time->isAfter($existing_time)
                     ) {
@@ -96,7 +96,8 @@ class YearlyTimeGroup implements TimeGroup
         );
     }
 
-    public function timeTag(): string {
+    public function timeTag(): string
+    {
         $finished_date = $this->finishedAt();
 
         return "$finished_date->year";

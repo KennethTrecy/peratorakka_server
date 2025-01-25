@@ -2,9 +2,9 @@
 
 namespace App\Libraries;
 
-use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
-use App\Entities\Currency;
 use App\Casts\RationalNumber;
+use App\Entities\Currency;
+use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 
 class FinancialStatementGroup
 {

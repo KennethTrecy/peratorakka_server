@@ -34,7 +34,8 @@ abstract class GranularTimeGroup implements TimeGroup
         return [ [ $started_at, $finished_at ] ];
     }
 
-    public function timeTag(): string {
+    public function timeTag(): string
+    {
         $finished_date = $this->finishedAt();
 
         return $finished_date->toLocalizedString("MMMM yyyy");
