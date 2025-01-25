@@ -230,7 +230,7 @@ class TimeGroupManager
                 ->findAll();
 
             foreach ($this->time_groups as $time_group) {
-                $exchangeRateBasis = $this->context->getVariable(
+                $exchange_rate_basis = $this->context->getVariable(
                     ContextKeys::EXCHANGE_RATE_BASIS,
                     PERIODIC_EXCHANGE_RATE_BASIS
                 );
@@ -238,13 +238,13 @@ class TimeGroupManager
                     ContextKeys::DESTINATION_CURRENCY_ID,
                     null
                 );
-                if (is_null($destination_currency_id)) {
+                if (!is_null($destination_currency_id)) {
                     $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
                         $destination_currency_id
                     ]);
                 }
                 $derivator = $this->exchange_rate_cache->buildDerivator(
-                    $exchangeRateBasis === LATEST_EXCHANGE_RATE_BASIS
+                    $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
                         : $time_group->finishedAt()
                 );
@@ -448,18 +448,18 @@ class TimeGroupManager
             ContextKeys::DESTINATION_CURRENCY_ID,
             null
         );
-        if (is_null($destination_currency_id)) {
+        if (!is_null($destination_currency_id)) {
             $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
                 $destination_currency_id
             ]);
         }
 
-        $exchangeRateBasis = $this->context->getVariable(
+        $exchange_rate_basis = $this->context->getVariable(
             ContextKeys::EXCHANGE_RATE_BASIS,
             PERIODIC_EXCHANGE_RATE_BASIS
         );
         $derivator = $this->exchange_rate_cache->buildDerivator(
-            $exchangeRateBasis === LATEST_EXCHANGE_RATE_BASIS
+            $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                 ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
                 : $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
