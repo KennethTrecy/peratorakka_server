@@ -40,6 +40,42 @@ digraph {
 			</table>
 			>
 		]
+		precision_formats [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Precision Formats
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">user_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+						minimum_presentational_precision<br align="left"/>
+						maximum_presentational_precision<br align="left"/>
+					</td>
+					<td align="left">
+						varchar(255)<br align="left"/>
+						int<br align="left"/>
+						int<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
 		currencies [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -57,7 +93,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">user_id</td>
+					<td align="left">precision_format_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -65,8 +101,6 @@ digraph {
 					<td align="left">
 						code<br align="left"/>
 						name<br align="left"/>
-						minimum_presentational_precision<br align="left"/>
-						maximum_presentational_precision<br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
@@ -142,7 +176,78 @@ digraph {
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,general_asset,liability,equity,<br align="left"/>general_expense,general_income,liquid_asset,<br align="left"/>depreciative_asset,itemized_asset,<br align="left"/>itemized_equity,revenue,loss)<br align="left"/>
+						enum(unknown,general_asset,liability,equity,<br align="left"/>general_expense,general_income,liquid_asset,<br align="left"/>depreciative_asset,itemized_asset,<br align="left"/>itemized_equity,market_adjustment,<br align="left"/>paper_adjustment,revenue,loss)<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		item_details [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Item Details
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">precision_format_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						name<br align="left"/>
+						description<br align="left"/>
+					</td>
+					<td align="left">
+						varchar(255)<br align="left"/>
+						nullable text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		item_configuration [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Item Configuration
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">item_detail_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">account_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						valuation_method<br align="left"/>
+					</td>
+					<td align="left">
+						enum(unknown,weighted_average,fifo,lifo)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -305,14 +410,14 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
-						action<br align="left"/>
 						kind<br align="left"/>
+						action<br align="left"/><br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,record,close,exchange)<br align="left"/>
 						enum(unknown,reactive,dependent,manual)<br align="left"/>
+						enum(unknown,record,close,exchange,<br align="left"/>paper_record,bid,ask,transform,throw,catch,<br align="left"/>enrich,dilute)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -346,14 +451,39 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
-						kind<br align="left"/>
-						description<br align="left"/>
-						action<br align="left"/>
-						kind<br align="left"/>
+						kind<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
-						enum(unknown,debit,credit,paper_debit,paper_credit,item)<br align="left"/>
+						enum(unknown,debit,credit,<br align="left"/>paper_debit,paper_credit,item)<br align="left"/>
 					</td>
+				</tr>
+			</table>
+			>
+		]
+		modifier_atom_activities [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Modifier Atom Activities
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>PK</td>
+					<td align="left">id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">modifier_atom_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">cash_flow_activity_id</td>
+					<td align="left">bigint</td>
 				</tr>
 			</table>
 			>
@@ -613,39 +743,6 @@ digraph {
 			</table>
 			>
 		]
-		paper_summary_calculations [
-			label = <
-			<table cellspacing="0" border="0" cellborder="1">
-				<tr>
-					<td colspan="3" bgcolor="darkslategray">
-						<font color="white">
-							Paper Summary Calculations
-						</font>
-					</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">unadjusted_hash</td>
-					<td align="left">string</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						opened_debit_amount<br align="left"/>
-						opened_credit_amount<br align="left"/>
-						closed_debit_amount<br align="left"/>
-						closed_credit_amount<br align="left"/>
-					</td>
-					<td align="left">
-						string<br align="left"/>
-						string<br align="left"/>
-						string<br align="left"/>
-						string<br align="left"/>
-					</td>
-				</tr>
-			</table>
-			>
-		]
 		flow_calculations [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
@@ -757,7 +854,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">user_id</td>
+					<td align="left">precision_format_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -766,9 +863,7 @@ digraph {
 						name<br align="left"/>
 						description<br align="left"/>
 						output_format<br align="left"/><br align="left"/>
-						minimum_presentational_precision<br align="left"/>
-						maximum_presentational_precision<br align="left"/>
-						formula<br align="left"/>
+						expression<br align="left"/>
 					</td>
 					<td align="left">
 						name<br align="left"/>
@@ -840,11 +935,10 @@ digraph {
 
 		events -> timeout_events
 		events -> interval_events
-		modifiers -> dependent_modifiers
 
 		unadjusted_summary_calculations -> adjusted_summary_calculations
-		unadjusted_summary_calculations -> paper_summary_calculations
 		unadjusted_summary_calculations -> flow_calculations
+		modifier_atoms -> modifier_atom_activities
 	}
 
 	{
@@ -855,6 +949,8 @@ digraph {
 		]
 
 		reactive_modifiers -> modifiers
+		dependent_modifiers -> modifiers
+		modifier_atom_activities -> cash_flow_activities
 	}
 
 	{
@@ -874,6 +970,11 @@ digraph {
 		cash_flow_activities -> flow_calculations
 		currencies -> accounts
 		collections -> account_collections
+		precision_formats -> formulae
+		precision_formats -> currencies
+		precision_formats -> item_details
+		users -> collections
+		item_details -> item_configuration
 	}
 
 	{
@@ -886,10 +987,9 @@ digraph {
 		modifier_atoms -> accounts
 		numerical_tools -> currencies
 		modifiers -> users
-		collections -> users
 		account_collections -> accounts
-		currencies -> users
-		formulae -> users
+		item_configuration -> accounts
+		precision_formats -> users
 	}
 
 	{
@@ -908,9 +1008,7 @@ digraph {
 			arrowtail = noneteetee
 		]
 
-		financial_entry_atoms -> financial_entries
 		modifier_atoms -> financial_entry_atoms
-		modifier_atoms -> modifiers
 	}
 
 	{
@@ -921,6 +1019,8 @@ digraph {
 		]
 
 		frozen_periods -> unadjusted_summary_calculations
+		modifiers -> modifier_atoms
+		financial_entries -> financial_entry_atoms
 	}
 
 	{
@@ -933,19 +1033,18 @@ digraph {
 		events -> collections
 		account_collections -> currencies
 
-		reactive_modifiers -> modifier_atoms
+		timeout_events -> reactive_modifiers -> dependent_modifiers
 		events -> modifier_atoms
-		numerical_tools -> accounts
-		numerical_tools -> accounts
-		flow_calculations -> adjusted_summary_calculations -> paper_summary_calculations
+		account_collections -> item_configuration
+		numerical_tools -> item_configuration
+		flow_calculations -> adjusted_summary_calculations
+		financial_entry_atoms -> modifier_atom_activities
+		item_details -> account_collections
 	}
 
 	{
 		rank = source;
 		l0
-		interval_events
-		timeout_events
-		event_started_times
 		numerical_tools
 		formulae
 	}
@@ -953,48 +1052,54 @@ digraph {
 	{
 		rank = same;
 		l1
-		account_collections
-		collections
-		events
-		currencies
+		interval_events
+		timeout_events
+		event_started_times
+		precision_formats
 	}
 
 	{
 		rank = same;
 		l2
-		accounts
-		modifier_atoms
-		reactive_modifiers
+		events
+		item_details
+		currencies
 	}
 
 	{
 		rank = same;
 		l3
-		frozen_periods
+		account_collections
+		collections
+		reactive_modifiers
 		users
-		unadjusted_summary_calculations
-		modifiers
+		item_configuration
 	}
 
 	{
 		rank = same;
 		l4
-		cash_flow_activities
-		flow_calculations
-		financial_entry_atoms
-		adjusted_summary_calculations
-		paper_summary_calculations
-	}
-
-	{
-		rank = same;
-		l5
-		financial_entries
+		modifier_atoms
+		accounts
+		modifiers
 		dependent_modifiers
 	}
 
 	{
 		rank = same;
+		l5
+		frozen_periods
+		unadjusted_summary_calculations
+	}
+
+	{
+		rank = same;
 		l6
+		modifier_atom_activities
+		cash_flow_activities
+		flow_calculations
+		financial_entry_atoms
+		adjusted_summary_calculations
+		financial_entries
 	}
 }
