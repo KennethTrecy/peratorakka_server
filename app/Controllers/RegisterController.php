@@ -22,7 +22,6 @@ class RegisterController extends BaseRegisterController
 
         $session = session();
 
-
         // Remove the following keys to prevent log in errors
         $session->remove("errors");
 
@@ -92,7 +91,7 @@ class RegisterController extends BaseRegisterController
                 $new_response = $new_response
                     ->setStatusCode(200)
                     ->setJSON([
-                        "meta" => [
+                        "@meta" => [
                             "id" => $current_user->id,
                             "username" => $current_user->username,
                             "message" => $message,

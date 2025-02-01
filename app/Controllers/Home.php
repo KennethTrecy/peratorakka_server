@@ -11,7 +11,7 @@ class Home extends BaseController
             "data" => [
                 "csrf_token" => csrf_hash()
             ],
-            "meta" => $metadata
+            "@meta" => $metadata
         ]);
     }
 }

@@ -118,7 +118,7 @@ abstract class BaseOwnedResourceController extends BaseController
         $overall_filtered_count = $overall_filtered_count->countAllResults();
 
         $response_document = [
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => $overall_filtered_count
             ],
             static::getCollectiveName() => $scoped_model->findAll($limit, $offset)

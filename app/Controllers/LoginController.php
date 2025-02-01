@@ -82,7 +82,7 @@ class LoginController extends BaseLoginController
                 $new_response = $new_response
                     ->setStatusCode(200)
                     ->setJSON([
-                        "meta" => [
+                        "@meta" => [
                             "id" => $current_user->id,
                             "username" => $current_user->username,
                             "token" => [
