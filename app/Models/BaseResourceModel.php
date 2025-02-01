@@ -72,13 +72,15 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
             "descending" => "DESC"
         ];
 
+        array_push($options, [ $this->primaryKey, "ASC" ]);
+
         foreach ($options as $option) {
             [ $criteria, $order ] = $option;
             $order = in_array($order, array_keys($order_translation))
                 ? $order_translation[$order]
                 : "ASC";
 
-            if (in_array($criteria, $this->sortable_fields)) {
+            if (in_array($criteria, $this->sortable_fields) || $criteria === $this->primaryKey) {
                 $query_builder = $query_builder->orderBy($criteria, $order);
             } elseif (in_array($criteria, $this->sortable_factors)) {
                 $query_builder = $this->sortListByFactor($query_builder, $criteria, $order);
