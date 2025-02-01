@@ -22,36 +22,36 @@ if (!function_exists("make_owned_resource_routes")) {
         $possible_operations = [
             "forceDelete" => [
                 "http_method" => "delete",
-                "uri" => "/api/v1/$collective_name/(:num)/force",
+                "uri" => "/api/v2/$collective_name/(:num)/force",
                 "search_mode_options" => [ SEARCH_WITH_DELETED, 4 ]
             ],
             "show" => [
                 "http_method" => "get",
-                "uri" => "/api/v1/$collective_name/(:num)",
+                "uri" => "/api/v2/$collective_name/(:num)",
                 "search_mode_options" => [ SEARCH_WITH_DELETED ]
             ],
             "update" => [
                 "http_method" => "put",
-                "uri" => "/api/v1/$collective_name/(:num)",
+                "uri" => "/api/v2/$collective_name/(:num)",
                 "search_mode_options" => [ SEARCH_NORMALLY ]
             ],
             "delete" => [
                 "http_method" => "delete",
-                "uri" => "/api/v1/$collective_name/(:num)",
+                "uri" => "/api/v2/$collective_name/(:num)",
                 "search_mode_options" => [ SEARCH_NORMALLY ]
             ],
             "restore" => [
                 "http_method" => "patch",
-                "uri" => "/api/v1/$collective_name/(:num)",
+                "uri" => "/api/v2/$collective_name/(:num)",
                 "search_mode_options" => [ SEARCH_ONLY_DELETED ]
             ],
             "index" => [
                 "http_method" => "get",
-                "uri" => "/api/v1/$collective_name"
+                "uri" => "/api/v2/$collective_name"
             ],
             "create" => [
                 "http_method" => "post",
-                "uri" => "/api/v1/$collective_name"
+                "uri" => "/api/v2/$collective_name"
             ]
         ];
 
@@ -133,21 +133,21 @@ make_owned_resource_routes($routes, AccessTokenController::class, [
     "index"
 ]);
 $routes->post(
-    "api/v1/".FrozenPeriodController::getInfo()->getCollectiveName()."/dry_run",
+    "api/v2/".FrozenPeriodController::getInfo()->getCollectiveName()."/dry_run",
     [
         FrozenPeriodController::class,
         "dry_run_create"
     ]
 );
 $routes->post(
-    "api/v1/".FrozenPeriodController::getInfo()->getCollectiveName()."/recalculate",
+    "api/v2/".FrozenPeriodController::getInfo()->getCollectiveName()."/recalculate",
     [
         FrozenPeriodController::class,
         "recalculate"
     ]
 );
 $routes->get(
-    "api/v1/".NumericalToolController::getInfo()->getCollectiveName()."/calculate/(:num)",
+    "api/v2/".NumericalToolController::getInfo()->getCollectiveName()."/calculate/(:num)",
     [
         NumericalToolController::class,
         "calculate"
@@ -160,14 +160,14 @@ $routes->get(
     ]
 );
 $routes->patch(
-    "api/v1/user",
+    "api/v2/user",
     [
         UserController::class,
         "update"
     ]
 );
 $routes->patch(
-    "api/v1/user/password",
+    "api/v2/user/password",
     [
         UserController::class,
         "updatePassword"
