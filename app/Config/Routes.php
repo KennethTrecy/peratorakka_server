@@ -107,12 +107,14 @@ use App\Controllers\FormulaController;
 use App\Controllers\FrozenPeriodController;
 use App\Controllers\ModifierController;
 use App\Controllers\NumericalToolController;
+use App\Controllers\PrecisionFormatController;
 use App\Controllers\UserController;
 
 make_owned_resource_routes($routes, AccountController::class);
 make_owned_resource_routes($routes, CashFlowActivityController::class);
 make_owned_resource_routes($routes, CollectionController::class);
 make_owned_resource_routes($routes, CurrencyController::class);
+make_owned_resource_routes($routes, PrecisionFormatController::class);
 make_owned_resource_routes($routes, FinancialEntryController::class);
 make_owned_resource_routes($routes, ModifierController::class);
 make_owned_resource_routes($routes, FormulaController::class);
