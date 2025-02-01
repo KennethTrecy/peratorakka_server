@@ -9,6 +9,20 @@ use Xylemical\Expressions\Context as BaseContext;
 
 class Context extends BaseContext
 {
+    /**
+     * @type Context[]
+     */
+    private static ?Context $instance = null;
+
+    public static function make()
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
+    }
+
     public function __construct()
     {
         $this->setVariable(ContextKeys::FLASH_CACHE, new FlashCache());
@@ -22,6 +36,15 @@ class Context extends BaseContext
         }
 
         return parent::getVariable($name, $default);
+    }
+
+    public function hasVariable($name)
+    {
+        if ($name instanceof ContextKeys) {
+            $name = $name->value;
+        }
+
+        return parent::hasVariable($name);
     }
 
     public function setVariable($name, $value)
