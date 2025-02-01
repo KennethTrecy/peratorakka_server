@@ -213,6 +213,18 @@ class ModifierAtomInputExaminer
                 DEPRECIATIVE_ASSET_ACCOUNT_KIND => $one_or_many_count
             ]
         ];
+        $exchange_atom_permissions = [
+            [
+                "any",
+                GENERAL_ASSET_ACCOUNT_KIND => $one_count_only,
+                LIABILITY_ACCOUNT_KIND => $one_count_only,
+                EQUITY_ACCOUNT_KIND => $one_count_only,
+                GENERAL_EXPENSE_ACCOUNT_KIND => $one_count_only,
+                GENERAL_INCOME_ACCOUNT_KIND => $one_count_only,
+                LIQUID_ASSET_ACCOUNT_KIND => $one_count_only,
+                DEPRECIATIVE_ASSET_ACCOUNT_KIND => $one_count_only
+            ]
+        ];
 
         return [
             RECORD_MODIFIER_ACTION => [
@@ -238,8 +250,8 @@ class ModifierAtomInputExaminer
                 ]
             ],
             EXCHANGE_MODIFIER_ACTION => [
-                DEBIT_MODIFIER_ATOM_KIND => $normal_atom_permissions,
-                CREDIT_MODIFIER_ATOM_KIND => $normal_atom_permissions
+                DEBIT_MODIFIER_ATOM_KIND => $exchange_atom_permissions,
+                CREDIT_MODIFIER_ATOM_KIND => $exchange_atom_permissions
             ],
             BID_MODIFIER_ACTION => [
                 DEBIT_MODIFIER_ATOM_KIND => [
