@@ -173,16 +173,40 @@ define("ACCOUNT_KINDS", [
  | - RECORD_MODIFIER_ACTION. A modifier with this action can create normal journal entries.
  | - CLOSE_MODIFIER_ACTION. A modifier with this action can create closing journal entries.
  | - EXCHANGE_MODIFIER_ACTION. A modifier with this action can create exchange journal entries.
+ | - BID_MODIFIER_ACTION. A modifier with this action can create bid journal entries.
+ | - ASK_MODIFIER_ACTION. A modifier with this action can create ask journal entries.
+ | - TRANSFORM_MODIFIER_ACTION. A modifier with this action can create transform journal entries.
+ | - THROW_MODIFIER_ACTION. A modifier with this action can create throw journal entries.
+ | - CATCH_MODIFIER_ACTION. A modifier with this action can create catch journal entries.
+ | - CONDENSE_MODIFIER_ACTION. A modifier with this action can create condense journal entries.
+ | - DILUTE_MODIFIER_ACTION. A modifier with this action can create dilute journal entries.
+ | - PAPER_RECORD_MODIFIER_ACTION. A modifier with this action can create paper journal entries.
  */
 define("UNKNOWN_MODIFIER_ACTION", "unknown");
 define("RECORD_MODIFIER_ACTION", "record");
 define("CLOSE_MODIFIER_ACTION", "close");
 define("EXCHANGE_MODIFIER_ACTION", "exchange");
+define("BID_MODIFIER_ACTION", "bid");
+define("ASK_MODIFIER_ACTION", "ask");
+define("PAPER_RECORD_MODIFIER_ACTION", "paper_record");
+define("TRANSFORM_MODIFIER_ACTION", "transform");
+define("THROW_MODIFIER_ACTION", "throw");
+define("CATCH_MODIFIER_ACTION", "catch");
+define("CONDENSE_MODIFIER_ACTION", "condense");
+define("DILUTE_MODIFIER_ACTION", "dilute");
 
 define("ACCEPTABLE_MODIFIER_ACTIONS", [
     RECORD_MODIFIER_ACTION,
     CLOSE_MODIFIER_ACTION,
     EXCHANGE_MODIFIER_ACTION,
+    BID_MODIFIER_ACTION,
+    ASK_MODIFIER_ACTION,
+    PAPER_RECORD_MODIFIER_ACTION,
+    TRANSFORM_MODIFIER_ACTION,
+    THROW_MODIFIER_ACTION,
+    CATCH_MODIFIER_ACTION,
+    CONDENSE_MODIFIER_ACTION,
+    DILUTE_MODIFIER_ACTION
 ]);
 
 define("MODIFIER_ACTIONS", [
