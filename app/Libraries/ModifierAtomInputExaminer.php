@@ -177,6 +177,16 @@ class ModifierAtomInputExaminer
             }
         }
 
+        if ($action === EXCHANGE_MODIFIER_ACTION) {
+            $debit_account_id = $this->input[0]["account_id"];
+            $credit_account_id = $this->input[1]["account_id"];
+
+            $source_currency_id = $account_cache->determineCurrencyID($credit_account_id);
+            $destination_currency_id = $account_cache->determineCurrencyID($debit_account_id);
+
+            return $source_currency_id !== $destination_currency_id;
+        }
+
         return true;
     }
 
