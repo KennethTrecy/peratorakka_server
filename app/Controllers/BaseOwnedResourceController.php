@@ -64,7 +64,7 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
-    protected static function processCreatedDocument(array $initial_document): array
+    protected static function processCreatedDocument(array $initial_document, array $input): array
     {
         return $initial_document;
     }
@@ -76,9 +76,11 @@ abstract class BaseOwnedResourceController extends BaseController
         return $enriched_document;
     }
 
-    private static function processAndOrganizeCreatedDocument(array $initial_document): array
-    {
-        $processed_document = static::processCreatedDocument($initial_document);
+    private static function processAndOrganizeCreatedDocument(
+        array $initial_document,
+        array $input
+    ): array {
+        $processed_document = static::processCreatedDocument($initial_document, $input);
         ksort($processed_document);
         return $processed_document;
     }
@@ -96,6 +98,7 @@ abstract class BaseOwnedResourceController extends BaseController
         $page = $request->getVar("page") ?? [];
         $offset = $page["offset"] ?? 0;
         $limit = min($page["limit"] ?? 100, 100);
+        $must_be_enriched = isset($page["must_be_enriched"]) ? $page["must_be_enriched"] : "false";
 
         if ($scoped_model instanceof BaseResourceModel) {
             $scoped_model = $scoped_model->limitSearchToUser($scoped_model, $current_user);
@@ -123,7 +126,9 @@ abstract class BaseOwnedResourceController extends BaseController
             ],
             static::getCollectiveName() => $scoped_model->findAll($limit, $offset)
         ];
-        $response_document = static::enrichAndOrganizeResponseDocument($response_document);
+        $response_document = (
+            $must_be_enriched === "true" || $must_be_enriched === "1" || $must_be_enriched === true
+        ) ? static::enrichAndOrganizeResponseDocument($response_document) : $response_document;
 
         return response()->setJSON($response_document);
     }
@@ -183,7 +188,8 @@ abstract class BaseOwnedResourceController extends BaseController
                                 )
                             ];
                             $response_document = static::processAndOrganizeCreatedDocument(
-                                $response_document
+                                $response_document,
+                                $info
                             );
 
                             if (static::mustTransactForCreation()) {
