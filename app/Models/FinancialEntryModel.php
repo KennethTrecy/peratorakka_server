@@ -43,18 +43,25 @@ class FinancialEntryModel extends BaseResourceModel
         $begin_date = $options["begin_date"] ?? null;
         $end_date = $options["end_date"] ?? null;
 
-        // TODO: Fix the filter for account-specific search
-        // if (!is_null($filter_account_id)) {
-        //     $query_builder = $query_builder
-        //         ->whereIn(
-        //             "modifier_id",
-        //             model(ModifierModel::class, false)
-        //                 ->builder()
-        //                 ->select("id")
-        //                 ->where("debit_account_id", $filter_account_id)
-        //                 ->orWhere("credit_account_id", $filter_account_id)
-        //         );
-        // }
+        if (!is_null($filter_account_id)) {
+            $query_builder = $query_builder
+                ->whereIn(
+                    "id",
+                    model(FinancialEntryAtomModel::class, false)
+                        ->builder()
+                        ->select("financial_entry_id")
+                        ->where(
+                            "modifier_atom_id",
+                            model(ModifierAtomModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->where(
+                                    "account_id",
+                                    $filter_account_id
+                                )
+                        )
+                );
+        }
 
         if (!is_null($filter_modifier_id)) {
             $query_builder = $query_builder
