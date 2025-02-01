@@ -105,8 +105,6 @@ digraph {
 					<td align="left">
 						varchar(255)<br align="left"/>
 						varchar(255)<br align="left"/>
-						int<br align="left"/>
-						int<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -171,12 +169,19 @@ digraph {
 					<td align="left">
 						name<br align="left"/>
 						description<br align="left"/>
-						kind<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
-						enum(unknown,general_asset,liability,equity,<br align="left"/>general_expense,general_income,liquid_asset,<br align="left"/>depreciative_asset,itemized_asset,<br align="left"/>itemized_equity,market_adjustment,<br align="left"/>paper_adjustment,revenue,loss)<br align="left"/>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						kind<br align="left"/><br align="left"/><br align="left"/><br align="left"/>
+					</td>
+					<td align="left">
+						enum(unknown,general_asset,liability,<br align="left"/>equity,general_expense,general_income,<br align="left"/>liquid_asset,depreciative_asset,<br align="left"/>general_temporary,itemized_asset,<br align="left"/>direct_cost,direct_sale)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -216,13 +221,13 @@ digraph {
 			</table>
 			>
 		]
-		item_configuration [
+		item_configurations [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Item Configuration
+							Item Configurations
 						</font>
 					</td>
 				</tr>
@@ -417,7 +422,7 @@ digraph {
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
 						enum(unknown,reactive,dependent,manual)<br align="left"/>
-						enum(unknown,record,close,exchange,<br align="left"/>paper_record,bid,ask,transform,throw,catch,<br align="left"/>enrich,dilute)<br align="left"/>
+						enum(unknown,record,close,exchange,<br align="left"/>paper_record,bid,ask,transform,throw,catch,<br align="left"/>condense,dilute)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -454,7 +459,7 @@ digraph {
 						kind<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
-						enum(unknown,debit,credit,<br align="left"/>paper_debit,paper_credit,item)<br align="left"/>
+						enum(unknown,debit,credit,<br align="left"/>base,paper,item_count,price)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -469,11 +474,6 @@ digraph {
 							Modifier Atom Activities
 						</font>
 					</td>
-				</tr>
-				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
-					<td align="left">bigint</td>
 				</tr>
 				<tr>
 					<td>FK</td>
@@ -617,7 +617,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">financial_entry_id</td>
+					<td align="left">financial_entry_atom_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -628,7 +628,7 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
-						amount<br align="left"/>
+						numerical_value<br align="left"/>
 					</td>
 					<td align="left">
 						string<br align="left"/>
@@ -722,7 +722,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">unadjusted_hash</td>
+					<td align="left">unadjusted_summary_calculation_hash</td>
 					<td align="left">string</td>
 				</tr>
 				<tr>
@@ -755,7 +755,7 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">unadjusted_hash</td>
+					<td align="left">unadjusted_summary_calculation_hash</td>
 					<td align="left">string</td>
 				</tr>
 				<tr>
@@ -767,6 +767,38 @@ digraph {
 					<td></td>
 					<td align="left">
 						net_amount<br align="left"/>
+					</td>
+					<td align="left">
+						string<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		item_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Item Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">unadjusted_summary_calculation_hash</td>
+					<td align="left">string</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">financial_entry_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						remaining_count<br align="left"/>
 					</td>
 					<td align="left">
 						string<br align="left"/>
@@ -869,8 +901,6 @@ digraph {
 						name<br align="left"/>
 						nullable text<br align="left"/>
 						enum(unknown,raw,<br align="left"/>percentage,currency)<br align="left"/>
-						int<br align="left"/>
-						int<br align="left"/>
 						text<br align="left"/>
 					</td>
 				</tr>
@@ -970,11 +1000,13 @@ digraph {
 		cash_flow_activities -> flow_calculations
 		currencies -> accounts
 		collections -> account_collections
-		precision_formats -> formulae
 		precision_formats -> currencies
 		precision_formats -> item_details
+		precision_formats -> formulae
 		users -> collections
-		item_details -> item_configuration
+		item_details -> item_configurations
+		unadjusted_summary_calculations -> item_calculations
+		financial_entry_atoms -> item_calculations
 	}
 
 	{
@@ -988,7 +1020,7 @@ digraph {
 		numerical_tools -> currencies
 		modifiers -> users
 		account_collections -> accounts
-		item_configuration -> accounts
+		item_configurations -> accounts
 		precision_formats -> users
 	}
 
@@ -1029,17 +1061,22 @@ digraph {
 			style = invis
 		]
 
-		events -> formulae -> collections
 		events -> collections
 		account_collections -> currencies
 
 		timeout_events -> reactive_modifiers -> dependent_modifiers
 		events -> modifier_atoms
-		account_collections -> item_configuration
-		numerical_tools -> item_configuration
+		// account_collections -> item_configurations
+		event_started_times -> numerical_tools -> precision_formats
+		numerical_tools -> events
+		numerical_tools -> collections
+		numerical_tools -> reactive_modifiers
+		numerical_tools -> account_collections
+		numerical_tools -> currencies
 		flow_calculations -> adjusted_summary_calculations
 		financial_entry_atoms -> modifier_atom_activities
 		item_details -> account_collections
+		currencies -> item_configurations
 	}
 
 	{
@@ -1047,11 +1084,6 @@ digraph {
 		l0
 		numerical_tools
 		formulae
-	}
-
-	{
-		rank = same;
-		l1
 		interval_events
 		timeout_events
 		event_started_times
@@ -1060,7 +1092,7 @@ digraph {
 
 	{
 		rank = same;
-		l2
+		l1
 		events
 		item_details
 		currencies
@@ -1068,17 +1100,17 @@ digraph {
 
 	{
 		rank = same;
-		l3
+		l2
 		account_collections
 		collections
 		reactive_modifiers
 		users
-		item_configuration
+		item_configurations
 	}
 
 	{
 		rank = same;
-		l4
+		l3
 		modifier_atoms
 		accounts
 		modifiers
@@ -1087,19 +1119,25 @@ digraph {
 
 	{
 		rank = same;
-		l5
+		l4
 		frozen_periods
 		unadjusted_summary_calculations
+		financial_entries
 	}
 
 	{
 		rank = same;
-		l6
-		modifier_atom_activities
-		cash_flow_activities
-		flow_calculations
+		l5
 		financial_entry_atoms
 		adjusted_summary_calculations
-		financial_entries
+		item_calculations
+	}
+
+	{
+		rank = sink;
+		l6
+		flow_calculations
+		modifier_atom_activities
+		cash_flow_activities
 	}
 }
