@@ -1,29 +1,31 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Deprecated;
 
 use App\Casts\ModifierAction;
 use App\Casts\RationalNumber;
-use App\Entities\Currency;
+use App\Entities\Deprecated\Currency;
 use App\Libraries\Resource;
+use App\Models\BaseResourceModel;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
-class CurrencyModel extends BaseResourceModel
+class DeprecatedCurrencyModel extends BaseResourceModel
 {
-    protected $table = "currencies_v2";
+    protected $table = "currencies";
     protected $returnType = Currency::class;
     protected $allowedFields = [
-        "precision_format_id",
+        "user_id",
         "code",
         "name",
-        "created_at",
+        "presentational_precision",
         "deleted_at"
     ];
 
     protected $sortable_fields = [
         "code",
         "name",
+        "presentational_precision",
         "created_at",
         "updated_at",
         "deleted_at"
@@ -33,42 +35,14 @@ class CurrencyModel extends BaseResourceModel
     {
         return [
             "code"  => $faker->unique()->currencyCode(),
-            "name"  => $faker->unique()->firstName()
+            "name"  => $faker->unique()->firstName(),
+            "presentational_precision"  => $faker->randomElement([ 0, 1, 2, 3, 4, 12 ])
         ];
     }
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
-        return $query_builder
-            ->whereIn(
-                "precision_format_id",
-                model(PrecisionFormatModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->where("user_id", $user->id)
-            );
-    }
-
-    protected static function createAncestorResources(int $user_id, array $options): array
-    {
-        [
-            $precision_format
-        ] = PrecisionFormatModel::createTestResource(
-            $user_id,
-            $options["precision_format_options"] ?? []
-        );
-
-        return [
-            [ [ $precision_format ] ],
-            [ [ "precision_format_id" => $precision_format->id ] ]
-        ];
-    }
-
-    protected static function identifyAncestors(): array
-    {
-        return [
-            PrecisionFormatModel::class => [ "precision_format_id" ]
-        ];
+        return $query_builder->where("user_id", $user->id);
     }
 
     public static function makeExchangeRates(
