@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Deprecated;
 
 use App\Entities\Account;
+use App\Models\BaseResourceModel;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
-class AccountModel extends BaseResourceModel
+class DeprecatedAccountModel extends BaseResourceModel
 {
-    protected $table = "accounts_v2";
+    protected $table = "accounts";
     protected $returnType = Account::class;
     protected $allowedFields = [
         "currency_id",
@@ -40,44 +41,17 @@ class AccountModel extends BaseResourceModel
         return $query_builder
             ->whereIn(
                 "currency_id",
-                model(CurrencyModel::class, false)
+                model(DeprecatedCurrencyModel::class, false)
                     ->builder()
                     ->select("id")
-                    ->whereIn(
-                        "precision_format_id",
-                        model(PrecisionFormatModel::class, false)
-                            ->builder()
-                            ->select("id")
-                            ->where("user_id", $user->id)
-                    )
+                    ->where("user_id", $user->id)
             );
-    }
-
-    protected static function createAncestorResources(int $user_id, array $options): array
-    {
-        [
-            $precision_formats,
-            $currency
-        ] = CurrencyModel::createTestResource(
-            $user_id,
-            $options["currency_format_options"] ?? []
-        );
-
-        $parent_links = static::permutateParentLinks([
-            "currency_id" => [ $currency->id ],
-            "kind" => $options["expected_kinds"] ?? []
-        ], $options);
-
-        return [
-            [ $precision_formats, [ $currency ] ],
-            $parent_links
-        ];
     }
 
     protected static function identifyAncestors(): array
     {
         return [
-            CurrencyModel::class => [ "currency_id" ]
+            DeprecatedCurrencyModel::class => [ "currency_id" ]
         ];
     }
 
