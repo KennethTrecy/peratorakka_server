@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Validation\CompoundDataRules;
 use App\Validation\DatabaseRules;
 use App\Validation\EnumerationRules;
 use App\Validation\FractionRules;
@@ -36,7 +37,8 @@ class Validation extends BaseConfig
         TimeRules::class,
         EnumerationRules::class,
         FractionRules::class,
-        NumericalToolRules::class
+        NumericalToolRules::class,
+        CompoundDataRules::class
     ];
 
     /**
