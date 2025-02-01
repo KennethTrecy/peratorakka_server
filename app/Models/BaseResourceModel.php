@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Contracts\OwnedResource;
 use App\Exceptions\UnprocessableRequest;
-use App\Libraries\Resource;
 use CodeIgniter\Model;
 use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\Test\Fabricator;
 use CodeIgniter\Test\Interfaces\FabricatorModel;
-use Faker\Generator;
 
 abstract class BaseResourceModel extends Model implements FabricatorModel, OwnedResource
 {
@@ -224,6 +223,153 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
         } while (count($incomplete_ancestor_IDs) > 0);
 
         return array_values($resolved_ancestors);
+    }
+
+    public static function createTestResources(
+        int $user_id,
+        int $count_per_user,
+        array $options
+    ): array {
+        return static::createOrMakeTestResources($user_id, $count_per_user, "create", $options);
+    }
+
+    public static function createTestResource(int $user_id, array $options): array
+    {
+        $resources = static::createTestResources($user_id, 1, $options);
+        $last_resource_index = count($resources) - 1;
+        $resources[$last_resource_index] = count($resources[$last_resource_index]) === 1
+            ? $resources[$last_resource_index][0]
+            : $resources[$last_resource_index];
+
+        return $resources;
+    }
+
+    public static function makeTestResources(
+        int $user_id,
+        int $count_per_user,
+        array $options
+    ): array {
+        return static::createOrMakeTestResources($user_id, $count_per_user, "make", $options);
+    }
+
+    public static function makeTestResource(int $user_id, array $options): array
+    {
+        $resources = static::makeTestResources($user_id, 1, $options);
+        $last_resource_index = count($resources) - 1;
+        $resources[$last_resource_index] = count($resources[$last_resource_index]) === 1
+            ? $resources[$last_resource_index][0]
+            : $resources[$last_resource_index];
+
+        return $resources;
+    }
+
+    public static function createAndMakeTestResources(int $user_id, array $options): array
+    {
+        $ancestor_data = isset($options["ancestor_data"])
+            ? $options["ancestor_data"]
+            : static::createAncestorResources($user_id, $options);
+        $options["ancestor_data"] = $ancestor_data;
+        $original_overrides = isset($options["overrides"]) ? $options["overrides"] : [];
+
+        $created_resources = static::createTestResources($user_id, 1, $options);
+
+        $made_options = [ ...$options ];
+        if (isset($options["make_overrides"])) {
+            $made_options["overrides"] = array_merge(
+                $original_overrides,
+                $options["make_overrides"]
+            );
+        }
+        $made_resources = static::makeTestResources($user_id, 1, $made_options);
+        $ancestor_resources = $ancestor_data[0];
+        $last_index = count($ancestor_resources);
+
+        return array_merge(
+            $ancestor_resources,
+            $created_resources[$last_index],
+            $made_resources[$last_index]
+        );
+    }
+
+    protected static function createAncestorResources(int $user_id, array $options): array
+    {
+        $ancestor_resources = [];
+        $parent_links = static::permutateParentLinks([
+            "user_id" => [ $user_id ]
+        ], $options);
+
+        return [
+            $ancestor_resources,
+            $parent_links
+        ];
+    }
+
+    protected static function permutateParentLinks(
+        array $parent_links,
+        array $options
+    ): array {
+        $permutated_links = [];
+
+        foreach ($parent_links as $parent_link_column_name => $parent_link_IDs) {
+            if (count($parent_link_IDs) === 0) {
+                continue;
+            }
+
+            if (count($permutated_links) === 0) {
+                $permutated_links = array_map(fn ($parent_link_id) => [
+                    $parent_link_column_name => $parent_link_id
+                ], $parent_link_IDs);
+            } else {
+                $permutated_links = array_reduce(
+                    $permutated_links,
+                    fn ($previous_links, $permutated_link) => array_merge(
+                        $previous_links,
+                        array_map(fn ($parent_link_id) => [
+                            ...$permutated_link,
+                            $parent_link_column_name => $parent_link_id
+                        ], $parent_link_IDs)
+                    ),
+                    []
+                );
+            }
+        }
+
+        return $permutated_links;
+    }
+
+    protected static function createOrMakeTestResources(
+        int $user_id,
+        int $count_per_parent,
+        string $fabricator_generation_method,
+        array $options
+    ): array {
+        $resources = [];
+        [
+            $ancestor_resources,
+            $parent_links
+        ] = isset($options["ancestor_data"])
+            ? $options["ancestor_data"]
+            : static::createAncestorResources($user_id, $options);
+
+        $fabricator = new Fabricator(static::class);
+        foreach ($parent_links as $parent_link) {
+            $overrides = $parent_link;
+            if (isset($options["overrides"])) {
+                $overrides = array_merge($overrides, $options["overrides"]);
+            }
+            $fabricator->setOverrides($overrides);
+
+            if ($count_per_parent === 1) {
+                array_push($resources, $fabricator->$fabricator_generation_method());
+            } else {
+                $resources = array_merge(
+                    $resources,
+                    $fabricator->$fabricator_generation_method($count_per_parent)
+                );
+            }
+        }
+
+        return array_merge($ancestor_resources, [ $resources ]);
     }
 
     protected static function identifyAncestors(): array
