@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Libraries\Context;
+
+use App\Libraries\Context\ContextKeys;
+use App\Models\AccountModel;
+
+class AccountCache extends ResourceCache
+{
+    protected static function contextKey(): ContextKeys
+    {
+        return ContextKeys::ACCOUNT_CACHE;
+    }
+
+    protected static function getModel(): AccountModel
+    {
+        return model(AccountModel::class, false);
+    }
+
+    public function determineCurrencyID(int $account_id): ?int
+    {
+        return isset($this->resources[$account_id])
+            ? $this->resources[$account_id]->currency_id
+            : null;
+    }
+
+    public function determineAccountName(int $account_id): ?string
+    {
+        return isset($this->resources[$account_id])
+            ? $this->resources[$account_id]->name
+            : null;
+    }
+
+    public function determineAccountKind(int $account_id): ?string
+    {
+        return isset($this->resources[$account_id])
+            ? $this->resources[$account_id]->kind
+            : null;
+    }
+}
