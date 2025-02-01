@@ -16,6 +16,7 @@ enum ContextKeys: string
     case MEMOIZER = "memoizer";
     case CURRENCY_CACHE = "currency_cache";
     case MODIFIER_CACHE = "modifier_cache";
+    case MODIFIER_ATOM_CACHE = "modifier_atom_cache";
     case ACCOUNT_CACHE = "account_cache";
     case COLLECTION_CACHE = "collection_cache";
     case EXCHANGE_RATE_CACHE = "exchange_rate_cache";
