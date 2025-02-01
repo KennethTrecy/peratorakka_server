@@ -29,22 +29,35 @@ mechanism is dependent to the developer's preference.
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - General Asset
      - Liability
-     - Equity
+     - General Equity
      - General Expense
      - General Income
      - Liquid Asset
      - Depreciative Asset
+     - General Temporary
      - Itemized Asset
-     - Paper Gain
-     - Paper Loss
-     - Revenue
-     - Loss
-5. An cash flow activity has the following information:
+     - Direct Cost
+     - Direct Sale
+4.  An item info has the following information:
    - Primary ID
    - User ID
    - Name
    - Description
-6. An event has the following information:
+5.  An item configuration has the following information:
+    - Primary ID
+    - Account ID
+    - Item Info ID
+    - Valuation Method
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Weighted Average
+      - FIFO
+      - LIFO
+6. An cash flow activity has the following information:
+   - Primary ID
+   - User ID
+   - Name
+   - Description
+7. An event has the following information:
    - Primary ID
    - User ID
    - Name
@@ -54,19 +67,19 @@ mechanism is dependent to the developer's preference.
      - Timeout
      - Interval
      - Manual
-7. A timeout event has the following information:
+8. A timeout event has the following information:
    - Primary ID
    - Event ID
    - Expiration date and time
-8. An interval event has the following information:
+9. An interval event has the following information:
    - Primary ID
    - Event ID
    - Schedule as CRON expression
-9. An event started time has the following information:
+10. An event started time has the following information:
    - Primary ID
    - Event ID
    - Started time
-10. A modifier has the following information:
+11. A modifier has the following information:
    - Primary ID
    - Name
    - Description (optional)
@@ -75,20 +88,20 @@ mechanism is dependent to the developer's preference.
      - Record
      - Close
      - Exchange
-     - Group
+     - Paper Record
      - Bid
      - Ask
      - Transform
      - Throw
      - Catch
-     - Enrich
+     - Condense
      - Dilute
    - Kind (enumeration)
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - Reactive
      - Dependent
      - Manual Input
-13. A reactive modifier has the following special information:
+12. A reactive modifier has the following special information:
    - Primary ID
    - Modifier ID
    - Event ID
@@ -97,7 +110,7 @@ mechanism is dependent to the developer's preference.
      - Adder
      - Multiplier
      - Value
-14. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
+13. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
     following special information:
     - Primary ID
     - Modifier ID
@@ -107,51 +120,66 @@ mechanism is dependent to the developer's preference.
       - Adder
       - Multiplier
     - Value
-15. A financial entry has the following information
+14. A modifier atom has the following information
     - Primary ID
-    - User ID
+    - Modifier ID
+    - Account ID
+    - Field Kind
+      - Debit
+      - Credit
+      - Base
+      - Paper
+      - Item Count
+      - Price
+15. A modifier atom activity has the following information:
+    - Primary ID
+    - Modifier Atom ID
+    - Cash Flow Activity ID
+16. A financial entry has the following information
+    - Primary ID
+    - Modifier ID
     - Transaction Date
     - Remarks
-16. A financial entry atom has the following information
+17. A financial entry atom has the following information
     - Primary ID
     - Financial Entry ID
     - Modifier Atom ID
-    - Amount
-17. A frozen period has the following information:
+    - Numerical Value
+18. A frozen period has the following information:
     - Primary ID
     - User ID
     - Started date and time
     - Finished date and time
-18. A unadjusted summary calculation has the following information:
-    - Primary ID
+19. A unadjusted summary calculation has the following information:
+    - Primary Hash
     - Frozen Period ID
     - Account ID
     - Unadjusted Debit Amount
     - Unadjusted Credit Amount
-19. A adjusted summary calculation has the following information
-    - Primary ID
-    - Frozen Period ID
-    - Account ID
+20. A adjusted summary calculation has the following information
+    - Unadjusted Summary Calculation Hash
     - Opened Debit Amount
     - Closed Debit Amount
     - Opened Credit Amount
     - Closed Credit Amount
-20. A flow calculation has the following information:
-    - Primary ID
-    - Frozen Period ID
+21. A flow calculation has the following information:
+    - Unadjusted Summary Calculation Hash
     - Cash Flow Activity ID
-    - Account ID
     - Net amount
-21. A collection has the following information:
+22. An item calculation has the following information:
+    - Unadjusted Summary Calculation Hash
+    - Financial Entry ID
+    - Remaining Count
+23. A collection has the following information:
     - Primary ID
     - User ID
     - Name
     - Description
-22. An account collection has the following information:
+24. An account collection has the following information:
     - Primary ID
     - Collection ID
     - Account ID
-23. A formula has the following information:
+25. A formula has the following information:
     - Primary ID
     - User ID
     - Name
@@ -167,7 +195,7 @@ mechanism is dependent to the developer's preference.
       - Latest
     - Presentational Precision
     - Expression
-24. A numerical tool has the following information:
+26. A numerical tool has the following information:
     - Primary ID
     - User ID
     - Name
@@ -185,43 +213,6 @@ mechanism is dependent to the developer's preference.
     - Order
     - Notes
     - Configuration
-25. A modifier atom has the following information
-    - Primary ID
-    - Modifier ID
-    - Account ID
-    - Field Kind
-      - Debit
-      - Credit
-      - Item
-      - Modifier
-26. A modifier atom activity has the following information:
-    - Primary ID
-    - Modifier Atom ID
-    - Cash Flow Activity ID
-27. An item info has the following information:
-   - Primary ID
-   - User ID
-   - Name
-   - Description
-28. An itemized configuration has the following information:
-    - Primary ID
-    - Account ID
-    - Item Info ID
-    - Valuation Method
-      - Unknown (to represent kinds in later versions in case the user downgraded)
-      - Weighted Average
-      - FIFO
-      - LIFO
-29. An item count entry has the following information:
-    - Primary ID
-    - Financial Entry Atom ID
-    - Count
-30. A inventory calculation entry has the following information:
-    - Primary ID
-    - Summary Calculation ID
-    - Issued Date
-    - Remaining Count
-    - Cost
 
 ### Migration Plan
 Next version would have a major upgrade.
