@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entities;
+namespace App\Entities\Deprecated;
 
-use App\Casts\RationalNumber;
+use App\Entities\BaseResourceEntity;
 
 class FinancialEntry extends BaseResourceEntity
 {
@@ -18,6 +18,12 @@ class FinancialEntry extends BaseResourceEntity
     protected $casts = [
         "id" => "integer",
         "modifier_id" => "integer",
+        "debit_amount" => "rational_number",
+        "credit_amount" => "rational_number",
         "remarks" => "?string"
+    ];
+
+    protected $castHandlers = [
+        "rational_number" => RationalNumber::class
     ];
 }
