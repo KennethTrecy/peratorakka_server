@@ -2,19 +2,25 @@
 
 namespace App\Models;
 
-use App\Entities\FinancialEntry;
+use App\Entities\Deprecated\FinancialEntry;
+use App\Models\BaseResourceModel;
+use App\Models\CashFlowActivityModel;
+use App\Models\CurrencyModel;
+use App\Models\ModifierModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use DateTimeInterface;
 use Faker\Generator;
 
-class FinancialEntryModel extends BaseResourceModel
+class DeprecatedFinancialEntryModel extends BaseResourceModel
 {
-    protected $table = "financial_entries_v2";
+    protected $table = "financial_entries";
     protected $returnType = FinancialEntry::class;
     protected $allowedFields = [
         "modifier_id",
         "transacted_at",
+        "debit_amount",
+        "credit_amount",
         "remarks",
         "deleted_at"
     ];
@@ -28,8 +34,11 @@ class FinancialEntryModel extends BaseResourceModel
 
     public function fake(Generator &$faker)
     {
+        $amount = $faker->regexify("\d{5}\.\d{3}");
         return [
             "transacted_at"  => Time::today()->toDateTimeString(),
+            "debit_amount"  => $amount,
+            "credit_amount"  => $amount,
             "remarks"  => $faker->paragraph(),
         ];
     }
@@ -43,18 +52,17 @@ class FinancialEntryModel extends BaseResourceModel
         $begin_date = $options["begin_date"] ?? null;
         $end_date = $options["end_date"] ?? null;
 
-        // TODO: Fix the filter for account-specific search
-        // if (!is_null($filter_account_id)) {
-        //     $query_builder = $query_builder
-        //         ->whereIn(
-        //             "modifier_id",
-        //             model(ModifierModel::class, false)
-        //                 ->builder()
-        //                 ->select("id")
-        //                 ->where("debit_account_id", $filter_account_id)
-        //                 ->orWhere("credit_account_id", $filter_account_id)
-        //         );
-        // }
+        if (!is_null($filter_account_id)) {
+            $query_builder = $query_builder
+                ->whereIn(
+                    "modifier_id",
+                    model(ModifierModel::class, false)
+                        ->builder()
+                        ->select("id")
+                        ->where("debit_account_id", $filter_account_id)
+                        ->orWhere("credit_account_id", $filter_account_id)
+                );
+        }
 
         if (!is_null($filter_modifier_id)) {
             $query_builder = $query_builder
@@ -82,13 +90,37 @@ class FinancialEntryModel extends BaseResourceModel
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
+        $account_subquery = model(AccountModel::class, false)
+            ->builder()
+            ->select("id")
+            ->whereIn(
+                "currency_id",
+                model(CurrencyModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->where("user_id", $user->id)
+            );
+        $cash_flow_activity_subquery = model(CashFlowActivityModel::class, false)
+            ->builder()
+            ->select("id")
+            ->where("user_id", $user->id);
+
         return $query_builder
             ->whereIn(
                 "modifier_id",
                 model(ModifierModel::class, false)
                     ->builder()
                     ->select("id")
-                    ->where("user_id", $user->id)
+                    ->whereIn("debit_account_id", $account_subquery)
+                    ->whereIn("credit_account_id", $account_subquery)
+                    ->groupStart()
+                        ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
+                        ->orWhere("debit_cash_flow_activity_id IS NULL")
+                    ->groupEnd()
+                    ->groupStart()
+                        ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery)
+                        ->orWhere("credit_cash_flow_activity_id IS NULL")
+                    ->groupEnd()
             );
     }
 
