@@ -17,6 +17,13 @@ class ModifierAtomCache extends ResourceCache
         return model(ModifierAtomModel::class, false);
     }
 
+    public function determineModifierAtomAccountID(int $modifier_atom_id): ?string
+    {
+        return isset($this->resources[$modifier_atom_id])
+            ? $this->resources[$modifier_atom_id]->account_id
+            : null;
+    }
+
     public function determineModifierAtomKind(int $modifier_atom_id): ?string
     {
         return isset($this->resources[$modifier_atom_id])
