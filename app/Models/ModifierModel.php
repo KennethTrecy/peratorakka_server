@@ -8,17 +8,15 @@ use Faker\Generator;
 
 class ModifierModel extends BaseResourceModel
 {
-    protected $table = "modifiers";
+    protected $table = "modifiers_v2";
     protected $returnType = Modifier::class;
     protected $allowedFields = [
-        "debit_account_id",
-        "credit_account_id",
-        "debit_cash_flow_activity_id",
-        "credit_cash_flow_activity_id",
+        "user_id",
         "name",
         "description",
         "action",
         "kind",
+        "created_at",
         "deleted_at"
     ];
 
@@ -36,7 +34,7 @@ class ModifierModel extends BaseResourceModel
             "description"  => $faker->paragraph(),
             "action"  => $faker->randomElement([
                 RECORD_MODIFIER_ACTION,
-                CLOSE_MODIFIER_ACTION,
+                CLOSE_MODIFIER_ACTION
             ]),
             "kind"  => $faker->randomElement(ACCEPTABLE_MODIFIER_KINDS),
         ];
@@ -44,42 +42,20 @@ class ModifierModel extends BaseResourceModel
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
-        $account_subquery = model(AccountModel::class, false)
-            ->builder()
-            ->select("id")
-            ->whereIn(
-                "currency_id",
-                model(CurrencyModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->where("user_id", $user->id)
-            );
-        $cash_flow_activity_subquery = model(CashFlowActivityModel::class, false)
-            ->builder()
-            ->select("id")
-            ->where("user_id", $user->id);
-
-        return $query_builder
-            ->whereIn("debit_account_id", $account_subquery)
-            ->whereIn("credit_account_id", $account_subquery)
-            ->groupStart()
-                ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
-                ->orWhere("debit_cash_flow_activity_id IS NULL")
-            ->groupEnd()
-            ->groupStart()
-                ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery)
-                ->orWhere("credit_cash_flow_activity_id IS NULL")
-            ->groupEnd();
+        return $query_builder->where("user_id", $user->id);
     }
 
-    protected static function identifyAncestors(): array
+    protected static function createAncestorResources(int $user_id, array $options): array
     {
+        $ancestor_resources = [];
+        $parent_links = static::permutateParentLinks([
+            "user_id" => [ $user_id ],
+            "expected_actions" => $options["expected_actions"] ?? []
+        ], $options);
+
         return [
-            AccountModel::class => [ "debit_account_id", "credit_account_id" ],
-            CashFlowActivityModel::class => [
-                "debit_cash_flow_activity_id",
-                "credit_cash_flow_activity_id"
-            ]
+            $ancestor_resources,
+            $parent_links
         ];
     }
 }
