@@ -106,12 +106,25 @@ define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
  | - GENERAL_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts with no special
  |   behavior when it comes to changes in cash flow statement.
  | - LIABILITY_ACCOUNT_KIND. Account kind that may represent liability accounts.
- | - EQUITY_ACCOUNT_KIND. Account kind that may represent equity accounts.
- | - EXPENSE_ACCOUNT_KIND. Account kind that may represent expense accounts.
- | - INCOME_ACCOUNT_KIND. Account kind that may represent income accounts.
- | - LIQUID_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that highly-liquid.
+ | - EQUITY_ACCOUNT_KIND. Account kind that may represent equity accounts with no special behavior
+ |   when it comes to changes in cash flow statement.
+ | - GENERAL_EXPENSE_ACCOUNT_KIND. Account kind that may represent expense accounts with no special
+ |   behavior when it comes to changes in cash flow statement.
+ | - GENERAL_INCOME_ACCOUNT_KIND. Account kind that may represent income accounts with no special
+ |   behavior when it comes to changes in cash flow statement.
+ | - LIQUID_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that highly-liquid
+ |   and forbids cash flow activity to be associated.
  | - DEPRECIATIVE_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that crediting
  |   their value means depreciation.
+ | - GENERAL_TEMPORARY_ACCOUNT_KIND. Account kind that may represent any temporary account and
+ |   should be closed first before freezing a period.
+ | - ITEMIZED_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that have certain
+ |   number of items holding its value.
+ | - DIRECT_COST_ACCOUNT_KIND. Account kind that may represent costs for itemized asset accounts.
+ |   Cash flow statement is deducted on positive paper flow and vice-versa. Income statement is
+ |   deducted on negative real flow.
+ | - DIRECT_SALE_ACCOUNT_KIND. Account kind that may represent unrealized values for itemized
+ |   asset accounts. Only shows to cash flow statement and income statement on non-zero real flow.
  |
  | When the user creates an account, certain kinds can be accepted by the server.
  | When the server finds an account kind not existing in the current version,
@@ -121,19 +134,27 @@ define("UNKNOWN_ACCOUNT_KIND", "unknown");
 define("GENERAL_ASSET_ACCOUNT_KIND", "general_asset");
 define("LIABILITY_ACCOUNT_KIND", "liability");
 define("EQUITY_ACCOUNT_KIND", "equity");
-define("EXPENSE_ACCOUNT_KIND", "expense");
-define("INCOME_ACCOUNT_KIND", "income");
+define("GENERAL_EXPENSE_ACCOUNT_KIND", "general_expense");
+define("GENERAL_INCOME_ACCOUNT_KIND", "general_income");
 define("LIQUID_ASSET_ACCOUNT_KIND", "liquid_asset");
 define("DEPRECIATIVE_ASSET_ACCOUNT_KIND", "depreciative_asset");
+define("GENERAL_TEMPORARY_ACCOUNT_KIND", "general_temporary");
+define("ITEMIZED_ASSET_ACCOUNT_KIND", "itemized_asset");
+define("DIRECT_COST_ACCOUNT_KIND", "direct_cost");
+define("DIRECT_SALE_ACCOUNT_KIND", "direct_sales");
 
 define("ACCEPTABLE_ACCOUNT_KINDS", [
     GENERAL_ASSET_ACCOUNT_KIND,
     LIABILITY_ACCOUNT_KIND,
     EQUITY_ACCOUNT_KIND,
-    EXPENSE_ACCOUNT_KIND,
-    INCOME_ACCOUNT_KIND,
+    GENERAL_EXPENSE_ACCOUNT_KIND,
+    GENERAL_INCOME_ACCOUNT_KIND,
     LIQUID_ASSET_ACCOUNT_KIND,
-    DEPRECIATIVE_ASSET_ACCOUNT_KIND
+    DEPRECIATIVE_ASSET_ACCOUNT_KIND,
+    GENERAL_TEMPORARY_ACCOUNT_KIND,
+    ITEMIZED_ASSET_ACCOUNT_KIND,
+    DIRECT_COST_ACCOUNT_KIND,
+    DIRECT_SALE_ACCOUNT_KIND
 ]);
 
 define("ACCOUNT_KINDS", [
