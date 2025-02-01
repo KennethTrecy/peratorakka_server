@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Entities;
+namespace App\Entities\Deprecated;
+
+use App\Entities\BaseResourceEntity;
 
 class Currency extends BaseResourceEntity
 {
@@ -14,8 +16,9 @@ class Currency extends BaseResourceEntity
 
     protected $casts = [
         "id" => "integer",
-        "precision_format_id" => "integer",
+        "user_id" => "integer",
         "code" => "string",
-        "name" => "string"
+        "name" => "string",
+        "presentational_precision" => "integer"
     ];
 }
