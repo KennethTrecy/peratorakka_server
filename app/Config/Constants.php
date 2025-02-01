@@ -246,6 +246,46 @@ define("MODIFIER_KINDS", [
 
 /*
  | --------------------------------------------------------------------------
+ | Modifier Atom Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different modifier atom kinds that the system can handle.
+ | - UNKNOWN_MODIFIER_ATOM_KIND. A modifier atom with this kind is not supported by the system at
+ |   the current version. This case may happen when the system downgraded.
+ | - DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would be
+ |   debited on calculations and reduces any paper calculations.
+ | - CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would be
+ |   credited on calculations and reduces any paper calculations.
+ | - PAPER_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account will be
+ |   have inputs considered as part of paper calculations.
+ | - ITEM_COUNT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would
+ |   have its number of items to be updated.
+ | - PRICE_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked paper account would
+ |   have its input as price and may be used as basis of latest price if owned by bid/paper record
+ |   modifier.
+ */
+define("UNKNOWN_MODIFIER_ATOM_KIND", "unknown_modifier_atom_kind");
+define("DEBIT_MODIFIER_ATOM_KIND", "debit_modifier_atom_kind");
+define("CREDIT_MODIFIER_ATOM_KIND", "credit_modifier_atom_kind");
+define("PAPER_MODIFIER_ATOM_KIND", "paper_modifier_atom_kind");
+define("ITEM_COUNT_MODIFIER_ATOM_KIND", "item_count_modifier_atom_kind");
+define("PRICE_MODIFIER_ATOM_KIND", "price_modifier_atom_kind");
+
+define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
+    DEBIT_MODIFIER_ATOM_KIND,
+    CREDIT_MODIFIER_ATOM_KIND,
+    PAPER_MODIFIER_ATOM_KIND,
+    ITEM_COUNT_MODIFIER_ATOM_KIND,
+    PRICE_MODIFIER_ATOM_KIND
+]);
+
+define("MODIFIER_ATOM_KINDS", [
+    UNKNOWN_MODIFIER_ATOM_KIND,
+    ...ACCEPTABLE_MODIFIER_ATOM_KINDS
+]);
+
+/*
+ | --------------------------------------------------------------------------
  | Output Formats
  | --------------------------------------------------------------------------
  |
