@@ -74,6 +74,12 @@ class FinancialEntryAtomInputExaminer
 
         $modifier_atom_cache = $this->context->getVariable(ContextKeys::MODIFIER_ATOM_CACHE);
 
+        foreach ($this->input as $input_element) {
+            if ($input_element->isEqualTo(RationalNumber::zero())) {
+                return false;
+            }
+        }
+
         switch ($modifier_action) {
             case RECORD_MODIFIER_ACTION: {
                 $debit_total = RationalNumber::zero();
@@ -94,6 +100,14 @@ class FinancialEntryAtomInputExaminer
                 }
 
                 return $debit_total->isEqualTo($credit_total);
+            }
+
+            case CLOSE_MODIFIER_ACTION: {
+                return count($this->input) === 0;
+            }
+
+            case EXCHANGE_MODIFIER_ACTION: {
+                return count($this->input) === 2;
             }
         }
 
