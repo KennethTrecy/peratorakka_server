@@ -175,7 +175,7 @@ class FinancialEntryAtomInputExaminer
                         } else {
                             $debit_total = $debit_total->plus($numerical_value);
                         }
-                    } else {
+                    } elseif ($modifier_atom_kind === CREDIT_MODIFIER_ATOM_KIND) {
                         $credit_total = $credit_total->plus($numerical_value);
                     }
                 }
@@ -243,7 +243,7 @@ class FinancialEntryAtomInputExaminer
                         if ($account_kind !== ITEMIZED_ASSET_ACCOUNT_KIND) {
                             $credit_total = $credit_total->plus($numerical_value);
                         }
-                    } else {
+                    } elseif ($modifier_atom_kind === DEBIT_MODIFIER_ATOM_KIND) {
                         $debit_total = $debit_total->plus($numerical_value);
                     }
                 }

@@ -313,10 +313,10 @@ class ModifierAtomInputExaminer
                     [
                         "any",
                         GENERAL_INCOME_ACCOUNT_KIND => $zero_or_many_count,
-                        DIRECT_SALE_ACCOUNT_KIND => $zero_or_many_count
                     ],
                     [
-                        "any",
+                        "all",
+                        DIRECT_SALE_ACCOUNT_KIND => $one_count_only,
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ],
@@ -334,14 +334,6 @@ class ModifierAtomInputExaminer
                 ]
             ],
             PAPER_RECORD_MODIFIER_ACTION => [
-                DEBIT_MODIFIER_ATOM_KIND => [
-                    [
-                        "any",
-                        GENERAL_ASSET_ACCOUNT_KIND => $one_count_only,
-                        LIQUID_ASSET_ACCOUNT_KIND => $one_count_only,
-                        DEPRECIATIVE_ASSET_ACCOUNT_KIND => $one_count_only
-                    ]
-                ],
                 PAPER_MODIFIER_ATOM_KIND => [
                     [
                         "any",
@@ -432,7 +424,7 @@ class ModifierAtomInputExaminer
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ]
-            ],
+            ]
         ];
     }
 }
