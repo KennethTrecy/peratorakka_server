@@ -250,6 +250,24 @@ class FinancialEntryAtomInputExaminer
 
                 return $debit_total->isEqualTo($credit_total);
             }
+
+            // Make sure there is always an input to the accounts.
+            // TODO: Create finer validation for the following once opened.
+            case PAPER_RECORD_MODIFIER_ACTION:
+            case TRANSFORM_MODIFIER_ACTION:
+            case THROW_MODIFIER_ACTION:
+            case CATCH_MODIFIER_ACTION:
+            case CONDENSE_MODIFIER_ACTION:
+            case DILUTE_MODIFIER_ACTION: {
+                foreach ($this->input as $input_element) {
+                    $numerical_value = RationalNumber::get($input_element["numerical_value"]);
+                    if ($numerical_value->isZero()) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
         }
 
         return false;
