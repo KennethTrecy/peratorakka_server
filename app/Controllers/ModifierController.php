@@ -69,9 +69,9 @@ class ModifierController extends BaseOwnedResourceController
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_MODIFIER_ACTIONS)."]",
             "must_have_compound_data_key[$individual_name.@meta.atoms]",
-            "has_valid_atom_group_info[$individual_name.@meta.atoms]",
-            "does_own_resources_declared_in_atom_group_info[$individual_name.@meta.atoms]",
-            "has_valid_atom_group_cash_flow_activity[$individual_name.@meta.atoms]",
+            "has_valid_modifier_atom_group_info[$individual_name.@meta.atoms]",
+            "does_own_resources_declared_in_modifier_atom_group_info[$individual_name.@meta.atoms]",
+            "has_valid_modifier_atom_group_cash_flow_activity[$individual_name.@meta.atoms]",
             "may_allow_modifier_action[$individual_name.@meta.atoms]"
         ]);
 

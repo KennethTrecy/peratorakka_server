@@ -26,7 +26,7 @@ class CompoundDataRules
     }
 
     // !: Validate data with `must_have_compound_data_key` first before putting this validator.
-    public function has_valid_atom_group_info(
+    public function has_valid_modifier_atom_group_info(
         $value,
         string $parameters,
         array $data,
@@ -39,7 +39,7 @@ class CompoundDataRules
     }
 
     // !: Validate data with `must_have_compound_data_key` first before putting this validator.
-    public function has_valid_atom_group_cash_flow_activity(
+    public function has_valid_modifier_atom_group_cash_flow_activity(
         $value,
         string $parameters,
         array $data,

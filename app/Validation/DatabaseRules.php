@@ -251,7 +251,7 @@ class DatabaseRules
     }
 
     // !: Validate data with `must_have_compound_data_key` first before putting this validator.
-    public function does_own_resources_declared_in_atom_group_info(
+    public function does_own_resources_declared_in_modifier_atom_group_info(
         $value,
         string $parameters,
         array $data,
