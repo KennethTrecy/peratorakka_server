@@ -30,6 +30,13 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
+        $validation->setRule("$individual_name.@meta", "entry value", [
+            "required"
+        ]);
+        $validation->setRule("$individual_name.@meta.atoms", "entry value", [
+            "required"
+        ]);
+        $atom_key = "$individual_name.@meta.atoms";
         $validation->setRule("$individual_name.modifier_id", "modifier", [
             "required",
             "is_natural_no_zero",
@@ -37,19 +44,10 @@ class FinancialEntryController extends BaseOwnedResourceController
                 ModifierModel::class,
                 SEARCH_NORMALLY
             ])."]",
-            "has_column_value_in_list[".implode(",", [
-                ModifierModel::class,
-                "kind",
-                MANUAL_MODIFIER_KIND
-            ])."]"
-        ]);
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_currency_amount",
-            "must_be_same_for_modifier[$individual_name.modifier_id,$individual_name.credit_amount]"
+            "must_have_compound_data_key[$atom_key]",
+            "has_valid_financial_entry_atom_group_info[$atom_key]",
+            "does_own_resources_declared_in_financial_entry_atom_group_info[$atom_key]",
+            "has_valid_financial_entry_atom_group_values[$atom_key]"
         ]);
 
         return $validation;
@@ -60,15 +58,6 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_currency_amount",
-            "must_be_same_for_financial_entry[$resource_id,$individual_name.credit_amount]"
-        ]);
-
         return $validation;
     }
 
@@ -76,26 +65,26 @@ class FinancialEntryController extends BaseOwnedResourceController
     {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
-        $main_documents = $is_single_main_document
-            ? [ $initial_document[static::getIndividualName()] ]
-            : ($initial_document[static::getCollectiveName()] ?? []);
+        // $main_documents = $is_single_main_document
+        //     ? [ $initial_document[static::getIndividualName()] ]
+        //     : ($initial_document[static::getCollectiveName()] ?? []);
 
-        [
-            $modifiers,
-            $accounts,
-            $cash_flow_activities,
-            $currencies,
-        ] = FinancialEntryModel::selectAncestorsWithResolvedResources($main_documents);
+        // [
+        //     $modifiers,
+        //     $accounts,
+        //     $cash_flow_activities,
+        //     $currencies,
+        // ] = FinancialEntryModel::selectAncestorsWithResolvedResources($main_documents);
 
-        if ($is_single_main_document) {
-            $enriched_document["modifier"] = $modifiers[0] ?? null;
-        } else {
-            $enriched_document["modifiers"] = $modifiers;
-        }
+        // if ($is_single_main_document) {
+        //     $enriched_document["modifier"] = $modifiers[0] ?? null;
+        // } else {
+        //     $enriched_document["modifiers"] = $modifiers;
+        // }
 
-        $enriched_document["accounts"] = $accounts;
-        $enriched_document["cash_flow_activities"] = $cash_flow_activities;
-        $enriched_document["currencies"] = $currencies;
+        // $enriched_document["accounts"] = $accounts;
+        // $enriched_document["cash_flow_activities"] = $cash_flow_activities;
+        // $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
     }
@@ -107,13 +96,6 @@ class FinancialEntryController extends BaseOwnedResourceController
 
         $validation->setRule($individual_name, "financial entry info", [
             "required"
-        ]);
-        $validation->setRule("$individual_name.credit_amount", "credit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_currency_amount"
         ]);
         $validation->setRule("$individual_name.transacted_at", "transacted date", [
             "required",
