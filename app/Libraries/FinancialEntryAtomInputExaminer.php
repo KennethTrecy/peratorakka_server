@@ -142,9 +142,9 @@ class FinancialEntryAtomInputExaminer
                         }
                     } elseif ($modifier_atom_kind === PRICE_MODIFIER_ATOM_KIND) {
                         if (isset($remaining_item_count_atoms[$modifier_atom_id])) {
-                            $product = $remaining_price_atoms[$modifier_atom_id]
+                            $product = $remaining_item_count_atoms[$modifier_atom_id]
                                 ->multipliedBy($numerical_value);
-                            unset($remaining_price_atoms[$modifier_atom_id]);
+                            unset($remaining_item_count_atoms[$modifier_atom_id]);
 
                             $remaining_itemized_debit_atoms[$modifier_id] = $product;
                         } else {
@@ -177,6 +177,74 @@ class FinancialEntryAtomInputExaminer
                         }
                     } else {
                         $credit_total = $credit_total->plus($numerical_value);
+                    }
+                }
+
+                return $debit_total->isEqualTo($credit_total);
+            }
+
+            case ASK_MODIFIER_ACTION: {
+                $debit_total = RationalNumber::zero();
+                $credit_total = RationalNumber::zero();
+
+                $remaining_price_atoms = [];
+                $remaining_item_count_atoms = [];
+                $remaining_itemized_credit_atoms = [];
+
+                foreach ($this->input as $input_element) {
+                    $modifier_atom_id = $input_element["modifier_atom_id"];
+                    $numerical_value = RationalNumber::get($input_element["numerical_value"]);
+                    if ($numerical_value->isZero()) {
+                        return false;
+                    }
+
+                    $modifier_atom_kind = $modifier_atom_cache->determineModifierAtomKind(
+                        $modifier_atom_id
+                    );
+
+                    if ($modifier_atom_kind === ITEM_COUNT_MODIFIER_ATOM_KIND) {
+                        if (isset($remaining_price_atoms[$modifier_atom_id])) {
+                            $product = $remaining_price_atoms[$modifier_atom_id]
+                                ->multipliedBy($numerical_value);
+                            unset($remaining_price_atoms[$modifier_atom_id]);
+
+                            $remaining_itemized_credit_atoms[$modifier_id] = $product;
+                        } else {
+                            $remaining_item_count_atoms[$modifier_id] = $numerical_value;
+                        }
+                    } elseif ($modifier_atom_kind === PRICE_MODIFIER_ATOM_KIND) {
+                        if (isset($remaining_item_count_atoms[$modifier_atom_id])) {
+                            $product = $remaining_item_count_atoms[$modifier_atom_id]
+                                ->multipliedBy($numerical_value);
+                            unset($remaining_item_count_atoms[$modifier_atom_id]);
+
+                            $remaining_itemized_credit_atoms[$modifier_id] = $product;
+                        } else {
+                            $remaining_price_atoms[$modifier_id] = $numerical_value;
+                        }
+                    }
+
+                    if (
+                        isset($remaining_itemized_credit_atoms[$modifier_atom_id])
+                        && !$remaining_itemized_credit_atoms[$modifier_atom_id]->isZero()
+                    ) {
+                        $credit_total = $credit_total->plus(
+                            $remaining_itemized_credit_atoms[$modifier_atom_id]
+                        );
+
+                        unset($remaining_itemized_credit_atoms[$modifier_atom_id]);
+                    }
+
+                    if ($modifier_atom_kind === CREDIT_MODIFIER_ATOM_KIND) {
+                        $account_id = $modifier_atom_cache
+                            ->determineModifierAtomAccountID($modifier_atom_id);
+                        $account_kind = $account_cache->determineAccountKind($account_id);
+
+                        if ($account_kind !== ITEMIZED_ASSET_ACCOUNT_KIND) {
+                            $credit_total = $credit_total->plus($numerical_value);
+                        }
+                    } else {
+                        $debit_total = $debit_total->plus($numerical_value);
                     }
                 }
 
