@@ -2,6 +2,7 @@
 
 namespace App\Validation;
 
+use App\Libraries\FinancialEntryAtomInputExaminer;
 use App\Libraries\ModifierAtomInputExaminer;
 use App\Models\AccountModel;
 use App\Models\ModifierModel;
@@ -49,5 +50,37 @@ class CompoundDataRules
         $modifier_atom_input_examiner = ModifierAtomInputExaminer::make($parameters[0], $data);
 
         return $modifier_atom_input_examiner->validateCashFlowActivityAssociations($value);
+    }
+
+    // !: Validate data with `must_have_compound_data_key` first before putting this validator.
+    public function has_valid_financial_entry_atom_group_info(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+        $financial_entry_atom_input_examiner = FinancialEntryAtomInputExaminer::make(
+            $parameters[0],
+            $data
+        );
+
+        return $financial_entry_atom_input_examiner->validateSchema();
+    }
+
+    // !: Validate data with `must_have_compound_data_key` first before putting this validator.
+    public function has_valid_financial_entry_atom_group_values(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+        $financial_entry_atom_input_examiner = FinancialEntryAtomInputExaminer::make(
+            $parameters[0],
+            $data
+        );
+
+        return $financial_entry_atom_input_examiner->validateCurrencyValues($value);
     }
 }
