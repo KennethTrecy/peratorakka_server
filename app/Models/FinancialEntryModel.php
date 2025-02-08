@@ -16,6 +16,8 @@ class FinancialEntryModel extends BaseResourceModel
         "modifier_id",
         "transacted_at",
         "remarks",
+        "created_at",
+        "updated_at",
         "deleted_at"
     ];
 
@@ -52,7 +54,7 @@ class FinancialEntryModel extends BaseResourceModel
                         ->select("financial_entry_id")
                         ->where(
                             "modifier_atom_id",
-                            model(ModifierAtomModel::class, false)
+                            model(ModifierModel::class, false)
                                 ->builder()
                                 ->select("id")
                                 ->where(
@@ -97,6 +99,29 @@ class FinancialEntryModel extends BaseResourceModel
                     ->select("id")
                     ->where("user_id", $user->id)
             );
+    }
+
+    protected static function createAncestorResources(int $user_id, array $options): array
+    {
+        [
+            $modifiers
+        ] = isset($options["parent_modifiers"])
+            ? [ $options["parent_modifiers"] ]
+            : ModifierModel::createTestResources($user_id, 1, $options["modifier_options"] ?? []);
+
+        $filtered_parent_links = static::permutateParentLinks([
+            "modifier_id" => array_map(
+                fn ($modifier) => $modifier->id,
+                $modifiers
+            )
+        ], $options);
+
+        return [
+            [
+                $modifiers
+            ],
+            $filtered_parent_links
+        ];
     }
 
     protected static function identifyAncestors(): array
