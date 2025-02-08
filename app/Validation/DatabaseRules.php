@@ -3,8 +3,8 @@
 namespace App\Validation;
 
 use App\Contracts\OwnedResource;
-use App\Libraries\ModifierAtomInputExaminer;
 use App\Libraries\FinancialEntryAtomInputExaminer;
+use App\Libraries\ModifierAtomInputExaminer;
 use App\Models\BaseResourceModel;
 use InvalidArgumentException;
 
@@ -277,6 +277,6 @@ class DatabaseRules
             $data
         );
 
-        return $financial_entry_atom_input_examiner->validateOwnership();
+        return $financial_entry_atom_input_examiner->validateOwnership($value);
     }
 }
