@@ -2,8 +2,15 @@
 
 namespace App\Libraries\Context;
 
-class Memoizer
+use App\Libraries\Context\ContextKeys;
+
+class Memoizer extends SingletonCache
 {
+    protected static function contextKey(): ContextKeys
+    {
+        return ContextKeys::MEMOIZER;
+    }
+
     private array $memo = [];
 
     public function write(string $key, mixed $value): void
