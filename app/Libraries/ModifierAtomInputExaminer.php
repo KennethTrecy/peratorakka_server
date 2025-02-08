@@ -148,15 +148,13 @@ class ModifierAtomInputExaminer
         }
 
         foreach ($allowed_account_kinds_per_atom_kind as $atom_kind => $account_condition_sets) {
-            if (!isset($account_tally[$atom_kind])) {
-                return false;
-            }
-
             foreach ($account_condition_sets as $account_condition_set) {
                 $condition = $account_condition_set[0];
                 $involved_account_kinds = array_slice(array_keys($account_condition_set), 1);
 
-                $tallied_account_kinds = $account_tally[$atom_kind];
+                $tallied_account_kinds = isset($account_tally[$atom_kind])
+                    ? $account_tally[$atom_kind]
+                    : [];
                 foreach ($involved_account_kinds as $involved_account_kind) {
                     if (isset($tallied_account_kinds[$involved_account_kind])) {
                         $quantifier = $account_condition_set[$involved_account_kind];
