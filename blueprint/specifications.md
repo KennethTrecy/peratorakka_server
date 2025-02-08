@@ -88,7 +88,7 @@ mechanism is dependent to the developer's preference.
      - Record
      - Close
      - Exchange
-     - Paper Record
+     - Reprice
      - Bid
      - Ask
      - Transform
@@ -125,10 +125,10 @@ mechanism is dependent to the developer's preference.
     - Modifier ID
     - Account ID
     - Field Kind
-      - Debit
-      - Credit
-      - Base
-      - Paper
+      - Real Debit
+      - Real Credit
+      - Imaginary Debit
+      - Imaginary Credit
       - Item Count
       - Price
 15. A modifier atom activity has the following information:
@@ -150,36 +150,52 @@ mechanism is dependent to the developer's preference.
     - User ID
     - Started date and time
     - Finished date and time
-19. A unadjusted summary calculation has the following information:
+19. A frozen account has the following information:
     - Primary Hash
     - Frozen Period ID
     - Account ID
+20. A real unadjusted summary calculation has the following information:
+    - Frozen Account Hash
     - Unadjusted Debit Amount
     - Unadjusted Credit Amount
-20. A adjusted summary calculation has the following information
-    - Unadjusted Summary Calculation Hash
+21. A real adjusted summary calculation has the following information
+    - Frozen Account Hash
     - Opened Debit Amount
     - Closed Debit Amount
     - Opened Credit Amount
     - Closed Credit Amount
-21. A flow calculation has the following information:
-    - Unadjusted Summary Calculation Hash
+22. A real flow calculation has the following information:
+    - Frozen Account Hash
     - Cash Flow Activity ID
     - Net amount
-22. An item calculation has the following information:
-    - Unadjusted Summary Calculation Hash
+23. An item calculation has the following information:
+    - Frozen Account Hash
     - Financial Entry ID
     - Remaining Count
-23. A collection has the following information:
+24. An imaginary unadjusted summary calculation has the following information:
+    - Frozen Account Hash
+    - Unadjusted Debit Amount
+    - Unadjusted Credit Amount
+25. An imaginary adjusted summary calculation has the following information
+    - Frozen Account Hash
+    - Opened Debit Amount
+    - Closed Debit Amount
+    - Opened Credit Amount
+    - Closed Credit Amount
+26. An imaginary flow calculation has the following information:
+    - Frozen Account Hash
+    - Cash Flow Activity ID
+    - Net amount
+27. A collection has the following information:
     - Primary ID
     - User ID
     - Name
     - Description
-24. An account collection has the following information:
+28. An account collection has the following information:
     - Primary ID
     - Collection ID
     - Account ID
-25. A formula has the following information:
+29. A formula has the following information:
     - Primary ID
     - User ID
     - Name
@@ -195,7 +211,7 @@ mechanism is dependent to the developer's preference.
       - Latest
     - Presentational Precision
     - Expression
-26. A numerical tool has the following information:
+30. A numerical tool has the following information:
     - Primary ID
     - User ID
     - Name
@@ -233,3 +249,8 @@ Next version would have a major upgrade.
 
 #### Migration Plan III
 - Make another table for papered summary calculation
+
+## Frozen Period Specifications
+Before the financial statements are completely frozen, certain conditions must be met:
+- All temporary accounts have zero real balances
+- All imaginary balances should be equal on both sides
