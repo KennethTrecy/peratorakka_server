@@ -286,6 +286,137 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
             ]);
     }
 
+    public function testDualCurrencyCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $currencies,
+            $asset_account
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ LIQUID_ASSET_ACCOUNT_KIND ]
+        ]);
+
+        [
+            $precision_formats,
+            $other_currencies,
+            $equity_account
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ EQUITY_ACCOUNT_KIND ],
+            "currency_options" => [
+                "precision_format_parent" => [ $precision_formats[0] ]
+            ]
+        ]);
+
+        [
+            $cash_flow_activity
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        [
+            $details
+        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, []);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/modifiers", [
+                "modifier" => array_merge(
+                    $details->toArray(),
+                    [
+                        "modifier_atoms" => [
+                            [
+                                "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                "account_id" => $asset_account->id
+                            ],
+                            [
+                                "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                "account_id" => $equity_account->id,
+                                "cash_flow_activity_id" => $cash_flow_activity->id
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "modifier" => $details->toArray(),
+            "modifier_atoms" => [
+                [
+                    "account_id" => $asset_account->id,
+                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND
+                ],
+                [
+                    "account_id" => $equity_account->id,
+                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND
+                ]
+            ],
+            "modifier_atom_activities" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id
+                ]
+            ]
+        ]);
+        $this->seeNumRecords(1, "modifiers_v2", []);
+        $this->seeNumRecords(2, "modifier_atoms", []);
+        $this->seeNumRecords(1, "modifier_atom_activities", []);
+    }
+
+    public function testPartiallyUnownedCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        [
+            $precision_formats,
+            $currencies,
+            $asset_account
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ LIQUID_ASSET_ACCOUNT_KIND ]
+        ]);
+
+        [
+            $other_precision_formats,
+            $other_currencies,
+            $equity_account
+        ] = AccountModel::createTestResource($another_user->id, [
+            "expected_kinds" => [ EQUITY_ACCOUNT_KIND ]
+        ]);
+
+        [
+            $cash_flow_activity
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        [
+            $details
+        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, []);
+
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/modifiers", [
+                "modifier" => array_merge(
+                    $details->toArray(),
+                    [
+                        "modifier_atoms" => [
+                            [
+                                "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                "account_id" => $asset_account->id
+                            ],
+                            [
+                                "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                "account_id" => $equity_account->id,
+                                "cash_flow_activity_id" => $cash_flow_activity->id
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+    }
+
+    // TODO: Make test to confirm error of updating entry within frozen period
+
     public function testInvalidUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
