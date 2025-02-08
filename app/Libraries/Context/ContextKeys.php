@@ -14,13 +14,18 @@ enum ContextKeys: string
     case TIME_GROUP_MANAGER = "manager";
     case FLASH_CACHE = "flash_cache";
     case MEMOIZER = "memoizer";
+    case PRECISION_FORMAT_CACHE = "precision_format_cache";
     case CURRENCY_CACHE = "currency_cache";
     case MODIFIER_CACHE = "modifier_cache";
     case MODIFIER_ATOM_CACHE = "modifier_atom_cache";
+    case MODIFIER_ATOM_ACTIVITY_CACHE = "modifier_atom_activity_cache";
     case ACCOUNT_CACHE = "account_cache";
     case COLLECTION_CACHE = "collection_cache";
     case EXCHANGE_RATE_CACHE = "exchange_rate_cache";
     case CASH_FLOW_ACTIVITY_CACHE = "cash_flow_activity_cache";
+    case REAL_UNADJUSTED_SUMMARY_CALCULATION_CACHE = "real_unadjusted_summary_calculation_cache";
+    case REAL_ADJUSTED_SUMMARY_CALCULATION_CACHE = "real_adjusted_summary_calculation_cache";
+    case REAL_FLOW_CALCULATION_CACHE = "real_flow_calculation_cache";
 
     case CURRENT_STACK_COUNT_STATUS = "current_stack_count_status";
     case MAX_STACK_COUNT_STATUS = "max_stack_count_status";
