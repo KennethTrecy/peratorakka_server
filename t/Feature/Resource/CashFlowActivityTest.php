@@ -15,20 +15,22 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activities = $cash_flow_activity_fabricator->create(10);
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/cash_flow_activities");
+        $result = $authenticated_info->getRequest()->get("/api/v2/cash_flow_activities");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities))
+            "cash_flow_activities" => json_decode(json_encode($details))
         ]);
     }
 
@@ -36,17 +38,17 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+        $result = $authenticated_info->getRequest()->get(
+            "/api/v2/cash_flow_activities/{$details->id}"
+        );
 
         $result->assertOk();
         $result->assertJSONExact([
-            "cash_flow_activity" => json_decode(json_encode($cash_flow_activity))
+            "cash_flow_activity" => json_decode(json_encode($details))
         ]);
     }
 
@@ -54,19 +56,20 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->make();
+        [
+            $details
+        ] = CashFlowActivityModel::makeTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/cash_flow_activities", [
-                "cash_flow_activity" => $cash_flow_activity->toArray()
+            ->post("/api/v2/cash_flow_activities", [
+                "cash_flow_activity" => $details->toArray()
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "cash_flow_activity" => $cash_flow_activity->toArray()
+            "cash_flow_activity" => $details->toArray()
         ]);
     }
 
@@ -74,23 +77,24 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $new_details = $cash_flow_activity_fabricator->make();
+        [
+            $details,
+            $new_details
+        ] = CashFlowActivityModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            []
+        );
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/cash_flow_activities/$cash_flow_activity->id", [
+            ->put("/api/v2/cash_flow_activities/$details->id", [
                 "cash_flow_activity" => $new_details->toArray()
             ]);
 
         $result->assertStatus(204);
         $this->seeInDatabase("cash_flow_activities", array_merge(
-            [ "id" => $cash_flow_activity->id ],
+            [ "id" => $details->id ],
             $new_details->toRawArray()
         ));
     }
@@ -99,22 +103,20 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+            ->delete("/api/v2/cash_flow_activities/$details->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("cash_flow_activities", array_merge(
-            [ "id" => $cash_flow_activity->id ]
+            [ "id" => $details->id ]
         ));
         $this->dontSeeInDatabase("cash_flow_activities", [
-            "id" => $cash_flow_activity->id,
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -123,20 +125,18 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        model(CashFlowActivityModel::class)->delete($cash_flow_activity->id);
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CashFlowActivityModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+            ->patch("/api/v2/cash_flow_activities/$details->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("cash_flow_activities", [
-            "id" => $cash_flow_activity->id,
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -145,16 +145,14 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        model(CashFlowActivityModel::class)->delete($cash_flow_activity->id);
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CashFlowActivityModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/cash_flow_activities/$cash_flow_activity->id/force");
+            ->delete("/api/v2/cash_flow_activities/$details->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "cash_flow_activities", []);
@@ -164,11 +162,11 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/cash_flow_activities");
+        $result = $authenticated_info->getRequest()->get("/api/v2/cash_flow_activities");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 0
             ],
             "cash_flow_activities" => []
@@ -179,13 +177,16 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activities = $cash_flow_activity_fabricator->create(10);
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/cash_flow_activities", [
+        $result = $authenticated_info->getRequest()->get("/api/v2/cash_flow_activities", [
+            "sort" => [ [ "id", "ASC" ] ],
             "page" => [
                 "limit" => 5
             ]
@@ -193,10 +194,10 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "cash_flow_activities" => json_decode(json_encode(array_slice($cash_flow_activities, 0, 5)))
+            "cash_flow_activities" => json_decode(json_encode(array_slice($details, 0, 5)))
         ]);
     }
 
@@ -204,35 +205,35 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $cash_flow_activity->id = $cash_flow_activity->id + 1;
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        $details->id = $details->id + 1;
 
         $this->expectException(MissingResource::class);
         $this->expectExceptionCode(404);
-        $result = $authenticated_info->getRequest()->get("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+        $result = $authenticated_info->getRequest()->get("/api/v2/cash_flow_activities/$details->id");
     }
 
     public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "name" => "@only alphanumeric characters only"
+        [
+            $details
+        ] = CashFlowActivityModel::makeTestResource($authenticated_info->getUser()->id, [
+            "overrides" => [
+                "name" => "@only alphanumeric characters only"
+            ]
         ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->make();
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/cash_flow_activities", [
-                "cash_flow_activity" => $cash_flow_activity->toArray()
+            ->post("/api/v2/cash_flow_activities", [
+                "cash_flow_activities" => $details->toArray()
             ]);
     }
 
@@ -240,23 +241,25 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $cash_flow_activity_fabricator->setOverrides([
-            "name" => "@only alphanumeric characters only"
-        ]);
-        $new_details = $cash_flow_activity_fabricator->make();
+        [
+            $details,
+            $new_details
+        ] = CashFlowActivityModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            [
+                "make_overrides" => [
+                    "name" => "@only alphanumeric characters only"
+                ]
+            ]
+        );
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/cash_flow_activities/$cash_flow_activity->id", [
-                "cash_flow_activity" => $new_details->toArray()
+            ->put("/api/v2/cash_flow_activities/$details->id", [
+                "cash_flow_activities" => $new_details->toArray()
             ]);
     }
 
@@ -265,25 +268,23 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($another_user->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+                ->delete("/api/v2/cash_flow_activities/$details->id");
             $this->assertTrue(false);
         } catch (MissingResource $error) {
             $this->seeInDatabase("cash_flow_activities", array_merge(
-                [ "id" => $cash_flow_activity->id ]
+                [ "id" => $details->id ]
             ));
             $this->seeInDatabase("cash_flow_activities", [
-                "id" => $cash_flow_activity->id,
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -295,27 +296,24 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     public function testDoubleDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        model(CashFlowActivityModel::class)->delete($cash_flow_activity->id);
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CashFlowActivityModel::class)->delete($details->id);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+                ->delete("/api/v2/cash_flow_activities/$details->id");
         } catch (MissingResource $error) {
             $this->seeInDatabase("cash_flow_activities", array_merge(
-                [ "id" => $cash_flow_activity->id ]
+                [ "id" => $details->id ]
             ));
             $this->dontSeeInDatabase("cash_flow_activities", [
-                "id" => $cash_flow_activity->id,
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -327,23 +325,20 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     public function testDoubleRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->patch("/api/v1/cash_flow_activities/$cash_flow_activity->id");
+                ->patch("/api/v2/cash_flow_activities/$details->id");
         } catch (MissingResource $error) {
             $this->seeInDatabase("cash_flow_activities", [
-                "id" => $cash_flow_activity->id,
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -356,15 +351,13 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/cash_flow_activities/$cash_flow_activity->id/force");
+            ->delete("/api/v2/cash_flow_activities/$details->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "cash_flow_activities", []);
@@ -375,19 +368,17 @@ class CashFlowActivityTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        model(CashFlowActivityModel::class)->delete($cash_flow_activity->id, true);
+        [
+            $details
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CashFlowActivityModel::class)->delete($details->id, true);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/cash_flow_activities/$cash_flow_activity->id/force");
+                ->delete("/api/v2/cash_flow_activities/$details->id/force");
         } catch (MissingResource $error) {
             $this->seeNumRecords(0, "cash_flow_activities", []);
             throw $error;
