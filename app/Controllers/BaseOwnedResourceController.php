@@ -59,8 +59,10 @@ abstract class BaseOwnedResourceController extends BaseController
         return false;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationship
+    ): array {
         return $initial_document;
     }
 
@@ -69,9 +71,11 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
-    private static function enrichAndOrganizeResponseDocument(array $initial_document): array
-    {
-        $enriched_document = static::enrichResponseDocument($initial_document);
+    private static function enrichAndOrganizeResponseDocument(
+        array $initial_document,
+        array $relationship
+    ): array {
+        $enriched_document = static::enrichResponseDocument($initial_document, $relationship);
         ksort($enriched_document);
         return $enriched_document;
     }
@@ -93,12 +97,15 @@ abstract class BaseOwnedResourceController extends BaseController
         $request = $this->request;
 
         $scoped_model = static::getModel();
+        $relationship = $request->getVar("relationship") ?? "";
+        $relationship = is_array($relationship)
+            ? $relationship
+            : ($relationship === "" ? [] : explode(",", $relationship));
         $filter = $request->getVar("filter") ?? [];
         $sort = $request->getVar("sort") ?? [];
         $page = $request->getVar("page") ?? [];
         $offset = $page["offset"] ?? 0;
         $limit = min($page["limit"] ?? 100, 100);
-        $must_be_enriched = isset($page["must_be_enriched"]) ? $page["must_be_enriched"] : "false";
 
         if ($scoped_model instanceof BaseResourceModel) {
             $scoped_model = $scoped_model->limitSearchToUser($scoped_model, $current_user);
@@ -126,9 +133,10 @@ abstract class BaseOwnedResourceController extends BaseController
             ],
             static::getCollectiveName() => $scoped_model->findAll($limit, $offset)
         ];
-        $response_document = (
-            $must_be_enriched === "true" || $must_be_enriched === "1" || $must_be_enriched === true
-        ) ? static::enrichAndOrganizeResponseDocument($response_document) : $response_document;
+        $response_document = static::enrichAndOrganizeResponseDocument(
+            $response_document,
+            $relationship
+        );
 
         return response()->setJSON($response_document);
     }
@@ -138,6 +146,13 @@ abstract class BaseOwnedResourceController extends BaseController
         helper([ "auth" ]);
 
         $current_user = auth()->user();
+        $request = $this->request;
+
+        $relationship = $request->getVar("relationship") ?? "*";
+        $relationship = is_array($relationship)
+            ? $relationship
+            : ($relationship === "" ? [] : explode(",", $relationship));
+
         $model = static::getModel();
         $data = $model->find($id);
 
@@ -147,7 +162,10 @@ abstract class BaseOwnedResourceController extends BaseController
             $response_document = [
                 static::getIndividualName() => $data
             ];
-            $response_document = static::enrichAndOrganizeResponseDocument($response_document);
+            $response_document = static::enrichAndOrganizeResponseDocument(
+                $response_document,
+                $relationship
+            );
 
             return response()->setJSON($response_document);
         } else {
