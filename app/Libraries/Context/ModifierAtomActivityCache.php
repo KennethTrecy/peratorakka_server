@@ -17,7 +17,8 @@ class ModifierAtomActivityCache extends ResourceCache
         return model(ModifierAtomActivityModel::class, false);
     }
 
-    public function extractAssociatedCashFlowActivityIDs(): array {
+    public function extractAssociatedCashFlowActivityIDs(): array
+    {
         $cash_flow_activity_IDs = [];
         foreach ($this->resources as $resource) {
             $cash_flow_activity_IDs[$resource->modifier_atom_id] = $resource->cash_flow_activity_id;
@@ -25,7 +26,8 @@ class ModifierAtomActivityCache extends ResourceCache
         return $cash_flow_activity_IDs;
     }
 
-    public function loadResourcesFromParentIDs(array $target_parent_IDs): void {
+    public function loadResourcesFromParentIDs(array $target_parent_IDs): void
+    {
         $current_user = auth()->user();
 
         $loaded_parent_IDs = array_map(

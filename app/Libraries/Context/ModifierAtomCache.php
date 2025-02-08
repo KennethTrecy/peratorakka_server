@@ -31,7 +31,8 @@ class ModifierAtomCache extends ResourceCache
             : null;
     }
 
-    public function extractAssociatedAccountIDs(): array {
+    public function extractAssociatedAccountIDs(): array
+    {
         $account_IDs = [];
         foreach ($this->resources as $resource) {
             $account_IDs[$resource->id] = $resource->account_id;
@@ -39,7 +40,8 @@ class ModifierAtomCache extends ResourceCache
         return $account_IDs;
     }
 
-    public function loadResourcesFromParentIDs(array $target_parent_IDs): void {
+    public function loadResourcesFromParentIDs(array $target_parent_IDs): void
+    {
         $current_user = auth()->user();
 
         $loaded_parent_IDs = array_map(fn ($resource) => $resource->modifier_id, $this->resources);

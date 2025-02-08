@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Libraries\Context;
+
 use App\Libraries\Context\ContextKeys;
 
 class FlashCache extends SingletonCache

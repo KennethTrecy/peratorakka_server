@@ -40,7 +40,9 @@ class AccountCache extends ResourceCache
 
     public function isDebitedNormally(int $account_id): ?bool
     {
-        if (!isset($this->resources[$account_id])) return null;
+        if (!isset($this->resources[$account_id])) {
+            return null;
+        }
 
         $kind = $this->resources[$account_id]->kind;
 

@@ -14,7 +14,7 @@ class Context extends BaseContext
      */
     private static ?Context $instance = null;
 
-    public static function make()
+    public static function make(): self
     {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -23,10 +23,15 @@ class Context extends BaseContext
         return self::$instance;
     }
 
+    public static function clear()
+    {
+        self::$instance = null;
+    }
+
     public function __construct()
     {
-        $this->setVariable(ContextKeys::FLASH_CACHE, new FlashCache());
-        $this->setVariable(ContextKeys::MEMOIZER, new Memoizer());
+        FlashCache::make($this);
+        Memoizer::make($this);
     }
 
     public function getVariable($name, $default = null)
