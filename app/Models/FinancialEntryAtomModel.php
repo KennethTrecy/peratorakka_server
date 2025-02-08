@@ -135,6 +135,110 @@ class FinancialEntryAtomModel extends BaseResourceModel
             );
     }
 
+    protected static function createAncestorResources(int $user_id, array $options): array
+    {
+        $combinations = $options["combinations"] ?? [];
+        $entries = $options["entries"] ?? [];
+
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities
+        ] = ModifierAtomActivityModel::createTestResources(
+            $user_id,
+            1,
+            $options["modifier_atom_activity_options"] ?? []
+        );
+
+        [
+            $modifiers,
+            $financial_entries
+        ] = FinancialEntryModel::createTestResources(
+            $user_id,
+            1,
+            array_merge(
+                $options["financial_entry_options"] ?? [],
+                [
+                    "parent_modifiers" => $modifiers
+                ]
+            )
+        );
+
+        $filtered_parent_links = [];
+        if (isset($options["entries"])) {
+            $keyed_accounts = Resource::key($accounts, fn ($account) => $account->id);
+            $keyed_modifiers = Resource::key($modifiers, fn ($modifier) => $modifier->id);
+            $keyed_modifier_atoms = Resource::key(
+                $modifier_atoms,
+                fn ($modifier_atom) => (
+                    $keyed_modifiers[$modifier_atom->modifier_id]->action
+                    ."_"
+                    .$modifier_atom->kind
+                    ."_"
+                    .$keyed_accounts[$modifier_atom->account_id]->kind
+                )
+            );
+            $keyed_financial_entries = Resource::key(
+                $financial_entries,
+                fn ($financial_entry) => (
+                    $financial_entry->modifier_id
+                )
+            );
+
+            $filtered_parent_links = array_map(
+                fn ($entry) => [
+                    "financial_entry_id" => $keyed_financial_entries[
+                        $keyed_modifier_atoms[
+                            $entry[0]
+                            ."_"
+                            .$entry[1]
+                            ."_"
+                            .$entry[2]
+                        ]->modifier_id
+                    ]->id,
+                    "modifier_atom_id" => $keyed_modifier_atoms[
+                        $entry[0]
+                        ."_"
+                        .$entry[1]
+                        ."_"
+                        .$entry[2]
+                    ]->id,
+                    "numerical_value" => $entry[3]
+                ],
+                $entries
+            );
+        } else {
+            $filtered_parent_links = static::permutateParentLinks([
+                "financial_entry_id" => array_map(
+                    fn ($financial_entry) => $financial_entry->id,
+                    $financial_entries
+                ),
+                "modifier_atom_id" => array_map(
+                    fn ($modifier_atom) => $modifier_atom->id,
+                    $modifier_atoms
+                )
+            ], $options);
+        }
+
+        return [
+            [
+                $precision_formats,
+                $currencies,
+                $accounts,
+                $modifiers,
+                $modifier_atoms,
+                $cash_flow_activities,
+                $modifier_atom_activities,
+                $financial_entries
+            ],
+            $filtered_parent_links
+        ];
+    }
+
     protected static function identifyAncestors(): array
     {
         return [
