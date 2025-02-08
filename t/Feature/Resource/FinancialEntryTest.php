@@ -7,62 +7,35 @@ use App\Exceptions\MissingResource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
+use App\Models\FinancialEntryAtomModel;
 use App\Models\FinancialEntryModel;
-use App\Models\FrozenPeriodModel;
+use App\Models\ModifierAtomActivityModel;
+use App\Models\ModifierAtomModel;
 use App\Models\ModifierModel;
-use CodeIgniter\I18n\Time;
+use App\Models\PrecisionFormatModel;
 use CodeIgniter\Test\Fabricator;
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 use Throwable;
 
-class FinancialEntryTest extends AuthenticatedHTTPTestCase
+class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
 {
     public function testDefaultIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entries = $financial_entry_fabricator->create(10);
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResources($authenticated_info->getUser()->id, 10, []);
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries");
+        $result = $authenticated_info->getRequest()->get("/api/v2/financial_entries");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
-            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
-            "currencies" => [ $currency ],
-            "financial_entries" => json_decode(json_encode($financial_entries)),
-            "modifiers" => json_decode(json_encode([ $modifier ])),
+            "financial_entries" => json_decode(json_encode($details))
         ]);
     }
 
@@ -70,47 +43,16 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($authenticated_info->getUser()->id, []);
 
-        $result = $authenticated_info
-            ->getRequest()
-            ->get("/api/v1/financial_entries/$financial_entry->id");
+        $result = $authenticated_info->getRequest()->get("/api/v2/financial_entries/$details->id");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
-            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
-            "currencies" => [ $currency ],
-            "financial_entry" => json_decode(json_encode($financial_entry)),
-            "modifier" => json_decode(json_encode($modifier)),
+            "financial_entry" => json_decode(json_encode($details))
         ]);
     }
 
@@ -118,111 +60,147 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
+            "modifier_options" => [ "expected_actions" => [ RECORD_MODIFIER_ACTION ] ]
         ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities
+        ] = ModifierAtomActivityModel::createTestResource($authenticated_info->getUser()->id, [
+            "combinations" => [
+                [
+                    RECORD_MODIFIER_ACTION,
+                    [
+                        REAL_DEBIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND
+                    ],
+                    [
+                        GENERAL_ASSET_ACCOUNT_KIND,
+                        LIQUID_ASSET_ACCOUNT_KIND
+                    ],
+                    [
+                        null,
+                        0
+                    ]
+                ]
+            ],
+            "modifier_atom_options" => [
+                "parent_modifiers" => $modifiers
+            ]
         ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/financial_entries", [
-                "financial_entry" => [
-                    ...$financial_entry->toArray(),
-                    "debit_amount" => $financial_entry->debit_amount->toScale(4),
-                    "credit_amount" => $financial_entry->credit_amount->toScale(4)
-                ]
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => array_merge(
+                    $details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => array_map(fn ($atom) => [
+                                "modifier_atom_id" => $atom->id,
+                                "numerical_value" => "100"
+                            ], $modifier_atoms)
+                        ]
+                    ]
+                )
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "financial_entry" => [
-                ...$financial_entry->toArray(),
-                "debit_amount" => $financial_entry->debit_amount->toScale(4),
-                "credit_amount" => $financial_entry->credit_amount->toScale(4)
-            ]
+            "financial_entry" => $details->toArray(),
+            "financial_entry_atoms" => array_map(fn ($atom) => [
+                "modifier_atom_id" => $atom->id,
+                "numerical_value" => "100"
+            ], $modifier_atoms)
         ]);
+        $this->seeNumRecords(1, "financial_entries_v2", []);
+        $this->seeNumRecords(1, "modifiers_v2", []);
+        $this->seeNumRecords(2, "modifier_atoms", []);
+        $this->seeNumRecords(2, "financial_entry_atoms", []);
+        $this->seeNumRecords(1, "modifier_atom_activities", []);
     }
 
     public function testDefaultUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities,
+            $financial_entries,
+            $financial_entry_atoms
+        ] = FinancialEntryAtomModel::createTestResource($authenticated_info->getUser()->id, [
+            "modifier_atom_activity_options" => [
+                "combinations" => [
+                    [
+                        RECORD_MODIFIER_ACTION,
+                        [
+                            REAL_DEBIT_MODIFIER_ATOM_KIND,
+                            REAL_CREDIT_MODIFIER_ATOM_KIND
+                        ],
+                        [
+                            GENERAL_ASSET_ACCOUNT_KIND,
+                            LIQUID_ASSET_ACCOUNT_KIND
+                        ],
+                        [
+                            null,
+                            0
+                        ]
+                    ]
+                ]
+            ],
+            "entries" => [
+                [
+                    RECORD_MODIFIER_ACTION,
+                    REAL_DEBIT_MODIFIER_ATOM_KIND,
+                    GENERAL_ASSET_ACCOUNT_KIND,
+                    "100"
+                ],
+                [
+                    RECORD_MODIFIER_ACTION,
+                    REAL_CREDIT_MODIFIER_ATOM_KIND,
+                    LIQUID_ASSET_ACCOUNT_KIND,
+                    "100"
+                ]
+            ]
         ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        $new_details = $financial_entry_fabricator->make();
+
+        $details = $financial_entries[0];
+        $new_details = $financial_entries[0];
+        $new_subdetails = $financial_entry_atoms;
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/financial_entries/$financial_entry->id", [
-                "financial_entry" => [
-                    ...$new_details->toArray(),
-                    "debit_amount" => $new_details->debit_amount->toScale(4),
-                    "credit_amount" => $new_details->credit_amount->toScale(4)
-                ]
+            ->put("/api/v2/financial_entries/$details->id", [
+                "financial_entry" => array_merge(
+                    $new_details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => $new_subdetails
+                        ]
+                    ]
+                )
             ]);
 
         $result->assertStatus(204);
-        $this->seeInDatabase("financial_entries", array_merge(
-            [ "id" => $financial_entry->id ],
-            [
-                ...$new_details->toArray(),
-                "debit_amount" => $new_details->debit_amount->toScale(4),
-                "credit_amount" => $new_details->credit_amount->toScale(4)
-            ]
+        $this->seeInDatabase("financial_entries_v2", array_merge(
+            [ "id" => $details->id ],
+            $new_details->toRawArray()
         ));
     }
 
@@ -230,46 +208,21 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id");
+            ->delete("/api/v2/financial_entries/$details->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("financial_entries", array_merge(
-            [ "id" => $financial_entry->id ]
+        $this->seeInDatabase("financial_entries_v2", array_merge(
+            [ "id" => $details->id ]
         ));
-        $this->dontSeeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
+        $this->dontSeeInDatabase("financial_entries_v2", [
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -278,44 +231,19 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id);
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(FinancialEntryModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/financial_entries/$financial_entry->id");
+            ->patch("/api/v2/financial_entries/$details->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("financial_entries", [
-            "id" => $financial_entry->id,
+        $this->seeInDatabase("financial_entries_v2", [
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -324,61 +252,32 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id);
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(FinancialEntryModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id/force");
+            ->delete("/api/v2/financial_entries/$details->id/force");
 
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "financial_entries", []);
+        $this->seeNumRecords(0, "financial_entries_v2", []);
     }
 
     public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries");
+        $result = $authenticated_info->getRequest()->get("/api/v2/financial_entries");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 0
             ],
-            "accounts" => [],
-            "cash_flow_activities" => [],
-            "currencies" => [],
-            "financial_entries" => [],
-            "modifiers" => [],
+            "financial_entries" => []
         ]);
     }
 
@@ -386,115 +285,28 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entries = $financial_entry_fabricator->create(10);
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries", [
+        $result = $authenticated_info->getRequest()->get("/api/v2/financial_entries", [
             "page" => [
-                "limit" => 5
+                "limit" => 5,
+                "must_be_enriched" => true
             ]
         ]);
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
-            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
-            "currencies" => [ $currency ],
-            "financial_entries" => json_decode(json_encode(array_slice($financial_entries, 0, 5))),
-            "modifiers" => json_decode(json_encode([ $modifier ])),
-        ]);
-    }
-
-    public function testFilteredIndex()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "transacted_at" => Time::today()->toDateTimeString()
-        ]);
-        $financial_entries_today = $financial_entry_fabricator->create(3);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "transacted_at" => Time::tomorrow()->toDateTimeString()
-        ]);
-        $financial_entry_fabricator->create(5);
-
-        $result = $authenticated_info->getRequest()->get("/api/v1/financial_entries", [
-            "filter" => [
-                "begin_date" => Time::yesterday()->toDateTimeString(),
-                "end_date" => Time::today()->toDateTimeString()
-            ],
-            "page" => [
-                "limit" => 5
-            ]
-        ]);
-
-        $result->assertOk();
-        $result->assertJSONExact([
-            "meta" => [
-                "overall_filtered_count" => 3
-            ],
-            "accounts" => json_decode(json_encode([ $debit_account, $credit_account ])),
-            "cash_flow_activities" => json_decode(json_encode([ $cash_flow_activity ])),
-            "currencies" => [ $currency ],
-            "financial_entries" => json_decode(json_encode($financial_entries_today)),
-            "modifiers" => json_decode(json_encode([ $modifier ])),
+            "financial_entries" => json_decode(json_encode(array_slice($details, 0, 5)))
         ]);
     }
 
@@ -502,86 +314,37 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        $financial_entry->id = $financial_entry->id + 1;
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($authenticated_info->getUser()->id, []);
+        $details->id = $details->id + 1;
 
         $this->expectException(MissingResource::class);
         $this->expectExceptionCode(404);
-        $result = $authenticated_info
-            ->getRequest()
-            ->get("/api/v1/financial_entries/$financial_entry->id");
+        $result = $authenticated_info->getRequest()->get("/api/v2/financial_entries/$details->id");
     }
 
     public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
+            "overrides" => [
+                "name" => "@only alphanumeric characters only"
+            ]
         ]);
-        $currency = $currency_fabricator->create();
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id + 1
-        ]);
-        $financial_entry = $financial_entry_fabricator->make();
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/financial_entries", [
-                "financial_entry" => $financial_entry->toArray()
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => $details->toArray()
             ]);
     }
 
@@ -589,260 +352,122 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
+            "modifier_options" => [ "expected_actions" => [ RECORD_MODIFIER_ACTION ] ]
         ]);
-        $currencyA = $currency_fabricator->create();
-        $currencyB = $currency_fabricator->create();
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
+        [
+            $precision_formats,
+            $currencies,
+            $general_asset_account
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ GENERAL_ASSET_ACCOUNT_KIND ]
         ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currencyA->id
+        [
+            $precision_formats,
+            $other_currencies,
+            $liquid_asset_account
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ LIQUID_ASSET_ACCOUNT_KIND ],
+            "currency_options" => [
+                "precision_format_parent" => [ $precision_formats[0] ]
+            ]
         ]);
-        $debit_account = $account_fabricator->create();
-        $account_fabricator->setOverrides([
-            "currency_id" => $currencyB->id
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities
+        ] = ModifierAtomActivityModel::createTestResource($authenticated_info->getUser()->id, [
+            "combinations" => [
+                [
+                    RECORD_MODIFIER_ACTION,
+                    [
+                        REAL_DEBIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND
+                    ],
+                    [
+                        GENERAL_ASSET_ACCOUNT_KIND,
+                        LIQUID_ASSET_ACCOUNT_KIND
+                    ],
+                    [
+                        null,
+                        0
+                    ]
+                ]
+            ],
+            "modifier_atom_options" => [
+                "ancestor_accounts" => [
+                    $precision_formats,
+                    array_merge($currencies, $other_currencies),
+                    [ $general_asset_account, $liquid_asset_account ]
+                ],
+                "parent_modifiers" => $modifiers
+            ]
         ]);
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "debit_amount" => "1.0"
-        ]);
-        $financial_entry = $financial_entry_fabricator->make();
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/financial_entries", [
-                "financial_entry" => [
-                    ...$financial_entry->toArray(),
-                    "debit_amount" => $financial_entry->debit_amount->toScale(4),
-                    "credit_amount" => $financial_entry->credit_amount->toScale(4)
-                ]
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => array_merge(
+                    $details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => array_map(fn ($atom) => [
+                                "modifier_atom_id" => $atom->id,
+                                "numerical_value" => "100"
+                            ], $modifier_atoms)
+                        ]
+                    ]
+                )
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "financial_entry" => [
-                ...$financial_entry->toArray(),
-                "debit_amount" => $financial_entry->debit_amount->toScale(4),
-                "credit_amount" => $financial_entry->credit_amount->toScale(4)
-            ]
+            "financial_entry" => $details->toArray(),
+            "financial_entry_atoms" => array_map(fn ($atom) => [
+                "modifier_atom_id" => $atom->id,
+                "numerical_value" => "100"
+            ], $modifier_atoms)
         ]);
+        $this->seeNumRecords(1, "financial_entries_v2", []);
+        $this->seeNumRecords(1, "modifiers_v2", []);
+        $this->seeNumRecords(2, "modifier_atoms", []);
+        $this->seeNumRecords(2, "financial_entry_atoms", []);
+        $this->seeNumRecords(1, "modifier_atom_activities", []);
     }
 
-    public function testDualCurrencyUpdate()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currencyA = $currency_fabricator->create();
-        $currencyB = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currencyA->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $account_fabricator->setOverrides([
-            "currency_id" => $currencyB->id
-        ]);
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "debit_amount" => "1.0"
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        $new_details = $financial_entry_fabricator->make();
-
-        $result = $authenticated_info
-            ->getRequest()
-            ->withBodyFormat("json")
-            ->put("/api/v1/financial_entries/$financial_entry->id", [
-                "financial_entry" => [
-                    ...$new_details->toArray(),
-                    "debit_amount" => $new_details->debit_amount->toScale(4),
-                    "credit_amount" => $new_details->credit_amount->toScale(4)
-                ]
-            ]);
-
-        $result->assertStatus(204);
-    }
-
-    public function testPartiallyUnownedCreate()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currencyA = $currency_fabricator->create();
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currencyB = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currencyA->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $account_fabricator->setOverrides([
-            "currency_id" => $currencyB->id
-        ]);
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->make();
-
-        $this->expectException(InvalidRequest::class);
-        $this->expectExceptionCode(400);
-        $result = $authenticated_info
-            ->getRequest()
-            ->withBodyFormat("json")
-            ->post("/api/v1/financial_entries", [
-                "financial_entry" => $financial_entry->toArray()
-            ]);
-    }
+    // TODO: Make test to confirm error of updating entry within frozen period
 
     public function testInvalidUpdate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id + 1
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        $new_details = $financial_entry_fabricator->make();
-
-        $this->expectException(MissingResource::class);
-        $this->expectExceptionCode(404);
-        $result = $authenticated_info
-            ->getRequest()
-            ->withBodyFormat("json")
-            ->put("/api/v1/financial_entries/$financial_entry->id", [
-                "financial_entry" => $new_details->toArray()
-            ]);
-    }
-
-    public function testFrozenUpdate()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id,
-            "transacted_at" => Time::now()->toDateTimeString()
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        $new_details = $financial_entry_fabricator->make();
+        [
+            $modifiers,
+            $details,
+            $new_details
+        ] = FinancialEntryModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            [
+                "make_overrides" => [
+                    "name" => "@only alphanumeric characters only"
+                ]
+            ]
+        );
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/financial_entries/$financial_entry->id", [
+            ->put("/api/v2/financial_entries/$details->id", [
                 "financial_entry" => $new_details->toArray()
             ]);
     }
@@ -852,52 +477,26 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($another_user->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/financial_entries/$financial_entry->id");
+                ->delete("/api/v2/financial_entries/$details->id");
             $this->assertTrue(false);
         } catch (MissingResource $error) {
-            $this->seeInDatabase("financial_entries", array_merge(
-                [ "id" => $financial_entry->id ]
+            $this->seeInDatabase("financial_entries_v2", array_merge(
+                [ "id" => $details->id ]
             ));
-            $this->seeInDatabase("financial_entries", [
-                "id" => $financial_entry->id,
+            $this->seeInDatabase("financial_entries_v2", [
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
-
             throw $error;
         } catch (Throwable $error) {
             $this->assertTrue(false);
@@ -909,53 +508,26 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id);
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($another_user->id, []);
+        model(FinancialEntryModel::class)->delete($details->id);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/financial_entries/$financial_entry->id");
-            $this->assertTrue(false);
+                ->delete("/api/v2/financial_entries/$details->id");
         } catch (MissingResource $error) {
-            $this->seeInDatabase("financial_entries", array_merge(
-                [ "id" => $financial_entry->id ]
+            $this->seeInDatabase("financial_entries_v2", array_merge(
+                [ "id" => $details->id ]
             ));
-            $this->dontSeeInDatabase("financial_entries", [
-                "id" => $financial_entry->id,
+            $this->dontSeeInDatabase("financial_entries_v2", [
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
-
             throw $error;
         } catch (Throwable $error) {
             $this->assertTrue(false);
@@ -967,46 +539,20 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($another_user->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->patch("/api/v1/financial_entries/$financial_entry->id");
-            $this->assertTrue(false);
+                ->patch("/api/v2/financial_entries/$details->id");
         } catch (MissingResource $error) {
-            $this->seeInDatabase("financial_entries", [
-                "id" => $financial_entry->id,
+            $this->seeInDatabase("financial_entries_v2", [
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -1019,41 +565,17 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/financial_entries/$financial_entry->id/force");
+            ->delete("/api/v2/financial_entries/$details->id/force");
+
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "financial_entries", []);
+        $this->seeNumRecords(0, "financial_entries_v2", []);
     }
 
     public function testDoubleForceDelete()
@@ -1061,46 +583,20 @@ class FinancialEntryTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $cash_flow_activity = $cash_flow_activity_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $debit_account = $account_fabricator->create();
-        $credit_account = $account_fabricator->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $modifier_fabricator->setOverrides([
-            "debit_account_id" => $debit_account->id,
-            "credit_account_id" => $credit_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id
-        ]);
-        $modifier = $modifier_fabricator->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $modifier->id
-        ]);
-        $financial_entry = $financial_entry_fabricator->create();
-        model(FinancialEntryModel::class)->delete($financial_entry->id, true);
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::createTestResource($another_user->id, []);
+        model(FinancialEntryModel::class)->delete($details->id, true);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/financial_entries/$financial_entry->id/force");
-            $this->assertTrue(false);
+                ->delete("/api/v2/financial_entries/$details->id/force");
         } catch (MissingResource $error) {
-            $this->seeNumRecords(0, "financial_entries", []);
+            $this->seeNumRecords(0, "financial_entries_v2", []);
             throw $error;
         } catch (Throwable $error) {
             $this->assertTrue(false);
