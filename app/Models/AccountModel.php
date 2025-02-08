@@ -60,7 +60,7 @@ class AccountModel extends BaseResourceModel
             $currency
         ] = CurrencyModel::createTestResource(
             $user_id,
-            $options["currency_format_options"] ?? []
+            $options["currency_options"] ?? []
         );
 
         $parent_links = static::permutateParentLinks([
