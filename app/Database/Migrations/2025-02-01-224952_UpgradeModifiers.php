@@ -49,11 +49,11 @@ class UpgradeModifiers extends Migration
             $old_account_id = $old_entity->credit_account_id;
             $old_currency_id = $keyed_old_parents[$old_account_id]->currency_id;
             $user_id = $keyed_old_grandparents[$old_currency_id]->user_id;
+
             $name = $old_entity->name;
             $i = 0;
             $generated_name = $name;
             $unique_generated_name = $user_id.$generated_name;
-
             while (in_array($unique_generated_name, $known_unique_data)) {
                 $generated_name = $name." ".(++$i);
                 $unique_generated_name = $user_id.$generated_name;
@@ -61,7 +61,7 @@ class UpgradeModifiers extends Migration
 
             if ($old_entity->name !== $generated_name) {
                 $old_entity->name = $generated_name;
-                $old_entity->name->save();
+                model(DeprecatedModifierModel::class, false)->save($old_entity);
             }
             array_push($known_unique_data, $unique_generated_name);
             $new_entity->fill([
@@ -83,10 +83,10 @@ class UpgradeModifiers extends Migration
         }
 
         if (count($new_entities) > 0) {
-            model(ModifierModel::class)->insertBatch($new_entities);
+            model(ModifierModel::class, false)->insertBatch($new_entities);
 
             $keyed_modifiers_by_name_and_date = Resource::key(
-                model(ModifierModel::class)->withDeleted()->findAll(),
+                model(ModifierModel::class, false)->withDeleted()->findAll(),
                 fn ($entity) => $entity->name.$entity->created_at->toDateTimeString()
             );
             $new_child_entities = [];
@@ -107,7 +107,7 @@ class UpgradeModifiers extends Migration
                 $new_entity->fill([
                     "modifier_id" => $modifier_id,
                     "account_id" => $debit_account_id,
-                    "kind" => DEBIT_MODIFIER_ATOM_KIND
+                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND
                 ]);
 
                 array_push($new_child_entities, $new_entity);
@@ -123,21 +123,21 @@ class UpgradeModifiers extends Migration
                 $new_entity->fill([
                     "modifier_id" => $modifier_id,
                     "account_id" => $credit_account_id,
-                    "kind" => CREDIT_MODIFIER_ATOM_KIND
+                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND
                 ]);
 
                 array_push($new_child_entities, $new_entity);
             }
 
             if (count($new_child_entities) > 0) {
-                model(ModifierAtomModel::class)->insertBatch($new_child_entities);
+                model(ModifierAtomModel::class, false)->insertBatch($new_child_entities);
 
                 $keyed_modifiers_by_id = Resource::key(
                     array_values($keyed_modifiers_by_name_and_date),
                     fn ($entity) => $entity->id
                 );
                 $keyed_modifier_atoms = Resource::key(
-                    model(ModifierAtomModel::class)->findAll(),
+                    model(ModifierAtomModel::class, false)->findAll(),
                     fn ($entity) => (
                         $keyed_modifiers_by_id[$entity->modifier_id]->name
                         .$keyed_modifiers_by_id[$entity->modifier_id]->created_at->toDateTimeString()
@@ -200,7 +200,8 @@ class UpgradeModifiers extends Migration
                 }
 
                 if (count($new_grandchild_entities) > 0) {
-                    model(ModifierAtomActivityModel::class)->insertBatch($new_grandchild_entities);
+                    model(ModifierAtomActivityModel::class, false)
+                        ->insertBatch($new_grandchild_entities);
                 }
             }
         }
