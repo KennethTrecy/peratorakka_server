@@ -422,7 +422,7 @@ digraph {
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
 						enum(unknown,reactive,dependent,manual)<br align="left"/>
-						enum(unknown,record,close,exchange,<br align="left"/>paper_record,bid,ask,transform,throw,catch,<br align="left"/>condense,dilute)<br align="left"/>
+						enum(unknown,record,close,exchange,<br align="left"/>reprice,bid,ask,transform,throw,catch,<br align="left"/>condense,dilute)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -459,7 +459,7 @@ digraph {
 						kind<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
-						enum(unknown,debit,credit,<br align="left"/>base,paper,item_count,price)<br align="left"/>
+						enum(unknown,real_debit,real_credit,<br align="left"/>imaginary_debit,imaginary_credit,<br align="left"/>item_count,price)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -631,7 +631,7 @@ digraph {
 						numerical_value<br align="left"/>
 					</td>
 					<td align="left">
-						string<br align="left"/>
+						text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -671,20 +671,20 @@ digraph {
 			</table>
 			>
 		]
-		unadjusted_summary_calculations [
+		frozen_accounts [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Unadjusted Summary Calculations
+							Frozen Accounts
 						</font>
 					</td>
 				</tr>
 				<tr>
 					<td>PK</td>
 					<td align="left">hash</td>
-					<td align="left">string</td>
+					<td align="left">char(72)</td>
 				</tr>
 				<tr>
 					<td>FK</td>
@@ -696,67 +696,81 @@ digraph {
 					<td align="left">account_id</td>
 					<td align="left">bigint</td>
 				</tr>
-				<tr>
-					<td></td>
-					<td align="left">
-						unadjusted_debit_amount<br align="left"/>
-						unadjusted_credit_amount<br align="left"/>
-					</td>
-					<td align="left">
-						string<br align="left"/>
-						string<br align="left"/>
-					</td>
-				</tr>
 			</table>
 			>
 		]
-		adjusted_summary_calculations [
+		real_unadjusted_summary_calculations [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Adjusted Summary Calculations
+							Real Unadjusted Summary Calculations
 						</font>
 					</td>
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">unadjusted_summary_calculation_hash</td>
-					<td align="left">string</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
 				</tr>
 				<tr>
 					<td></td>
 					<td align="left">
-						opened_debit_amount<br align="left"/>
-						opened_credit_amount<br align="left"/>
-						closed_debit_amount<br align="left"/>
-						closed_credit_amount<br align="left"/>
+						debit_amount<br align="left"/>
+						credit_amount<br align="left"/>
 					</td>
 					<td align="left">
-						string<br align="left"/>
-						string<br align="left"/>
-						string<br align="left"/>
-						string<br align="left"/>
+						text<br align="left"/>
+						text<br align="left"/>
 					</td>
 				</tr>
 			</table>
 			>
 		]
-		flow_calculations [
+		real_adjusted_summary_calculations [
 			label = <
 			<table cellspacing="0" border="0" cellborder="1">
 				<tr>
 					<td colspan="3" bgcolor="darkslategray">
 						<font color="white">
-							Flow Calculations
+							Real Adjusted Summary Calculations
 						</font>
 					</td>
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">unadjusted_summary_calculation_hash</td>
-					<td align="left">string</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						opened_amount<br align="left"/>
+						closed_amount<br align="left"/>
+					</td>
+					<td align="left">
+						text<br align="left"/>
+						text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		real_flow_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Real Flow Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
 				</tr>
 				<tr>
 					<td>FK</td>
@@ -769,7 +783,97 @@ digraph {
 						net_amount<br align="left"/>
 					</td>
 					<td align="left">
-						string<br align="left"/>
+						text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		imaginary_unadjusted_summary_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Imaginary Unadjusted Summary Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						debit_amount<br align="left"/>
+						credit_amount<br align="left"/>
+					</td>
+					<td align="left">
+						text<br align="left"/>
+						text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		imaginary_adjusted_summary_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Imaginary Adjusted Summary Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						opened_amount<br align="left"/>
+						closed_amount<br align="left"/>
+					</td>
+					<td align="left">
+						text<br align="left"/>
+						text<br align="left"/>
+					</td>
+				</tr>
+			</table>
+			>
+		]
+		imaginary_flow_calculations [
+			label = <
+			<table cellspacing="0" border="0" cellborder="1">
+				<tr>
+					<td colspan="3" bgcolor="darkslategray">
+						<font color="white">
+							Imaginary Flow Calculations
+						</font>
+					</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
+				</tr>
+				<tr>
+					<td>FK</td>
+					<td align="left">cash_flow_activity_id</td>
+					<td align="left">bigint</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td align="left">
+						net_amount<br align="left"/>
+					</td>
+					<td align="left">
+						text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -787,8 +891,8 @@ digraph {
 				</tr>
 				<tr>
 					<td>FK</td>
-					<td align="left">unadjusted_summary_calculation_hash</td>
-					<td align="left">string</td>
+					<td align="left">frozen_account_hash</td>
+					<td align="left">char(72)</td>
 				</tr>
 				<tr>
 					<td>FK</td>
@@ -801,7 +905,7 @@ digraph {
 						remaining_count<br align="left"/>
 					</td>
 					<td align="left">
-						string<br align="left"/>
+						text<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -966,8 +1070,11 @@ digraph {
 		events -> timeout_events
 		events -> interval_events
 
-		unadjusted_summary_calculations -> adjusted_summary_calculations
-		unadjusted_summary_calculations -> flow_calculations
+		frozen_accounts -> real_adjusted_summary_calculations
+		frozen_accounts -> real_flow_calculations
+		frozen_accounts -> imaginary_adjusted_summary_calculations
+		frozen_accounts -> imaginary_unadjusted_summary_calculations
+		frozen_accounts -> imaginary_flow_calculations
 		modifier_atoms -> modifier_atom_activities
 	}
 
@@ -978,6 +1085,7 @@ digraph {
 			arrowtail = noneteeodot
 		]
 
+		real_unadjusted_summary_calculations -> frozen_accounts
 		reactive_modifiers -> modifiers
 		dependent_modifiers -> modifiers
 		modifier_atom_activities -> cash_flow_activities
@@ -994,10 +1102,10 @@ digraph {
 		users -> events
 		events -> event_started_times
 		events -> reactive_modifiers
-		accounts -> unadjusted_summary_calculations
+		accounts -> frozen_accounts
 		modifiers -> financial_entries
 		users -> frozen_periods
-		cash_flow_activities -> flow_calculations
+		cash_flow_activities -> real_flow_calculations
 		currencies -> accounts
 		collections -> account_collections
 		precision_formats -> currencies
@@ -1005,7 +1113,7 @@ digraph {
 		precision_formats -> formulae
 		users -> collections
 		item_details -> item_configurations
-		unadjusted_summary_calculations -> item_calculations
+		frozen_accounts -> item_calculations
 		financial_entry_atoms -> item_calculations
 	}
 
@@ -1022,6 +1130,7 @@ digraph {
 		account_collections -> accounts
 		item_configurations -> accounts
 		precision_formats -> users
+		imaginary_flow_calculations -> cash_flow_activities
 	}
 
 	{
@@ -1050,7 +1159,7 @@ digraph {
 			arrowtail = noneteetee
 		]
 
-		frozen_periods -> unadjusted_summary_calculations
+		frozen_periods -> frozen_accounts
 		modifiers -> modifier_atoms
 		financial_entries -> financial_entry_atoms
 	}
@@ -1066,14 +1175,17 @@ digraph {
 
 		timeout_events -> reactive_modifiers -> dependent_modifiers
 		events -> modifier_atoms
-		// account_collections -> item_configurations
+		modifier_atoms -> frozen_periods
 		event_started_times -> numerical_tools -> precision_formats
 		numerical_tools -> events
 		numerical_tools -> collections
 		numerical_tools -> reactive_modifiers
 		numerical_tools -> account_collections
 		numerical_tools -> currencies
-		flow_calculations -> adjusted_summary_calculations
+		item_calculations -> imaginary_flow_calculations -> real_flow_calculations
+		imaginary_flow_calculations -> imaginary_adjusted_summary_calculations
+		real_adjusted_summary_calculations -> imaginary_adjusted_summary_calculations
+		accounts -> real_unadjusted_summary_calculations
 		financial_entry_atoms -> modifier_atom_activities
 		item_details -> account_collections
 		currencies -> item_configurations
@@ -1115,28 +1227,32 @@ digraph {
 		accounts
 		modifiers
 		dependent_modifiers
+		real_unadjusted_summary_calculations
 	}
 
 	{
 		rank = same;
 		l4
 		frozen_periods
-		unadjusted_summary_calculations
+		frozen_accounts
 		financial_entries
+		real_adjusted_summary_calculations
 	}
 
 	{
 		rank = same;
 		l5
 		financial_entry_atoms
-		adjusted_summary_calculations
+		imaginary_flow_calculations
 		item_calculations
+		imaginary_adjusted_summary_calculations
 	}
 
 	{
 		rank = sink;
 		l6
-		flow_calculations
+		real_flow_calculations
+		imaginary_unadjusted_summary_calculations
 		modifier_atom_activities
 		cash_flow_activities
 	}
