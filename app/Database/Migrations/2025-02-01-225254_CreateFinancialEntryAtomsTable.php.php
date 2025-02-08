@@ -34,7 +34,7 @@ class CreateFinancialEntryAtomsTable extends Migration
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
                 "financial_entry_id",
-                "financial_entries",
+                "financial_entries_v2",
                 "id",
                 "CASCADE",
                 "CASCADE",
