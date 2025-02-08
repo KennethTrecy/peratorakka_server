@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libraries\Context\TimeGroupManager;
+namespace App\Libraries\Context;
 
 use App\Casts\ModifierAction;
 use App\Libraries\Context;
@@ -9,27 +9,29 @@ use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\FinancialStatementGroup\ExchangeRateInfo;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
-use App\Models\CurrencyModel;
-use App\Models\FinancialEntryModel;
+use App\Models\Deprecated\DeprecatedCurrencyModel;
+use App\Models\Deprecated\DeprecatedFinancialEntryModel;
 use App\Models\ModifierModel;
 use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 
 class ExchangeRateCache
 {
+    public static function make(Context $context): self
+    {
+        if (!$context->hasVariable(ContextKeys::EXCHANGE_RATE_CACHE)) {
+            $this->context->setVariable(ContextKeys::EXCHANGE_RATE_CACHE, $this);
+        }
+
+        return $this->context->setVariable(ContextKeys::EXCHANGE_RATE_CACHE);
+    }
+
     public readonly Context $context;
+
     private array $exchange_entries = [];
     private array $known_currency_IDs = [];
     private array $built_derivators = [];
     private Time $last_exchange_rate_time;
-
-    public function __construct(Context $context, Time $last_exchange_rate_time)
-    {
-        $this->context = $context;
-        $this->last_exchange_rate_time = $last_exchange_rate_time;
-
-        $this->context->setVariable(ContextKeys::EXCHANGE_RATE_CACHE, $this);
-    }
 
     public function buildDerivator(Time $target_time): ExchangeRateDerivator
     {
@@ -119,7 +121,7 @@ class ExchangeRateCache
                     ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
                     ->whereIn(
                         "id",
-                        model(FinancialEntryModel::class, false)
+                        model(DeprecatedFinancialEntryModel::class, false)
                             ->builder()
                             ->select("modifier_id")
                             ->where(
@@ -134,7 +136,7 @@ class ExchangeRateCache
             );
 
             $new_exchange_entries = count($new_exchange_modifiers) > 0
-                ? model(FinancialEntryModel::class, false)
+                ? model(DeprecatedFinancialEntryModel::class, false)
                     ->where(
                         "transacted_at <=",
                         $this->last_exchange_rate_time
