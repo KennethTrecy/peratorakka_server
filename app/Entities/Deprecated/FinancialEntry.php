@@ -2,6 +2,7 @@
 
 namespace App\Entities\Deprecated;
 
+use App\Casts\RationalNumber;
 use App\Entities\BaseResourceEntity;
 
 class FinancialEntry extends BaseResourceEntity
