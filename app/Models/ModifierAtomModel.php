@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Entities\ModifierAtom;
+use App\Libraries\Resource;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
@@ -58,19 +59,25 @@ class ModifierAtomModel extends BaseResourceModel
     protected static function createAncestorResources(int $user_id, array $options): array
     {
         $combination_options = $options["combinations"] ?? [];
-        $specific_modifier_actions = array_unique(
-            array_map(fn ($combination) => $combination[0], $combination_options)
+        $specific_modifier_actions = array_map(
+            fn ($combination) => $combination[0],
+            $combination_options
         );
         $specific_account_kinds = array_unique(
-            array_merge(
-                array_map(fn ($combination) => $combination[1], $combination_options),
-                array_map(fn ($combination) => $combination[2], $combination_options)
+            array_reduce(
+                $combination_options,
+                fn ($previous_combinations, $combination) => [
+                    ...$previous_combinations,
+                    ...$combination[2]
+                ],
+                []
             )
         );
 
         $modifier_options = $options["modifier_options"] ?? [ "expected_actions" => [] ];
-        $modifier_options["expected_actions"] = array_unique(
-            array_merge($modifier_options["expected_actions"], $specific_modifier_actions)
+        $modifier_options["expected_actions"] = array_merge(
+            $modifier_options["expected_actions"],
+            $specific_modifier_actions
         );
         $account_options = $options["account_options"] ?? [ "expected_kinds" => [] ];
         $account_options["expected_kinds"] = array_unique(
@@ -81,28 +88,32 @@ class ModifierAtomModel extends BaseResourceModel
             $precision_formats,
             $currencies,
             $accounts
-        ] = AccountModel::createTestResources($user_id, 1, $account_options);
+        ] = isset($options["ancestor_accounts"])
+            ? $options["ancestor_accounts"]
+            : AccountModel::createTestResources($user_id, 1, $account_options);
         [
             $modifiers
-        ] = ModifierModel::createTestResources($user_id, 1, $modifier_options);
+        ] = isset($options["parent_modifiers"])
+            ? [ $options["parent_modifiers"] ]
+            : ModifierModel::createTestResources($user_id, 1, $modifier_options);
 
         $filtered_parent_links = [];
         if (isset($options["combinations"])) {
             $keyed_accounts = Resource::key($accounts, fn ($account) => $account->kind);
-            $keyed_modifiers = Resource::key($modifiers, fn ($modifier) => $modifier->kind);
 
             $filtered_parent_links = array_reduce(
-                $options["combinations"],
-                fn ($parent_links, $combination) => [
+                array_map(null, array_keys($options["combinations"]), $options["combinations"]),
+                fn ($parent_links, $combination_info) => [
                     ...$parent_links,
-                    [
-                        "modifier_id" => $keyed_accounts[$combination[0]],
-                        "account_id" => $keyed_accounts[$combination[1]]
-                    ],
-                    [
-                        "modifier_id" => $keyed_accounts[$combination[0]],
-                        "account_id" => $keyed_accounts[$combination[2]]
-                    ]
+                    ...array_map(
+                        fn ($kind_combination, $account_combination) => [
+                            "modifier_id" => $modifiers[$combination_info[0]]->id,
+                            "account_id" => $keyed_accounts[$account_combination]->id,
+                            "kind" => $kind_combination
+                        ],
+                        $combination_info[1][1],
+                        $combination_info[1][2]
+                    )
                 ],
                 []
             );

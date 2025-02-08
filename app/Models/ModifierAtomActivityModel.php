@@ -68,17 +68,20 @@ class ModifierAtomActivityModel extends BaseResourceModel
         $combination_options = $options["combinations"] ?? [];
         $specific_cash_flow_activity_indexes = Resource::retainExistingElements(
             array_unique(
-                array_merge(
-                    array_map(fn ($combination) => $combination[3], $combination_options),
-                    array_map(fn ($combination) => $combination[4], $combination_options)
+                array_reduce(
+                    $combination_options,
+                    fn ($previous_combinations, $combination) => [
+                        ...$previous_combinations,
+                        $combination[3]
+                    ],
+                    []
                 )
             )
         );
 
         $modifier_atom_options = $options["modifier_atom_options"] ?? [ "combinations" => [] ];
-        $preexisting_combination_count = count($modifier_atom_options["combinations"]);
         $modifier_atom_options["combinations"] = array_merge(
-            $modifier_atom_options["combinations"],
+            $modifier_atom_options["combinations"] ?? [],
             array_map(fn ($combination) => array_slice($combination, 0, 3), $combination_options)
         );
 
@@ -94,7 +97,7 @@ class ModifierAtomActivityModel extends BaseResourceModel
         ] = CashFlowActivityModel::createTestResources(
             $user_id,
             count($specific_cash_flow_activity_indexes),
-            $options["cash_flow_activity_options"]
+            $options["cash_flow_activity_options"] ?? []
         );
 
         $filtered_parent_links = [];
@@ -104,9 +107,11 @@ class ModifierAtomActivityModel extends BaseResourceModel
             $keyed_modifier_atoms = Resource::key(
                 $modifier_atoms,
                 fn ($modifier_atom) => (
-                    $keyed_accounts[$modifier_atom->account_id]->kind
+                    $keyed_modifiers[$modifier_atom->modifier_id]->action
                     ."_"
-                    .$keyed_modifiers[$modifier_atom->modifier_id]->kind
+                    .$modifier_atom->kind
+                    ."_"
+                    .$keyed_accounts[$modifier_atom->account_id]->kind
                 )
             );
 
@@ -114,18 +119,36 @@ class ModifierAtomActivityModel extends BaseResourceModel
                 $options["combinations"],
                 fn ($parent_links, $combination) => [
                     ...$parent_links,
-                    is_null($combination[3]) ? null : [
-                        "modifier_atom_id" => $keyed_modifier_atoms[
-                            $combination[0]."_".$combination[1]
-                        ]->id,
-                        "cash_flow_activity_id" => $cash_flow_activities[$combination[3]]->id
-                    ],
-                    is_null($combination[4]) ? null : [
-                        "modifier_atom_id" => $keyed_modifier_atoms[
-                            $combination[0]."_".$combination[2]
-                        ]->id,
-                        "cash_flow_activity_id" => $cash_flow_activities[$combination[4]]->id
-                    ]
+                    ...array_reduce(
+                        $combination_options,
+                        fn ($previous_combination, $combination) => [
+                            ...$previous_combination,
+                            ...array_map(
+                                fn (
+                                    $kind_combination,
+                                    $account_combination,
+                                    $activity_combination
+                                ) => is_null($activity_combination)
+                                    ? null
+                                    : [
+                                        "modifier_atom_id" => $keyed_modifier_atoms[
+                                            $combination[0]
+                                            ."_"
+                                            .$kind_combination
+                                            ."_"
+                                            .$account_combination
+                                        ]->id,
+                                        "cash_flow_activity_id" => $cash_flow_activities[
+                                            $activity_combination
+                                        ]->id
+                                    ],
+                                $combination[1],
+                                $combination[2],
+                                $combination[3]
+                            )
+                        ],
+                        []
+                    )
                 ],
                 []
             ));

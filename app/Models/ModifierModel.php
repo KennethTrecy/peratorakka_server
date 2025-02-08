@@ -50,7 +50,7 @@ class ModifierModel extends BaseResourceModel
         $ancestor_resources = [];
         $parent_links = static::permutateParentLinks([
             "user_id" => [ $user_id ],
-            "expected_actions" => $options["expected_actions"] ?? []
+            "action" => $options["expected_actions"] ?? []
         ], $options);
 
         return [
