@@ -162,6 +162,15 @@ define("ACCOUNT_KINDS", [
     ...ACCEPTABLE_ACCOUNT_KINDS
 ]);
 
+define("NORMAL_DEBIT_ACCOUNT_KINDS", [
+    GENERAL_ASSET_ACCOUNT_KIND,
+    GENERAL_EXPENSE_ACCOUNT_KIND,
+    LIQUID_ASSET_ACCOUNT_KIND,
+    DEPRECIATIVE_ASSET_ACCOUNT_KIND,
+    ITEMIZED_ASSET_ACCOUNT_KIND,
+    DIRECT_COST_ACCOUNT_KIND
+]);
+
 /*
  | --------------------------------------------------------------------------
  | Modifier Actions
