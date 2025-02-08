@@ -10,10 +10,10 @@ use App\Models\CurrencyModel;
 use App\Models\ModifierModel;
 use App\Models\PrecisionFormatModel;
 use CodeIgniter\Test\Fabricator;
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 use Throwable;
 
-class ModifierTest extends AuthenticatedHTTPTestCase
+class ModifierTest extends AuthenticatedContextualHTTPTestCase
 {
     public function testDefaultIndex()
     {
@@ -59,7 +59,7 @@ class ModifierTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         [
-            $precison_formats,
+            $precision_formats,
             $currencies,
             [ $asset_account, $equity_account ]
         ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
@@ -79,17 +79,15 @@ class ModifierTest extends AuthenticatedHTTPTestCase
                 "modifier" => array_merge(
                     $details->toArray(),
                     [
-                        "@meta" => [
-                            "atoms" => [
-                                [
-                                    "kind" => DEBIT_MODIFIER_ATOM_KIND,
-                                    "account_id" => $asset_account->id
-                                ],
-                                [
-                                    "kind" => CREDIT_MODIFIER_ATOM_KIND,
-                                    "account_id" => $equity_account->id,
-                                    "cash_flow_activity_id" => $cash_flow_activity->id
-                                ]
+                        "modifier_atoms" => [
+                            [
+                                "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                "account_id" => $asset_account->id
+                            ],
+                            [
+                                "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                "account_id" => $equity_account->id,
+                                "cash_flow_activity_id" => $cash_flow_activity->id
                             ]
                         ]
                     ]
@@ -102,11 +100,11 @@ class ModifierTest extends AuthenticatedHTTPTestCase
             "modifier_atoms" => [
                 [
                     "account_id" => $asset_account->id,
-                    "kind" => DEBIT_MODIFIER_ATOM_KIND
+                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND
                 ],
                 [
                     "account_id" => $equity_account->id,
-                    "kind" => CREDIT_MODIFIER_ATOM_KIND
+                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND
                 ]
             ],
             "modifier_atom_activities" => [
@@ -234,8 +232,12 @@ class ModifierTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info->getRequest()->get("/api/v2/modifiers", [
             "page" => [
-                "limit" => 5,
-                "must_be_enriched" => true
+                "limit" => 5
+            ],
+            "relationship" => [
+                "precision_formats",
+                "currencies",
+                "accounts"
             ]
         ]);
 
@@ -302,6 +304,34 @@ class ModifierTest extends AuthenticatedHTTPTestCase
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->put("/api/v2/modifiers/$details->id", [
+                "modifier" => $new_details->toArray()
+            ]);
+    }
+
+    public function testUnownedUpdate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        [
+            $details
+        ] = ModifierModel::createTestResource(
+            $another_user->id,
+            []
+        );
+        [
+            $new_details
+        ] = ModifierModel::makeTestResource(
+            $authenticated_info->getUser()->id,
+            []
+        );
+
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")

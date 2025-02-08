@@ -195,8 +195,10 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result = $authenticated_info->getRequest()->get("/api/v2/currencies", [
             "page" => [
-                "limit" => 5,
-                "must_be_enriched" => true
+                "limit" => 5
+            ],
+            "relationship" => [
+                "precision_formats"
             ]
         ]);
 
