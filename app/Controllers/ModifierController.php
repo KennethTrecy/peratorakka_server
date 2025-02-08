@@ -39,10 +39,8 @@ class ModifierController extends BaseOwnedResourceController
 
         $user_id = $owner->id;
 
-        $validation->setRule("$individual_name.@meta", "group info", [
-            "required"
-        ]);
-        $validation->setRule("$individual_name.@meta.atoms", "group info", [
+        $atom_key = "$individual_name.modifier_atoms";
+        $validation->setRule("$atom_key", "group info", [
             "required"
         ]);
         $validation->setRule("$individual_name.name", "name", [
@@ -68,11 +66,11 @@ class ModifierController extends BaseOwnedResourceController
             "min_length[3]",
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_MODIFIER_ACTIONS)."]",
-            "must_have_compound_data_key[$individual_name.@meta.atoms]",
-            "has_valid_modifier_atom_group_info[$individual_name.@meta.atoms]",
-            "does_own_resources_declared_in_modifier_atom_group_info[$individual_name.@meta.atoms]",
-            "has_valid_modifier_atom_group_cash_flow_activity[$individual_name.@meta.atoms]",
-            "may_allow_modifier_action[$individual_name.@meta.atoms]"
+            "must_have_compound_data_key[$atom_key]",
+            "has_valid_modifier_atom_group_info[$atom_key]",
+            "does_own_resources_declared_in_modifier_atom_group_info[$atom_key]",
+            "has_valid_modifier_atom_group_cash_flow_activity[$atom_key]",
+            "may_allow_modifier_action[$atom_key]"
         ]);
 
         return $validation;
@@ -108,8 +106,10 @@ class ModifierController extends BaseOwnedResourceController
         return true;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
@@ -142,7 +142,7 @@ class ModifierController extends BaseOwnedResourceController
                 ]);
                 return $modifier_atom_entity;
             },
-            $input["@meta"]["atoms"]
+            $input["modifier_atoms"]
         );
         model(ModifierAtomModel::class, false)->insertBatch($modifier_atoms);
         $created_document["modifier_atoms"] = model(ModifierAtomModel::class, false)
@@ -166,7 +166,7 @@ class ModifierController extends BaseOwnedResourceController
                 return $modifier_atom_activity_entity;
             },
             array_filter(
-                $input["@meta"]["atoms"],
+                $input["modifier_atoms"],
                 fn ($raw_modifier_atom) => (
                     isset($raw_modifier_atom["cash_flow_activity_id"])
                     && !is_null($raw_modifier_atom["cash_flow_activity_id"])
