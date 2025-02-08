@@ -53,7 +53,7 @@ class CurrencyModel extends BaseResourceModel
     {
         [
             $precision_format
-        ] = PrecisionFormatModel::createTestResource(
+        ] = $options["precision_format_parent"] ?? PrecisionFormatModel::createTestResource(
             $user_id,
             $options["precision_format_options"] ?? []
         );
