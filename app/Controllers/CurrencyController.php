@@ -113,7 +113,10 @@ class CurrencyController extends BaseOwnedResourceController
         if (in_array("*", $relationships) || in_array("precision_formats", $relationships)) {
             [
                 $precision_formats
-            ] = CurrencyModel::selectAncestorsWithResolvedResources($main_documents);
+            ] = CurrencyModel::selectAncestorsWithResolvedResources(
+                $main_documents,
+                $relationships
+            );
             $enriched_document["precision_formats"] = $precision_formats;
         }
 
