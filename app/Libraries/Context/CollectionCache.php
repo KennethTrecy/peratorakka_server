@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libraries\Context\TimeGroupManager;
+namespace App\Libraries\Context;
 
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
@@ -9,23 +9,24 @@ use App\Models\AccountCollectionModel;
 use App\Models\CollectionModel;
 use Brick\Math\BigRational;
 
-class CollectionCache
+class CollectionCache extends ResourceCache
 {
-    public readonly Context $context;
-    private array $collections = [];
-    private array $collected_accounts = [];
-
-    public function __construct(Context $context)
+    protected static function contextKey(): ContextKeys
     {
-        $this->context = $context;
-
-        $this->context->setVariable(ContextKeys::COLLECTION_CACHE, $this);
+        return ContextKeys::COLLECTION_CACHE;
     }
+
+    protected static function getModel(): CollectionModel
+    {
+        return model(CollectionModel::class, false);
+    }
+
+    private array $collected_accounts = [];
 
     public function determineCollectionName(int $collection_id): ?string
     {
-        return isset($this->collections[$collection_id])
-            ? $this->collections[$collection_id]->name
+        return isset($this->resources[$collection_id])
+            ? $this->resources[$collection_id]->name
             : null;
     }
 
@@ -34,29 +35,6 @@ class CollectionCache
         return isset($this->collected_accounts[$collection_id])
             ? $this->collected_accounts[$collection_id]
             : [];
-    }
-
-    public function loadCollections(array $target_collection_IDs): void
-    {
-        $missing_collection_IDs = array_diff(
-            $target_collection_IDs,
-            array_keys($this->collections)
-        );
-
-        if (count($missing_collection_IDs) === 0) {
-            return;
-        }
-
-        $new_collections = model(CollectionModel::class, false)
-            ->whereIn("id", array_unique($missing_collection_IDs))
-            ->findAll();
-
-        $this->collections = array_replace(
-            $this->collections,
-            Resource::key($new_collections, function ($collection) {
-                return $collection->id;
-            })
-        );
     }
 
     public function loadCollectedAccounts(array $target_collection_IDs): void
