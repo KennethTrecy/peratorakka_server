@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Entities\FinancialEntryAtom;
+use App\Libraries\Resource;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use DateTimeInterface;
@@ -10,7 +11,7 @@ use Faker\Generator;
 
 class FinancialEntryAtomModel extends BaseResourceModel
 {
-    protected $table = "financial_entry_stoms";
+    protected $table = "financial_entry_atoms";
     protected $returnType = FinancialEntryAtom::class;
     protected $allowedFields = [
         "financial_entry_id",
