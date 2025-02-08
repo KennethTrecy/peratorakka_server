@@ -135,10 +135,13 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
         return array_merge([ $resources ], $resolved_ancestors);
     }
 
-    public static function selectAncestorsWithResolvedResources(array $resources): array
-    {
+    public static function selectAncestorsWithResolvedResources(
+        array $resources,
+        array $relationship = ["*"]
+    ): array {
         $direct_ancestor_information = static::identifyAncestors();
         $newly_discovered_ancestors = array_keys($direct_ancestor_information);
+        // Descendants are the keys and parent are the values
         $inverse_hierarchy = array_map(
             function () { return []; },
             array_flip($newly_discovered_ancestors)
@@ -146,7 +149,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
         while (count($newly_discovered_ancestors) > 0) {
             $newly_discovered_ancestor = array_shift($newly_discovered_ancestors);
 
-            $ancestor_model = model($newly_discovered_ancestor);
+            $ancestor_model = model($newly_discovered_ancestor, false);
             $indirect_ancestor_information = $ancestor_model::identifyAncestors();
             $parent_ancestors = array_keys($indirect_ancestor_information);
             $newly_discovered_ancestors = array_merge(
@@ -156,6 +159,8 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
             $inverse_hierarchy[$newly_discovered_ancestor] = $parent_ancestors;
         }
 
+        // Parents are the keys and descendants are the values.
+        // If entity belonged in normal hierarchy, its children are not yet loaded.
         $normal_hierarchy = array_map(
             function () { return []; },
             array_flip(array_keys($inverse_hierarchy))
@@ -166,7 +171,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
             }
         }
 
-        $resolved_ancestors = array_map(function () { return []; }, $inverse_hierarchy);
+        // Records IDs that have been found
         $incomplete_ancestor_IDs = array_map(function () { return []; }, $normal_hierarchy);
 
         foreach ($direct_ancestor_information as $ancestor_class => $column_IDs) {
@@ -179,20 +184,26 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
             }
         }
 
+        // Records the parents that have been found
+        $resolved_ancestors = array_map(function () { return []; }, $inverse_hierarchy);
+        // Loops until no ancestor IDs are waiting to be loaded
         do {
+            // Loops until a parents have been loaded
             foreach ($normal_hierarchy as $parent_ancestor_class => $child_ancestors) {
+                // Check if the current entity has no pending child ancestors
                 if (count($child_ancestors) === 0) {
                     $target_IDs = $incomplete_ancestor_IDs[$parent_ancestor_class];
                     $target_IDs = array_unique($target_IDs);
 
-                    $ancestor_model = model($parent_ancestor_class);
+                    // Load pending IDs of the parent
+                    $ancestor_model = model($parent_ancestor_class, false);
                     $ancestor_entities = $ancestor_model->selectUsingMultipleIDs($target_IDs);
                     $resolved_ancestors[$parent_ancestor_class] = array_merge(
                         $resolved_ancestors[$parent_ancestor_class],
                         $ancestor_entities
                     );
-                    $indirect_ancestors = array_slice($ancestor_entities, 1);
 
+                    // Load grandparent information
                     $indirect_ancestor_information = $ancestor_model::identifyAncestors();
                     $ancestor_linked_columns = [];
                     foreach ($indirect_ancestor_information as $ancestor_class => $column_names) {
@@ -201,6 +212,7 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
                         }
                     }
 
+                    // Extract grandparent IDs of loaded parents and include to pending IDs
                     foreach ($ancestor_entities as $ancestor_entity) {
                         foreach ($ancestor_linked_columns as $column_name => $ancestor_class) {
                             $incomplete_ancestor_IDs[$ancestor_class][]
@@ -208,8 +220,11 @@ abstract class BaseResourceModel extends Model implements FabricatorModel, Owned
                         }
                     }
 
+                    // Remove pending IDs as they are now loaded
                     unset($incomplete_ancestor_IDs[$parent_ancestor_class]);
+                    // Remove parent entity
                     unset($normal_hierarchy[$parent_ancestor_class]);
+                    // Remove parent entity that is a child in other entities
                     $normal_hierarchy = array_map(
                         function ($child_ancestors) use ($parent_ancestor_class) {
                             return array_diff($child_ancestors, [ $parent_ancestor_class ]);
