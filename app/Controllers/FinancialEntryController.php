@@ -3,6 +3,10 @@
 namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
+use App\Libraries\Context;
+use App\Libraries\Context\Memoizer;
+use App\Libraries\Resource;
+use App\Models\FinancialEntryAtomModel;
 use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
 use CodeIgniter\Shield\Entities\User;
@@ -30,13 +34,12 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $validation->setRule("$individual_name.@meta", "entry value", [
-            "required"
+        $atom_key = "$individual_name.@relationship.financial_entry_atoms";
+        $validation->setRule("$atom_key", "entry value", [ "required" ]);
+        $validation->setRule("$atom_key.*.numerical_value", "numerical value", [
+            "required",
+            "is_valid_currency_amount"
         ]);
-        $validation->setRule("$individual_name.@meta.atoms", "entry value", [
-            "required"
-        ]);
-        $atom_key = "$individual_name.@meta.atoms";
         $validation->setRule("$individual_name.modifier_id", "modifier", [
             "required",
             "is_natural_no_zero",
@@ -58,11 +61,32 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
+        $atom_key = "$individual_name.@relationship.financial_entry_atoms";
+        $validation->setRule("$atom_key", "entry value", [ "required" ]);
+        $validation->setRule("$atom_key.*.numerical_value", "numerical value", [
+            "required",
+            "is_valid_currency_amount"
+        ]);
+        $validation->setRule("$individual_name.modifier_id", "modifier", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                ModifierModel::class,
+                SEARCH_NORMALLY
+            ])."]",
+            "must_have_compound_data_key[$atom_key]",
+            "has_valid_financial_entry_atom_group_info[$atom_key]",
+            "does_own_resources_declared_in_financial_entry_atom_group_info[$atom_key]",
+            "has_valid_financial_entry_atom_group_values[$atom_key]"
+        ]);
+
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
         // $main_documents = $is_single_main_document
@@ -87,6 +111,29 @@ class FinancialEntryController extends BaseOwnedResourceController
         // $enriched_document["currencies"] = $currencies;
 
         return $enriched_document;
+    }
+
+    protected static function processCreatedDocument(array $created_document, $input): array
+    {
+        $main_document = $created_document[static::getIndividualName()];
+        $main_document_id = $main_document["id"];
+        $modifier_id = $main_document["modifier_id"];
+
+        $context = Context::make();
+        $memoizer = Memoizer::make($context);
+        $financial_entry_atoms = $memoizer->read("#$modifier_id", []);
+        $financial_entry_atoms = array_map(function ($atom) use ($main_document_id) {
+            $atom->financial_entry_id = $main_document_id;
+            return $atom;
+        }, $financial_entry_atoms);
+
+        model(FinancialEntryAtomModel::class, false)->insertBatch($financial_entry_atoms);
+
+        $created_document["financial_entry_atoms"] = model(FinancialEntryAtomModel::class, false)
+            ->where("financial_entry_id", $main_document_id)
+            ->findAll();
+
+        return $created_document;
     }
 
     private static function makeValidation(): Validation
