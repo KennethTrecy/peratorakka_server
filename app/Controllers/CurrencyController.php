@@ -101,17 +101,21 @@ class CurrencyController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        [
-            $precision_formats
-        ] = CurrencyModel::selectAncestorsWithResolvedResources($main_documents);
-        $enriched_document["precision_formats"] = $precision_formats;
+        if (in_array("*", $relationships) || in_array("precision_formats", $relationships)) {
+            [
+                $precision_formats
+            ] = CurrencyModel::selectAncestorsWithResolvedResources($main_documents);
+            $enriched_document["precision_formats"] = $precision_formats;
+        }
 
         return $enriched_document;
     }
