@@ -18,7 +18,8 @@ abstract class ResourceCache extends SingletonCache
         return count($this->resources);
     }
 
-    public function getLoadedResource($account_id): ?OwnedResource {
+    public function getLoadedResource($account_id): ?OwnedResource
+    {
         return $this->resources[$account_id] ?? null;
     }
 

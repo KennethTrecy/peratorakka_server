@@ -3,35 +3,37 @@
 namespace App\Libraries\Context;
 
 use App\Casts\ModifierAction;
+use App\Casts\ModifierAtomKind;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\FinancialStatementGroup\ExchangeRateInfo;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
-use App\Models\Deprecated\DeprecatedCurrencyModel;
-use App\Models\Deprecated\DeprecatedFinancialEntryModel;
+use App\Models\FinancialEntryAtomModel;
+use App\Models\FinancialEntryModel;
+use App\Models\ModifierAtomModel;
 use App\Models\ModifierModel;
-use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 
-class ExchangeRateCache
+class ExchangeRateCache extends SingletonCache
 {
-    public static function make(Context $context): self
+    protected static function contextKey(): ContextKeys
     {
-        if (!$context->hasVariable(ContextKeys::EXCHANGE_RATE_CACHE)) {
-            $this->context->setVariable(ContextKeys::EXCHANGE_RATE_CACHE, $this);
-        }
-
-        return $this->context->setVariable(ContextKeys::EXCHANGE_RATE_CACHE);
+        return ContextKeys::EXCHANGE_RATE_CACHE;
     }
-
-    public readonly Context $context;
 
     private array $exchange_entries = [];
     private array $known_currency_IDs = [];
     private array $built_derivators = [];
-    private Time $last_exchange_rate_time;
+    private ?Time $last_exchange_rate_time = null;
+
+    public function setLastExchangeRateTimeOnce(Time $time)
+    {
+        if ($this->last_exchange_rate_time === null) {
+            $this->last_exchange_rate_time = $last_exchange_rate_time;
+        }
+    }
 
     public function buildDerivator(Time $target_time): ExchangeRateDerivator
     {
@@ -70,33 +72,52 @@ class ExchangeRateCache
         return $new_derivator;
     }
 
-    public function loadExchangeRatesForAccounts(array $missing_account_IDs): void
+    public function loadExchangeRatesForAccounts(array $target_account_IDs): void
     {
-        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $account_cache = AccountCache::make($this->context);
+
+        $accounts = [];
+        $missing_account_IDs = [];
+        foreach ($target_account_IDs as $target_account_id) {
+            $account = $account_cache->getLoadedResource($target_account_id);
+
+            if (is_null($account)) {
+                array_push($missing_account_IDs, $target_account_id);
+            } else {
+                array_push($accounts, $account);
+            }
+        }
 
         $account_cache->loadAccounts($missing_account_IDs);
+        foreach ($missing_account_IDs as $missing_account_id) {
+            $account = $account_cache->getLoadedResource($missing_account_id);
+            array_push($accounts, $account);
+        }
 
-        $target_currency_IDs = array_unique(array_map(function ($account_id) use ($account_cache) {
-            return $account_cache->determineCurrencyID($account_id);
-        }, $missing_account_IDs));
+        $target_currency_IDs = array_unique(array_map(
+            fn ($account) => $account->currency_id,
+            $accounts
+        ));
 
-        $new_currency_IDs = array_diff($target_currency_IDs, $this->known_currency_IDs);
-
-        $this->loadExchangeRatesForCurrencies($new_currency_IDs);
+        $this->loadExchangeRatesForCurrencies($target_currency_IDs);
     }
 
     public function loadExchangeRatesForCurrencies(array $new_currency_IDs): void
     {
-        $currency_cache = $this->context->getVariable(ContextKeys::CURRENCY_CACHE);
-        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $currency_cache = CurrencyCache::make($this->context);
+        $account_cache = AccountCache::make($this->context);
+        $modifier_atom_cache = ModifierAtomCache::make($this->context);
 
-        $all_known_IDs = array_unique(array_merge($this->known_currency_IDs, $new_currency_IDs));
+        $unknown_IDs = array_diff($new_currency_IDs, $this->known_currency_IDs);
+        $all_known_IDs = array_unique(array_merge($this->known_currency_IDs, $unknown_IDs));
 
-        if (count($new_currency_IDs) > 0 && $this->last_exchange_rate_time->getTimestamp() > 0) {
-            $currency_cache->loadCurrencies($new_currency_IDs);
+        if (count($unknown_IDs) > 0 && !is_null($this->last_exchange_rate_time)) {
+            $currency_cache->loadResources($unknown_IDs);
 
-            $this->known_currency_IDs = $all_known_IDs;
-
+            $exchange_modifier_subquery = model(ModifierModel::class, false)
+                ->builder()
+                ->select("id")
+                ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION));
             $all_account_subquery = model(AccountModel::class, false)
                 ->builder()
                 ->select("id")
@@ -106,67 +127,137 @@ class ExchangeRateCache
                 ->select("id")
                 ->whereIn("currency_id", $new_currency_IDs);
 
-            $new_exchange_modifiers = Resource::key(
-                model(ModifierModel::class, false)
+            $financial_entry_subquery =  model(FinancialEntryAtomModel::class, false)
+                ->builder()
+                ->select("id")
+                ->where(
+                    "transacted_at <=",
+                    $this->last_exchange_rate_time
+                )
+                ->groupStart()
                     ->groupStart()
-                        ->groupStart()
-                            ->whereIn("debit_account_id", $new_account_subquery)
-                            ->whereIn("credit_account_id", $all_account_subquery)
-                        ->groupEnd()
-                        ->orGroupStart()
-                            ->whereIn("debit_account_id", $all_account_subquery)
-                            ->whereIn("credit_account_id", $new_account_subquery)
-                        ->groupEnd()
+                        ->whereIn(
+                            "id",
+                            model(FinancialEntryAtomModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->whereIn(
+                                    "modifier_atom_id",
+                                    model(ModifierAtomModel::class, false)
+                                        ->builder()
+                                        ->select("id")
+                                        ->where("modifier_id", $exchange_modifier_subquery)
+                                        ->where("account_id", $new_account_subquery)
+                                        ->where(
+                                            "kind",
+                                            ModifierAtomKind::set(REAL_DEBIT_MODIFIER_ATOM_KIND)
+                                        )
+                                )
+                        )
+                        ->whereIn(
+                            "id",
+                            model(FinancialEntryAtomModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->whereIn(
+                                    "modifier_atom_id",
+                                    model(ModifierAtomModel::class, false)
+                                        ->builder()
+                                        ->select("id")
+                                        ->where("modifier_id", $exchange_modifier_subquery)
+                                        ->where("account_id", $all_account_subquery)
+                                        ->where(
+                                            "kind",
+                                            ModifierAtomKind::set(REAL_CREDIT_MODIFIER_ATOM_KIND)
+                                        )
+                                )
+                        )
                     ->groupEnd()
-                    ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
-                    ->whereIn(
-                        "id",
-                        model(DeprecatedFinancialEntryModel::class, false)
-                            ->builder()
-                            ->select("modifier_id")
-                            ->where(
-                                "transacted_at <=",
-                                $this->last_exchange_rate_time
-                            )
-                    )
-                    ->findAll(),
-                function ($modifier) {
-                    return $modifier->id;
-                }
-            );
+                    ->orGroupStart()
+                        ->whereIn(
+                            "id",
+                            model(FinancialEntryAtomModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->whereIn(
+                                    "modifier_atom_id",
+                                    model(ModifierAtomModel::class, false)
+                                        ->builder()
+                                        ->select("id")
+                                        ->where("modifier_id", $exchange_modifier_subquery)
+                                        ->where("account_id", $all_account_subquery)
+                                        ->where(
+                                            "kind",
+                                            ModifierAtomKind::set(REAL_DEBIT_MODIFIER_ATOM_KIND)
+                                        )
+                                )
+                        )
+                        ->whereIn(
+                            "id",
+                            model(FinancialEntryAtomModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->whereIn(
+                                    "modifier_atom_id",
+                                    model(ModifierAtomModel::class, false)
+                                        ->builder()
+                                        ->select("id")
+                                        ->where("modifier_id", $exchange_modifier_subquery)
+                                        ->where("account_id", $new_account_subquery)
+                                        ->where(
+                                            "kind",
+                                            ModifierAtomKind::set(REAL_CREDIT_MODIFIER_ATOM_KIND)
+                                        )
+                                )
+                        )
+                    ->groupEnd()
+                ->groupEnd();
 
-            $new_exchange_entries = count($new_exchange_modifiers) > 0
-                ? model(DeprecatedFinancialEntryModel::class, false)
-                    ->where(
-                        "transacted_at <=",
-                        $this->last_exchange_rate_time
-                    )
-                    ->whereIn(
-                        "modifier_id",
-                        array_keys($new_exchange_modifiers)
-                    )
+
+            $financial_entry_atoms = count($new_exchange_modifiers) > 0
+                ? model(FinancialEntryAtomModel::class, false)
+                    ->whereIn("financial_entry_id", $financial_entry_subquery)
                     ->findAll()
                 : [];
 
-            foreach ($new_exchange_entries as $financial_entry) {
-                $modifier = $new_exchange_modifiers[$financial_entry->modifier_id];
-                $debit_account_id = $modifier->debit_account_id;
-                $credit_account_id = $modifier->credit_account_id;
-                $account_cache->loadAccounts(array_unique(
-                    [ $debit_account_id, $credit_account_id ]
-                ));
+            $linked_modifier_atoms = array_map(
+                fn ($atom) => $atom->modifier_atom_id,
+                $financial_entry_atoms
+            );
+            $modifier_atom_cache->loadResources(array_unique($linked_modifier_atoms));
+
+            $associated_accounts = $modifier_atom_cache->extractAssociatedAccountIDs();
+            $linked_accounts = array_unique(array_values($associated_accounts));
+            $account_cache->loadResources($linked_accounts);
+
+            $paired_financial_entry_atoms = Resource::group(
+                $financial_entry_atoms,
+                fn ($atom) => $atom->financial_entry_id
+            );
+
+            foreach ($paired_financial_entry_atoms as $financial_entry_atom_pair) {
+                [
+                    $debit_financial_entry_atom,
+                    $credit_financial_entry_atom
+                ] = $financial_entry_atom_pair;
+
+                $debit_modifier_atom_id = $debit_financial_entry_atom->modiifer_atom_id;
+                $credit_modifier_atom_id = $credit_financial_entry_atom->modiifer_atom_id;
+                $debit_account_id = $modifier_atom_cache
+                    ->determineModifierAtomAccountID($debit_modifier_atom_id);
+                $credit_account_id = $modifier_atom_cache
+                    ->determineModifierAtomAccountID($credit_modifier_atom_id);
 
                 $debit_account_kind = $account_cache->determineAccountKind($debit_account_id);
 
-                $may_use_debit_account_as_destination
-                    = $debit_account_kind === GENERAL_ASSET_ACCOUNT_KIND
-                        || $debit_account_kind === LIQUID_ASSET_ACCOUNT_KIND
-                        || $debit_account_kind === DEPRECIATIVE_ASSET_ACCOUNT_KIND
-                        || $debit_account_kind === EXPENSE_ACCOUNT_KIND;
+                $may_use_debit_account_as_destination = in_array(
+                    $debit_account_kind,
+                    NORMAL_DEBIT_ACCOUNT_KINDS
+                );
                 $debit_currency_id = $account_cache->determineCurrencyID($debit_account_id);
                 $credit_currency_id = $account_cache->determineCurrencyID($credit_account_id);
-                $debit_value = $financial_entry->debit_amount;
-                $credit_value = $financial_entry->credit_amount;
+                $debit_value = $debit_financial_entry_atom->numerical_value;
+                $credit_value = $credit_financial_entry_atom->numerical_value;
 
                 $source_currency_id = $may_use_debit_account_as_destination
                     ? $credit_currency_id
@@ -182,16 +273,22 @@ class ExchangeRateCache
                     ? $debit_value
                     : $credit_value;
 
+                $lowest_financial_entry_atom_id = min(
+                    $debit_financial_entry_atom->id,
+                    $credit_financial_entry_atom->id
+                );
                 $new_exchange_rate_info = new ExchangeRateInfo(
                     $source_currency_id,
                     $source_value,
                     $destination_currency_id,
                     $destination_value,
-                    $financial_entry->transacted_at
+                    Time::now()->subSeconds($lowest_financial_entry_atom_id)
                 );
 
                 array_push($this->exchange_entries, $new_exchange_rate_info);
             }
+
+            $this->known_currency_IDs = $all_known_IDs;
         }
     }
 }
