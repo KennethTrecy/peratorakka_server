@@ -356,7 +356,7 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
             $modifiers,
             $details
         ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
-            "modifier_options" => [ "expected_actions" => [ RECORD_MODIFIER_ACTION ] ]
+            "modifier_options" => [ "expected_actions" => [ EXCHANGE_MODIFIER_ACTION ] ]
         ]);
         [
             $precision_formats,
