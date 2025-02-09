@@ -4,20 +4,21 @@ namespace App\Controllers;
 
 use App\Casts\RationalNumber;
 use App\Contracts\OwnedResource;
-use App\Entities\FlowCalculation;
-use App\Entities\SummaryCalculation;
+use App\Entities\Deprecated\FlowCalculation;
+use App\Entities\Deprecated\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
 use App\Libraries\FinancialStatementGroup;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
+use App\Libraries\Context\AccountCache;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
-use App\Models\CurrencyModel;
-use App\Models\FinancialEntryModel;
-use App\Models\FlowCalculationModel;
+use App\Models\Deprecated\DeprecatedCurrencyModel;
+use App\Models\Deprecated\DeprecatedFinancialEntryModel;
+use App\Models\Deprecated\DeprecatedFlowCalculationModel;
+use App\Models\Deprecated\DeprecatedSummaryCalculation;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
-use App\Models\SummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
@@ -54,8 +55,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return true;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
 
@@ -107,7 +110,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         return $enriched_document;
     }
 
-    protected static function processCreatedDocument(array $created_document): array
+    protected static function processCreatedDocument(array $created_document, array $input): array
     {
         $main_document = $created_document[static::getIndividualName()];
 
@@ -149,55 +152,50 @@ class FrozenPeriodController extends BaseOwnedResourceController
         array $main_document,
         bool $must_be_strict
     ): array {
+        $account_cache = AccountCache::make($context);
         $current_user = auth()->user();
 
         [
-            $cash_flow_activities,
-            $accounts,
-            $raw_summary_calculations,
-            $raw_flow_calculations,
-            $raw_exchange_rates
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows
         ] = FrozenPeriodModel::makeRawCalculations(
             $current_user,
             $main_document["started_at"],
             $main_document["finished_at"]
         );
-        $keyed_calculations = Resource::key($raw_summary_calculations, function ($calculation) {
-            return $calculation->account_id;
-        });
+
+        $keyed_frozen_accounts = Resource::key(
+            $frozen_accounts,
+            fn ($frozen_account) => $frozen_account->hash
+        );
 
         if ($must_be_strict) {
-            foreach ($accounts as $account) {
+            foreach ($real_adjusted_summaries as $adjusted_summary) {
+                $frozen_account_hash = $adjusted_summary->frozen_account_hash;
+                $account_id = $keyed_frozen_accounts[$frozen_account_hash];
+                $account_kind = $account_cache->determineAccountKind($account_id);
+
                 if (
-                    (
-                        $account->kind === EXPENSE_ACCOUNT_KIND
-                        || $account->kind === INCOME_ACCOUNT_KIND
-                    )
-                    // Some accounts are temporary and exist only for closing other accounts.
-                    // Therefore, they would not have any summary calculations.
-                    && isset($keyed_calculations[$account->id])
+                    $account_kind === GENERAL_EXPENSE_ACCOUNT_KIND
+                    || $account_kind === GENERAL_INCOME_ACCOUNT_KIND
+                    || $account_kind === GENERAL_TEMPORARY_ACCOUNT_KIND
+                    || $account_kind === DIRECT_COST_ACCOUNT_KIND
+                    || $account_kind === DIRECT_SALE_ACCOUNT_KIND
                 ) {
-                    $raw_calculation = $keyed_calculations[$account->id];
-                    if (
-                        !(
-                            $raw_calculation->closed_debit_amount->getSign() === 0
-                            && $raw_calculation->closed_debit_amount->getSign() === 0
-                        )
-                    ) {
-                        throw new UnprocessableRequest(
-                            "Temporary accounts must be closed first to create the frozen period."
-                        );
-                    }
+                    throw new UnprocessableRequest(
+                        "Temporary accounts must be closed first to create the frozen period."
+                    );
                 }
             }
         }
 
         return [
-            $cash_flow_activities,
-            $accounts,
-            $raw_summary_calculations,
-            $raw_flow_calculations,
-            $raw_exchange_rates
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows
         ];
     }
 
