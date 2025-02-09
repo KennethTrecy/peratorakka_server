@@ -55,4 +55,14 @@ class FrozenAccountModel extends BaseResourceModel
                     )
             );
     }
+
+    public static function generateAccountHash(
+        string $started_at,
+        string $finished_at,
+        int $account_id
+    ): string {
+        $key = $account_id.$finished_at.$started_at;
+
+        return sha1($key).md5($key);
+    }
 }
