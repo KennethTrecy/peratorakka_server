@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Casts\RationalNumber;
-use App\Entities\Deprecated\FlowCalculation;
 use App\Entities\FrozenAccount;
 use App\Entities\FrozenPeriod;
 use App\Entities\RealAdjustedSummaryCalculation;
@@ -11,8 +10,6 @@ use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
 use App\Libraries\Context;
 use App\Libraries\Context\AccountCache;
-use App\Libraries\Context\CashFlowActivityCache;
-use App\Libraries\Context\CurrencyCache;
 use App\Libraries\Context\ModifierAtomActivityCache;
 use App\Libraries\Context\ModifierAtomCache;
 use App\Libraries\Context\ModifierCache;
@@ -22,7 +19,6 @@ use App\Models\RealAdjustedSummaryCalculationModel;
 use App\Models\RealUnadjustedSummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
-use DateTimeInterface;
 use Faker\Generator;
 
 class FrozenPeriodModel extends BaseResourceModel
@@ -80,12 +76,10 @@ class FrozenPeriodModel extends BaseResourceModel
         // Happens for new users
         if (count($financial_entries) === 0) {
             return [
-                [], // cash flow activities
-                [], // accounts
+                [], // frozen accounts
                 [], // real unadjusted summary calculations
                 [], // real adjusted summary calculations
                 [], // real flow calculations
-                [] // raw exchange rates
             ];
         }
 
@@ -186,10 +180,6 @@ class FrozenPeriodModel extends BaseResourceModel
 
         $associated_cash_flow_activities = $modifier_atom_activity_cache
             ->extractAssociatedCashFlowActivityIDs();
-        $linked_cash_flow_activities = array_unique(array_values($associated_cash_flow_activities));
-
-        $modifier_atom_activity_cache->extractAssociatedCashFlowActivityIDs();
-        CashFlowActivityCache::make($context)->loadResources($linked_cash_flow_activities);
 
         $linked_financial_entries = [];
         foreach ($financial_entries as $document) {
