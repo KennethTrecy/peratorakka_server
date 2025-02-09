@@ -341,6 +341,7 @@ class FrozenPeriodModel extends BaseResourceModel
 
                 $keyed_real_raw_flows[$cash_flow_activity_id][$account_id] = [
                     "frozen_account_hash" => $account_hash,
+                    "cash_flow_activity_id" => $cash_flow_activity_id,
                     "net_amount" => RationalNumber::zero()
                 ];
             }
