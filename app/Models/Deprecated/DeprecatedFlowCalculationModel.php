@@ -1,13 +1,16 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Deprecated;
 
-use App\Entities\FlowCalculation;
+use App\Entities\Deprecated\FlowCalculation;
+use App\Models\BaseResourceModel;
+use App\Models\CashFlowActivityModel;
+use App\Models\FrozenPeriodModel;
 use CodeIgniter\Shield\Entities\User;
 use DateTimeInterface;
 use Faker\Generator;
 
-class FlowCalculationModel extends BaseResourceModel
+class DeprecatedFlowCalculationModel extends BaseResourceModel
 {
     protected $table = "flow_calculations";
     protected $returnType = FlowCalculation::class;
@@ -47,12 +50,12 @@ class FlowCalculationModel extends BaseResourceModel
             )
             ->whereIn(
                 "account_id",
-                model(AccountModel::class, false)
+                model(DeprecatedAccountModel::class, false)
                     ->builder()
                     ->select("id")
                     ->whereIn(
                         "currency_id",
-                        model(CurrencyModel::class, false)
+                        model(DeprecatedCurrencyModel::class, false)
                             ->builder()
                             ->select("id")
                             ->where("user_id", $user->id)
