@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Deprecated;
 
-use App\Entities\SummaryCalculation;
+use App\Entities\Deprecated\SummaryCalculation;
+use App\Models\BaseResourceModel;
+use App\Models\FrozenPeriodModel;
 use CodeIgniter\Shield\Entities\User;
 use DateTimeInterface;
 use Faker\Generator;
 
-class SummaryCalculationModel extends BaseResourceModel
+class DeprecatedSummaryCalculationModel extends BaseResourceModel
 {
     protected $table = "summary_calculations";
     protected $returnType = SummaryCalculation::class;
@@ -49,12 +51,12 @@ class SummaryCalculationModel extends BaseResourceModel
             )
             ->whereIn(
                 "account_id",
-                model(AccountModel::class, false)
+                model(DeprecatedAccountModel::class, false)
                     ->builder()
                     ->select("id")
                     ->whereIn(
                         "currency_id",
-                        model(CurrencyModel::class, false)
+                        model(DeprecatedCurrencyModel::class, false)
                             ->builder()
                             ->select("id")
                             ->where("user_id", $user->id)
