@@ -220,7 +220,7 @@ class ModifierAtomInputExaminer
                 LIABILITY_ACCOUNT_KIND => $one_or_many_count,
                 EQUITY_ACCOUNT_KIND => $one_or_many_count,
                 GENERAL_EXPENSE_ACCOUNT_KIND => $one_or_many_count,
-                GENERAL_INCOME_ACCOUNT_KIND => $one_or_many_count,
+                GENERAL_REVENUE_ACCOUNT_KIND => $one_or_many_count,
                 LIQUID_ASSET_ACCOUNT_KIND => $one_or_many_count,
                 DEPRECIATIVE_ASSET_ACCOUNT_KIND => $one_or_many_count,
                 DIRECT_COST_ACCOUNT_KIND => $one_or_many_count,
@@ -234,7 +234,7 @@ class ModifierAtomInputExaminer
                 LIABILITY_ACCOUNT_KIND => $one_count_only,
                 EQUITY_ACCOUNT_KIND => $one_count_only,
                 GENERAL_EXPENSE_ACCOUNT_KIND => $one_count_only,
-                GENERAL_INCOME_ACCOUNT_KIND => $one_count_only,
+                GENERAL_REVENUE_ACCOUNT_KIND => $one_count_only,
                 LIQUID_ASSET_ACCOUNT_KIND => $one_count_only,
                 DEPRECIATIVE_ASSET_ACCOUNT_KIND => $one_count_only
             ]
@@ -252,7 +252,7 @@ class ModifierAtomInputExaminer
                     [
                         "any",
                         EQUITY_ACCOUNT_KIND => $one_count_only,
-                        GENERAL_INCOME_ACCOUNT_KIND => $one_count_only,
+                        GENERAL_REVENUE_ACCOUNT_KIND => $one_count_only,
                         GENERAL_TEMPORARY_ACCOUNT_KIND => $one_count_only,
                         DIRECT_SALE_ACCOUNT_KIND => $one_count_only
                     ]
@@ -425,7 +425,7 @@ class ModifierAtomInputExaminer
                 REAL_CREDIT_MODIFIER_ATOM_KIND => [
                     [
                         "any",
-                        GENERAL_INCOME_ACCOUNT_KIND => $one_or_many_count,
+                        GENERAL_REVENUE_ACCOUNT_KIND => $one_or_many_count,
                         DIRECT_SALE_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ],

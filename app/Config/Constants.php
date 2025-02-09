@@ -110,7 +110,7 @@ define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
  |   when it comes to changes in cash flow statement.
  | - GENERAL_EXPENSE_ACCOUNT_KIND. Account kind that may represent expense accounts with no special
  |   behavior when it comes to changes in cash flow statement.
- | - GENERAL_INCOME_ACCOUNT_KIND. Account kind that may represent income accounts with no special
+ | - GENERAL_REVENUE_ACCOUNT_KIND. Account kind that may represent income accounts with no special
  |   behavior when it comes to changes in cash flow statement.
  | - LIQUID_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that highly-liquid
  |   and forbids cash flow activity to be associated.
@@ -135,20 +135,20 @@ define("GENERAL_ASSET_ACCOUNT_KIND", "general_asset");
 define("LIABILITY_ACCOUNT_KIND", "liability");
 define("EQUITY_ACCOUNT_KIND", "equity");
 define("GENERAL_EXPENSE_ACCOUNT_KIND", "general_expense");
-define("GENERAL_INCOME_ACCOUNT_KIND", "general_income");
+define("GENERAL_REVENUE_ACCOUNT_KIND", "general_revenue");
 define("LIQUID_ASSET_ACCOUNT_KIND", "liquid_asset");
 define("DEPRECIATIVE_ASSET_ACCOUNT_KIND", "depreciative_asset");
 define("GENERAL_TEMPORARY_ACCOUNT_KIND", "general_temporary");
 define("ITEMIZED_ASSET_ACCOUNT_KIND", "itemized_asset");
 define("DIRECT_COST_ACCOUNT_KIND", "direct_cost");
-define("DIRECT_SALE_ACCOUNT_KIND", "direct_sales");
+define("DIRECT_SALE_ACCOUNT_KIND", "direct_sale");
 
 define("ACCEPTABLE_ACCOUNT_KINDS", [
     GENERAL_ASSET_ACCOUNT_KIND,
     LIABILITY_ACCOUNT_KIND,
     EQUITY_ACCOUNT_KIND,
     GENERAL_EXPENSE_ACCOUNT_KIND,
-    GENERAL_INCOME_ACCOUNT_KIND,
+    GENERAL_REVENUE_ACCOUNT_KIND,
     LIQUID_ASSET_ACCOUNT_KIND,
     DEPRECIATIVE_ASSET_ACCOUNT_KIND,
     GENERAL_TEMPORARY_ACCOUNT_KIND,
