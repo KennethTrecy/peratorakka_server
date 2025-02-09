@@ -70,7 +70,9 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
         ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
         [
             $details
-        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, []);
+        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, [
+            "expected_actions" => [ RECORD_MODIFIER_ACTION ]
+        ]);
 
         $result = $authenticated_info
             ->getRequest()
@@ -314,7 +316,9 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
         ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
         [
             $details
-        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, []);
+        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, [
+            "expected_actions" => [ EXCHANGE_MODIFIER_ACTION ]
+        ]);
 
         $result = $authenticated_info
             ->getRequest()
