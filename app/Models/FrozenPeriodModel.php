@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\RationalNumber;
 use App\Entities\Deprecated\FlowCalculation;
+use App\Entities\FrozenAccount;
 use App\Entities\FrozenPeriod;
 use App\Entities\RealAdjustedSummaryCalculation;
 use App\Entities\RealFlowCalculation;
@@ -152,18 +153,11 @@ class FrozenPeriodModel extends BaseResourceModel
             $keyed_real_raw_flows
         );
 
-        $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
-        $raw_exchange_rates = CurrencyModel::makeExchangeRates(
-            $latest_entry_transacted_time,
-            $linked_currencies
-        );
-
         return [
-            array_values($accounts),
-            array_values($associated_account_hashes),
-            array_values($summaries),
-            array_values($flows),
-            $raw_exchange_rates
+            array_values($frozen_accounts),
+            array_values($real_unadjusted_summaries),
+            array_values($real_adjusted_summaries),
+            array_values($real_flows)
         ];
     }
 
@@ -437,7 +431,10 @@ class FrozenPeriodModel extends BaseResourceModel
         array $keyed_real_raw_adjusted_summaries,
         array $keyed_real_raw_flows
     ): array {
-        $frozen_accounts = $associated_accounts;
+        $frozen_accounts = array_values(array_map(
+            fn ($raw_associated_account) => (new FrozenAccount())->fill($raw_associated_account),
+            $associated_accounts
+        ));
 
         $keyed_real_raw_unadjusted_summaries = array_filter(
             $keyed_real_raw_unadjusted_summaries,
