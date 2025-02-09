@@ -18,6 +18,10 @@ abstract class ResourceCache extends SingletonCache
         return count($this->resources);
     }
 
+    public function getLoadedResource($account_id): ?OwnedResource {
+        return $this->resources[$account_id] ?? null;
+    }
+
     public function loadResources(array $target_resource_IDs): void
     {
         $current_user = auth()->user();
