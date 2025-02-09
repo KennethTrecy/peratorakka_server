@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Deprecated;
 
 use App\Entities\Deprecated\FinancialEntry;
 use App\Models\BaseResourceModel;
