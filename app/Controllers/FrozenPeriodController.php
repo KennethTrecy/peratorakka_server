@@ -98,7 +98,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         $context = Context::make();
         $account_cache = AccountCache::make($context);
-        $linked_accounts = FrozenAccountModel::extractLinkedAccounts($frozen_accounts);
+        $linked_accounts = array_unique(
+            FrozenAccountModel::extractLinkedAccounts($frozen_accounts)
+        );
         $account_cache->loadResources($linked_accounts);
         $accounts = array_map(
             fn ($account_id) => $account_cache->getLoadedResource($account_id),
@@ -109,7 +111,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
 
         $currency_cache = CurrencyCache::make($context);
-        $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
+        $linked_currencies = array_unique(AccountModel::extractLinkedCurrencies($accounts));
         $currency_cache->loadResources($linked_currencies);
         $currencies = array_map(
             fn ($currency_id) => $currency_cache->getLoadedResource($currency_id),
