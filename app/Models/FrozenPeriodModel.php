@@ -59,6 +59,23 @@ class FrozenPeriodModel extends BaseResourceModel
             ->first();
     }
 
+    public static function createAncestorResources(int $user_id, array $options): array
+    {
+        return [
+            [],
+            isset($options["time_ranges"])
+                ? array_map(fn ($range) => [
+                    "started_at" => $range[0],
+                    "finished_at" => $range[1],
+                    "user_id" => $user_id
+                ], $options["time_ranges"]) : [
+                    [
+                        "user_id" => $user_id
+                    ]
+                ]
+        ];
+    }
+
     public static function makeRawCalculations(
         User $user,
         Context $context,
