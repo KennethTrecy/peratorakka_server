@@ -155,6 +155,172 @@ class FrozenPeriodModel extends BaseResourceModel
         ];
     }
 
+    public static function createTestPeriods(
+        User $user,
+        array $time_range_entry_groups,
+        array $dependencies
+    ): array {
+        $currency_count = $dependencies["currency_count"];
+        $cash_flow_activity_count = $dependencies["cash_flow_activity_count"];
+        $modifier_actions = $dependencies["expected_modifier_actions"];
+
+        [
+            $precision_formats,
+            $currencies
+        ] = CurrencyModel::createTestResources($user->id, $currency_count, []);
+        [
+            $cash_flow_activities
+        ] = CashFlowActivityModel::createTestResources($user->id, $cash_flow_activity_count, []);
+        [
+            $modifiers
+        ] = ModifierModel::createTestResources($user->id, count($modifier_actions), [
+            "expected_actions" => $modifier_actions
+        ]);
+
+        $raw_account_infos = array_map(fn ($combination) => [
+            "currency_id" => $currencies[$combination[0]]->id,
+            "kind" => $combination[1]
+        ], $dependencies["account_combinations"]);
+        [ $accounts ] = AccountModel::createTestResources($user->id, 1, [
+            "ancestor_data" => [
+                [],
+                $raw_account_infos
+            ]
+        ]);
+
+        $raw_modifier_atom_infos = array_map(fn ($combination) => [
+            "modifier_id" => $modifiers[$combination[0]]->id,
+            "account_id" => $accounts[$combination[1]]->id,
+            "kind" => $combination[2]
+        ], $dependencies["modifier_atom_combinations"]);
+        [ $modifier_atoms ] = ModifierAtomModel::createTestResources($user->id, 1, [
+            "ancestor_data" => [
+                [],
+                $raw_modifier_atom_infos
+            ]
+        ]);
+
+        $raw_modifier_atom_activity_infos = array_map(fn ($combination) => [
+            "modifier_atom_id" => $modifier_atoms[$combination[0]]->id,
+            "cash_flow_activity_id" => $cash_flow_activities[$combination[1]]->id
+        ], $dependencies["modifier_atom_activity_combinations"]);
+
+        model(ModifierAtomActivityModel::class, false)
+            ->insertBatch($raw_modifier_atom_activity_infos);
+        $modifier_atom_activities = model(ModifierAtomActivityModel::class, false)->findAll();
+
+        [ $raw_financial_entry_infos, $raw_financial_entry_atom_infos ] = array_reduce(
+            $time_range_entry_groups,
+            fn ($previous_infos, $time_range_entry_group) => array_reduce(
+                $time_range_entry_group["entries"],
+                fn ($previous_entry_infos, $time_range_entry) => [
+                    [
+                        ...$previous_entry_infos[0],
+                        [
+                            "modifier_id" => $modifiers[$time_range_entry["modifier_index"]]->id,
+                            "transacted_at" => $time_range_entry_group["started_at"]
+                        ]
+                    ],
+                    [
+                        ...$previous_entry_infos[1],
+                        ...array_map(
+                            fn ($time_range_entry_atom) => [
+                                "financial_entry_index" => count($previous_entry_infos[0]),
+                                "modifier_atom_index" => $time_range_entry_atom[0],
+                                "numerical_value" => $time_range_entry_atom[1]
+                            ],
+                            $time_range_entry["atoms"]
+                        )
+                    ]
+                ],
+                $previous_infos
+            ),
+            [ [], [] ]
+        );
+                [ $financial_entries ] = FinancialEntryModel::createTestResources(
+            $user->id,
+            1,
+            [
+                "ancestor_data" => [
+                    [],
+                    $raw_financial_entry_infos
+                ]
+            ]
+        );
+
+        $raw_financial_entry_atom_infos = array_map(fn ($info) => [
+            "financial_entry_id" => $financial_entries[$info["financial_entry_index"]]->id,
+            "modifier_atom_id" => $modifier_atoms[$info["modifier_atom_index"]]->id,
+            "numerical_value" => $info["numerical_value"]
+        ], $raw_financial_entry_atom_infos);
+        [ $financial_entry_atoms ] = FinancialEntryAtomModel::createTestResources(
+            $user->id,
+            1,
+            [
+                "ancestor_data" => [
+                    [],
+                    $raw_financial_entry_atom_infos
+                ]
+            ]
+        );
+
+        $frozen_periods = [];
+        $frozen_accounts = [];
+        $real_adjusted_summaries = [];
+        $real_unadjusted_summaries = [];
+        $real_flows = [];
+        foreach ($time_range_entry_groups as $time_range_entry_group) {
+            if (isset($time_range_entry_group["finished_at"])) {
+                $started_at = $time_range_entry_group["started_at"];
+                $finished_at = $time_range_entry_group["finished_at"];
+
+                [
+                    $periodic_frozen_accounts,
+                    $periodic_real_unadjusted_summaries,
+                    $periodic_real_adjusted_summaries,
+                    $periodic_real_flows
+                ] = FrozenPeriodModel::makeRawCalculations(
+                    $user,
+                    Context::make(),
+                    $started_at,
+                    $finished_at
+                );
+
+                [ $frozen_period ] = FrozenPeriodModel::createTestResource(
+                    $user->id,
+                    [
+                        "overrides" => [
+                            "started_at" => $started_at,
+                            "finished_at" => $finished_at
+                        ]
+                    ]
+                );
+
+                foreach ($periodic_frozen_accounts as $frozen_account) {
+                    $frozen_account->frozen_period_id = $frozen_period->id;
+                }
+                model(FrozenAccountModel::class)->insertBatch($periodic_frozen_accounts);
+                model(RealAdjustedSummaryCalculationModel::class)
+                    ->insertBatch($periodic_real_adjusted_summaries);
+                model(RealUnadjustedSummaryCalculationModel::class)
+                    ->insertBatch($periodic_real_unadjusted_summaries);
+                model(RealFlowCalculationModel::class)->insertBatch($periodic_real_flows);
+                array_push($frozen_periods, $frozen_period);
+            } else {
+                array_push($frozen_periods, (new FrozenPeriod())->fill([
+                    "started_at" => $time_range_entry_group["started_at"]
+                ]));
+            }
+        }
+
+        return [
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods
+        ];
+    }
+
     private static function loadLinkedResourcesAndFinancialEntryAtoms(
         Context $context,
         array $financial_entries
