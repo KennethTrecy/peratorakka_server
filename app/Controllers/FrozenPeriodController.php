@@ -155,12 +155,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
     {
         $main_document = $created_document[static::getIndividualName()];
 
+        $context = Context::make();
         [
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
             $real_flows
-        ] = static::calculateValidCalculations($main_document, true);
+        ] = static::calculateValidCalculations($context, $main_document, true);
 
         foreach ($frozen_accounts as $frozen_account) {
             $frozen_account->frozen_period_id = $main_document["id"];
@@ -176,10 +177,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
     }
 
     private static function calculateValidCalculations(
+        Context $context,
         array $main_document,
         bool $must_be_strict
     ): array {
-        $context = Context::make();
         $account_cache = AccountCache::make($context);
         $current_user = auth()->user();
 
@@ -229,6 +230,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
     }
 
     private static function generateFullValidCalculations(
+        Context $context,
         array $main_document,
         bool $must_be_strict
     ): array {
@@ -237,7 +239,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
             $real_flows
-        ] = static::calculateValidCalculations($main_document, $must_be_strict);
+        ] = static::calculateValidCalculations($context, $main_document, $must_be_strict);
 
         $account_cache = AccountCache::make($context);
         $accounts = array_filter(array_map(
@@ -286,6 +288,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 function ($request_data) use ($controller, $current_user) {
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
+                    $context = Context::make();
+
                     [
                         $precision_formats,
                         $currencies,
@@ -296,6 +300,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $real_flows,
                         $derivator
                     ] = static::generateFullValidCalculations(
+                        $context,
                         $info,
                         false
                     );
@@ -341,6 +346,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 function ($request_data) use ($controller, $current_user) {
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
+                    $context = Context::make();
+
                     [
                         $cash_flow_activities,
                         $accounts,
@@ -348,6 +355,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $raw_flow_calculations,
                         $raw_exchange_rates
                     ] = static::generateFullValidCalculations(
+                        $context,
                         $info,
                         false
                     );
