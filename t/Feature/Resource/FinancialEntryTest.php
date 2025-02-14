@@ -386,7 +386,7 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
         ] = ModifierAtomActivityModel::createTestResource($authenticated_info->getUser()->id, [
             "combinations" => [
                 [
-                    RECORD_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
                     [
                         REAL_DEBIT_MODIFIER_ATOM_KIND,
                         REAL_CREDIT_MODIFIER_ATOM_KIND
