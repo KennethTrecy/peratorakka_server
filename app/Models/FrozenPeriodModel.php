@@ -190,7 +190,7 @@ class FrozenPeriodModel extends BaseResourceModel
         ] = CashFlowActivityModel::createTestResources($user->id, $cash_flow_activity_count, []);
         [
             $modifiers
-        ] = ModifierModel::createTestResources($user->id, count($modifier_actions), [
+        ] = ModifierModel::createTestResources($user->id, 1, [
             "expected_actions" => $modifier_actions
         ]);
 
