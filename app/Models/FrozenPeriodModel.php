@@ -355,11 +355,11 @@ class FrozenPeriodModel extends BaseResourceModel
 
         $associated_accounts = $modifier_atom_cache->extractAssociatedAccountIDs();
         $linked_accounts = array_unique(array_values($associated_accounts));
-        AcccountCache::make($context)->loadResources($linked_accounts);
+        AccountCache::make($context)->loadResources($linked_accounts);
 
         $linked_modifier_atoms = array_keys($associated_accounts);
         $modifier_atom_activity_cache = ModifierAtomActivityCache::make($context);
-        $modifier_atom_activity_cache->loadResources($linked_modifier_atoms);
+        $modifier_atom_activity_cache->loadResourcesFromParentIDs($linked_modifier_atoms);
 
         $associated_cash_flow_activities = $modifier_atom_activity_cache
             ->extractAssociatedCashFlowActivityIDs();
