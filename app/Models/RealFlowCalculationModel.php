@@ -67,4 +67,12 @@ class RealFlowCalculationModel extends BaseResourceModel
                     ->where("user_id", $user->id)
             );
     }
+
+    public static function extractLinkedCashFlowActivities(array $flow_calculations): array
+    {
+        return array_map(
+            fn ($flow_calculation) => $flow_calculation->cash_flow_activity_id,
+            $flow_calculations
+        );
+    }
 }
