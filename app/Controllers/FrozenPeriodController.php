@@ -4,23 +4,17 @@ namespace App\Controllers;
 
 use App\Casts\RationalNumber;
 use App\Contracts\OwnedResource;
-use App\Entities\Deprecated\FlowCalculation;
-use App\Entities\Deprecated\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
 use App\Libraries\Context;
 use App\Libraries\Context\AccountCache;
-use App\Libraries\Context\CurrencyCache;
 use App\Libraries\Context\CashFlowActivityCache;
+use App\Libraries\Context\CurrencyCache;
 use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\FinancialStatementGroup;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
-use App\Models\Deprecated\DeprecatedCurrencyModel;
-use App\Models\Deprecated\DeprecatedFinancialEntryModel;
-use App\Models\Deprecated\DeprecatedFlowCalculationModel;
-use App\Models\Deprecated\DeprecatedSummaryCalculation;
 use App\Models\FrozenAccountModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
@@ -124,7 +118,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if (in_array("*", $relationships) || in_array("currencies", $relationships)) {
             $cash_flow_activity_cache = CashFlowActivityCache::make($context);
             $linked_cash_flow_activities
-                = RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows);
+                = array_unique(RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows));
             $cash_flow_activity_cache->loadResources($linked_cash_flow_activities);
             $enriched_document["cash_flow_activities"] = array_map(
                 fn ($cash_flow_activity_id) => $cash_flow_activity_cache->getLoadedResource(
@@ -185,6 +179,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         array $main_document,
         bool $must_be_strict
     ): array {
+        $context = Context::make();
         $account_cache = AccountCache::make($context);
         $current_user = auth()->user();
 
@@ -195,6 +190,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $real_flows
         ] = FrozenPeriodModel::makeRawCalculations(
             $current_user,
+            $context,
             $main_document["started_at"],
             $main_document["finished_at"]
         );
@@ -207,7 +203,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
         if ($must_be_strict) {
             foreach ($real_adjusted_summaries as $adjusted_summary) {
                 $frozen_account_hash = $adjusted_summary->frozen_account_hash;
-                $account_id = $keyed_frozen_accounts[$frozen_account_hash];
+                $account_id = $keyed_frozen_accounts[$frozen_account_hash]->account_id;
                 $account_kind = $account_cache->determineAccountKind($account_id);
 
                 if (
