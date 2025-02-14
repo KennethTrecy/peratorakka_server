@@ -16,7 +16,6 @@ use App\Libraries\Context\ModifierCache;
 use App\Libraries\Resource;
 use App\Models\FrozenAccountModel;
 use App\Models\RealAdjustedSummaryCalculationModel;
-use App\Models\RealUnadjustedSummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
@@ -143,6 +142,7 @@ class FrozenPeriodModel extends BaseResourceModel
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows
         ] = static::consolidateRawCalculations(
+            $context,
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows,
@@ -522,6 +522,7 @@ class FrozenPeriodModel extends BaseResourceModel
     }
 
     private static function consolidateRawCalculations(
+        Context $context,
         array $keyed_real_raw_unadjusted_summaries,
         array $keyed_real_raw_adjusted_summaries,
         array $keyed_real_raw_flows,
@@ -540,9 +541,10 @@ class FrozenPeriodModel extends BaseResourceModel
             $financial_entry = $keyed_financial_entries[$financial_entry_id];
             $modifier_id = $financial_entry->modifier_id;
             $modifier_atom_id = $financial_entry_atom->modifier_atom_id;
-            $account_id = $financial_entry_atom->account_id;
+            $account_id = $modifier_atom_cache->determineModifierAtomAccountID($modifier_atom_id);
             $numerical_value = $financial_entry_atom->numerical_value;
 
+            $atom_kind = $modifier_atom_cache->determineModifierAtomKind($modifier_atom_id);
             $is_debited_normally = $account_cache->isDebitedNormally($account_id);
             $adjusted_value = $is_debited_normally === (
                 $atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
@@ -554,17 +556,16 @@ class FrozenPeriodModel extends BaseResourceModel
                     ->plus($adjusted_value);
 
             if ($modifier_cache->determineModifierAction($modifier_id) !== CLOSE_MODIFIER_ACTION) {
-                $atom_kind = $modifier_atom_cache->determineModifierAtomKind($modifier_atom_id);
                 switch ($atom_kind) {
                     case REAL_DEBIT_MODIFIER_ATOM_KIND: {
-                        $keyed_real_raw_unadjusted_summaries["debit_amount"]
-                            = $keyed_real_raw_unadjusted_summaries["debit_amount"]
+                        $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
+                            = $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
                                 ->plus($numerical_value);
                         break;
                     }
                     case REAL_CREDIT_MODIFIER_ATOM_KIND: {
-                        $keyed_real_raw_unadjusted_summaries["credit_amount"]
-                            = $keyed_real_raw_unadjusted_summaries["credit_amount"]
+                        $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
+                            = $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
                                 ->plus($numerical_value);
                         break;
                     }
@@ -584,8 +585,9 @@ class FrozenPeriodModel extends BaseResourceModel
                 }
 
                 if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
-                    $keyed_real_raw_flows[$cash_flow_activity_id][$account]["net_amount"]
-                        = $keyed_real_raw_flows[$cash_flow_activity_id][$account]["net_amount"]
+                    $cash_flow_activity_id = $associated_cash_flow_activities[$modifier_atom_id];
+                    $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                        = $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
                             ->plus($adjusted_value);
                 }
             }
@@ -649,7 +651,7 @@ class FrozenPeriodModel extends BaseResourceModel
         );
 
         $real_flows = [];
-        foreach ($keyed_real_flows as $cash_flow_activity_id => $real_flows_per_activity) {
+        foreach ($keyed_real_raw_flows as $cash_flow_activity_id => $real_flows_per_activity) {
             foreach ($real_flows_per_activity as $account_id => $real_flow) {
                 if (!$real_flow["net_amount"]->isZero()) {
                     $raw_calculation = (new RealFlowCalculation())->fill([
