@@ -37,4 +37,22 @@ class ExchangeRateInfo
             $this->updated_at
         );
     }
+
+    public function rawArray(): array {
+        $source = BigRational::of($this->source_value);
+        $destination = BigRational::of($this->destination_value);
+        $rate = $destination->dividedBy($source)->simplified();
+
+        return [
+            "source" => [
+                "currency_id" => $this->source_currency_id,
+                "value" => $rate->getDenominator()
+            ],
+            "destination" => [
+                "currency_id" => $this->destination_currency_id,
+                "value" => $rate->getNumerator()
+            ],
+            "updated_at" => $financial_entry->updated_at->toDateTimeString()
+        ];
+    }
 }
