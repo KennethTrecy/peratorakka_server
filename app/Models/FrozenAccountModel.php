@@ -56,6 +56,11 @@ class FrozenAccountModel extends BaseResourceModel
             );
     }
 
+    public static function extractLinkedAccounts(array $frozen_accounts): array
+    {
+        return array_map(fn ($frozen_account) => $frozen_account->account_id, $frozen_accounts);
+    }
+
     public static function generateAccountHash(
         string $started_at,
         string $finished_at,
