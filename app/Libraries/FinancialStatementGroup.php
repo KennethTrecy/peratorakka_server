@@ -3,7 +3,7 @@
 namespace App\Libraries;
 
 use App\Casts\RationalNumber;
-use App\Entities\Deprecated\Currency;
+use App\Entities\Currency;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 
 class FinancialStatementGroup
@@ -135,7 +135,7 @@ class FinancialStatementGroup
             $real_illiquid_cash_flow_activity_subtotals
         ] = $this->totalFlowCalculations(
             $target_currency,
-            $target_real_unadjusted_summaries,
+            $target_real_adjusted_summaries,
             $target_real_flows
         );
 
@@ -241,7 +241,7 @@ class FinancialStatementGroup
                 ->credit_amount
                 ->multipliedBy($exchange_rate);
             $converted_debit_amount = $summary_calculation
-                ->$debit_amount
+                ->debit_amount
                 ->multipliedBy($exchange_rate);
 
             switch ($account->kind) {
