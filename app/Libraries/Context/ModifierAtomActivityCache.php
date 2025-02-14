@@ -49,7 +49,6 @@ class ModifierAtomActivityCache extends ResourceCache
         $scoped_model = $scoped_model->limitSearchToUser($scoped_model, $current_user);
         $new_resources = $scoped_model
             ->whereIn("modifier_atom_id", array_unique($missing_parent_IDs))
-            ->withDeleted()
             ->findAll();
 
         $this->resources = array_replace(
