@@ -3,6 +3,7 @@
 namespace App\Libraries\Context;
 
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Resource;
 use App\Models\ModifierAtomActivityModel;
 
 class ModifierAtomActivityCache extends ResourceCache
