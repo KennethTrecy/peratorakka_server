@@ -7,9 +7,13 @@ use App\Contracts\OwnedResource;
 use App\Entities\Deprecated\FlowCalculation;
 use App\Entities\Deprecated\SummaryCalculation;
 use App\Exceptions\UnprocessableRequest;
+use App\Libraries\Context;
+use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\CurrencyCache;
+use App\Libraries\Context\CashFlowActivityCache;
+use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\FinancialStatementGroup;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
-use App\Libraries\Context\AccountCache;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
@@ -17,8 +21,12 @@ use App\Models\Deprecated\DeprecatedCurrencyModel;
 use App\Models\Deprecated\DeprecatedFinancialEntryModel;
 use App\Models\Deprecated\DeprecatedFlowCalculationModel;
 use App\Models\Deprecated\DeprecatedSummaryCalculation;
+use App\Models\FrozenAccountModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
+use App\Models\RealAdjustedSummaryCalculationModel;
+use App\Models\RealFlowCalculationModel;
+use App\Models\RealUnadjustedSummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
@@ -66,43 +74,80 @@ class FrozenPeriodController extends BaseOwnedResourceController
             return $enriched_document;
         }
 
-        $summary_calculations = model(SummaryCalculationModel::class)
+        $frozen_accounts = model(FrozenAccountModel::class)
             ->where("frozen_period_id", $initial_document[static::getIndividualName()]->id)
             ->findAll();
-        $enriched_document["summary_calculations"] = $summary_calculations;
+        $enriched_document["frozen_accounts"] = $frozen_accounts;
 
-        $flow_calculations = model(FlowCalculationModel::class)
-            ->where("frozen_period_id", $initial_document[static::getIndividualName()]->id)
+        $frozen_account_hashes = array_map(fn ($account) => $account->hash, $frozen_accounts);
+
+        $real_unadjusted_summaries = model(RealUnadjustedSummaryCalculationModel::class)
+            ->whereIn("frozen_account_hash", $frozen_account_hashes)
             ->findAll();
-        $enriched_document["flow_calculations"] = $flow_calculations;
+        $enriched_document["real_unadjusted_summary_calculations"] = $real_unadjusted_summaries;
 
-        $linked_accounts = SummaryCalculationModel::extractLinkedAccounts($summary_calculations);
-        $accounts = model(AccountModel::class)->selectUsingMultipleIDs($linked_accounts);
-        $enriched_document["accounts"] = $accounts;
+        $real_adjusted_summaries = model(RealAdjustedSummaryCalculationModel::class)
+            ->whereIn("frozen_account_hash", $frozen_account_hashes)
+            ->findAll();
+        $enriched_document["real_adjusted_summary_calculations"] = $real_adjusted_summaries;
 
+        $real_flows = model(RealFlowCalculationModel::class)
+            ->whereIn("frozen_account_hash", $frozen_account_hashes)
+            ->findAll();
+        $enriched_document["real_flow_calculations"] = $real_flows;
+
+        $context = Context::make();
+        $account_cache = AccountCache::make($context);
+        $linked_accounts = FrozenAccountModel::extractLinkedAccounts($frozen_accounts);
+        $account_cache->loadResources($linked_accounts);
+        $accounts = array_map(
+            fn ($account_id) => $account_cache->getLoadedResource($account_id),
+            $linked_accounts
+        );
+        if (in_array("*", $relationships) || in_array("accounts", $relationships)) {
+            $enriched_document["accounts"] = $accounts;
+        }
+
+        $currency_cache = CurrencyCache::make($context);
         $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
-        $currencies = model(CurrencyModel::class)->selectUsingMultipleIDs($linked_currencies);
-        $enriched_document["currencies"] = $currencies;
-
-        $linked_cash_flow_activities = FlowCalculationModel::extractLinkedCashFlowActivities(
-            $flow_calculations
-        );
-        $cash_flow_activities = model(CashFlowActivityModel::class)->selectUsingMultipleIDs(
-            $linked_cash_flow_activities
-        );
-        $enriched_document["cash_flow_activities"] = $cash_flow_activities;
-
-        $raw_exchange_rates = CurrencyModel::makeExchangeRates(
-            $initial_document[static::getIndividualName()]->finished_at,
+        $currency_cache->loadResources($linked_currencies);
+        $currencies = array_map(
+            fn ($currency_id) => $currency_cache->getLoadedResource($currency_id),
             $linked_currencies
         );
+        if (in_array("*", $relationships) || in_array("currencies", $relationships)) {
+            $enriched_document["currencies"] = $currencies;
+        }
+
+        if (in_array("*", $relationships) || in_array("currencies", $relationships)) {
+            $cash_flow_activity_cache = CashFlowActivityCache::make($context);
+            $linked_cash_flow_activities
+                = RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows);
+            $cash_flow_activity_cache->loadResources($linked_cash_flow_activities);
+            $enriched_document["cash_flow_activities"] = array_map(
+                fn ($cash_flow_activity_id) => $cash_flow_activity_cache->getLoadedResource(
+                    $cash_flow_activity_id
+                ),
+                $linked_cash_flow_activities
+            );
+        }
+
+        $raw_exchange_rates = [];
+        $exchange_rate_cache = ExchangeRateCache::make($context);
+        $finished_at = $initial_document[static::getIndividualName()]->finished_at;
+        $exchange_rate_cache->setLastExchangeRateTimeOnce($finished_at);
+        $derivator = $exchange_rate_cache->buildDerivator($finished_at);
+        $raw_exchange_rates = $derivator->exportExchangeRates();
 
         $enriched_document["@meta"] = [
             "statements" => static::makeStatements(
                 $currencies,
                 $accounts,
-                $summary_calculations,
-                $flow_calculations
+                $frozen_accounts,
+                $real_unadjusted_summaries,
+                $real_adjusted_summaries,
+                $real_flows,
+                $derivator
             ),
             "exchange_rates" => $raw_exchange_rates
         ];
@@ -115,40 +160,26 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $main_document = $created_document[static::getIndividualName()];
 
         [
-            $cash_flow_activities,
-            $accounts,
-            $raw_summary_calculations,
-            $raw_flow_calculations
-        ] = static::calculateValidSummaryCalculations($main_document, true);
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows
+        ] = static::calculateValidCalculations($main_document, true);
 
-        $raw_summary_calculations = array_map(
-            function ($raw_summary_calculation) use ($main_document) {
-                return array_merge(
-                    [ "frozen_period_id" => $main_document["id"] ],
-                    $raw_summary_calculation->toArray()
-                );
-            },
-            $raw_summary_calculations
-        );
+        foreach ($frozen_accounts as $frozen_account) {
+            $frozen_account->frozen_period_id = $main_document["id"];
+        }
+        model(FrozenAccountModel::class)->insertBatch($frozen_accounts);
 
-        model(SummaryCalculationModel::class)->insertBatch($raw_summary_calculations);
-
-        $raw_flow_calculations = array_map(
-            function ($raw_flow_calculation) use ($main_document) {
-                return array_merge(
-                    [ "frozen_period_id" => $main_document["id"] ],
-                    $raw_flow_calculation->toArray()
-                );
-            },
-            $raw_flow_calculations
-        );
-
-        model(FlowCalculationModel::class)->insertBatch($raw_flow_calculations);
+        model(RealFlowCalculationModel::class)->insertBatch($real_flows);
+        model(RealAdjustedSummaryCalculationModel::class)->insertBatch($real_adjusted_summaries);
+        model(RealUnadjustedSummaryCalculationModel::class)
+            ->insertBatch($real_unadjusted_summaries);
 
         return $created_document;
     }
 
-    private static function calculateValidSummaryCalculations(
+    private static function calculateValidCalculations(
         array $main_document,
         bool $must_be_strict
     ): array {
@@ -179,7 +210,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                 if (
                     $account_kind === GENERAL_EXPENSE_ACCOUNT_KIND
-                    || $account_kind === GENERAL_INCOME_ACCOUNT_KIND
+                    || $account_kind === GENERAL_REVENUE_ACCOUNT_KIND
                     || $account_kind === GENERAL_TEMPORARY_ACCOUNT_KIND
                     || $account_kind === DIRECT_COST_ACCOUNT_KIND
                     || $account_kind === DIRECT_SALE_ACCOUNT_KIND
@@ -199,6 +230,51 @@ class FrozenPeriodController extends BaseOwnedResourceController
         ];
     }
 
+    private static function generateFullValidCalculations(
+        array $main_document,
+        bool $must_be_strict
+    ): array {
+        [
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows
+        ] = static::calculateValidCalculations($main_document, $must_be_strict);
+
+        $account_cache = AccountCache::make($context);
+        $accounts = array_filter(array_map(
+            fn ($frozen_info) => $account_cache->getLoadedResource($frozen_info->account_id),
+            $frozen_accounts
+        ), fn ($account) => !is_null($account));
+
+        $currency_cache = CurrencyCache::make($context);
+        $currency_IDs = array_map(
+            fn ($account) => $account->currency_id,
+            $accounts
+        );
+        $currency_cache->loadResources(array_unique());
+        $currencies = array_map(fn ($id) => $currency_cache->getLoadedResource($id), $currency_IDs);
+
+        $exchange_rate_cache = ExchangeRateCache::make($context);
+        $exchange_rate_cache->setLastExchangeRateTimeOnce($main_document["finished_at"]);
+        $derivator = $exchange_rate_cache->buildDerivator($main_document["finished_at"]);
+
+        [
+            $precision_formats
+        ] = CurrencyModel::selectAncestorsWithResolvedResources($currencies);
+
+        return [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows,
+            $derivator
+        ];
+    }
+
     public function dry_run_create()
     {
         helper("auth");
@@ -213,24 +289,27 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $model = static::getModel();
                     $info = static::prepareRequestData($request_data);
                     [
-                        $cash_flow_activities,
+                        $precision_formats,
+                        $currencies,
                         $accounts,
-                        $raw_summary_calculations,
-                        $raw_flow_calculations,
-                        $raw_exchange_rates
-                    ] = static::calculateValidSummaryCalculations(
+                        $frozen_accounts,
+                        $real_unadjusted_summaries,
+                        $real_adjusted_summaries,
+                        $real_flows,
+                        $derivator
+                    ] = static::generateFullValidCalculations(
                         $info,
                         false
                     );
 
-                    $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
-                    $currencies = model(CurrencyModel::class)
-                        ->selectUsingMultipleIDs($linked_currencies);
                     $statements = static::makeStatements(
                         $currencies,
                         $accounts,
-                        $raw_summary_calculations,
-                        $raw_flow_calculations
+                        $frozen_accounts,
+                        $real_unadjusted_summaries,
+                        $real_adjusted_summaries,
+                        $real_flows,
+                        $derivator
                     );
 
                     $response_document = [
@@ -270,7 +349,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $raw_summary_calculations,
                         $raw_flow_calculations,
                         $raw_exchange_rates
-                    ] = static::calculateValidSummaryCalculations(
+                    ] = static::generateFullValidCalculations(
                         $info,
                         false
                     );
@@ -347,14 +426,19 @@ class FrozenPeriodController extends BaseOwnedResourceController
     private static function makeStatements(
         array $currencies,
         array $accounts,
-        array $summary_calculations,
-        array $flow_calculations
+        array $frozen_accounts,
+        array $real_unadjusted_summaries,
+        array $real_adjusted_summaries,
+        array $real_flows,
+        ExchangeRateDerivator $derivator
     ): array {
         $financial_statement_group = new FinancialStatementGroup(
             $accounts,
-            $summary_calculations,
-            $flow_calculations,
-            new ExchangeRateDerivator([])
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows,
+            $derivator
         );
 
         $statements = array_reduce(
@@ -368,9 +452,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     return $statements;
                 }
 
-                array_push($statements, $statement_set);
-
-                return $statements;
+                return [
+                    ...$statements,
+                    $statement_set
+                ];
             },
             []
         );
