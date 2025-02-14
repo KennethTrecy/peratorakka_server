@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Entities\RealAdjustedSummaryCalculation;
+use App\Entities\RealUnadjustedSummaryCalculation;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
