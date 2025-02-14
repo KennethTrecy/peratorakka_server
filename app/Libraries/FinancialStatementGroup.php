@@ -38,7 +38,9 @@ class FinancialStatementGroup
         );
         $this->real_adjusted_summaries = Resource::key(
             $real_adjusted_summaries,
-            fn ($summary_calculation) => $summary_calculation->frozen_account_hash
+            fn ($summary_calculation) => $hashed_frozen_accounts[
+                $summary_calculation->frozen_account_hash
+            ]->account_id
         );
         $this->real_flows = Resource::group(
             $real_flows,
