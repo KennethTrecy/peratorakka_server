@@ -28,7 +28,7 @@ class ExchangeRateCache extends SingletonCache
     private array $built_derivators = [];
     private ?Time $last_exchange_rate_time = null;
 
-    public function setLastExchangeRateTimeOnce(Time $time)
+    public function setLastExchangeRateTimeOnce(Time $last_exchange_rate_time)
     {
         if ($this->last_exchange_rate_time === null) {
             $this->last_exchange_rate_time = $last_exchange_rate_time;
