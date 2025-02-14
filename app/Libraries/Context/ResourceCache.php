@@ -3,6 +3,7 @@
 namespace App\Libraries\Context;
 
 use App\Contracts\OwnedResource;
+use App\Entities\BaseResourceEntity;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Resource;
@@ -18,7 +19,7 @@ abstract class ResourceCache extends SingletonCache
         return count($this->resources);
     }
 
-    public function getLoadedResource($account_id): ?OwnedResource
+    public function getLoadedResource($account_id): BaseResourceEntity
     {
         return $this->resources[$account_id] ?? null;
     }
