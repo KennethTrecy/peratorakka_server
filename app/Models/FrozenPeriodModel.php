@@ -141,7 +141,7 @@ class FrozenPeriodModel extends BaseResourceModel
             $real_adjusted_summaries,
             $real_flows
         ] = static::makeResources(
-            $associated_accounts,
+            $associated_account_hashes,
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows
@@ -368,8 +368,8 @@ class FrozenPeriodModel extends BaseResourceModel
     }
 
     private static function generateAccountHashes(
-        array $started_at,
-        array $finished_at,
+        string $started_at,
+        string $finished_at,
         array $associated_accounts
     ): array {
         $started_at = $started_at;
