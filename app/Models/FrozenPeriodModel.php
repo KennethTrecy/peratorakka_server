@@ -254,7 +254,7 @@ class FrozenPeriodModel extends BaseResourceModel
             ),
             [ [], [] ]
         );
-                [ $financial_entries ] = FinancialEntryModel::createTestResources(
+        [ $financial_entries ] = FinancialEntryModel::createTestResources(
             $user->id,
             1,
             [
@@ -561,12 +561,32 @@ class FrozenPeriodModel extends BaseResourceModel
                         $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
                             = $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
                                 ->plus($numerical_value);
+
+                        if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                            $cash_flow_activity_id = $associated_cash_flow_activities[
+                                $modifier_atom_id
+                            ];
+                            $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                                = $keyed_real_raw_flows[$cash_flow_activity_id][$account_id][
+                                    "net_amount"
+                                ]->minus($adjusted_value);
+                        }
                         break;
                     }
                     case REAL_CREDIT_MODIFIER_ATOM_KIND: {
                         $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
                             = $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
                                 ->plus($numerical_value);
+
+                        if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                            $cash_flow_activity_id = $associated_cash_flow_activities[
+                                $modifier_atom_id
+                            ];
+                            $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                                = $keyed_real_raw_flows[$cash_flow_activity_id][$account_id][
+                                    "net_amount"
+                                ]->plus($adjusted_value);
+                        }
                         break;
                     }
                         // TODO: Implement calculation for imaginary values.
@@ -582,13 +602,6 @@ class FrozenPeriodModel extends BaseResourceModel
                     case PRICE_MODIFIER_ATOM_KIND: {
                         break;
                     }
-                }
-
-                if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
-                    $cash_flow_activity_id = $associated_cash_flow_activities[$modifier_atom_id];
-                    $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
-                        = $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
-                            ->plus($adjusted_value);
                 }
             }
         }
