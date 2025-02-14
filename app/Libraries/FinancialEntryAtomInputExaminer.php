@@ -100,11 +100,24 @@ class FinancialEntryAtomInputExaminer
             }
 
             case CLOSE_MODIFIER_ACTION: {
-                return count($this->input) === 0;
+                $is_correct = count($this->input) === 0;
+
+                if ($is_correct) {
+                    $memoizer->write("#$modifier_id", []);
+                }
+
+                return $is_correct;
             }
 
             case EXCHANGE_MODIFIER_ACTION: {
-                return count($this->input) === 2;
+                $is_correct = count($this->input) === 2;
+
+                if ($is_correct) {
+                    $premade_financial_entry_atoms = $this->makeFinancialEntryAtoms($this->input);
+                    $memoizer->write("#$modifier_id", $premade_financial_entry_atoms);
+                }
+
+                return $is_correct;
             }
 
             case BID_MODIFIER_ACTION: {
