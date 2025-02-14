@@ -373,7 +373,7 @@ class FrozenPeriodModel extends BaseResourceModel
         $financial_entry_atoms = [];
         if (count($linked_financial_entries) > 0) {
             $financial_entry_atoms = model(FinancialEntryAtomModel::class)
-                ->whereIn("id", array_unique($linked_financial_entries))
+                ->whereIn("financial_entry_id", array_unique($linked_financial_entries))
                 ->findAll();
         }
 
