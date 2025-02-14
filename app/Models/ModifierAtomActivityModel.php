@@ -59,8 +59,8 @@ class ModifierAtomActivityModel extends BaseResourceModel
             ->where("user_id", $user->id);
 
         return $query_builder
-            ->where("modifier_atom_id", $modifier_atom_subquery)
-            ->where("cash_flow_activity_id", $cash_flow_activity_subquery);
+            ->whereIn("modifier_atom_id", $modifier_atom_subquery)
+            ->whereIn("cash_flow_activity_id", $cash_flow_activity_subquery);
     }
 
     protected static function createAncestorResources(int $user_id, array $options): array
