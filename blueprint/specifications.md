@@ -197,7 +197,7 @@ mechanism is dependent to the developer's preference.
     - Account ID
 29. A formula has the following information:
     - Primary ID
-    - User ID
+    - Precision Format ID
     - Name
     - Description
     - Output Format
@@ -205,17 +205,12 @@ mechanism is dependent to the developer's preference.
       - Raw
       - Percentage
       - Currency
-    - Exchange Rate Basis
-      - Unknown (to represent kinds in later versions in case the user downgraded)
-      - Periodic
-      - Latest
-    - Presentational Precision
     - Expression
 30. A numerical tool has the following information:
     - Primary ID
     - User ID
+    - Currency ID
     - Name
-    - Base Currency
     - Kind
       - Unknown (to represent kinds in later versions in case the user downgraded)
       - Number
@@ -226,6 +221,11 @@ mechanism is dependent to the developer's preference.
       - Periodic
       - Yearly
     - Recency
+    - Recency
+    - Exchange Rate Basis
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Periodic
+      - Latest
     - Order
     - Notes
     - Configuration
