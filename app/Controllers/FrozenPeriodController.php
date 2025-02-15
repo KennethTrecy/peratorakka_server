@@ -163,15 +163,18 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $real_flows
         ] = static::calculateValidCalculations($context, $main_document, true);
 
-        foreach ($frozen_accounts as $frozen_account) {
-            $frozen_account->frozen_period_id = $main_document["id"];
-        }
-        model(FrozenAccountModel::class)->insertBatch($frozen_accounts);
+        if (count($frozen_accounts) > 0) {
+            foreach ($frozen_accounts as $frozen_account) {
+                $frozen_account->frozen_period_id = $main_document["id"];
+            }
+            model(FrozenAccountModel::class)->insertBatch($frozen_accounts);
 
-        model(RealFlowCalculationModel::class)->insertBatch($real_flows);
-        model(RealAdjustedSummaryCalculationModel::class)->insertBatch($real_adjusted_summaries);
-        model(RealUnadjustedSummaryCalculationModel::class)
-            ->insertBatch($real_unadjusted_summaries);
+            model(RealFlowCalculationModel::class)->insertBatch($real_flows);
+            model(RealAdjustedSummaryCalculationModel::class)
+                ->insertBatch($real_adjusted_summaries);
+            model(RealUnadjustedSummaryCalculationModel::class)
+                ->insertBatch($real_unadjusted_summaries);
+        }
 
         return $created_document;
     }
