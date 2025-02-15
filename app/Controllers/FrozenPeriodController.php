@@ -107,7 +107,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
         }
 
         $currency_cache = CurrencyCache::make($context);
-        $linked_currencies = array_unique(AccountModel::extractLinkedCurrencies($accounts));
+        $linked_currencies = array_values(array_unique(
+            AccountModel::extractLinkedCurrencies($accounts)
+        ));
         $currency_cache->loadResources($linked_currencies);
         $currencies = array_map(
             fn ($currency_id) => $currency_cache->getLoadedResource($currency_id),
@@ -261,12 +263,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
         ), fn ($account) => !is_null($account));
 
         $currency_cache = CurrencyCache::make($context);
-        $currency_IDs = array_map(
-            fn ($account) => $account->currency_id,
-            $accounts
+        $linked_currencies = array_values(array_unique(
+            AccountModel::extractLinkedCurrencies($accounts)
+        ));
+        $currency_cache->loadResources($linked_currencies);
+        $currencies = array_map(
+            fn ($id) => $currency_cache->getLoadedResource($id),
+            $linked_currencies
         );
-        $currency_cache->loadResources(array_unique($currency_IDs));
-        $currencies = array_map(fn ($id) => $currency_cache->getLoadedResource($id), $currency_IDs);
 
         $exchange_rate_cache = ExchangeRateCache::make($context);
         $last_known_time = Time::parse($main_document["finished_at"]);
