@@ -9,12 +9,14 @@ use App\Libraries\Context;
 use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\CashFlowActivityCache;
 use App\Libraries\Context\CurrencyCache;
+use App\Libraries\Context\ModifierAtomActivityCache;
 use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\FinancialStatementGroup;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
+use App\Models\CurrencyModel;
 use App\Models\FrozenAccountModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
@@ -319,17 +321,28 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         $derivator
                     );
 
+                    $modifier_atom_activity_cache = ModifierAtomActivityCache::make($context);
+                    $associated_cash_flow_activities = $modifier_atom_activity_cache
+                        ->extractAssociatedCashFlowActivityIDs();
+                    $cash_flow_activity_IDs = array_unique(array_values(
+                        $associated_cash_flow_activities
+                    ));
+                    $cash_flow_activities = model(CashFlowActivityModel::class)
+                        ->whereIn("id", $cash_flow_activity_IDs)
+                        ->findAll();
+
                     $response_document = [
                         "@meta" => [
                             "statements" => $statements,
-                            "exchange_rates" => $raw_exchange_rates
+                            "exchange_rates" => $derivator->exportExchangeRates()
                         ],
                         static::getIndividualName() => $info,
-                        "summary_calculations" => $raw_summary_calculations,
+                        "real_unadjusted_summary_calculations" => $real_unadjusted_summaries,
+                        "real_adjusted_summary_calculations" => $real_adjusted_summaries,
+                        "real_flow_calculations" => $real_flows,
                         "accounts" => $accounts,
                         "currencies" => $currencies,
-                        "cash_flow_activities" => $cash_flow_activities,
-                        "flow_calculations" => $raw_flow_calculations
+                        "cash_flow_activities" => $cash_flow_activities
                     ];
 
                     return $controller->response->setJSON($response_document);
