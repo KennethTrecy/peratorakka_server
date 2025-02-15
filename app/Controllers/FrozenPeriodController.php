@@ -117,7 +117,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $enriched_document["currencies"] = $currencies;
         }
 
-        if (in_array("*", $relationships) || in_array("currencies", $relationships)) {
+        if (in_array("*", $relationships) || in_array("precision_formats", $relationships)) {
+            [
+                $precision_formats
+            ] = CurrencyModel::selectAncestorsWithResolvedResources($currencies);
+
+            $enriched_document["precision_formats"] = $precision_formats;
+        }
+
+        if (in_array("*", $relationships) || in_array("cash_flow_activities", $relationships)) {
             $cash_flow_activity_cache = CashFlowActivityCache::make($context);
             $linked_cash_flow_activities
                 = array_unique(RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows));
@@ -343,7 +351,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         "real_flow_calculations" => $real_flows,
                         "accounts" => $accounts,
                         "currencies" => $currencies,
-                        "cash_flow_activities" => $cash_flow_activities
+                        "cash_flow_activities" => $cash_flow_activities,
+                        "precision_formats" => $precision_formats
                     ];
 
                     return $controller->response->setJSON($response_document);
