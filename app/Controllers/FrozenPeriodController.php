@@ -255,12 +255,13 @@ class FrozenPeriodController extends BaseOwnedResourceController
             fn ($account) => $account->currency_id,
             $accounts
         );
-        $currency_cache->loadResources(array_unique());
+        $currency_cache->loadResources(array_unique($currency_IDs));
         $currencies = array_map(fn ($id) => $currency_cache->getLoadedResource($id), $currency_IDs);
 
         $exchange_rate_cache = ExchangeRateCache::make($context);
-        $exchange_rate_cache->setLastExchangeRateTimeOnce($main_document["finished_at"]);
-        $derivator = $exchange_rate_cache->buildDerivator($main_document["finished_at"]);
+        $last_known_time = Time::parse($main_document["finished_at"]);
+        $exchange_rate_cache->setLastExchangeRateTimeOnce($last_known_time);
+        $derivator = $exchange_rate_cache->buildDerivator($last_known_time);
 
         [
             $precision_formats
