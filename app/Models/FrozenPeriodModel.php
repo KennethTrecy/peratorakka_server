@@ -291,21 +291,22 @@ class FrozenPeriodModel extends BaseResourceModel
         $real_unadjusted_summaries = [];
         $real_flows = [];
         foreach ($time_range_entry_groups as $time_range_entry_group) {
-            if (isset($time_range_entry_group["finished_at"])) {
-                $started_at = $time_range_entry_group["started_at"];
-                $finished_at = $time_range_entry_group["finished_at"];
+            $started_at = $time_range_entry_group["started_at"];
 
-                [
-                    $periodic_frozen_accounts,
-                    $periodic_real_unadjusted_summaries,
-                    $periodic_real_adjusted_summaries,
-                    $periodic_real_flows
-                ] = FrozenPeriodModel::makeRawCalculations(
-                    $user,
-                    Context::make(),
-                    $started_at,
-                    $finished_at
-                );
+            [
+                $periodic_frozen_accounts,
+                $periodic_real_unadjusted_summaries,
+                $periodic_real_adjusted_summaries,
+                $periodic_real_flows
+            ] = FrozenPeriodModel::makeRawCalculations(
+                $user,
+                Context::make(),
+                $started_at,
+                $time_range_entry_group["finished_at"] ?? Time::now()
+            );
+
+            if (isset($time_range_entry_group["finished_at"])) {
+                $finished_at = $time_range_entry_group["finished_at"];
 
                 [ $frozen_period ] = FrozenPeriodModel::createTestResource(
                     $user->id,
@@ -325,17 +326,20 @@ class FrozenPeriodModel extends BaseResourceModel
                     ->insertBatch($periodic_real_adjusted_summaries);
                 model(RealUnadjustedSummaryCalculationModel::class)
                     ->insertBatch($periodic_real_unadjusted_summaries);
-                model(RealFlowCalculationModel::class)->insertBatch($periodic_real_flows);
+                if (count($periodic_real_flows) > 0) {
+                    model(RealFlowCalculationModel::class)->insertBatch($periodic_real_flows);
+                }
                 array_push($frozen_periods, $frozen_period);
-                array_push($frozen_accounts, ...$periodic_frozen_accounts);
-                array_push($real_unadjusted_summaries, ...$periodic_real_unadjusted_summaries);
-                array_push($real_adjusted_summaries, ...$periodic_real_adjusted_summaries);
-                array_push($real_flows, ...$periodic_real_flows);
             } else {
                 array_push($frozen_periods, (new FrozenPeriod())->fill([
                     "started_at" => $time_range_entry_group["started_at"]
                 ]));
             }
+
+            array_push($frozen_accounts, ...$periodic_frozen_accounts);
+            array_push($real_unadjusted_summaries, ...$periodic_real_unadjusted_summaries);
+            array_push($real_adjusted_summaries, ...$periodic_real_adjusted_summaries);
+            array_push($real_flows, ...$periodic_real_flows);
         }
 
         return [
