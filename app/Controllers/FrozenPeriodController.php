@@ -367,11 +367,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $context = Context::make();
 
                     [
-                        $cash_flow_activities,
+                        $precision_formats,
+                        $currencies,
                         $accounts,
-                        $raw_summary_calculations,
-                        $raw_flow_calculations,
-                        $raw_exchange_rates
+                        $frozen_accounts,
+                        $real_unadjusted_summaries,
+                        $real_adjusted_summaries,
+                        $real_flows,
+                        $derivator
                     ] = static::generateFullValidCalculations(
                         $context,
                         $info,
@@ -388,9 +391,11 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
                     $financial_statement_group = new FinancialStatementGroup(
                         $accounts,
-                        $raw_summary_calculations,
-                        $raw_flow_calculations,
-                        new ExchangeRateDerivator([])
+                        $frozen_accounts,
+                        $real_unadjusted_summaries,
+                        $real_adjusted_summaries,
+                        $real_flows,
+                        $derivator
                     );
 
                     $keyed_currencies = Resource::key($currencies, function ($currency) {
