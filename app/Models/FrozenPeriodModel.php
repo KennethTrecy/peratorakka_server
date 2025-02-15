@@ -343,6 +343,7 @@ class FrozenPeriodModel extends BaseResourceModel
         }
 
         return [
+            $precision_formats,
             $cash_flow_activities,
             $currencies,
             $accounts,
