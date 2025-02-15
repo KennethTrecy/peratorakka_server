@@ -187,7 +187,9 @@ class FrozenPeriodModel extends BaseResourceModel
         ] = CurrencyModel::createTestResources($user->id, $currency_count, []);
         [
             $cash_flow_activities
-        ] = CashFlowActivityModel::createTestResources($user->id, $cash_flow_activity_count, []);
+        ] = $cash_flow_activity_count === 0
+            ? [ [] ]
+            : CashFlowActivityModel::createTestResources($user->id, $cash_flow_activity_count, []);
         [
             $modifiers
         ] = ModifierModel::createTestResources($user->id, 1, [
@@ -217,13 +219,15 @@ class FrozenPeriodModel extends BaseResourceModel
             ]
         ]);
 
-        $raw_modifier_atom_activity_infos = array_map(fn ($combination) => [
-            "modifier_atom_id" => $modifier_atoms[$combination[0]]->id,
-            "cash_flow_activity_id" => $cash_flow_activities[$combination[1]]->id
-        ], $dependencies["modifier_atom_activity_combinations"]);
+        if (count($dependencies["modifier_atom_activity_combinations"]) > 0) {
+            $raw_modifier_atom_activity_infos = array_map(fn ($combination) => [
+                "modifier_atom_id" => $modifier_atoms[$combination[0]]->id,
+                "cash_flow_activity_id" => $cash_flow_activities[$combination[1]]->id
+            ], $dependencies["modifier_atom_activity_combinations"]);
 
-        model(ModifierAtomActivityModel::class, false)
-            ->insertBatch($raw_modifier_atom_activity_infos);
+            model(ModifierAtomActivityModel::class, false)
+                ->insertBatch($raw_modifier_atom_activity_infos);
+        }
         $modifier_atom_activities = model(ModifierAtomActivityModel::class, false)->findAll();
 
         [ $raw_financial_entry_infos, $raw_financial_entry_atom_infos ] = array_reduce(
