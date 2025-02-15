@@ -208,7 +208,6 @@ mechanism is dependent to the developer's preference.
     - Expression
 30. A numerical tool has the following information:
     - Primary ID
-    - User ID
     - Currency ID
     - Name
     - Kind

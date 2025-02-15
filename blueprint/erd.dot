@@ -1051,7 +1051,7 @@ digraph {
 						enum(unknown,periodic,latest)<br align="left"/>
 						unsigned int<br align="left"/>
 						nullable text<br align="left"/>
-						nullable text<br align="left"/>
+						text<br align="left"/>
 					</td>
 				</tr>
 			</table>
