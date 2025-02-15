@@ -337,6 +337,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                             "exchange_rates" => $derivator->exportExchangeRates()
                         ],
                         static::getIndividualName() => $info,
+                        "frozen_accounts" => $frozen_accounts,
                         "real_unadjusted_summary_calculations" => $real_unadjusted_summaries,
                         "real_adjusted_summary_calculations" => $real_adjusted_summaries,
                         "real_flow_calculations" => $real_flows,
