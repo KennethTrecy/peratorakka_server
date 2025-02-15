@@ -70,7 +70,7 @@ class CreateNumericalToolV2Table extends Migration
         if ($database->DBDriver !== "SQLite3") {
             $this->forge->addForeignKey(
                 "currency_id",
-                "currencies",
+                "currencies_v2",
                 "id",
                 "CASCADE",
                 "CASCADE",
