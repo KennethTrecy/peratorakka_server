@@ -8,7 +8,7 @@ use Faker\Generator;
 
 class FormulaModel extends BaseResourceModel
 {
-    protected $table = "formulae";
+    protected $table = "formulae_v2";
     protected $returnType = Formula::class;
     protected $allowedFields = [
         "precision_format_id",
