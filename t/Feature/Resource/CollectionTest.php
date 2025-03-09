@@ -15,20 +15,22 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collections = $collection_fabricator->create(10);
+        [
+            $details
+        ] = CollectionModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/collections");
+        $result = $authenticated_info->getRequest()->get("/api/v2/collections");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "collections" => json_decode(json_encode($collections))
+            "collections" => json_decode(json_encode($details))
         ]);
     }
 
@@ -36,17 +38,17 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/collections/$collection->id");
+        $result = $authenticated_info->getRequest()->get(
+            "/api/v2/collections/{$details->id}"
+        );
 
         $result->assertOk();
         $result->assertJSONExact([
-            "collection" => json_decode(json_encode($collection))
+            "collection" => json_decode(json_encode($details))
         ]);
     }
 
@@ -54,19 +56,20 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection = $collection_fabricator->make();
+        [
+            $details
+        ] = CollectionModel::makeTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/collections", [
-                "collection" => $collection->toArray()
+            ->post("/api/v2/collections", [
+                "collection" => $details->toArray()
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "collection" => $collection->toArray()
+            "collection" => $details->toArray()
         ]);
     }
 
@@ -74,24 +77,25 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
-        $new_details = $collection_fabricator->make();
+        [
+            $details,
+            $new_details
+        ] = CollectionModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            []
+        );
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/collections/$collection->id", [
+            ->put("/api/v2/collections/$details->id", [
                 "collection" => $new_details->toArray()
             ]);
 
         $result->assertStatus(204);
         $this->seeInDatabase("collections", array_merge(
-            [ "id" => $collection->id ],
-            $new_details->toArray()
+            [ "id" => $details->id ],
+            $new_details->toRawArray()
         ));
     }
 
@@ -99,22 +103,20 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/collections/$collection->id");
+            ->delete("/api/v2/collections/$details->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("collections", array_merge(
-            [ "id" => $collection->id ]
+            [ "id" => $details->id ]
         ));
         $this->dontSeeInDatabase("collections", [
-            "id" => $collection->id,
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -123,20 +125,18 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
-        model(CollectionModel::class)->delete($collection->id);
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CollectionModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/collections/$collection->id");
+            ->patch("/api/v2/collections/$details->id");
 
         $result->assertStatus(204);
         $this->seeInDatabase("collections", [
-            "id" => $collection->id,
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -145,16 +145,14 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
-        model(CollectionModel::class)->delete($collection->id);
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CollectionModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/collections/$collection->id/force");
+            ->delete("/api/v2/collections/$details->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "collections", []);
@@ -164,11 +162,11 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/collections");
+        $result = $authenticated_info->getRequest()->get("/api/v2/collections");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 0
             ],
             "collections" => []
@@ -179,13 +177,16 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collections = $collection_fabricator->create(10);
+        [
+            $details
+        ] = CollectionModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/collections", [
+        $result = $authenticated_info->getRequest()->get("/api/v2/collections", [
+            "sort" => [ [ "id", "ASC" ] ],
             "page" => [
                 "limit" => 5
             ]
@@ -193,10 +194,10 @@ class CollectionTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "collections" => json_decode(json_encode(array_slice($collections, 0, 5)))
+            "collections" => json_decode(json_encode(array_slice($details, 0, 5)))
         ]);
     }
 
@@ -204,35 +205,35 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
-        $collection->id = $collection->id + 1;
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        $details->id = $details->id + 1;
 
         $this->expectException(MissingResource::class);
         $this->expectExceptionCode(404);
-        $result = $authenticated_info->getRequest()->get("/api/v1/collections/$collection->id");
+        $result = $authenticated_info->getRequest()->get("/api/v2/collections/$details->id");
     }
 
     public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "name" => "@only alphanumeric characters only"
+        [
+            $details
+        ] = CollectionModel::makeTestResource($authenticated_info->getUser()->id, [
+            "overrides" => [
+                "name" => "@only alphanumeric characters only"
+            ]
         ]);
-        $collection = $collection_fabricator->make();
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/collections", [
-                "collection" => $collection->toArray()
+            ->post("/api/v2/collections", [
+                "collections" => $details->toArray()
             ]);
     }
 
@@ -240,23 +241,25 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
-        $collection_fabricator->setOverrides([
-            "name" => "@only alphanumeric characters only"
-        ]);
-        $new_details = $collection_fabricator->make();
+        [
+            $details,
+            $new_details
+        ] = CollectionModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            [
+                "make_overrides" => [
+                    "name" => "@only alphanumeric characters only"
+                ]
+            ]
+        );
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/collections/$collection->id", [
-                "collection" => $new_details->toArray()
+            ->put("/api/v2/collections/$details->id", [
+                "collections" => $new_details->toArray()
             ]);
     }
 
@@ -265,25 +268,23 @@ class CollectionTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $collection = $collection_fabricator->create();
+        [
+            $details
+        ] = CollectionModel::createTestResource($another_user->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/collections/$collection->id");
+                ->delete("/api/v2/collections/$details->id");
             $this->assertTrue(false);
         } catch (MissingResource $error) {
             $this->seeInDatabase("collections", array_merge(
-                [ "id" => $collection->id ]
+                [ "id" => $details->id ]
             ));
             $this->seeInDatabase("collections", [
-                "id" => $collection->id,
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -295,27 +296,24 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     public function testDoubleDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $collection = $collection_fabricator->create();
-        model(CollectionModel::class)->delete($collection->id);
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CollectionModel::class)->delete($details->id);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/collections/$collection->id");
+                ->delete("/api/v2/collections/$details->id");
         } catch (MissingResource $error) {
             $this->seeInDatabase("collections", array_merge(
-                [ "id" => $collection->id ]
+                [ "id" => $details->id ]
             ));
             $this->dontSeeInDatabase("collections", [
-                "id" => $collection->id,
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -327,23 +325,20 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     public function testDoubleRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $collection = $collection_fabricator->create();
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->patch("/api/v1/collections/$collection->id");
+                ->patch("/api/v2/collections/$details->id");
         } catch (MissingResource $error) {
             $this->seeInDatabase("collections", [
-                "id" => $collection->id,
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -356,15 +351,13 @@ class CollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/collections/$collection->id/force");
+            ->delete("/api/v2/collections/$details->id/force");
 
         $result->assertStatus(204);
         $this->seeNumRecords(0, "collections", []);
@@ -375,19 +368,17 @@ class CollectionTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $collection = $collection_fabricator->create();
-        model(CollectionModel::class)->delete($collection->id, true);
+        [
+            $details
+        ] = CollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(CollectionModel::class)->delete($details->id, true);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/collections/$collection->id/force");
+                ->delete("/api/v2/collections/$details->id/force");
         } catch (MissingResource $error) {
             $this->seeNumRecords(0, "collections", []);
             throw $error;
