@@ -4,8 +4,6 @@
 return [
     'must_be_same_for_modifier' => 'The "{field}" modifier only allows same values in debit side'
         .' and credit side.',
-    'must_be_same_for_financial_entry' => 'The "{field}" modifier only allows same values in'
-        .' debit side and credit side.',
     'must_be_same_as_password_of_current_user' => 'The "{field}" must be same to the current'
         .' password of the current user.',
 

@@ -3,7 +3,6 @@
 namespace App\Validation;
 
 use App\Models\AccountModel;
-use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
 use InvalidArgumentException;
 
@@ -37,38 +36,6 @@ class SimilarityRules
         }
 
         $modifier_id = dot_array_search($parameters[0], $data);
-
-        return $this->mayAllowForDualCurrency($modifier_id);
-    }
-
-    public function must_be_same_for_financial_entry(
-        $debit_value,
-        string $parameters,
-        array $data,
-        ?string &$error = null
-    ): bool {
-        helper("array");
-
-        $parameters = explode(",", $parameters);
-
-        if (
-            count($parameters) < 2
-            || is_null(dot_array_search($parameters[1], $data))
-        ) {
-            throw new InvalidArgumentException(
-                '"must_be_same_for_financial_entry" needs a key to financial entry ID and key to'
-                .' credit value to check the required similarity for field.'
-            );
-        }
-
-        $credit_value = dot_array_search($parameters[1], $data);
-        if ($credit_value === $debit_value) {
-            return true;
-        }
-
-        $financial_entry_id = intval($parameters[0]);
-        $financial_entry = model(FinancialEntryModel::class)->find($financial_entry_id);
-        $modifier_id = $financial_entry->modifier_id;
 
         return $this->mayAllowForDualCurrency($modifier_id);
     }
