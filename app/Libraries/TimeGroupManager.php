@@ -6,15 +6,15 @@ use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
 use App\Entities\FrozenPeriod;
 use App\Libraries\Context;
+use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\CollectionCache;
 use App\Libraries\Context\ContextKeys;
-use App\Libraries\Context\TimeGroupManager\AccountCache;
-use App\Libraries\Context\TimeGroupManager\CollectionCache;
-use App\Libraries\Context\TimeGroupManager\CurrencyCache;
-use App\Libraries\Context\TimeGroupManager\ExchangeRateCache;
+use App\Libraries\Context\CurrencyCache;
+use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
-use App\Models\FlowCalculationModel;
+use App\Models\Deprecated\DeprecatedFlowCalculationModel;
+use App\Models\Deprecated\DeprecatedSummaryCalculation;
 use App\Models\FrozenPeriodModel;
-use App\Models\SummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 
 class TimeGroupManager

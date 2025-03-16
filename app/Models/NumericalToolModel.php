@@ -4,12 +4,12 @@ namespace App\Models;
 
 use App\Entities\NumericalTool;
 use App\Libraries\Context;
-use App\Libraries\Context\TimeGroupManager;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\Resource;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
+use App\Libraries\TimeGroupManager;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
