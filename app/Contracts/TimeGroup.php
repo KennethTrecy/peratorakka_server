@@ -2,8 +2,9 @@
 
 namespace App\Contracts;
 
-use App\Entities\FlowCalculation;
-use App\Entities\SummaryCalculation;
+use App\Entities\RealFlowCalculation;
+use App\Entities\RealUnadjustedSummaryCalculation;
+use App\Entities\RealAdjustedSummaryCalculation;
 use App\Libraries\Context;
 use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
@@ -54,18 +55,30 @@ interface TimeGroup
     /**
      * Returns true if summary calculation belongs to the group.
      *
-     * @param SummaryCalculation $summary_calculation
+     * @param RealUnadjustedSummaryCalculation $summary_calculation
      * @return bool
      */
-    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool;
+    public function doesOwnRealUnadjustedSummaryCalculation(
+        RealUnadjustedSummaryCalculation $summary_calculation
+    ): bool;
+
+    /**
+     * Returns true if summary calculation belongs to the group.
+     *
+     * @param RealAdjustedSummaryCalculation $summary_calculation
+     * @return bool
+     */
+    public function doesOwnRealAdjustedSummaryCalculation(
+        RealAdjustedSummaryCalculation $summary_calculation
+    ): bool;
 
     /**
      * Returns true if flow calculation belongs to the group.
      *
-     * @param FlowCalculation $flow_calculation
+     * @param RealFlowCalculation $flow_calculation
      * @return bool
      */
-    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool;
+    public function doesOwnRealFlowCalculation(RealFlowCalculation $flow_calculation): bool;
 
     /**
      * Adds summary calculation only if it belongs to the time group.
@@ -74,10 +87,26 @@ interface TimeGroup
      *
      * Returns true if it belongs to the group.
      *
-     * @param SummaryCalculation $summary_calculation
+     * @param RealUnadjustedSummaryCalculation $summary_calculation
      * @return bool
      */
-    public function addSummaryCalculation(SummaryCalculation $summary_calculation): bool;
+    public function addRealUnadjustedSummaryCalculation(
+        RealUnadjustedSummaryCalculation $summary_calculation
+    ): bool;
+
+    /**
+     * Adds summary calculation only if it belongs to the time group.
+     *
+     * Assumes all calculations added are in the same currency.
+     *
+     * Returns true if it belongs to the group.
+     *
+     * @param RealAdjustedSummaryCalculation $summary_calculation
+     * @return bool
+     */
+    public function addRealAdjustedSummaryCalculation(
+        RealAdjustedSummaryCalculation $summary_calculation
+    ): bool;
 
     /**
      * Adds flow calculation only if it belongs to the time group.
@@ -86,17 +115,17 @@ interface TimeGroup
      *
      * Returns true if it belongs to the group.
      *
-     * @param FlowCalculation $flow_calculation
+     * @param RealFlowCalculation $flow_calculation
      * @return bool
      */
-    public function addFlowCalculation(FlowCalculation $flow_calculation): bool;
+    public function addRealFlowCalculation(RealFlowCalculation $flow_calculation): bool;
 
     /**
      * @param Context $context
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalOpenedDebitAmount(
+    public function totalRealOpenedDebitAmount(
         Context $context,
         array $selected_account_IDs
     ): array;
@@ -106,7 +135,7 @@ interface TimeGroup
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalOpenedCreditAmount(
+    public function totalRealOpenedCreditAmount(
         Context $context,
         array $selected_account_IDs
     ): array;
@@ -116,7 +145,7 @@ interface TimeGroup
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalUnadjustedDebitAmount(
+    public function totalRealUnadjustedDebitAmount(
         Context $context,
         array $selected_account_IDs
     ): array;
@@ -126,7 +155,7 @@ interface TimeGroup
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalUnadjustedCreditAmount(
+    public function totalRealUnadjustedCreditAmount(
         Context $context,
         array $selected_account_IDs
     ): array;
@@ -136,7 +165,7 @@ interface TimeGroup
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalClosedDebitAmount(
+    public function totalRealClosedDebitAmount(
         Context $context,
         array $selected_account_IDs
     ): array;
@@ -146,7 +175,7 @@ interface TimeGroup
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalClosedCreditAmount(
+    public function totalRealClosedCreditAmount(
         Context $context,
         array $selected_account_IDs
     ): array;
@@ -157,7 +186,7 @@ interface TimeGroup
      * @param int[] $selected_account_IDs
      * @return BigRational[]
      */
-    public function totalNetCashFlowAmount(
+    public function totalRealNetCashFlowAmount(
         Context $context,
         array $cash_flow_activity_IDs,
         array $selected_account_IDs
