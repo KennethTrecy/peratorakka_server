@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libraries\Context;
+namespace App\Libraries;
 
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
