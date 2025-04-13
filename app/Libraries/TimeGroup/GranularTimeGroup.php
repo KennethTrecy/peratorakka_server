@@ -50,7 +50,7 @@ abstract class GranularTimeGroup implements TimeGroup
     public function totalRealOpenedAmount(Context $context, array $selected_hashes): array {
         return [
             array_reduce(
-                $this->selectRealAdjustedSummaryCalculations($selected_hashes),
+                $this->selectRealAdjustedSummaryCalculations($context, $selected_hashes),
                 function ($total, $summary_calculation) {
                     return $total->plus($summary_calculation->opened_amount);
                 },
@@ -59,10 +59,10 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealCloseedAmount(Context $context, array $selected_hashes): array {
+    public function totalRealClosedAmount(Context $context, array $selected_hashes): array {
         return [
             array_reduce(
-                $this->selectRealAdjustedSummaryCalculations($selected_hashes),
+                $this->selectRealAdjustedSummaryCalculations($context, $selected_hashes),
                 function ($total, $summary_calculation) {
                     return $total->plus($summary_calculation->closed_amount);
                 },
@@ -138,10 +138,10 @@ abstract class GranularTimeGroup implements TimeGroup
     private function selectSummaryCalculations(array $source, array $selected_hashes): array
     {
         $raw_summary_calculations = array_map(
-            function ($account_hash) use ($source) {
+            function ($frozen_account_hash) use ($source) {
                 // If summary calculation is not found because it does not exist yet during this
                 // period, return null.
-                return $source[$account_hash] ?? null;
+                return $source[$frozen_account_hash] ?? null;
             },
             $selected_hashes
         );
@@ -165,10 +165,10 @@ abstract class GranularTimeGroup implements TimeGroup
                 $raw_real_flow_calculations = [
                     ...$raw_real_flow_calculations,
                     ...array_map(
-                        function ($account_id) use ($real_flow_calculations) {
+                        function ($frozen_account_hash) use ($real_flow_calculations) {
                             // If flow calculation is not found because it does not exist yet during this
                             // period, return null.
-                            return $real_flow_calculations[$account_id] ?? null;
+                            return $real_flow_calculations[$frozen_account_hash] ?? null;
                         },
                         $selected_hashes
                     )
