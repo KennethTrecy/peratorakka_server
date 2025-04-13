@@ -220,13 +220,43 @@ class TimeGroupManager
      */
     public function totalRealClosedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
+        $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
+        $account_cache = $this->account_cache;
+
+        $debit_hashes = [];
+        $credit_hashes = [];
+        $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+        $frozen_account_hash_group = Resource::group(
+            $frozen_account_hashes,
+            fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
+        );
+
+        foreach ($selected_account_IDs as $account_id) {
+            $frozen_account_hashes = array_map(
+                fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
+                $frozen_account_hash_group[$account_id]
+            );
+            $account_kind = $account_cache->determineAccountKind($account_id);
+
+            if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
+                $debit_hashes = array_merge($debit_hashes, $frozen_account_hashes);
+            } else {
+                $credit_hashes = array_merge($credit_hashes, $frozen_account_hashes);
+            }
+        }
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalClosedDebitAmount($context, $selected_account_IDs);
+            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealClosedAmount($context, $debit_hashes);
+                $credit_amounts = $time_group->totalRealClosedAmount($context, $credit_hashes);
+
+                return array_map(
+                    fn ($debit_amount, $credit_amount) => $debit_amount->minus($credit_amount),
+                    $debit_amounts,
+                    $credit_amounts
+                );
             },
             $this->time_groups
         );
@@ -240,13 +270,43 @@ class TimeGroupManager
      */
     public function totalRealClosedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
+        $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
+        $account_cache = $this->account_cache;
+
+        $debit_hashes = [];
+        $credit_hashes = [];
+        $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+        $frozen_account_hash_group = Resource::group(
+            $frozen_account_hashes,
+            fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
+        );
+
+        foreach ($selected_account_IDs as $account_id) {
+            $frozen_account_hashes = array_map(
+                fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
+                $frozen_account_hash_group[$account_id]
+            );
+            $account_kind = $account_cache->determineAccountKind($account_id);
+
+            if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
+                $debit_hashes = array_merge($debit_hashes, $frozen_account_hashes);
+            } else {
+                $credit_hashes = array_merge($credit_hashes, $frozen_account_hashes);
+            }
+        }
 
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalClosedCreditAmount($context, $selected_account_IDs);
+            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealClosedAmount($context, $debit_hashes);
+                $credit_amounts = $time_group->totalRealClosedAmount($context, $credit_hashes);
+
+                return array_map(
+                    fn ($debit_amount, $credit_amount) => $credit_amount->minus($debit_amount),
+                    $debit_amounts,
+                    $credit_amounts
+                );
             },
             $this->time_groups
         );
