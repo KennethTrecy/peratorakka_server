@@ -706,7 +706,8 @@ class TimeGroupManager
         if (count($missing_account_IDs) > 0) {
             $frozen_account_hashes = model(FrozenAccountModel::class)
                 ->whereIn("frozen_period_id", $this->frozenPeriodIDs())
-                ->whereIn("account_id", array_unique($missing_account_IDs));
+                ->whereIn("account_id", array_unique($missing_account_IDs))
+                ->findAll();
 
             $frozen_account_hashes = Resource::key(
                 $frozen_account_hashes,
@@ -715,7 +716,7 @@ class TimeGroupManager
 
             $this->loaded_frozen_account_hashes = array_merge(
                 $this->loaded_frozen_account_hashes,
-                $frozen_account_hash
+                $frozen_account_hashes
             );
         }
 
