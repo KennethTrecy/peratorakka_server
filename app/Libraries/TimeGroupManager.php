@@ -263,7 +263,7 @@ class TimeGroupManager
         if (count($missing_account_IDs) > 0) {
             $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
 
-            $frozen_account_hashes = $this->frozenAccountHashes();
+            $frozen_account_hashes = $this->frozenAccountHashes($missing_account_IDs);
             $summary_calculations = model(RealUnadjustedSummaryCalculationModel::class)
                 ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
                 ->findAll();
@@ -317,6 +317,79 @@ class TimeGroupManager
 
                         $time_group->addRealUnadjustedSummaryCalculation($summary_calculation);
                         $this->loaded_real_unadjusted_summary_calculations[$frozen_account_hash]
+                            = $account_id;
+                    }
+                }
+            }
+        }
+
+        // $this->loadPossibleLatestForUnfrozenGroup();
+    }
+
+    private function loadRealAdjustedSummaryCalculations(array $selected_account_IDs): void
+    {
+        $missing_account_IDs = array_diff(
+            $selected_account_IDs,
+            array_values($this->loaded_real_adjusted_summary_calculations)
+        );
+
+        if (count($missing_account_IDs) > 0) {
+            $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
+
+            $frozen_account_hashes = $this->frozenAccountHashes($missing_account_IDs);
+            $summary_calculations = model(RealAdjustedSummaryCalculationModel::class)
+                ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
+                ->findAll();
+
+            $exchange_rate_basis = $this->context->getVariable(
+                ContextKeys::EXCHANGE_RATE_BASIS,
+                PERIODIC_EXCHANGE_RATE_BASIS
+            );
+            $destination_currency_id = $this->context->getVariable(
+                ContextKeys::DESTINATION_CURRENCY_ID
+            );
+
+            // TODO: Move this condition to caller of this method
+            // if (!is_null($destination_currency_id)) {
+            //     $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
+            //         $destination_currency_id
+            //     ]);
+            // }
+
+            foreach ($this->time_groups as $time_group) {
+                $derivator = $this->exchange_rate_cache->buildDerivator(
+                    $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
+                        ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                        : $time_group->finishedAt()
+                );
+
+                foreach ($summary_calculations as $summary_calculation) {
+                    $frozen_account_hash = $summary_calculation->frozen_account_hash;
+                    $frozen_account_hash_info = $frozen_account_hashes[$frozen_account_hash];
+                    $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
+
+                    $is_owned = $time_group->doesRepresentFrozenPeriod($frozen_period_id);
+                    if ($is_owned) {
+                        $account_id = $frozen_account_hash_info->account_id;
+                        $source_currency_id = $this->account_cache->determineCurrencyID(
+                            $account_id
+                        );
+                        $derived_exchange_rate = $derivator->deriveExchangeRate(
+                            $source_currency_id,
+                            $destination_currency_id ?? $source_currency_id
+                        );
+
+                        $summary_calculation->opened_amount
+                            = $summary_calculation->opened_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+                        $summary_calculation->closed_amount
+                            = $summary_calculation->closed_amount
+                                ->multipliedBy($derived_exchange_rate)
+                                ->simplified();
+
+                        $time_group->addRealAdjustedSummaryCalculation($summary_calculation);
+                        $this->loaded_real_adjusted_summary_calculations[$frozen_account_hash]
                             = $account_id;
                     }
                 }
