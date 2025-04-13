@@ -184,10 +184,14 @@ class TimeGroupManager
 
         $context = $this->context;
 
+        $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+        $frozen_account_hashes = array_keys($frozen_account_hashes);
+
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs);
-            },
+            fn ($time_group) => $time_group->totalRealUnadjustedDebitAmount(
+                $context,
+                $frozen_account_hashes
+            ),
             $this->time_groups
         );
     }
@@ -204,10 +208,14 @@ class TimeGroupManager
 
         $context = $this->context;
 
+        $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+        $frozen_account_hashes = array_keys($frozen_account_hashes);
+
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs);
-            },
+            fn ($time_group) => $time_group->totalRealUnadjustedCreditAmount(
+                $context,
+                $frozen_account_hashes
+            ),
             $this->time_groups
         );
     }
@@ -404,7 +412,7 @@ class TimeGroupManager
             // }
 
             foreach ($this->time_groups as $time_group) {
-                $frozen_period_IDs = $this->frozenPeriodIDs();
+                $frozen_period_IDs = $time_group->frozenPeriodIDs();
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $derivator = $this->exchange_rate_cache->buildDerivator(
