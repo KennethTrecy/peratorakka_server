@@ -332,16 +332,19 @@ class TimeGroupManager
         array $cash_flow_activity_IDs,
         array $selected_account_IDs
     ): array {
-        $this->loadFlowCalculations($selected_account_IDs);
+        $this->loadRealFlowCalculations($selected_account_IDs);
 
         $context = $this->context;
 
+        $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+        $frozen_account_hashes = array_keys($frozen_account_hashes);
+
         return array_map(
-            function ($time_group) use ($context, $cash_flow_activity_IDs, $selected_account_IDs) {
-                return $time_group->totalNetCashFlowAmount(
+            function ($time_group) use ($context, $cash_flow_activity_IDs, $frozen_account_hashes) {
+                return $time_group->totalRealNetCashFlowAmount(
                     $context,
                     $cash_flow_activity_IDs,
-                    $selected_account_IDs
+                    $frozen_account_hashes
                 );
             },
             $this->time_groups
@@ -533,18 +536,19 @@ class TimeGroupManager
         // $this->loadPossibleLatestForUnfrozenGroup();
     }
 
-    private function loadFlowCalculations(array $selected_account_IDs): void
+    private function loadRealFlowCalculations(array $selected_account_IDs): void
     {
         $missing_account_IDs = array_diff(
             $selected_account_IDs,
-            $this->loaded_real_flow_calculations_by_account_id
+            $this->loaded_real_flow_calculations
         );
 
         if (count($missing_account_IDs) > 0) {
             $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
 
-            $flow_calculations = model(FlowCalculationModel::class)
-                ->whereIn("account_id", array_unique($missing_account_IDs))
+            $frozen_account_hashes = $this->frozenAccountHashes($missing_account_IDs);
+            $flow_calculations = model(RealFlowCalculationModel::class)
+                ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
                 ->findAll();
 
             $exchange_rate_basis = $this->context->getVariable(
@@ -552,15 +556,13 @@ class TimeGroupManager
                 PERIODIC_EXCHANGE_RATE_BASIS
             );
             $destination_currency_id = $this->context->getVariable(
-                ContextKeys::DESTINATION_CURRENCY_ID,
-                null
+                ContextKeys::DESTINATION_CURRENCY_ID
             );
-            if (!is_null($destination_currency_id)) {
-                $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-                    $destination_currency_id
-                ]);
-            }
+
             foreach ($this->time_groups as $time_group) {
+                $frozen_period_IDs = $time_group->frozenPeriodIDs();
+                if (count($frozen_period_IDs) === 0) continue;
+
                 $derivator = $this->exchange_rate_cache->buildDerivator(
                     $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
@@ -568,9 +570,13 @@ class TimeGroupManager
                 );
 
                 foreach ($flow_calculations as $flow_calculation) {
-                    $is_owned = $time_group->doesOwnFlowCalculation($flow_calculation);
+                    $frozen_account_hash = $flow_calculation->frozen_account_hash;
+                    $frozen_account_hash_info = $frozen_account_hashes[$frozen_account_hash];
+                    $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
+
+                    $is_owned = in_array($frozen_period_id, $frozen_period_IDs);
                     if ($is_owned) {
-                        $account_id = $flow_calculation->account_id;
+                        $account_id = $frozen_account_hash_info->account_id;
                         $source_currency_id = $this->account_cache->determineCurrencyID(
                             $account_id
                         );
@@ -578,19 +584,20 @@ class TimeGroupManager
                             $source_currency_id,
                             $destination_currency_id ?? $source_currency_id
                         );
+
                         $flow_calculation->net_amount
                             = $flow_calculation->net_amount
                                 ->multipliedBy($derived_exchange_rate)
                                 ->simplified();
 
-                        $time_group->addFlowCalculation($flow_calculation);
-                        $this->loaded_real_flow_calculations_by_account_id[] = $account_id;
+                        $time_group->addRealFlowCalculation($flow_calculation);
+                        $this->loaded_real_flow_calculations[] = $account_id;
                     }
                 }
             }
         }
 
-        $this->loadPossibleLatestForUnfrozenGroup();
+        // $this->loadPossibleLatestForUnfrozenGroup();
     }
 
     private function identifyDates(): array
