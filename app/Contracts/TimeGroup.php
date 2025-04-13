@@ -18,6 +18,13 @@ use CodeIgniter\I18n\Time;
 interface TimeGroup
 {
     /**
+     * Returns the IDs of frozen periods contained by the group.
+     *
+     * @return int[]
+     */
+    public function frozenPeriodIDs(): array;
+
+    /**
      * Returns the start date of the time group.
      *
      * @return Time
@@ -53,142 +60,84 @@ interface TimeGroup
     public function hasSomeUnfrozenDetails(): bool;
 
     /**
-     * Returns true if summary calculation belongs to the group.
+     * Returns true if the ID of frozen period belongs to the group.
+     *
+     * @param int $frozen_period_id
+     * @return bool
+     */
+    public function doesRepresentFrozenPeriod(int $frozen_period_id): bool;
+
+    /**
+     * Adds unadjusted summary calculation keyed its frozen account hash.
+     *
+     * Assumes all calculations added are in the same currency and belongs to the time group.
      *
      * @param RealUnadjustedSummaryCalculation $summary_calculation
-     * @return bool
-     */
-    public function doesOwnRealUnadjustedSummaryCalculation(
-        RealUnadjustedSummaryCalculation $summary_calculation
-    ): bool;
-
-    /**
-     * Returns true if summary calculation belongs to the group.
-     *
-     * @param RealAdjustedSummaryCalculation $summary_calculation
-     * @return bool
-     */
-    public function doesOwnRealAdjustedSummaryCalculation(
-        RealAdjustedSummaryCalculation $summary_calculation
-    ): bool;
-
-    /**
-     * Returns true if flow calculation belongs to the group.
-     *
-     * @param RealFlowCalculation $flow_calculation
-     * @return bool
-     */
-    public function doesOwnRealFlowCalculation(RealFlowCalculation $flow_calculation): bool;
-
-    /**
-     * Adds summary calculation only if it belongs to the time group.
-     *
-     * Assumes all calculations added are in the same currency.
-     *
-     * Returns true if it belongs to the group.
-     *
-     * @param RealUnadjustedSummaryCalculation $summary_calculation
-     * @return bool
      */
     public function addRealUnadjustedSummaryCalculation(
         RealUnadjustedSummaryCalculation $summary_calculation
-    ): bool;
+    ): void;
 
     /**
-     * Adds summary calculation only if it belongs to the time group.
+     * Adds adjusted summary calculation keyed its frozen account hash.
      *
-     * Assumes all calculations added are in the same currency.
-     *
-     * Returns true if it belongs to the group.
+     * Assumes all calculations added are in the same currency and belongs to the time group.
      *
      * @param RealAdjustedSummaryCalculation $summary_calculation
-     * @return bool
      */
     public function addRealAdjustedSummaryCalculation(
         RealAdjustedSummaryCalculation $summary_calculation
-    ): bool;
+    ): void;
 
     /**
-     * Adds flow calculation only if it belongs to the time group.
+     * Adds flow calculation keyed its frozen account hash.
      *
-     * Assumes all calculations added are in the same currency.
-     *
-     * Returns true if it belongs to the group.
+     * Assumes all calculations added are in the same currency and belongs to the time group.
      *
      * @param RealFlowCalculation $flow_calculation
-     * @return bool
      */
-    public function addRealFlowCalculation(RealFlowCalculation $flow_calculation): bool;
+    public function addRealFlowCalculation(RealFlowCalculation $flow_calculation): void;
 
     /**
      * @param Context $context
-     * @param int[] $selected_account_IDs
+     * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealOpenedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array;
+    public function totalRealOpenedAmount(Context $context, array $selected_hashes): array;
 
     /**
      * @param Context $context
-     * @param int[] $selected_account_IDs
+     * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealOpenedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array;
+    public function totalRealClosedAmount(Context $context, array $selected_hashes): array;
 
     /**
      * @param Context $context
-     * @param int[] $selected_account_IDs
+     * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealUnadjustedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array;
+    public function totalRealUnadjustedDebitAmount(Context $context, array $selected_hashes): array;
 
     /**
      * @param Context $context
-     * @param int[] $selected_account_IDs
+     * @param int[] $selected_hashes
      * @return BigRational[]
      */
     public function totalRealUnadjustedCreditAmount(
         Context $context,
-        array $selected_account_IDs
-    ): array;
-
-    /**
-     * @param Context $context
-     * @param int[] $selected_account_IDs
-     * @return BigRational[]
-     */
-    public function totalRealClosedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array;
-
-    /**
-     * @param Context $context
-     * @param int[] $selected_account_IDs
-     * @return BigRational[]
-     */
-    public function totalRealClosedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array;
 
     /**
      * @param Context $context
      * @param int[] $cash_flow_activity_IDs
-     * @param int[] $selected_account_IDs
+     * @param int[] $selected_hashes
      * @return BigRational[]
      */
     public function totalRealNetCashFlowAmount(
         Context $context,
         array $cash_flow_activity_IDs,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array;
 }
