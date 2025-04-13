@@ -80,8 +80,9 @@ class TimeGroupManager
      */
     public function totalRealOpenedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
+        $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
+        $context = $this->context;
         $account_cache = $this->account_cache;
 
         $debit_hashes = [];
@@ -107,14 +108,14 @@ class TimeGroupManager
         }
 
         return array_map(
-            function ($time_group) use ($debit_hashes, $credit_hashes) {
-                $debit_amounts = $time_group->totalRealOpenedAmount($debit_hashes);
-                $credit_amounts = $time_group->totalRealOpenedAmount($credit_hashes);
+            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealOpenedAmount($context, $debit_hashes);
+                $credit_amounts = $time_group->totalRealOpenedAmount($context, $credit_hashes);
 
                 return array_map(
                     fn ($debit_amount, $credit_amount) => $debit_amount->minus($credit_amount),
-                    $debit_amount,
-                    $credit_amount
+                    $debit_amounts,
+                    $credit_amounts
                 );
             },
             $this->time_groups
@@ -129,8 +130,9 @@ class TimeGroupManager
      */
     public function totalRealOpenedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
+        $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
+        $context = $this->context;
         $account_cache = $this->account_cache;
 
         $debit_hashes = [];
@@ -156,14 +158,14 @@ class TimeGroupManager
         }
 
         return array_map(
-            function ($time_group) use ($debit_hashes, $credit_hashes) {
-                $debit_amounts = $time_group->totalRealOpenedAmount($debit_hashes);
-                $credit_amounts = $time_group->totalRealOpenedAmount($credit_hashes);
+            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealOpenedAmount($context, $debit_hashes);
+                $credit_amounts = $time_group->totalRealOpenedAmount($context, $credit_hashes);
 
                 return array_map(
                     fn ($debit_amount, $credit_amount) => $credit_amount->minus($debit_amount),
-                    $debit_amount,
-                    $credit_amount
+                    $debit_amounts,
+                    $credit_amounts
                 );
             },
             $this->time_groups
@@ -176,9 +178,9 @@ class TimeGroupManager
      * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalUnadjustedDebitAmount(array $selected_account_IDs): array
+    public function totalRealUnadjustedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_IDs);
+        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
@@ -196,9 +198,9 @@ class TimeGroupManager
      * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalUnadjustedCreditAmount(array $selected_account_IDs): array
+    public function totalRealUnadjustedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_IDs);
+        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
@@ -216,9 +218,9 @@ class TimeGroupManager
      * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalClosedDebitAmount(array $selected_account_IDs): array
+    public function totalRealClosedDebitAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_IDs);
+        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
@@ -236,9 +238,9 @@ class TimeGroupManager
      * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalClosedCreditAmount(array $selected_account_IDs): array
+    public function totalRealClosedCreditAmount(array $selected_account_IDs): array
     {
-        $this->loadSummaryCalculations($selected_account_IDs);
+        $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $context = $this->context;
 
@@ -258,7 +260,7 @@ class TimeGroupManager
      * @param int[] $selected_account_IDs
      * @return BigRational[][]
      */
-    public function totalNetCashFlowAmount(
+    public function totalRealNetCashFlowAmount(
         array $cash_flow_activity_IDs,
         array $selected_account_IDs
     ): array {
@@ -418,7 +420,7 @@ class TimeGroupManager
             // }
 
             foreach ($this->time_groups as $time_group) {
-                $frozen_period_IDs = $this->frozenPeriodIDs();
+                $frozen_period_IDs = $time_group->frozenPeriodIDs();
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $derivator = $this->exchange_rate_cache->buildDerivator(
@@ -467,7 +469,7 @@ class TimeGroupManager
     {
         $missing_account_IDs = array_diff(
             $selected_account_IDs,
-            $this->loaded_flow_calculations_by_account_id
+            $this->loaded_real_flow_calculations_by_account_id
         );
 
         if (count($missing_account_IDs) > 0) {
@@ -514,7 +516,7 @@ class TimeGroupManager
                                 ->simplified();
 
                         $time_group->addFlowCalculation($flow_calculation);
-                        $this->loaded_flow_calculations_by_account_id[] = $account_id;
+                        $this->loaded_real_flow_calculations_by_account_id[] = $account_id;
                     }
                 }
             }
