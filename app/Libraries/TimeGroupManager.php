@@ -342,6 +342,9 @@ class TimeGroupManager
             // }
 
             foreach ($this->time_groups as $time_group) {
+                $frozen_period_IDs = $this->frozenPeriodIDs();
+                if (count($frozen_period_IDs) === 0) continue;
+
                 $derivator = $this->exchange_rate_cache->buildDerivator(
                     $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
@@ -353,7 +356,7 @@ class TimeGroupManager
                     $frozen_account_hash_info = $frozen_account_hashes[$frozen_account_hash];
                     $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
 
-                    $is_owned = $time_group->doesRepresentFrozenPeriod($frozen_period_id);
+                    $is_owned = in_array($frozen_period_id, $frozen_period_IDs);
                     if ($is_owned) {
                         $account_id = $frozen_account_hash_info->account_id;
                         $source_currency_id = $this->account_cache->determineCurrencyID(
@@ -415,6 +418,9 @@ class TimeGroupManager
             // }
 
             foreach ($this->time_groups as $time_group) {
+                $frozen_period_IDs = $this->frozenPeriodIDs();
+                if (count($frozen_period_IDs) === 0) continue;
+
                 $derivator = $this->exchange_rate_cache->buildDerivator(
                     $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                         ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
@@ -426,7 +432,7 @@ class TimeGroupManager
                     $frozen_account_hash_info = $frozen_account_hashes[$frozen_account_hash];
                     $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
 
-                    $is_owned = $time_group->doesRepresentFrozenPeriod($frozen_period_id);
+                    $is_owned = in_array($frozen_period_id, $frozen_period_IDs);
                     if ($is_owned) {
                         $account_id = $frozen_account_hash_info->account_id;
                         $source_currency_id = $this->account_cache->determineCurrencyID(

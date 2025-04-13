@@ -60,14 +60,6 @@ interface TimeGroup
     public function hasSomeUnfrozenDetails(): bool;
 
     /**
-     * Returns true if the ID of frozen period belongs to the group.
-     *
-     * @param int $frozen_period_id
-     * @return bool
-     */
-    public function doesRepresentFrozenPeriod(int $frozen_period_id): bool;
-
-    /**
      * Adds unadjusted summary calculation keyed its frozen account hash.
      *
      * Assumes all calculations added are in the same currency and belongs to the time group.
