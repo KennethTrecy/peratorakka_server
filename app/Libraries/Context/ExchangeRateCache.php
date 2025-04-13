@@ -88,7 +88,6 @@ class ExchangeRateCache extends SingletonCache
             }
         }
 
-        $account_cache->loadAccounts($missing_account_IDs);
         foreach ($missing_account_IDs as $missing_account_id) {
             $account = $account_cache->getLoadedResource($missing_account_id);
             array_push($accounts, $account);
