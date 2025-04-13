@@ -127,7 +127,7 @@ abstract class GranularTimeGroup implements TimeGroup
         );
     }
 
-    private function selectRealUnajustedSummaryCalculations(array $selected_hashes): array
+    private function selectRealUnadjustedSummaryCalculations(array $selected_hashes): array
     {
         return $this->selectSummaryCalculations(
             $this->real_unadjusted_summary_calculations,
