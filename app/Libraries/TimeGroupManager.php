@@ -51,10 +51,10 @@ class TimeGroupManager
     {
         $this->context = $context;
         $this->time_groups = $time_groups;
-        $this->currency_cache = new CurrencyCache($this->context);
-        $this->account_cache = new AccountCache($this->context);
-        $this->collection_cache = new CollectionCache($this->context);
-        $this->exchange_rate_cache = new ExchangeRateCache(
+        $this->currency_cache = CurrencyCache::make($this->context);
+        $this->account_cache = AccountCache::make($this->context);
+        $this->collection_cache = CollectionCache::make($this->context);
+        $this->exchange_rate_cache = ExchangeRateCache::make(
             $this->context,
             count($this->time_groups) > 0
                 ? $this->time_groups[count($this->time_groups) - 1]->finishedAt()
