@@ -566,19 +566,21 @@ class TimeGroupManager
             )
         );
 
-        $frozen_account_hashes = model(FrozenAccountModel::class)
-            ->whereIn("frozen_period_id", $this->frozenPeriodIDs())
-            ->whereIn("account_id", array_unique($missing_account_IDs));
+        if (count($missing_account_IDs) > 0) {
+            $frozen_account_hashes = model(FrozenAccountModel::class)
+                ->whereIn("frozen_period_id", $this->frozenPeriodIDs())
+                ->whereIn("account_id", array_unique($missing_account_IDs));
 
-        $frozen_account_hashes = Resource::key(
-            $frozen_account_hashes,
-            fn ($frozen_account_hash) => $frozen_account_hash->hash
-        );
+            $frozen_account_hashes = Resource::key(
+                $frozen_account_hashes,
+                fn ($frozen_account_hash) => $frozen_account_hash->hash
+            );
 
-        $this->loaded_frozen_account_hashes = array_merge(
-            $this->loaded_frozen_account_hashes,
-            $frozen_account_hash
-        );
+            $this->loaded_frozen_account_hashes = array_merge(
+                $this->loaded_frozen_account_hashes,
+                $frozen_account_hash
+            );
+        }
 
         return array_filter(
             $this->loaded_frozen_account_hashes,
