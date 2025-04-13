@@ -31,7 +31,7 @@ abstract class GranularTimeGroup implements TimeGroup
     /**
      * @var RealFlowCalculation[][]
      */
-    protected array $flow_calculations = [];
+    protected array $real_flow_calculations = [];
 
     public function granularTimeRanges(): array
     {
@@ -47,65 +47,37 @@ abstract class GranularTimeGroup implements TimeGroup
         return $finished_date->toLocalizedString("MMMM yyyy");
     }
 
-    public function totalRealOpenedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
-        [
-            $debit_summary_calculations,
-            $credit_summary_calculations
-        ] = $this->selectRealAdjustedSummaryCalculations($context, $selected_account_IDs);
-
+    public function totalRealOpenedAmount(Context $context, array $selected_hashes): array {
         return [
             array_reduce(
-                $credit_summary_calculations,
+                $this->selectRealAdjustedSummaryCalculations($selected_hashes),
                 function ($total, $summary_calculation) {
-                    return $total->minus($summary_calculation->opened_amount);
+                    return $total->plus($summary_calculation->opened_amount);
                 },
-                array_reduce(
-                    $debit_summary_calculations,
-                    function ($total, $summary_calculation) {
-                        return $total->reduce($summary_calculation->opened_amount);
-                    },
-                    RationalNumber::zero()
-                )
+                RationalNumber::zero()
             )
         ];
     }
 
-    public function totalRealOpenedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
-        [
-            $debit_summary_calculations,
-            $credit_summary_calculations
-        ] = $this->selectRealAdjustedSummaryCalculations($context, $selected_account_IDs);
-
+    public function totalRealCloseedAmount(Context $context, array $selected_hashes): array {
         return [
             array_reduce(
-                $debit_summary_calculations,
+                $this->selectRealAdjustedSummaryCalculations($selected_hashes),
                 function ($total, $summary_calculation) {
-                    return $total->minus($summary_calculation->opened_amount);
+                    return $total->plus($summary_calculation->closed_amount);
                 },
-                array_reduce(
-                    $credit_summary_calculations,
-                    function ($total, $summary_calculation) {
-                        return $total->reduce($summary_calculation->opened_amount);
-                    },
-                    RationalNumber::zero()
-                )
+                RationalNumber::zero()
             )
         ];
     }
 
     public function totalRealUnadjustedDebitAmount(
         Context $context,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array {
         return [
             array_reduce(
-                $this->selectRealUnadjustedSummaryCalculations($selected_account_IDs),
+                $this->selectRealUnadjustedSummaryCalculations($selected_hashes),
                 function ($total, $summary_calculation) {
                     return $total->plus($summary_calculation->debit_amount);
                 },
@@ -116,11 +88,11 @@ abstract class GranularTimeGroup implements TimeGroup
 
     public function totalRealUnadjustedCreditAmount(
         Context $context,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array {
         return [
             array_reduce(
-                $this->selectRealUnadjustedSummaryCalculations($selected_account_IDs),
+                $this->selectRealUnadjustedSummaryCalculations($selected_hashes),
                 function ($total, $summary_calculation) {
                     return $total->plus($summary_calculation->credit_amount);
                 },
@@ -129,66 +101,14 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealClosedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
-        [
-            $debit_summary_calculations,
-            $credit_summary_calculations
-        ] = $this->selectRealAdjustedSummaryCalculations($context, $selected_account_IDs);
-
-        return [
-            array_reduce(
-                $credit_summary_calculations,
-                function ($total, $summary_calculation) {
-                    return $total->minus($summary_calculation->closed_amount);
-                },
-                array_reduce(
-                    $debit_summary_calculations,
-                    function ($total, $summary_calculation) {
-                        return $total->reduce($summary_calculation->closed_amount);
-                    },
-                    RationalNumber::zero()
-                )
-            )
-        ];
-    }
-
-    public function totalRealClosedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
-        [
-            $debit_summary_calculations,
-            $credit_summary_calculations
-        ] = $this->selectRealAdjustedSummaryCalculations($context, $selected_account_IDs);
-
-        return [
-            array_reduce(
-                $debit_summary_calculations,
-                function ($total, $summary_calculation) {
-                    return $total->minus($summary_calculation->closed_amount);
-                },
-                array_reduce(
-                    $credit_summary_calculations,
-                    function ($total, $summary_calculation) {
-                        return $total->reduce($summary_calculation->closed_amount);
-                    },
-                    RationalNumber::zero()
-                )
-            )
-        ];
-    }
-
     public function totalRealNetCashFlowAmount(
         Context $context,
         array $cash_flow_activity_IDs,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array {
         return [
             array_reduce(
-                $this->selectRealFlowCalculations($cash_flow_activity_IDs, $selected_account_IDs),
+                $this->selectRealFlowCalculations($cash_flow_activity_IDs, $selected_hashes),
                 function ($total, $flow_calculation) {
                     return $total->plus($flow_calculation->net_amount);
                 },
@@ -199,51 +119,36 @@ abstract class GranularTimeGroup implements TimeGroup
 
     private function selectRealAdjustedSummaryCalculations(
         Context $context,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array {
-        $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE, null);
-        $summary_calculations = $this->real_adjusted_summary_calculations;
-
-        $raw_debit_summary_calculations = [];
-        $raw_credit_summary_calculations = [];
-        foreach ($selected_account_IDs as $account_id) {
-            if (isset($summary_calculations[$account_id])) {
-                $account_kind = $account_cache->determineAccountKind($account_id);
-                if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
-                    array_push(
-                        $raw_debit_summary_calculations,
-                        $summary_calculations[$account_id]
-                    );
-                } else {
-                    array_push(
-                        $raw_credit_summary_calculations,
-                        $summary_calculations[$account_id]
-                    );
-                }
-            }
-        }
-
-        return [ $raw_debit_summary_calculations, $raw_credit_summary_calculations ];
+        return $this->selectSummaryCalculations(
+            $this->real_adjusted_summary_calculations,
+            $selected_hashes
+        );
     }
 
-    private function selectRealUnajustedSummaryCalculations(array $selected_account_IDs): array
+    private function selectRealUnajustedSummaryCalculations(array $selected_hashes): array
     {
-        $real_unadjusted_summary_calculations = $this->real_unadjusted_summary_calculations;
+        return $this->selectSummaryCalculations(
+            $this->real_unadjusted_summary_calculations,
+            $selected_hashes
+        );
+    }
 
+    private function selectSummaryCalculations(array $source, array $selected_hashes): array
+    {
         $raw_summary_calculations = array_map(
-            function ($account_id) use ($real_unadjusted_summary_calculations) {
+            function ($account_hash) use ($source) {
                 // If summary calculation is not found because it does not exist yet during this
                 // period, return null.
-                return $real_unadjusted_summary_calculations[$account_id] ?? null;
+                return $source[$account_hash] ?? null;
             },
-            $selected_account_IDs
+            $selected_hashes
         );
 
         $loaded_summary_calculations = array_filter(
             $raw_summary_calculations,
-            function ($summary_calculation) {
-                return $summary_calculation !== null;
-            }
+            fn ($summary_calculation) => $summary_calculation !== null
         );
 
         return $loaded_summary_calculations;
@@ -251,21 +156,21 @@ abstract class GranularTimeGroup implements TimeGroup
 
     private function selectRealFlowCalculations(
         array $cash_flow_activity_IDs,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array {
         $raw_real_flow_calculations = [];
 
-        foreach ($this->flow_calculations as $cash_flow_activity_id => $flow_calculations) {
+        foreach ($this->real_flow_calculations as $cash_flow_activity_id => $real_flow_calculations) {
             if (in_array($cash_flow_activity_id, $cash_flow_activity_IDs)) {
                 $raw_real_flow_calculations = [
                     ...$raw_real_flow_calculations,
                     ...array_map(
-                        function ($account_id) use ($flow_calculations) {
+                        function ($account_id) use ($real_flow_calculations) {
                             // If flow calculation is not found because it does not exist yet during this
                             // period, return null.
-                            return $flow_calculations[$account_id] ?? null;
+                            return $real_flow_calculations[$account_id] ?? null;
                         },
-                        $selected_account_IDs
+                        $selected_hashes
                     )
                 ];
             }
