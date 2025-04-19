@@ -9,6 +9,7 @@ use Faker\Generator;
 class FrozenAccountModel extends BaseResourceModel
 {
     protected $table = "frozen_accounts";
+    protected $primaryKey = "hash";
     protected $returnType = FrozenAccount::class;
     protected $allowedFields = [
         "hash",
