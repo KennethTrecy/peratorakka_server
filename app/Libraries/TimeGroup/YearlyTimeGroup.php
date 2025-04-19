@@ -238,10 +238,10 @@ class YearlyTimeGroup implements TimeGroup
         array $selected_hashes
     ): array {
         return array_map(
-            fn ($time_group) => $time_group->totalNetCashFlowAmount(
+            fn ($time_group) => $time_group->totalRealNetCashFlowAmount(
                 $context,
                 $cash_flow_activity_IDs,
-                $selected_account_IDs
+                $selected_hashes
             )[0],
             $this->time_groups
         );
