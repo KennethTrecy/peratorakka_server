@@ -44,21 +44,16 @@ abstract class ResourceCache extends SingletonCache
             ->withDeleted()
             ->findAll();
 
-        $this->resources = array_replace(
-            $this->resources,
-            Resource::key($new_resources, function ($resource) {
-                return $resource->id;
-            })
-        );
+        $this->addPreloadedResources($new_resources);
     }
 
     public function addPreloadedResources(array $resources): void
     {
+        $scoped_model = static::getModel();
+        $primary_key = $scoped_model->primaryKey;
         $this->resources = array_replace(
             $this->resources,
-            Resource::key($new_resources, function ($resource) {
-                return $resource->id;
-            })
+            Resource::key($resources, fn ($resource) => $resource->$primary_key)
         );
     }
 }
