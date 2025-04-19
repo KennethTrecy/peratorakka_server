@@ -683,10 +683,11 @@ class TimeGroupManager
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
 
-        $account_IDs = array_unique(array_map(function ($account) {
-            return $account->id;
-        }, array_values($accounts)));
-        $this->account_cache->loadResourcs($account_IDs);
+        $this->updateFrozenAccountHashes($periodic_frozen_accounts);
+        $account_IDs = array_unique(array_map(function ($frozen_account) {
+            return $frozen_account->account_id;
+        }, $periodic_frozen_accounts));
+        $this->account_cache->loadResources($account_IDs);
         $this->exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
 
         $exchange_rate_basis = $this->context->getVariable(
@@ -762,16 +763,21 @@ class TimeGroupManager
         }
 
         foreach ($periodic_real_flows as $flow_calculation) {
-            $account_id = $flow_calculation->account_id;
+            $frozen_account_hash = $flow_calculation->frozen_account_hash;
+            $frozen_account_hash_info = $frozen_account_hashes[$frozen_account_hash];
+            $account_id = $frozen_account_hash_info->account_id;
+
             $source_currency_id = $this->account_cache->determineCurrencyID($account_id);
             $derived_exchange_rate = $derivator->deriveExchangeRate(
                 $source_currency_id,
                 $destination_currency_id ?? $source_currency_id
             );
+
             $flow_calculation->net_amount
                 = $flow_calculation->net_amount
                     ->multipliedBy($derived_exchange_rate)
                     ->simplified();
+
             $incomplete_frozen_group->addRealFlowCalculation($flow_calculation);
             $this->loaded_real_flow_calculations[] = $account_id;
         }
@@ -805,15 +811,7 @@ class TimeGroupManager
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
-            $frozen_account_hashes = Resource::key(
-                $frozen_account_hashes,
-                fn ($frozen_account_hash) => $frozen_account_hash->hash
-            );
-
-            $this->loaded_frozen_account_hashes = array_merge(
-                $this->loaded_frozen_account_hashes,
-                $frozen_account_hashes
-            );
+            $this->updateFrozenAccountHashes($frozen_account_hashes);
         }
 
         return array_filter(
@@ -822,6 +820,18 @@ class TimeGroupManager
                 $frozen_account_hash_info->account_id,
                 $selected_account_IDs
             )
+        );
+    }
+
+    private function updateFrozenAccountHashes($frozen_account_hashes): void {
+        $frozen_account_hashes = Resource::key(
+            $frozen_account_hashes,
+            fn ($frozen_account_hash) => $frozen_account_hash->hash
+        );
+
+        $this->loaded_frozen_account_hashes = array_merge(
+            $this->loaded_frozen_account_hashes,
+            $frozen_account_hashes
         );
     }
 }
