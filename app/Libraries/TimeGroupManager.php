@@ -12,6 +12,7 @@ use App\Libraries\Context\CollectionCache;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\CurrencyCache;
 use App\Libraries\Context\ExchangeRateCache;
+use App\Libraries\Context\FrozenAccountCache;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
 use App\Models\RealFlowCalculationModel;
 use App\Models\RealUnadjustedSummaryCalculationModel;
@@ -33,9 +34,9 @@ class TimeGroupManager
     private readonly ExchangeRateCache $exchange_rate_cache;
     private readonly CurrencyCache $currency_cache;
     private readonly AccountCache $account_cache;
+    private readonly FrozenAccountCache $frozen_account_cache;
     private readonly CollectionCache $collection_cache;
 
-    private array $loaded_frozen_account_hashes = [];
     private array $loaded_real_unadjusted_summary_calculations = [];
     private array $loaded_real_adjusted_summary_calculations = [];
     private array $loaded_real_flow_calculations = [];
@@ -53,6 +54,7 @@ class TimeGroupManager
         $this->time_groups = $time_groups;
         $this->currency_cache = CurrencyCache::make($this->context);
         $this->account_cache = AccountCache::make($this->context);
+        $this->frozen_account_cache = FrozenAccountCache::make($this->context);
         $this->collection_cache = CollectionCache::make($this->context);
         $this->exchange_rate_cache = ExchangeRateCache::make(
             $this->context,
@@ -540,7 +542,7 @@ class TimeGroupManager
     {
         $missing_account_IDs = array_diff(
             $selected_account_IDs,
-            $this->loaded_real_flow_calculations
+            array_values($this->loaded_real_flow_calculations)
         );
 
         if (count($missing_account_IDs) > 0) {
@@ -683,7 +685,7 @@ class TimeGroupManager
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
 
-        $this->updateFrozenAccountHashes($periodic_frozen_accounts);
+        $this->frozen_account_cache->addPreloadedResources($periodic_frozen_accounts);
         $account_IDs = array_unique(array_map(function ($frozen_account) {
             return $frozen_account->account_id;
         }, $periodic_frozen_accounts));
@@ -799,39 +801,20 @@ class TimeGroupManager
     private function frozenAccountHashes($selected_account_IDs): array {
         $missing_account_IDs = array_diff(
             $selected_account_IDs,
-            array_map(
-                fn ($account_hash_info) => $account_hash_info->account_id,
-                $this->loaded_frozen_account_hashes
-            )
+            array_values($this->loaded_real_unadjusted_summary_calculations),
+            array_values($this->loaded_real_adjusted_summary_calculations),
+            array_values($this->loaded_real_flow_calculations)
         );
 
         if (count($missing_account_IDs) > 0) {
-            $frozen_account_hashes = model(FrozenAccountModel::class)
+            $frozen_account_hashes = model(FrozenAccountModel::class, false)
                 ->whereIn("frozen_period_id", $this->frozenPeriodIDs())
                 ->whereIn("account_id", array_unique($missing_account_IDs))
                 ->findAll();
 
-            $this->updateFrozenAccountHashes($frozen_account_hashes);
+            $this->frozen_account_cache->addPreloadedResources($frozen_account_hashes);
         }
 
-        return array_filter(
-            $this->loaded_frozen_account_hashes,
-            fn ($frozen_account_hash_info) => in_array(
-                $frozen_account_hash_info->account_id,
-                $selected_account_IDs
-            )
-        );
-    }
-
-    private function updateFrozenAccountHashes($frozen_account_hashes): void {
-        $frozen_account_hashes = Resource::key(
-            $frozen_account_hashes,
-            fn ($frozen_account_hash) => $frozen_account_hash->hash
-        );
-
-        $this->loaded_frozen_account_hashes = array_merge(
-            $this->loaded_frozen_account_hashes,
-            $frozen_account_hashes
-        );
+        return $this->frozen_account_cache->selectAccountHashesByAccountID($selected_account_IDs);
     }
 }
