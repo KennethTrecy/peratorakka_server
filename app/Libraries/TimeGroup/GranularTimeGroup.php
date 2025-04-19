@@ -71,6 +71,7 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
+    // TODO: Remove requirement of contexts
     public function totalRealUnadjustedDebitAmount(
         Context $context,
         array $selected_hashes
@@ -117,6 +118,7 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
+    // TODO: Remove requirement of contexts
     private function selectRealAdjustedSummaryCalculations(
         Context $context,
         array $selected_hashes
