@@ -678,6 +678,7 @@ class TimeGroupManager
             $periodic_real_flows
         ] = FrozenPeriodModel::makeRawCalculations(
             $current_user,
+            $this->context,
             $last_frozen_finished_date->addDays(1)->setHour(0)->setMinute(0)->setSecond(0),
             $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
         );
