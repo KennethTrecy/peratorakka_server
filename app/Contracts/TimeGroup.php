@@ -39,6 +39,13 @@ interface TimeGroup
     public function finishedAt(): Time;
 
     /**
+     * Returns the last frozen date of the time group.
+     *
+     * @return Time|null
+     */
+    public function lastFrozenAt(): ?Time;
+
+    /**
      * Returns all ranges of the smallest time groups.
      *
      * @return Time[][]
@@ -91,44 +98,35 @@ interface TimeGroup
     public function addRealFlowCalculation(RealFlowCalculation $flow_calculation): void;
 
     /**
-     * @param Context $context
      * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealOpenedAmount(Context $context, array $selected_hashes): array;
+    public function totalRealOpenedAmount(array $selected_hashes): array;
 
     /**
-     * @param Context $context
      * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealClosedAmount(Context $context, array $selected_hashes): array;
+    public function totalRealClosedAmount(array $selected_hashes): array;
 
     /**
-     * @param Context $context
      * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealUnadjustedDebitAmount(Context $context, array $selected_hashes): array;
+    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array;
 
     /**
-     * @param Context $context
      * @param int[] $selected_hashes
      * @return BigRational[]
      */
-    public function totalRealUnadjustedCreditAmount(
-        Context $context,
-        array $selected_hashes
-    ): array;
+    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array;
 
     /**
-     * @param Context $context
      * @param int[] $cash_flow_activity_IDs
      * @param int[] $selected_hashes
      * @return BigRational[]
      */
     public function totalRealNetCashFlowAmount(
-        Context $context,
         array $cash_flow_activity_IDs,
         array $selected_hashes
     ): array;
