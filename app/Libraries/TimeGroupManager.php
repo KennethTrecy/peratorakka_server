@@ -75,6 +75,72 @@ class TimeGroupManager
     }
 
     /**
+     * Alias for `totalRealOpenedDebitAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalOpenedDebitAmount(array $selected_account_IDs): array {
+        return $this->totalRealOpenedDebitAmount($selected_account_IDs);
+    }
+
+    /**
+     * Alias for `totalRealOpenedCreditAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalOpenedCreditAmount(array $selected_account_IDs): array {
+        return $this->totalRealOpenedCreditAmount($selected_account_IDs);
+    }
+
+    /**
+     * Alias for `totalRealUnadjustedDebitAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalUnadjustedDebitAmount(array $selected_account_IDs): array {
+        return $this->totalRealUnadjustedDebitAmount($selected_account_IDs);
+    }
+
+    /**
+     * Alias for `totalRealUnadjustedCreditAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalUnadjustedCreditAmount(array $selected_account_IDs): array {
+        return $this->totalRealUnadjustedCreditAmount($selected_account_IDs);
+    }
+
+    /**
+     * Alias for `totalRealClosedDebitAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalClosedDebitAmount(array $selected_account_IDs): array {
+        return $this->totalRealClosedDebitAmount($selected_account_IDs);
+    }
+
+    /**
+     * Alias for `totalRealClosedCreditAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalClosedCreditAmount(array $selected_account_IDs): array {
+        return $this->totalRealClosedCreditAmount($selected_account_IDs);
+    }
+
+    /**
+     * Alias for `totalRealNetCashFlowAmount` before the complete transition.
+     *
+     * @deprecated
+     */
+    public function totalNetCashFlowAmount(
+        array $cash_flow_activity_IDs,
+        array $selected_account_IDs
+    ): array {
+        return $this->totalRealNetCashFlowAmount($cash_flow_activity_IDs, $selected_account_IDs);
+    }
+
+    /**
      * Gets total opened debit amount for all selected accounts of every time group.
      *
      * @param int[] $selected_account_IDs
