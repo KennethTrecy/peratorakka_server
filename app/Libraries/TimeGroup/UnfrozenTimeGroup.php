@@ -54,6 +54,11 @@ class UnfrozenTimeGroup extends GranularTimeGroup
         return $this->inclusive_finish_date;
     }
 
+    public function lastFrozenAt(): ?Time
+    {
+        return null;
+    }
+
     public function hasSomeUnfrozenDetails(): bool
     {
         return true;

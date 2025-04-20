@@ -47,10 +47,10 @@ abstract class GranularTimeGroup implements TimeGroup
         return $finished_date->toLocalizedString("MMMM yyyy");
     }
 
-    public function totalRealOpenedAmount(Context $context, array $selected_hashes): array {
+    public function totalRealOpenedAmount(array $selected_hashes): array {
         return [
             array_reduce(
-                $this->selectRealAdjustedSummaryCalculations($context, $selected_hashes),
+                $this->selectRealAdjustedSummaryCalculations($selected_hashes),
                 function ($total, $summary_calculation) {
                     return $total->plus($summary_calculation->opened_amount);
                 },
@@ -59,10 +59,10 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealClosedAmount(Context $context, array $selected_hashes): array {
+    public function totalRealClosedAmount(array $selected_hashes): array {
         return [
             array_reduce(
-                $this->selectRealAdjustedSummaryCalculations($context, $selected_hashes),
+                $this->selectRealAdjustedSummaryCalculations($selected_hashes),
                 function ($total, $summary_calculation) {
                     return $total->plus($summary_calculation->closed_amount);
                 },
@@ -71,11 +71,7 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    // TODO: Remove requirement of contexts
-    public function totalRealUnadjustedDebitAmount(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array {
         return [
             array_reduce(
                 $this->selectRealUnadjustedSummaryCalculations($selected_hashes),
@@ -87,10 +83,7 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealUnadjustedCreditAmount(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array {
         return [
             array_reduce(
                 $this->selectRealUnadjustedSummaryCalculations($selected_hashes),
@@ -103,7 +96,6 @@ abstract class GranularTimeGroup implements TimeGroup
     }
 
     public function totalRealNetCashFlowAmount(
-        Context $context,
         array $cash_flow_activity_IDs,
         array $selected_hashes
     ): array {
@@ -118,27 +110,21 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    // TODO: Remove requirement of contexts
-    private function selectRealAdjustedSummaryCalculations(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    private function selectRealAdjustedSummaryCalculations(array $selected_hashes): array {
         return $this->selectSummaryCalculations(
             $this->real_adjusted_summary_calculations,
             $selected_hashes
         );
     }
 
-    private function selectRealUnadjustedSummaryCalculations(array $selected_hashes): array
-    {
+    private function selectRealUnadjustedSummaryCalculations(array $selected_hashes): array {
         return $this->selectSummaryCalculations(
             $this->real_unadjusted_summary_calculations,
             $selected_hashes
         );
     }
 
-    private function selectSummaryCalculations(array $source, array $selected_hashes): array
-    {
+    private function selectSummaryCalculations(array $source, array $selected_hashes): array {
         $raw_summary_calculations = array_map(
             function ($frozen_account_hash) use ($source) {
                 // If summary calculation is not found because it does not exist yet during this

@@ -37,6 +37,11 @@ class PeriodicTimeGroup extends GranularTimeGroup
         return $this->frozen_period->finished_at;
     }
 
+    public function lastFrozenAt(): ?Time
+    {
+        return $this->finishedAt();
+    }
+
     public function hasSomeUnfrozenDetails(): bool
     {
         return false;

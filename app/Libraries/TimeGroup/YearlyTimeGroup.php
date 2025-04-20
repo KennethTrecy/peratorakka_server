@@ -97,6 +97,17 @@ class YearlyTimeGroup implements TimeGroup
         return $time_group->finishedAt();
     }
 
+    public function lastFrozenAt(): ?Time
+    {
+        $time_group_count = count($this->time_groups);
+        $time_group = $this->time_groups[$time_group_count - 1];
+        if ($this->hasSomeUnfrozenDetails() && $time_group_count >= 2) {
+            $time_group = $this->time_groups[$time_group_count - 2];
+        }
+
+        return $time_group->finishedAt();
+    }
+
     public function granularTimeRanges(): array
     {
         return array_map(
@@ -186,60 +197,40 @@ class YearlyTimeGroup implements TimeGroup
         }
     }
 
-    public function totalRealOpenedAmount(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    public function totalRealOpenedAmount(array $selected_hashes): array {
         return array_map(
-            fn ($time_group) => $time_group->totalRealOpenedAmount($context, $selected_hashes)[0],
+            fn ($time_group) => $time_group->totalRealOpenedAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalRealClosedAmount(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    public function totalRealClosedAmount(array $selected_hashes): array {
         return array_map(
-            fn ($time_group) => $time_group->totalRealClosedAmount($context, $selected_hashes)[0],
+            fn ($time_group) => $time_group->totalRealClosedAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalRealUnadjustedDebitAmount(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array {
         return array_map(
-            fn ($time_group) => $time_group->totalRealUnadjustedDebitAmount(
-                $context,
-                $selected_hashes
-            )[0],
+            fn ($time_group) => $time_group->totalRealUnadjustedDebitAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalRealUnadjustedCreditAmount(
-        Context $context,
-        array $selected_hashes
-    ): array {
+    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array {
         return array_map(
-            fn ($time_group) => $time_group->totalRealUnadjustedCreditAmount(
-                $context,
-                $selected_hashes
-            )[0],
+            fn ($time_group) => $time_group->totalRealUnadjustedCreditAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
     public function totalRealNetCashFlowAmount(
-        Context $context,
         array $cash_flow_activity_IDs,
         array $selected_hashes
     ): array {
         return array_map(
             fn ($time_group) => $time_group->totalRealNetCashFlowAmount(
-                $context,
                 $cash_flow_activity_IDs,
                 $selected_hashes
             )[0],
