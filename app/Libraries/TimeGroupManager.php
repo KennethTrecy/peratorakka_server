@@ -84,7 +84,6 @@ class TimeGroupManager
     {
         $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
-        $context = $this->context;
         $account_cache = $this->account_cache;
 
         $debit_hashes = [];
@@ -100,9 +99,8 @@ class TimeGroupManager
                 fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
                 $frozen_account_hash_group[$account_id]
             );
-            $account_kind = $account_cache->determineAccountKind($account_id);
 
-            if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
+            if ($account_cache->isDebitedNormally($account_id)) {
                 $debit_hashes = array_merge($debit_hashes, $frozen_account_hashes);
             } else {
                 $credit_hashes = array_merge($credit_hashes, $frozen_account_hashes);
@@ -110,9 +108,9 @@ class TimeGroupManager
         }
 
         return array_map(
-            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
-                $debit_amounts = $time_group->totalRealOpenedAmount($context, $debit_hashes);
-                $credit_amounts = $time_group->totalRealOpenedAmount($context, $credit_hashes);
+            function ($time_group) use ($debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealOpenedAmount($debit_hashes);
+                $credit_amounts = $time_group->totalRealOpenedAmount($credit_hashes);
 
                 return array_map(
                     fn ($debit_amount, $credit_amount) => $debit_amount->minus($credit_amount),
@@ -134,7 +132,6 @@ class TimeGroupManager
     {
         $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
-        $context = $this->context;
         $account_cache = $this->account_cache;
 
         $debit_hashes = [];
@@ -150,9 +147,8 @@ class TimeGroupManager
                 fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
                 $frozen_account_hash_group[$account_id]
             );
-            $account_kind = $account_cache->determineAccountKind($account_id);
 
-            if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
+            if ($account_cache->isDebitedNormally($account_id)) {
                 $debit_hashes = array_merge($debit_hashes, $frozen_account_hashes);
             } else {
                 $credit_hashes = array_merge($credit_hashes, $frozen_account_hashes);
@@ -160,9 +156,9 @@ class TimeGroupManager
         }
 
         return array_map(
-            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
-                $debit_amounts = $time_group->totalRealOpenedAmount($context, $debit_hashes);
-                $credit_amounts = $time_group->totalRealOpenedAmount($context, $credit_hashes);
+            function ($time_group) use ($debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealOpenedAmount($debit_hashes);
+                $credit_amounts = $time_group->totalRealOpenedAmount($credit_hashes);
 
                 return array_map(
                     fn ($debit_amount, $credit_amount) => $credit_amount->minus($debit_amount),
@@ -184,14 +180,11 @@ class TimeGroupManager
     {
         $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
-        $context = $this->context;
-
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
             fn ($time_group) => $time_group->totalRealUnadjustedDebitAmount(
-                $context,
                 $frozen_account_hashes
             ),
             $this->time_groups
@@ -208,14 +201,11 @@ class TimeGroupManager
     {
         $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
-        $context = $this->context;
-
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
             fn ($time_group) => $time_group->totalRealUnadjustedCreditAmount(
-                $context,
                 $frozen_account_hashes
             ),
             $this->time_groups
@@ -232,7 +222,6 @@ class TimeGroupManager
     {
         $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
-        $context = $this->context;
         $account_cache = $this->account_cache;
 
         $debit_hashes = [];
@@ -248,9 +237,8 @@ class TimeGroupManager
                 fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
                 $frozen_account_hash_group[$account_id]
             );
-            $account_kind = $account_cache->determineAccountKind($account_id);
 
-            if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
+            if ($account_cache->isDebitedNormally($account_id)) {
                 $debit_hashes = array_merge($debit_hashes, $frozen_account_hashes);
             } else {
                 $credit_hashes = array_merge($credit_hashes, $frozen_account_hashes);
@@ -258,9 +246,9 @@ class TimeGroupManager
         }
 
         return array_map(
-            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
-                $debit_amounts = $time_group->totalRealClosedAmount($context, $debit_hashes);
-                $credit_amounts = $time_group->totalRealClosedAmount($context, $credit_hashes);
+            function ($time_group) use ($debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealClosedAmount($debit_hashes);
+                $credit_amounts = $time_group->totalRealClosedAmount($credit_hashes);
 
                 return array_map(
                     fn ($debit_amount, $credit_amount) => $debit_amount->minus($credit_amount),
@@ -282,7 +270,6 @@ class TimeGroupManager
     {
         $this->loadRealAdjustedSummaryCalculations($selected_account_IDs);
 
-        $context = $this->context;
         $account_cache = $this->account_cache;
 
         $debit_hashes = [];
@@ -298,9 +285,8 @@ class TimeGroupManager
                 fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
                 $frozen_account_hash_group[$account_id]
             );
-            $account_kind = $account_cache->determineAccountKind($account_id);
 
-            if (in_array($account_kind, NORMAL_DEBIT_ACCOUNT_KINDS)) {
+            if ($account_cache->isDebitedNormally($account_id)) {
                 $debit_hashes = array_merge($debit_hashes, $frozen_account_hashes);
             } else {
                 $credit_hashes = array_merge($credit_hashes, $frozen_account_hashes);
@@ -308,9 +294,9 @@ class TimeGroupManager
         }
 
         return array_map(
-            function ($time_group) use ($context, $debit_hashes, $credit_hashes) {
-                $debit_amounts = $time_group->totalRealClosedAmount($context, $debit_hashes);
-                $credit_amounts = $time_group->totalRealClosedAmount($context, $credit_hashes);
+            function ($time_group) use ($debit_hashes, $credit_hashes) {
+                $debit_amounts = $time_group->totalRealClosedAmount($debit_hashes);
+                $credit_amounts = $time_group->totalRealClosedAmount($credit_hashes);
 
                 return array_map(
                     fn ($debit_amount, $credit_amount) => $credit_amount->minus($debit_amount),
@@ -336,19 +322,14 @@ class TimeGroupManager
     ): array {
         $this->loadRealFlowCalculations($selected_account_IDs);
 
-        $context = $this->context;
-
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
-            function ($time_group) use ($context, $cash_flow_activity_IDs, $frozen_account_hashes) {
-                return $time_group->totalRealNetCashFlowAmount(
-                    $context,
-                    $cash_flow_activity_IDs,
-                    $frozen_account_hashes
-                );
-            },
+            fn ($time_group) => $time_group->totalRealNetCashFlowAmount(
+                $cash_flow_activity_IDs,
+                $frozen_account_hashes
+            ),
             $this->time_groups
         );
     }
@@ -620,9 +601,8 @@ class TimeGroupManager
                 $latest_finish_date = $finished_at;
             }
 
-            if (!$time_group->hasSomeUnfrozenDetails()) {
-                $last_frozen_finished_date = $latest_finish_date;
-            }
+            $last_frozen_finished_date = $time_group->lastFrozenAt()
+                ?? $last_frozen_finished_date;
         }
 
         if ($last_frozen_finished_date === null) {
