@@ -11,6 +11,7 @@ use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
 use App\Libraries\TimeGroupManager;
 use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\Context\FrozenAccountCache;
 use App\Models\AccountCollectionModel;
 use App\Models\CollectionModel;
@@ -2487,6 +2488,189 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         $this->assertEquals($totals, [
             [ RationalNumber::get("1") ],
             [ RationalNumber::get("1") ]
+        ]);
+    }
+
+    public function testExchangedTotalOpenedDebitAmountForAssetCollection()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "1" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "1" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "1" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "1" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $foreign_asset_account = $accounts[4];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $foreign_asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $foreign_asset_account ]
+            ]
+        ]);
+        $asset_collection = $collections[0];
+
+        $time_groups = [
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
+        ];
+        $context = new Context();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
+        $account_IDs = array_map(fn ($account) => $account->id, $accounts);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources($account_IDs);
+        $exchange_rate_cache = ExchangeRateCache::make($context);
+        $exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
+        $exchange_rate_cache->setLastExchangeRateTimeOnce(Time::now());
+        $destination_currency_id = $context->getVariable(
+            ContextKeys::DESTINATION_CURRENCY_ID
+        );
+        $time_group_manager = new TimeGroupManager($context, $time_groups);
+        $math_expression = new MathExpression($time_group_manager);
+
+        $formula = "TOTAL_OPENED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("0") ],
+            [ RationalNumber::get("250") ]
         ]);
     }
 }
