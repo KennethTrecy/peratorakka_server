@@ -15,6 +15,7 @@ use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\Context\FrozenAccountCache;
 use App\Models\AccountCollectionModel;
 use App\Models\CollectionModel;
+use App\Models\FormulaModel;
 use App\Models\FrozenPeriodModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
@@ -2729,7 +2730,41 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    private function makeMathExpressionForPeriodicTests()
+    public function testShiftCycle() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "SHIFT_CYCLE(2 ** (CYCLE_DAY_PRECOUNT_PER_YEAR - 364), 1, 128)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("128"),
+            RationalNumber::get("4")
+        ]);
+    }
+
+    public function testSolve() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        [
+            $precision_formats,
+            $details
+        ] = FormulaModel::createTestResource(
+            model(setting("Auth.userProvider"), false)->first()->id,
+            [
+                "overrides" => [
+                    "expression" => "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS)"
+                ]
+            ]
+        );
+
+        $formula = "SOLVE(FORMULA[$details->id], 2)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("250") ],
+            [ RationalNumber::get("250") ]
+        ]);
+    }
+
+    private function makeMathExpressionForPeriodicTests(): MathExpression
     {
         [
             $precision_formats,
@@ -2760,7 +2795,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         return $math_expression;
     }
 
-    private function makeMathExpressionForYearlyTests()
+    private function makeMathExpressionForYearlyTests(): MathExpression
     {
         [
             $precision_formats,
@@ -2809,7 +2844,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         string $first_period_finish,
         string $last_period_start,
         string $last_period_finish
-    ) {
+    ): array {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
         return FrozenPeriodModel::createTestPeriods(
