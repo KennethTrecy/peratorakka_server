@@ -124,7 +124,7 @@ trait RegisterProcedures
 
                     $math_expression = new MathExpression($time_group_manager);
 
-                    $totals = $math_expression->evaluate($formula_info->formula);
+                    $totals = $math_expression->evaluate($formula_info->expression);
 
                     $result = json_encode($totals);
 
