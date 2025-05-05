@@ -126,98 +126,40 @@ class ExchangeRateCache extends SingletonCache
                 ->select("id")
                 ->whereIn("currency_id", $new_currency_IDs);
 
-            $financial_entry_subquery =  model(FinancialEntryAtomModel::class, false)
+            $financial_entry_subquery =  model(FinancialEntryModel::class, false)
                 ->builder()
                 ->select("id")
                 ->where(
                     "transacted_at <=",
                     $this->last_exchange_rate_time
                 )
-                ->groupStart()
-                    ->groupStart()
+                ->whereIn(
+                    "id",
+                    model(FinancialEntryAtomModel::class, false)
+                        ->builder()
+                        ->select("financial_entry_id")
                         ->whereIn(
-                            "id",
-                            model(FinancialEntryAtomModel::class, false)
+                            "modifier_atom_id",
+                            model(ModifierAtomModel::class, false)
                                 ->builder()
                                 ->select("id")
-                                ->whereIn(
-                                    "modifier_atom_id",
-                                    model(ModifierAtomModel::class, false)
-                                        ->builder()
-                                        ->select("id")
-                                        ->where("modifier_id", $exchange_modifier_subquery)
-                                        ->where("account_id", $new_account_subquery)
-                                        ->where(
-                                            "kind",
-                                            ModifierAtomKind::set(REAL_DEBIT_MODIFIER_ATOM_KIND)
-                                        )
-                                )
+                                ->where("modifier_id", $exchange_modifier_subquery)
+                                ->where("account_id", $new_account_subquery)
                         )
                         ->whereIn(
-                            "id",
-                            model(FinancialEntryAtomModel::class, false)
+                            "modifier_atom_id",
+                            model(ModifierAtomModel::class, false)
                                 ->builder()
                                 ->select("id")
-                                ->whereIn(
-                                    "modifier_atom_id",
-                                    model(ModifierAtomModel::class, false)
-                                        ->builder()
-                                        ->select("id")
-                                        ->where("modifier_id", $exchange_modifier_subquery)
-                                        ->where("account_id", $all_account_subquery)
-                                        ->where(
-                                            "kind",
-                                            ModifierAtomKind::set(REAL_CREDIT_MODIFIER_ATOM_KIND)
-                                        )
-                                )
+                                ->where("modifier_id", $exchange_modifier_subquery)
+                                ->where("account_id", $all_account_subquery)
                         )
-                    ->groupEnd()
-                    ->orGroupStart()
-                        ->whereIn(
-                            "id",
-                            model(FinancialEntryAtomModel::class, false)
-                                ->builder()
-                                ->select("id")
-                                ->whereIn(
-                                    "modifier_atom_id",
-                                    model(ModifierAtomModel::class, false)
-                                        ->builder()
-                                        ->select("id")
-                                        ->where("modifier_id", $exchange_modifier_subquery)
-                                        ->where("account_id", $all_account_subquery)
-                                        ->where(
-                                            "kind",
-                                            ModifierAtomKind::set(REAL_DEBIT_MODIFIER_ATOM_KIND)
-                                        )
-                                )
-                        )
-                        ->whereIn(
-                            "id",
-                            model(FinancialEntryAtomModel::class, false)
-                                ->builder()
-                                ->select("id")
-                                ->whereIn(
-                                    "modifier_atom_id",
-                                    model(ModifierAtomModel::class, false)
-                                        ->builder()
-                                        ->select("id")
-                                        ->where("modifier_id", $exchange_modifier_subquery)
-                                        ->where("account_id", $new_account_subquery)
-                                        ->where(
-                                            "kind",
-                                            ModifierAtomKind::set(REAL_CREDIT_MODIFIER_ATOM_KIND)
-                                        )
-                                )
-                        )
-                    ->groupEnd()
-                ->groupEnd();
+                );
 
 
-            $financial_entry_atoms = count($new_exchange_modifiers) > 0
-                ? model(FinancialEntryAtomModel::class, false)
-                    ->whereIn("financial_entry_id", $financial_entry_subquery)
-                    ->findAll()
-                : [];
+            $financial_entry_atoms = model(FinancialEntryAtomModel::class, false)
+                ->whereIn("financial_entry_id", $financial_entry_subquery)
+                ->findAll();
 
             $linked_modifier_atoms = array_map(
                 fn ($atom) => $atom->modifier_atom_id,
@@ -240,8 +182,8 @@ class ExchangeRateCache extends SingletonCache
                     $credit_financial_entry_atom
                 ] = $financial_entry_atom_pair;
 
-                $debit_modifier_atom_id = $debit_financial_entry_atom->modiifer_atom_id;
-                $credit_modifier_atom_id = $credit_financial_entry_atom->modiifer_atom_id;
+                $debit_modifier_atom_id = $debit_financial_entry_atom->modifier_atom_id;
+                $credit_modifier_atom_id = $credit_financial_entry_atom->modifier_atom_id;
                 $debit_account_id = $modifier_atom_cache
                     ->determineModifierAtomAccountID($debit_modifier_atom_id);
                 $credit_account_id = $modifier_atom_cache
