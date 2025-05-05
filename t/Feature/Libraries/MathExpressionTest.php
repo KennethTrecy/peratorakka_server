@@ -20,10 +20,6 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 
-// public function testPeriodicCycleDayCount()
-// public function testYearlyCycleDayCount()
-// public function testPeriodicDayPrecountPerYear()
-// public function testPeriodicDayPostcountPerYear()
 // public function testLiteralExponentiation()
 // public function testConstantExponentiation()
 // public function testShiftCycle()
@@ -2669,5 +2665,218 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             [ RationalNumber::get("250") ],
             [ RationalNumber::get("625") ]
         ]);
+    }
+
+    public function testPeriodicCycleDayCount() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / CYCLE_DAY_COUNT";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("125/183") ], // 250/366
+            [ RationalNumber::get("50/73") ] // 250/365
+        ]);
+    }
+
+    public function testYearlyCycleDayCount() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / CYCLE_DAY_COUNT";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("125/2"), RationalNumber::get("125/2") ] // 250/4, 250/4
+        ]);
+    }
+
+    public function testPeriodicDayPrecountPerYear() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "CYCLE_DAY_PRECOUNT_PER_YEAR";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("366"),
+            RationalNumber::get("365")
+        ]);
+    }
+
+    public function testPeriodicDayPostcountPerYear() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "CYCLE_DAY_POSTCOUNT_PER_YEAR";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("365"),
+            RationalNumber::get("365")
+        ]);
+    }
+
+    private function makeMathExpressionForPeriodicTests()
+    {
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = $this->makeDefaultFrozenPeriod(
+            Time::parse("2024/01/15")->toDateTimeString(),
+            Time::parse("2025/01/14")->toDateTimeString(),
+            Time::parse("2025/01/15")->toDateTimeString(),
+            Time::parse("2026/01/14")->toDateTimeString()
+        );
+
+        $time_groups = [
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
+        ];
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
+        $account_cache = AccountCache::make($time_group_manager->context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $math_expression = new MathExpression($time_group_manager);
+
+        return $math_expression;
+    }
+
+    private function makeMathExpressionForYearlyTests()
+    {
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = $this->makeDefaultFrozenPeriod(
+            Time::now()->subDays(3),
+            Time::now()->subDays(2),
+            Time::now()->subDays(1),
+            Time::now()
+        );
+
+        $context = Context::make();
+        $frozen_account_cache = FrozenAccountCache::make($context);
+        $frozen_account_cache->addPreloadedResources($frozen_accounts);
+
+        $first_year_time_subgroups = [
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
+        ];
+        $first_year_time_group = new YearlyTimeGroup(
+            $frozen_account_cache,
+            Time::now()->year,
+            true
+        );
+        foreach ($first_year_time_subgroups as $time_subgroup) {
+            $first_year_time_group->addTimeGroup($time_subgroup);
+        }
+        $time_groups = [ $first_year_time_group ];
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
+        $account_cache = AccountCache::make($time_group_manager->context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $math_expression = new MathExpression($time_group_manager);
+
+        return $math_expression;
+    }
+
+    private function makeDefaultFrozenPeriod(
+        string $first_period_start,
+        string $first_period_finish,
+        string $last_period_start,
+        string $last_period_finish
+    ) {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        return FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $first_period_start,
+                    "finished_at" => $first_period_finish,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $last_period_start,
+                    "finished_at" => $last_period_finish,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ]
+            ]
+        );
     }
 }
