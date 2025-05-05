@@ -20,8 +20,6 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 
-// public function testLiteralExponentiation()
-// public function testConstantExponentiation()
 // public function testShiftCycle()
 // public function testSolve()
 // public function testPeriodicSubcycleDayCount()
@@ -2707,6 +2705,27 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         $this->assertEquals($totals, [
             RationalNumber::get("365"),
             RationalNumber::get("365")
+        ]);
+    }
+
+    public function testLiteralExponentiation() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "2 ** 3";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("8")
+        ]);
+    }
+
+    public function testConstantExponentiation() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "2 ** (CYCLE_DAY_PRECOUNT_PER_YEAR - 364)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("4"),
+            RationalNumber::get("2")
         ]);
     }
 
