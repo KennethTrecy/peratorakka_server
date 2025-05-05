@@ -467,11 +467,10 @@ class TimeGroupManager
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
                 if (count($frozen_period_IDs) === 0) continue;
 
-                $derivator = $this->exchange_rate_cache->buildDerivator(
-                    $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                        ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
-                        : $time_group->finishedAt()
-                );
+                $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
+                    ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                    : $time_group->finishedAt();
+                $derivator = $this->exchange_rate_cache->buildDerivator($time_basis);
 
                 foreach ($summary_calculations as $summary_calculation) {
                     $frozen_account_hash = $summary_calculation->frozen_account_hash;
@@ -543,11 +542,10 @@ class TimeGroupManager
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
                 if (count($frozen_period_IDs) === 0) continue;
 
-                $derivator = $this->exchange_rate_cache->buildDerivator(
-                    $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                        ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
-                        : $time_group->finishedAt()
-                );
+                $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
+                    ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                    : $time_group->finishedAt();
+                $derivator = $this->exchange_rate_cache->buildDerivator($time_basis);
 
                 foreach ($summary_calculations as $summary_calculation) {
                     $frozen_account_hash = $summary_calculation->frozen_account_hash;
