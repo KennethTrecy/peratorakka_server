@@ -49,6 +49,7 @@ class ExchangeRateCache extends SingletonCache
                     || $exchange_entry->updated_at->equals($target_time);
             }
         );
+
         $updated_exchange_rates = [];
         foreach ($qualified_exchange_rates as $qualified_exchange_entry) {
             $exchange_id = $qualified_exchange_entry->source_currency_id
@@ -156,6 +157,13 @@ class ExchangeRateCache extends SingletonCache
                         )
                 );
 
+            $financial_entries = model(FinancialEntryModel::class, false)
+                ->whereIn("id", $financial_entry_subquery)
+                ->findAll();
+            $financial_entries = Resource::key(
+                $financial_entries,
+                fn ($financial_entry) => $financial_entry->id
+            );
 
             $financial_entry_atoms = model(FinancialEntryAtomModel::class, false)
                 ->whereIn("financial_entry_id", $financial_entry_subquery)
@@ -176,7 +184,7 @@ class ExchangeRateCache extends SingletonCache
                 fn ($atom) => $atom->financial_entry_id
             );
 
-            foreach ($paired_financial_entry_atoms as $financial_entry_atom_pair) {
+            foreach ($paired_financial_entry_atoms as $entry_id => $financial_entry_atom_pair) {
                 [
                     $debit_financial_entry_atom,
                     $credit_financial_entry_atom
@@ -214,16 +222,12 @@ class ExchangeRateCache extends SingletonCache
                     ? $debit_value
                     : $credit_value;
 
-                $lowest_financial_entry_atom_id = min(
-                    $debit_financial_entry_atom->id,
-                    $credit_financial_entry_atom->id
-                );
                 $new_exchange_rate_info = new ExchangeRateInfo(
                     $source_currency_id,
                     $source_value,
                     $destination_currency_id,
                     $destination_value,
-                    Time::now()->subSeconds($lowest_financial_entry_atom_id)
+                    $financial_entries[$entry_id]->transacted_at->addSeconds($entry_id)
                 );
 
                 array_push($this->exchange_entries, $new_exchange_rate_info);
