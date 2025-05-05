@@ -20,7 +20,6 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 
-// public function testExchangedTotalOpenedDebitAmountForAssetCollection()
 // public function testPeriodicCycleDayCount()
 // public function testYearlyCycleDayCount()
 // public function testPeriodicDayPrecountPerYear()
@@ -170,7 +169,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -305,7 +304,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -440,7 +439,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -575,7 +574,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -710,7 +709,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -845,7 +844,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -980,7 +979,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1115,7 +1114,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1247,7 +1246,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1382,7 +1381,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1517,7 +1516,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1652,7 +1651,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1787,7 +1786,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -1922,7 +1921,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -2057,7 +2056,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -2192,7 +2191,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -2327,7 +2326,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -2477,7 +2476,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $time_group_manager = new TimeGroupManager(new Context(), $time_groups);
+        $time_group_manager = new TimeGroupManager(Context::make(), $time_groups);
         $account_cache = AccountCache::make($time_group_manager->context);
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
@@ -2491,7 +2490,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testExchangedTotalOpenedDebitAmountForAssetCollection()
+    public function testExchangedTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -2530,13 +2529,13 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
                             "modifier_index" => 3,
                             "atoms" => [
                                 [ 6, "250" ],
-                                [ 7, "1" ]
+                                [ 7, "3" ]
                             ]
                         ],
                         [
                             "modifier_index" => 4,
                             "atoms" => [
-                                [ 8, "1" ],
+                                [ 8, "3" ],
                                 [ 9, "250" ]
                             ]
                         ],
@@ -2571,13 +2570,13 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
                             "modifier_index" => 3,
                             "atoms" => [
                                 [ 6, "250" ],
-                                [ 7, "1" ]
+                                [ 7, "2" ]
                             ]
                         ],
                         [
                             "modifier_index" => 4,
                             "atoms" => [
-                                [ 8, "1" ],
+                                [ 8, "2" ],
                                 [ 9, "250" ]
                             ]
                         ],
@@ -2628,7 +2627,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
                 ]
             ]
         );
-        $currency = $currencies[0];
+        $local_currency = $currencies[0];
+        $foreign_currency = $currencies[1];
         $foreign_asset_account = $accounts[4];
         $details = $frozen_periods[0];
         [
@@ -2640,7 +2640,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
             "ancestor_accounts" => [
                 $precision_formats,
-                $currencies,
+                [ $foreign_currency ],
                 [ $foreign_asset_account ]
             ]
         ]);
@@ -2650,27 +2650,24 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             new PeriodicTimeGroup($frozen_periods[0]),
             new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
         $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
-        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $local_currency->id);
         $account_IDs = array_map(fn ($account) => $account->id, $accounts);
         $account_cache = AccountCache::make($context);
         $account_cache->loadResources($account_IDs);
         $exchange_rate_cache = ExchangeRateCache::make($context);
         $exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
-        $exchange_rate_cache->setLastExchangeRateTimeOnce(Time::now());
-        $destination_currency_id = $context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID
-        );
+        $exchange_rate_cache->setLastExchangeRateTimeOnce(Time::now()->addDays(1));
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
-        $formula = "TOTAL_OPENED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
+        $formula = "TOTAL_CLOSED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])";
         $totals = $math_expression->evaluate($formula);
 
         $this->assertEquals($totals, [
-            [ RationalNumber::get("0") ],
-            [ RationalNumber::get("250") ]
+            [ RationalNumber::get("250") ],
+            [ RationalNumber::get("625") ]
         ]);
     }
 }
