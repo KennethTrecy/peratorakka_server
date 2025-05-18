@@ -21,16 +21,6 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 
-// public function testShiftCycle()
-// public function testSolve()
-// public function testPeriodicSubcycleDayCount()
-// public function testYearlySubcycleDayCount()
-// public function testPeriodicSubcycleIndex()
-// public function testYearlySubcycleIndex()
-// public function testPeriodicSubcycleCount()
-// public function testYearlySubcycleCount()
-// public function testPeriodicSubcycleLiteral()
-// public function testYearlySubcycleLiteral()
 // public function testPeriodicCyclicProduct()
 // public function testYearlyCyclicProduct()
 // public function testPeriodicSelectCycleFirstValue()
@@ -2489,6 +2479,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
+        $current_time = Time::now();
         [
             $precision_formats,
             $cash_flow_activities,
@@ -2503,8 +2494,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             $authenticated_info->getUser(),
             [
                 [
-                    "started_at" => Time::now()->subDays(3),
-                    "finished_at" => Time::now()->subDays(2),
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
                     "entries" => [
                         [
                             "modifier_index" => 0,
@@ -2544,8 +2535,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
                     ]
                 ],
                 [
-                    "started_at" => Time::now()->subDays(1),
-                    "finished_at" => Time::now(),
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
                     "entries" => [
                         [
                             "modifier_index" => 0,
@@ -2653,7 +2644,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         $account_cache->loadResources($account_IDs);
         $exchange_rate_cache = ExchangeRateCache::make($context);
         $exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
-        $exchange_rate_cache->setLastExchangeRateTimeOnce(Time::now()->addDays(1));
+        $exchange_rate_cache->setLastExchangeRateTimeOnce($current_time->addDays(1));
         $time_group_manager = new TimeGroupManager($context, $time_groups);
         $math_expression = new MathExpression($time_group_manager);
 
@@ -2738,6 +2729,90 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         $this->assertEquals($totals, [
             RationalNumber::get("128"),
             RationalNumber::get("4")
+        ]);
+    }
+
+    public function testPeriodicSubcycleDayCount() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / SUBCYCLE_DAY_COUNT";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("125/183") ], // 250/366
+            [ RationalNumber::get("50/73") ] // 250/365
+        ]);
+    }
+
+    public function testYearlySubcycleDayCount() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / SUBCYCLE_DAY_COUNT";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("125"), RationalNumber::get("125") ] // 250/2, 250/2
+        ]);
+    }
+
+    public function testPeriodicSubcycleIndex() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_INDEX + 1)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("250") ],
+            [ RationalNumber::get("250") ]
+        ]);
+    }
+
+    public function testYearlySubcycleIndex() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * SUBCYCLE_INDEX";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("0"), RationalNumber::get("250") ]
+        ]);
+    }
+
+    public function testPeriodicSubcycleCount() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_COUNT + 1)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("500") ],
+            [ RationalNumber::get("500") ]
+        ]);
+    }
+
+    public function testYearlySubcycleCount() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_COUNT + 1)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("750"), RationalNumber::get("750") ]
+        ]);
+    }
+
+    public function testPeriodicSubcycleLiteral() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_INDEX + SUBCYCLE_LITERAL(1))";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("250") ],
+            [ RationalNumber::get("250") ]
+        ]);
+    }
+
+    public function testYearlySubcycleLiteral() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_LITERAL(SUBCYCLE_COUNT) - SUBCYCLE_INDEX)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("500"), RationalNumber::get("250") ]
         ]);
     }
 
