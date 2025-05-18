@@ -21,11 +21,6 @@ use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 
-// public function testPeriodicCyclicProduct()
-// public function testYearlyCyclicProduct()
-// public function testPeriodicSelectCycleFirstValue()
-// public function testPeriodicSelectCycleLastValueAndCycleCount()
-// public function testYearlySelectCycleValue()
 // public function testPeriodicAccountNetCashFlowAmount()
 // public function testYearlyAccountNetCashFlowAmount()
 // public function testPeriodicCollectionNetCashFlowAmount()
@@ -2813,6 +2808,59 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
 
         $this->assertEquals($totals, [
             [ RationalNumber::get("500"), RationalNumber::get("250") ]
+        ]);
+    }
+
+    public function testPeriodicCyclicProduct() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "CYCLIC_PRODUCT(SUBCYCLE_LITERAL(3))";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("3"),
+            RationalNumber::get("3")
+        ]);
+    }
+
+    public function testYearlyCyclicProduct() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "CYCLIC_PRODUCT(SUBCYCLE_LITERAL(3))";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            RationalNumber::get("9")
+        ]);
+    }
+
+    public function testPeriodicSelectCycleFirstValue() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "SELECT_CYCLE_VALUE(TOTAL_CLOSED_CREDIT_AMOUNT(EQUITY_ACCOUNTS), 0)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("750") ],
+            [ RationalNumber::get("750") ]
+        ]);
+    }
+
+    public function testPeriodicSelectCycleLastValueAndCycleCount() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $formula = "SELECT_CYCLE_VALUE(TOTAL_CLOSED_CREDIT_AMOUNT(EQUITY_ACCOUNTS), CYCLE_COUNT - 1)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("1500") ],
+            [ RationalNumber::get("1500") ]
+        ]);
+    }
+
+    public function testYearlySelectCycleValue() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $formula = "SELECT_CYCLE_VALUE(TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * SUBCYCLE_INDEX, 0)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("0"), RationalNumber::get("250") ]
         ]);
     }
 
