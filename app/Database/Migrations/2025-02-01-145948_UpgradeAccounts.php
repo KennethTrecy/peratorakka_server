@@ -23,7 +23,7 @@ class UpgradeAccounts extends Migration
             fn ($entity) => $entity->id
         );
         $keyed_new_parents = Resource::key(
-            model(CurrencyModel::class)->findAll(),
+            model(CurrencyModel::class)->withDeleted()->findAll(),
             fn ($entity) => $entity->created_at->toDateTimeString()
         );
         $old_entities = model(DeprecatedAccountModel::class)
