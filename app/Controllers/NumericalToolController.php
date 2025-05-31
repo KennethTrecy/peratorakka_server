@@ -32,8 +32,14 @@ class NumericalToolController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $user_id = $owner->id;
-
+        $validation->setRule("$individual_name.currency_id", "currency", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                CurrencyModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[2]",
@@ -42,7 +48,7 @@ class NumericalToolController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "user_id=$user_id"
+                    "currency_id->$individual_name.currency_id"
                 ])
             ])."]"
         ]);
@@ -55,8 +61,6 @@ class NumericalToolController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $user_id = $owner->id;
-
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[3]",
@@ -65,7 +69,7 @@ class NumericalToolController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "user_id=$user_id"
+                    "currency_id->$individual_name.currency_id"
                 ]),
                 "id=$resource_id"
             ])."]"
@@ -83,36 +87,20 @@ class NumericalToolController extends BaseOwnedResourceController
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        $linked_currencies = array_filter(array_map(function ($main_document) {
-            $output_format = explode(
-                "#",
-                $main_document->configuration->sources[0]->outputFormatCode()
-            );
-            if ($output_format[0] === CURRENCY_FORMULA_OUTPUT_FORMAT) {
-                return intval($output_format[1]);
-            }
-
-            return null;
-        }, $main_documents), function ($currency_id) {
-            return $currency_id !== null;
-        });
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->selectUsingMultipleIDs($linked_currencies);
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        if ($must_include_precision_format || $must_include_currency) {
+            [
+                $currencies,
+                $precision_formats
+            ] = NumericalToolModel::selectAncestorsWithResolvedResources($main_documents);
+            $enriched_document["precision_formats"] = $precision_formats;
             $enriched_document["currencies"] = $currencies;
         }
 
         return $enriched_document;
-    }
-
-    protected static function prepareRequestData(array $raw_request_data): array
-    {
-        $current_user = auth()->user();
-
-        return array_merge(
-            [ "user_id" => $current_user->id ],
-            $raw_request_data
-        );
     }
 
     public function calculate(int $id)
@@ -137,7 +125,10 @@ class NumericalToolController extends BaseOwnedResourceController
                 ],
                 static::getIndividualName() => $data
             ];
-            $response_document = static::enrichResponseDocument($response_document);
+            $response_document = static::enrichResponseDocument($response_document, [
+                "precision_formats",
+                "currencies"
+            ]);
             ksort($response_document);
 
             return $this->response->setJSON($response_document);
