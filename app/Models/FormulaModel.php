@@ -16,6 +16,7 @@ class FormulaModel extends BaseResourceModel
         "description",
         "output_format",
         "expression",
+        "created_at",
         "deleted_at"
     ];
 
