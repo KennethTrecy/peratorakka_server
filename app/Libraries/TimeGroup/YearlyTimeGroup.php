@@ -123,6 +123,9 @@ class YearlyTimeGroup implements TimeGroup
     public function timeTag(): string
     {
         $finished_date = $this->finishedAt();
+        $finished_date = $finished_date
+            ->setTimezone(DATE_TIME_ZONE)
+            ->addHours(-$finished_date->getOffset());
 
         return "$finished_date->year";
     }

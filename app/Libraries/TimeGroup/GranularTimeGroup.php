@@ -44,7 +44,10 @@ abstract class GranularTimeGroup implements TimeGroup
     {
         $finished_date = $this->finishedAt();
 
-        return $finished_date->toLocalizedString("MMMM yyyy");
+        return $finished_date
+            ->setTimezone(DATE_TIME_ZONE)
+            ->addHours(-$finished_date->getOffset())
+            ->toLocalizedString("MMMM yyyy");
     }
 
     public function totalRealOpenedAmount(array $selected_hashes): array {
