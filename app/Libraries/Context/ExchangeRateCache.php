@@ -127,9 +127,7 @@ class ExchangeRateCache extends SingletonCache
                 ->select("id")
                 ->whereIn("currency_id", $new_currency_IDs);
 
-            $financial_entry_subquery =  model(FinancialEntryModel::class, false)
-                ->builder()
-                ->select("id")
+            $financial_entries = model(FinancialEntryModel::class, false)
                 ->where(
                     "transacted_at <=",
                     $this->last_exchange_rate_time
@@ -144,21 +142,18 @@ class ExchangeRateCache extends SingletonCache
                             model(ModifierAtomModel::class, false)
                                 ->builder()
                                 ->select("id")
-                                ->where("modifier_id", $exchange_modifier_subquery)
-                                ->where("account_id", $new_account_subquery)
+                                ->whereIn("modifier_id", $exchange_modifier_subquery)
+                                ->whereIn("account_id", $new_account_subquery)
                         )
-                        ->whereIn(
+                        ->orWhereIn(
                             "modifier_atom_id",
                             model(ModifierAtomModel::class, false)
                                 ->builder()
                                 ->select("id")
-                                ->where("modifier_id", $exchange_modifier_subquery)
-                                ->where("account_id", $all_account_subquery)
+                                ->whereIn("modifier_id", $exchange_modifier_subquery)
+                                ->whereIn("account_id", $all_account_subquery)
                         )
-                );
-
-            $financial_entries = model(FinancialEntryModel::class, false)
-                ->whereIn("id", $financial_entry_subquery)
+                )
                 ->findAll();
             $financial_entries = Resource::key(
                 $financial_entries,
@@ -166,7 +161,7 @@ class ExchangeRateCache extends SingletonCache
             );
 
             $financial_entry_atoms = model(FinancialEntryAtomModel::class, false)
-                ->whereIn("financial_entry_id", $financial_entry_subquery)
+                ->whereIn("financial_entry_id", array_keys($financial_entries))
                 ->findAll();
 
             $linked_modifier_atoms = array_map(
