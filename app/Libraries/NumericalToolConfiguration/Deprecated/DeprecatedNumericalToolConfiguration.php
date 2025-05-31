@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Libraries;
+namespace App\Libraries\NumericalToolConfiguration\Deprecated;
 
 use App\Contracts\NumericalToolSource;
 use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
-use App\Libraries\NumericalToolConfiguration\CollectionSource;
-use App\Libraries\NumericalToolConfiguration\FormulaSource;
+use App\Libraries\NumericalToolConfiguration\Deprecated\DeprecatedCollectionSource;
+use App\Libraries\NumericalToolConfiguration\Deprecated\DeprecatedFormulaSource;
 
-class NumericalToolConfiguration
+class DeprecatedNumericalToolConfiguration
 {
-    public static function parseConfiguration(array $configuration): NumericalToolConfiguration
-    {
+    public static function parseConfiguration(
+        array $configuration
+    ): DeprecatedNumericalToolConfiguration {
         if (
             isset($configuration["sources"])
             && is_array($configuration["sources"])
@@ -23,8 +24,8 @@ class NumericalToolConfiguration
             foreach ($sources as $i => $source) {
                 if (isset($source["type"])) {
                     switch ($source["type"]) {
-                        case CollectionSource::sourceType(): {
-                            $parsed_source = CollectionSource::parseConfiguration($source);
+                        case DeprecatedCollectionSource::sourceType(): {
+                            $parsed_source = DeprecatedCollectionSource::parseConfiguration($source);
 
                             if (is_null($parsed_source)) {
                                 throw new NumericalToolConfigurationException(
@@ -38,8 +39,8 @@ class NumericalToolConfiguration
                             break;
                         }
 
-                        case FormulaSource::sourceType(): {
-                            $parsed_source = FormulaSource::parseConfiguration($source);
+                        case DeprecatedFormulaSource::sourceType(): {
+                            $parsed_source = DeprecatedFormulaSource::parseConfiguration($source);
 
                             if (is_null($parsed_source)) {
                                 throw new NumericalToolConfigurationException(
@@ -75,7 +76,7 @@ class NumericalToolConfiguration
                 }
             }
 
-            return new NumericalToolConfiguration($parsed_sources);
+            return new DeprecatedNumericalToolConfiguration($parsed_sources);
         } else {
             throw new NumericalToolConfigurationException("Missing sources");
         }
@@ -88,14 +89,13 @@ class NumericalToolConfiguration
         $this->sources = $sources;
     }
 
-    // Before invoking this method, ensure destination currency ID and exchange rate basis were set
     public function calculate(Context $context): array
     {
         $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
 
         $collection_IDs = [];
         foreach ($this->sources as $source) {
-            if ($source instanceof CollectionSource) {
+            if ($source instanceof DeprecatedCollectionSource) {
                 array_push($collection_IDs, $source->collection_id);
             }
         }
@@ -112,10 +112,7 @@ class NumericalToolConfiguration
             }
 
             $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-            $account_cache->loadResources(array_unique($account_IDs));
-
-            $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
-            $exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
+            $account_cache->loadAccounts(array_unique($account_IDs));
         }
 
         $results = [];

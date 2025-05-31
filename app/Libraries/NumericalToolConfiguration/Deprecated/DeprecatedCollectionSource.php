@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libraries\NumericalToolConfiguration;
+namespace App\Libraries\NumericalToolConfiguration\Deprecated;
 
 use App\Casts\RationalNumber;
 use App\Contracts\NumericalToolSource;
@@ -17,17 +17,19 @@ use App\Libraries\MathExpression;
 use App\Libraries\TimeGroupManager;
 use App\Models\AccountCollectionModel;
 
-class CollectionSource implements NumericalToolSource
+class DeprecatedCollectionSource implements NumericalToolSource
 {
     public static function sourceType(): string
     {
         return "collection";
     }
 
-    public static function parseConfiguration(array $configuration): ?CollectionSource
+    public static function parseConfiguration(array $configuration): ?DeprecatedCollectionSource
     {
         if (
             isset($configuration["collection_id"])
+            && isset($configuration["currency_id"])
+            && isset($configuration["exchange_rate_basis"])
             && isset($configuration["stage_basis"])
             && 0 <= $configuration["stage_basis"]
             && in_array($configuration["stage_basis"], AMOUNT_STAGE_BASES)
@@ -47,7 +49,9 @@ class CollectionSource implements NumericalToolSource
                 )
             )
         ) {
-            return new CollectionSource(
+            return new DeprecatedCollectionSource(
+                $configuration["currency_id"],
+                $configuration["exchange_rate_basis"],
                 $configuration["collection_id"],
                 $configuration["stage_basis"],
                 $configuration["side_basis"],
@@ -60,6 +64,9 @@ class CollectionSource implements NumericalToolSource
         return null;
     }
 
+    public readonly int $currency_id;
+    public readonly string $exchange_rate_basis;
+
     public readonly int $collection_id;
     public readonly string $stage_basis;
     public readonly string $side_basis;
@@ -68,6 +75,8 @@ class CollectionSource implements NumericalToolSource
     public readonly bool $must_show_collective_average;
 
     private function __construct(
+        int $currency_id,
+        string $exchange_rate_basis,
         int $collection_id,
         string $stage_basis,
         string $side_basis,
@@ -75,6 +84,8 @@ class CollectionSource implements NumericalToolSource
         bool $must_show_collective_sum,
         bool $must_show_collective_average
     ) {
+        $this->currency_id = $currency_id;
+        $this->exchange_rate_basis = $exchange_rate_basis;
         $this->collection_id = $collection_id;
         $this->stage_basis = $stage_basis;
         $this->side_basis = $side_basis;
@@ -85,11 +96,14 @@ class CollectionSource implements NumericalToolSource
 
     public function outputFormatCode(): string
     {
-        return CURRENCY_FORMULA_OUTPUT_FORMAT;
+        return CURRENCY_FORMULA_OUTPUT_FORMAT."#$this->currency_id";
     }
 
     public function calculate(Context $context): array
     {
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $this->currency_id);
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, $this->exchange_rate_basis);
+
         /**
          * @var TimeGroupManager
          */
@@ -142,11 +156,11 @@ class CollectionSource implements NumericalToolSource
                 || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
             ) {
                 $debit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
-                    ? "totalRealOpenedDebitAmount"
+                    ? "totalOpenedDebitAmount"
                     : (
                         $this->stage_basis === UNADJUSTED_AMOUNT_STAGE_BASIS
-                            ? "totalRealUnadjustedDebitAmount"
-                            : "totalRealClosedDebitAmount"
+                            ? "totalUnadjustedDebitAmount"
+                            : "totalClosedDebitAmount"
                     );
 
                 $totals = $time_group_manager->$debit_function([ $account_id ]);
@@ -159,11 +173,11 @@ class CollectionSource implements NumericalToolSource
                 || $this->side_basis === NET_CREDIT_AMOUNT_SIDE_BASIS
             ) {
                 $credit_function = $this->stage_basis === OPENED_AMOUNT_STAGE_BASIS
-                    ? "totalRealOpenedCreditAmount"
+                    ? "totalOpenedCreditAmount"
                     : (
                         $this->stage_basis === UNADJUSTED_AMOUNT_STAGE_BASIS
-                            ? "totalRealUnadjustedCreditAmount"
-                            : "totalRealClosedCreditAmount"
+                            ? "totalUnadjustedCreditAmount"
+                            : "totalClosedCreditAmount"
                     );
                 $totals = $time_group_manager->$credit_function([ $account_id ]);
                 $account_credit_totals = MathExpression::summatePeriodicResults($totals);
@@ -210,7 +224,7 @@ class CollectionSource implements NumericalToolSource
                             $currency_id,
                             $time_group_value
                         );
-                        return new Star($display_value ?? "", $time_group_value);
+                        return new Star($display_value, $time_group_value);
                     },
                     $account_totals[$account_id]
                 )
@@ -252,7 +266,7 @@ class CollectionSource implements NumericalToolSource
                             $currency_id,
                             $sum
                         );
-                        return new Star($display_value ?? "", $sum);
+                        return new Star($display_value, $sum);
                     },
                     $collective_sum
                 )
@@ -286,7 +300,7 @@ class CollectionSource implements NumericalToolSource
                             $currency_id,
                             $average
                         );
-                        return new Star($display_value ?? "", $average);
+                        return new Star($display_value, $average);
                     },
                     $collective_average
                 )
@@ -301,6 +315,8 @@ class CollectionSource implements NumericalToolSource
         return [
             "type" => static::sourceType(),
             "collection_id" => $this->collection_id,
+            "currency_id" => $this->currency_id,
+            "exchange_rate_basis" => $this->exchange_rate_basis,
             "stage_basis" => $this->stage_basis,
             "side_basis" => $this->side_basis,
             "must_show_individual_amounts" => $this->must_show_individual_amounts,
