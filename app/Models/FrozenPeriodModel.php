@@ -184,7 +184,11 @@ class FrozenPeriodModel extends BaseResourceModel
         [
             $precision_formats,
             $currencies
-        ] = CurrencyModel::createTestResources($user->id, $currency_count, []);
+        ] = CurrencyModel::createTestResources(
+            $user->id,
+            $currency_count,
+            $dependencies["currency_options"] ?? []
+        );
 
         [
             $cash_flow_activities
