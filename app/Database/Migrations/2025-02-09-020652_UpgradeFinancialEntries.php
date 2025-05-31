@@ -55,44 +55,47 @@ class UpgradeFinancialEntries extends Migration
             fn ($entity) => $entity->modifier_id.$entity->account_id
         );
 
-        $old_entities = model(DeprecatedFinancialEntryModel::class, false)
-            ->withDeleted()
-            ->findAll();
-        $new_entities = [];
-        foreach ($old_entities as $old_entity) {
-            $new_entity = new FinancialEntry();
-            $old_modifier_id = $old_entity->modifier_id;
-            $old_modifier = $keyed_old_parents[$old_modifier_id];
-            $new_modifier = $keyed_new_parents[
-                $old_modifier->name.$old_modifier->created_at->toDateTimeString()
-            ];
+        $offset = 0;
+        $count_per_batch = 2500;
 
-            $new_entity->fill([
-                "modifier_id" => $new_modifier->id,
-                "transacted_at" => $old_entity->transacted_at->toDateTimeString(),
-                "remarks" => $old_entity->remarks,
-                "created_at" => $old_entity->created_at,
-                "updated_at" => $old_entity->updated_at
-            ]);
+        do {
+            $old_entities = model(DeprecatedFinancialEntryModel::class, false)
+                ->withDeleted()
+                ->findAll($count_per_batch, $offset);
 
-            array_push($new_entities, $new_entity);
-        }
+            $new_entities = [];
+            foreach ($old_entities as $old_entity) {
+                $new_entity = new FinancialEntry();
+                $old_modifier_id = $old_entity->modifier_id;
+                $old_modifier = $keyed_old_parents[$old_modifier_id];
+                $new_modifier = $keyed_new_parents[
+                    $old_modifier->name.$old_modifier->created_at->toDateTimeString()
+                ];
 
-        if (count($new_entities) > 0) {
-            model(FinancialEntryModel::class, false)->insertBatch($new_entities);
+                $new_entity->fill([
+                    "modifier_id" => $new_modifier->id,
+                    "transacted_at" => $old_entity->transacted_at->toDateTimeString(),
+                    "remarks" => $old_entity->remarks,
+                    "created_at" => $old_entity->created_at,
+                    "updated_at" => $old_entity->updated_at
+                ]);
 
-            $keyed_financial_entries_by_remarks_and_transacted_at = Resource::key(
-                model(FinancialEntryModel::class, false)->withDeleted()->findAll(),
-                fn ($entity) => (
-                    $entity->remarks
-                    .$entity->transacted_at->toDateTimeString()
-                    .$entity->created_at->toDateTimeString()
-                    .$entity->updated_at->toDateTimeString()
-                )
-            );
+                array_push($new_entities, $new_entity);
+            }
 
-            $chunked_old_entities = array_chunk($old_entities, 2500);
-            foreach ($chunked_old_entities as $old_entities) {
+            if (count($new_entities) > 0) {
+                model(FinancialEntryModel::class, false)->insertBatch($new_entities);
+
+                $keyed_financial_entries_by_remarks_and_transacted_at = Resource::key(
+                    model(FinancialEntryModel::class, false)->withDeleted()->findAll(),
+                    fn ($entity) => (
+                        $entity->remarks
+                        .$entity->transacted_at->toDateTimeString()
+                        .$entity->created_at->toDateTimeString()
+                        .$entity->updated_at->toDateTimeString()
+                    )
+                );
+
                 $new_child_entities = [];
 
                 foreach ($old_entities as $old_entity) {
@@ -145,14 +148,16 @@ class UpgradeFinancialEntries extends Migration
                     ]);
 
                     array_push($new_child_entities, $new_entity);
-
                 }
 
                 if (count($new_child_entities) > 0) {
-                    model(FinancialEntryAtomModel::class, false)->insertBatch($new_child_entities);
+                    model(FinancialEntryAtomModel::class, false)
+                        ->insertBatch($new_child_entities);
                 }
             }
-        }
+
+            $offset += $count_per_batch;
+        } while (count($old_entities) > 0);
     }
 
     public function down()
