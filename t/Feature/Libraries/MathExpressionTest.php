@@ -14,17 +14,13 @@ use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\Context\FrozenAccountCache;
 use App\Models\AccountCollectionModel;
+use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
 use App\Models\FormulaModel;
 use App\Models\FrozenPeriodModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
-
-// public function testPeriodicAccountNetCashFlowAmount()
-// public function testYearlyAccountNetCashFlowAmount()
-// public function testPeriodicCollectionNetCashFlowAmount()
-// public function testYearlyCollectionNetCashFlowAmount()
 
 class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
 {
@@ -2884,6 +2880,36 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         $this->assertEquals($totals, [
             [ RationalNumber::get("250") ],
             [ RationalNumber::get("250") ]
+        ]);
+    }
+
+    // Assumed to be working with other compound values as well
+    public function testPeriodicAccountNetCashFlowAmount() {
+        $math_expression = $this->makeMathExpressionForPeriodicTests();
+        $current_user = model(setting("Auth.userProvider"), false)->first();
+        $cash_flow_activity = model(CashFlowActivityModel::class)
+            ->where("user_id", $current_user->id)
+            ->first();
+        $formula = "TOTAL_NET_CASH_FLOW_AMOUNT(CASH_FLOW_ACTIVITY[$cash_flow_activity->id], EXPENSE_ACCOUNTS)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("-250") ],
+            [ RationalNumber::get("-250") ]
+        ]);
+    }
+
+    public function testYearlyAccountNetCashFlowAmount() {
+        $math_expression = $this->makeMathExpressionForYearlyTests();
+        $current_user = model(setting("Auth.userProvider"), false)->first();
+        $cash_flow_activity = model(CashFlowActivityModel::class)
+            ->where("user_id", $current_user->id)
+            ->first();
+        $formula = "TOTAL_NET_CASH_FLOW_AMOUNT(CASH_FLOW_ACTIVITY[$cash_flow_activity->id], EXPENSE_ACCOUNTS)";
+        $totals = $math_expression->evaluate($formula);
+
+        $this->assertEquals($totals, [
+            [ RationalNumber::get("-250"), RationalNumber::get("-250") ]
         ]);
     }
 
