@@ -39,7 +39,7 @@ class CollectionCache extends ResourceCache
 
     public function loadCollectedAccounts(array $target_collection_IDs): void
     {
-        $this->loadCollections($target_collection_IDs);
+        $this->loadResources($target_collection_IDs);
 
         if (count($target_collection_IDs) === 0 || $target_collection_IDs === null) {
             return;
