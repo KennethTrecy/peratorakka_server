@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Entities;
+namespace App\Entities\Deprecated;
 
-use App\Casts\NumericalToolConfiguration;
+use App\Casts\Deprecated\NumericalToolConfiguration;
+use App\Entities\BaseResourceEntity;
 use App\Casts\NumericalToolKind;
 use App\Casts\NumericalToolRecurrencePeriod;
-use App\Casts\ExchangeRateBasis;
 
 class NumericalTool extends BaseResourceEntity
 {
@@ -19,8 +19,7 @@ class NumericalTool extends BaseResourceEntity
 
     protected $casts = [
         "id" => "integer",
-        "currency_id" => "integer",
-        "exchange_rate_basis" => "numerical_tool_exchange_rate_basis",
+        "user_id" => "integer",
         "name" => "string",
         "kind" => "numerical_tool_kind",
         "recurrence" => "numerical_tool_recurrence_period",
@@ -31,7 +30,6 @@ class NumericalTool extends BaseResourceEntity
     ];
 
     protected $castHandlers = [
-        "numerical_tool_exchange_rate_basis" => ExchangeRateBasis::class,
         "numerical_tool_kind" => NumericalToolKind::class,
         "numerical_tool_recurrence_period" => NumericalToolRecurrencePeriod::class,
         "numerical_tool_configuration" => NumericalToolConfiguration::class
