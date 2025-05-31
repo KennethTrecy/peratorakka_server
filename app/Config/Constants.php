@@ -79,6 +79,10 @@ defined("EXIT__AUTO_MIN")      || define("EXIT__AUTO_MIN", 9);      // lowest au
 defined("EXIT__AUTO_MAX")      || define("EXIT__AUTO_MAX", 125);    // highest automatically-assigned error code
 
 define("DATE_TIME_STRING_FORMAT", "Y-m-d H:i:s");
+define("DATE_TIME_ZONE", "Atlantic/Faroe");
+// define("DATE_TIME_ZONE", "Asia/Manila");
+// define("DATE_TIME_ZONE", "Pacific/Wallis");
+// date_default_timezone_set(DATE_TIME_ZONE);
 
 /*
  | --------------------------------------------------------------------------
