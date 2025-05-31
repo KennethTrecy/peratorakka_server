@@ -172,6 +172,12 @@ class CurrencyModel extends BaseResourceModel
                     if (isset($raw_entries[$modifier["id"]])) {
                         if (
                             $financial_entry
+                            ->transacted_at
+                            ->isAfter($raw_entries[$modifier["id"]]->transacted_at)
+                        ) {
+                            $raw_entries[$modifier["id"]] = $financial_entry;
+                        } else if (
+                            $financial_entry
                             ->updated_at
                             ->isAfter($raw_entries[$modifier["id"]]->updated_at)
                         ) {
@@ -221,11 +227,13 @@ class CurrencyModel extends BaseResourceModel
                 if (isset($raw_exchanges[$exchange_id])) {
                     if (
                         $financial_entry
-                            ->updated_at
+                            ->transacted_at
                             ->isAfter($raw_exchanges[$exchange_id]["updated_at"])
                     ) {
                         $raw_exchanges[$exchange_id]["source"]["value"] = $source_value;
                         $raw_exchanges[$exchange_id]["destination"]["value"] = $destination_value;
+                        $raw_exchanges[$exchange_id]["updated_at"] = $financial_entry
+                            ->transacted_at;
                     }
                 } else {
                     $raw_exchanges[$exchange_id] = [
@@ -237,7 +245,7 @@ class CurrencyModel extends BaseResourceModel
                             "currency_id" => $destination_currency_id,
                             "value" => $destination_value
                         ],
-                        "updated_at" => $financial_entry->updated_at->toDateTimeString()
+                        "updated_at" => $financial_entry->transacted_at
                     ];
                 }
 
@@ -254,6 +262,8 @@ class CurrencyModel extends BaseResourceModel
 
                 $raw_exchange_rate["source"]["value"] = $rate->getDenominator();
                 $raw_exchange_rate["destination"]["value"] = $rate->getNumerator();
+                $raw_exchange_rate["updated_at"] = $raw_exchange_rate["updated_at"]
+                    ->toDateTimeString();
                 return $raw_exchange_rate;
             },
             $raw_exchange_rates
