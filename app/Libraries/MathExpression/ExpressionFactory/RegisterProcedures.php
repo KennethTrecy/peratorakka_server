@@ -6,6 +6,8 @@ use App\Exceptions\ExpressionException;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\FlashCache;
+use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
@@ -221,6 +223,10 @@ trait RegisterProcedures
                 lcfirst(ucwords($function_name, "_"))
             )
         );
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources($linked_accounts);
+        $exchange_rate_cache = ExchangeRateCache::make($context);
+        $exchange_rate_cache->loadExchangeRatesForAccounts($linked_accounts);
 
         $result = json_encode(
             $time_group_manager->$native_procedure_name($linked_accounts)
