@@ -72,6 +72,7 @@ class TimeGroupManager
         ] = $this->identifyDates();
 
         $this->context->setVariable(ContextKeys::LATEST_FINISHED_DATE, $latest_finish_date);
+        $this->exchange_rate_cache->setLastExchangeRateTimeOnce($latest_finish_date);
     }
 
     /**
@@ -456,20 +457,14 @@ class TimeGroupManager
                 ContextKeys::DESTINATION_CURRENCY_ID
             );
 
-            // TODO: Move this condition to caller of this method
-            // if (!is_null($destination_currency_id)) {
-            //     $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-            //         $destination_currency_id
-            //     ]);
-            // }
-
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                    ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                    ? Time::today()
                     : $time_group->finishedAt();
+                $time_basis = $time_basis->setHour(23)->setMinute(59)->setSecond(59);
                 $derivator = $this->exchange_rate_cache->buildDerivator($time_basis);
 
                 foreach ($summary_calculations as $summary_calculation) {
@@ -531,20 +526,14 @@ class TimeGroupManager
                 ContextKeys::DESTINATION_CURRENCY_ID
             );
 
-            // TODO: Move this condition to caller of this method
-            // if (!is_null($destination_currency_id)) {
-            //     $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-            //         $destination_currency_id
-            //     ]);
-            // }
-
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
-                    ? Time::today()->setHour(23)->setMinute(59)->setSecond(59)
+                    ? Time::today()
                     : $time_group->finishedAt();
+                $time_basis = $time_basis->setHour(23)->setMinute(59)->setSecond(59);
                 $derivator = $this->exchange_rate_cache->buildDerivator($time_basis);
 
                 foreach ($summary_calculations as $summary_calculation) {
@@ -669,7 +658,8 @@ class TimeGroupManager
                 ?? $last_frozen_finished_date;
         }
 
-        if ($last_frozen_finished_date === null) {
+        // Earliest start date may still be empty if there are no time groups in the first place
+        if ($earliest_start_date !== null && $last_frozen_finished_date === null) {
             $last_frozen_finished_date = $earliest_start_date->subDays(1);
         }
 
@@ -741,14 +731,8 @@ class TimeGroupManager
             PERIODIC_EXCHANGE_RATE_BASIS
         );
         $destination_currency_id = $this->context->getVariable(
-            ContextKeys::DESTINATION_CURRENCY_ID,
-            null
+            ContextKeys::DESTINATION_CURRENCY_ID
         );
-        if (!is_null($destination_currency_id)) {
-            $this->exchange_rate_cache->loadExchangeRatesForCurrencies([
-                $destination_currency_id
-            ]);
-        }
 
         $derivator = $this->exchange_rate_cache->buildDerivator(
             $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
