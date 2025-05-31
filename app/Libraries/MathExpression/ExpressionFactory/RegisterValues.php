@@ -58,7 +58,7 @@ trait RegisterValues
     private function evaluateAccountKind(array $values, Context $context, Token $token): string
     {
         $raw_kind = explode("_", $token->getValue());
-        $kind = strtolower($raw_kind[0]);
+        $kind = strtolower(implode("_", array_slice($raw_kind, 0, count($raw_kind) - 1)));
 
         $builder = model(AccountModel::class, false)
             ->builder()
