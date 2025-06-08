@@ -224,7 +224,7 @@ class ModifierAtomInputExaminer
                 LIQUID_ASSET_ACCOUNT_KIND => $one_or_many_count,
                 DEPRECIATIVE_ASSET_ACCOUNT_KIND => $one_or_many_count,
                 DIRECT_COST_ACCOUNT_KIND => $one_or_many_count,
-                DIRECT_SALE_ACCOUNT_KIND => $one_or_many_count
+                NOMINAL_RETURN_ACCOUNT_KIND => $one_or_many_count
             ]
         ];
         $exchange_atom_permissions = [
@@ -254,7 +254,7 @@ class ModifierAtomInputExaminer
                         EQUITY_ACCOUNT_KIND => $one_count_only,
                         GENERAL_REVENUE_ACCOUNT_KIND => $one_count_only,
                         GENERAL_TEMPORARY_ACCOUNT_KIND => $one_count_only,
-                        DIRECT_SALE_ACCOUNT_KIND => $one_count_only
+                        NOMINAL_RETURN_ACCOUNT_KIND => $one_count_only
                     ]
                 ],
                 REAL_CREDIT_MODIFIER_ATOM_KIND => [
@@ -340,7 +340,7 @@ class ModifierAtomInputExaminer
                     [
                         "all",
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count,
-                        DIRECT_SALE_ACCOUNT_KIND => $one_count_only
+                        NOMINAL_RETURN_ACCOUNT_KIND => $one_count_only
                     ],
                     [
                         "any",
@@ -426,7 +426,7 @@ class ModifierAtomInputExaminer
                     [
                         "any",
                         GENERAL_REVENUE_ACCOUNT_KIND => $one_or_many_count,
-                        DIRECT_SALE_ACCOUNT_KIND => $one_or_many_count
+                        NOMINAL_RETURN_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ],
                 ITEM_COUNT_MODIFIER_ATOM_KIND => [

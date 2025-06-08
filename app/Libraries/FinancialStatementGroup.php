@@ -248,7 +248,7 @@ class FinancialStatementGroup
 
             switch ($account->kind) {
                 case GENERAL_REVENUE_ACCOUNT_KIND:
-                case DIRECT_SALE_ACCOUNT_KIND:
+                case NOMINAL_RETURN_ACCOUNT_KIND:
                     $total_revenues = $total_revenues
                         ->plus($converted_credit_amount)
                         ->minus($converted_debit_amount);
@@ -363,7 +363,7 @@ class FinancialStatementGroup
                 || $account->kind === GENERAL_REVENUE_ACCOUNT_KIND
                 || $account->kind === GENERAL_TEMPORARY_ACCOUNT_KIND
                 || $account->kind === DIRECT_COST_ACCOUNT_KIND
-                || $account->kind === DIRECT_SALE_ACCOUNT_KIND
+                || $account->kind === NOMINAL_RETURN_ACCOUNT_KIND
             ) {
                 $illiquid_cash_flow_activity_subtotals[$activity_id]["net_income"]
                     = $illiquid_cash_flow_activity_subtotals[$activity_id]["net_income"]

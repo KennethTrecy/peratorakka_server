@@ -227,7 +227,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     || $account_kind === GENERAL_REVENUE_ACCOUNT_KIND
                     || $account_kind === GENERAL_TEMPORARY_ACCOUNT_KIND
                     || $account_kind === DIRECT_COST_ACCOUNT_KIND
-                    || $account_kind === DIRECT_SALE_ACCOUNT_KIND
+                    || $account_kind === NOMINAL_RETURN_ACCOUNT_KIND
                 ) {
                     throw new UnprocessableRequest(
                         "Temporary accounts must be closed first to create the frozen period."
