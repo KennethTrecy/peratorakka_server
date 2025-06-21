@@ -9,13 +9,14 @@ use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
 use App\Models\CurrencyModel;
-use App\Models\FinancialEntryModel;
-use App\Models\FlowCalculationModel;
+use App\Models\PrecisionFormatModel;
+use App\Models\Deprecated\DeprecatedFinancialEntryModel;
+use App\Models\Deprecated\DeprecatedFlowCalculationModel;
+use App\Models\Deprecated\DeprecatedSummaryCalculation;
 use App\Models\FormulaModel;
 use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
 use App\Models\NumericalToolModel;
-use App\Models\SummaryCalculationModel;
 use CodeIgniter\Database\Seeder;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\I18n\Time;
@@ -37,186 +38,9 @@ class MakeTestUser extends Seeder
         ]);
         $users->save($user);
 
-        $user_id = $users->getInsertID();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $peso_currency = $currency_fabricator->setOverrides([
-            "user_id" => $user_id,
-            "name" => "Philippine Peso",
-            "code" => "PHP",
-            "presentational_precision" => 2
-        ])->create();
-
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $operating_cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $user_id,
-            "name" => "Operating Activities",
-            "description" => "Activities that are part or related to your normal life."
-        ])->create();
-        $financing_cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $user_id,
-            "name" => "Financing Activities",
-            "description" => "Activities that are part or related to your loans."
-        ])->create();
-
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Cash",
-            "description" => "This is an example account.",
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND,
-        ])->create();
-        $expense_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Fare",
-            "description" => "This is an example account.",
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $expense_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Food and Beverage",
-            "description" => "This is an example account.",
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Living Equity",
-            "description" => "This is an example account.",
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $liability_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Accounts Payable to Friend",
-            "description" => "This is an example account.",
-            "kind" => LIABILITY_ACCOUNT_KIND
-        ])->create();
-        $income_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Service Income",
-            "description" => "This is an example account.",
-            "kind" => INCOME_ACCOUNT_KIND
-        ])->create();
-        $closing_account = $account_fabricator->setOverrides([
-            "currency_id" => $peso_currency->id,
-            "name" => "Revenue and Expenses",
-            "description" => "This is an example account.",
-            "kind" => INCOME_ACCOUNT_KIND
-        ])->create();
-
-
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $credit_collection = $collection_fabricator->setOverrides([
-            "user_id" => $user_id,
-            "name" => "All Credits"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $user_id,
-            "name" => "All Expenses"
-        ])->create();
-
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $credit_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_liability_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $credit_collection->id,
-            "account_id" => $liability_account->id
-        ])->create();
-        $collected_expense_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_a_account->id
-        ])->create();
-        $collected_expense_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_b_account->id
-        ])->create();
-
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_record_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Record existing balance",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $asset_account->id,
-            "credit_account_id" => $equity_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $loan_record_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Borrow cash from a friend",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $asset_account->id,
-            "credit_account_id" => $liability_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $financing_cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $expense_a_record_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Pay fare",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $expense_a_account->id,
-            "credit_account_id" => $asset_account->id,
-            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => null,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $expense_b_record_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Buy food and beverage",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $expense_b_account->id,
-            "credit_account_id" => $asset_account->id,
-            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => null,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $income_record_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Collect service income",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $asset_account->id,
-            "credit_account_id" => $income_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $close_income_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Close service income",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $income_account->id,
-            "credit_account_id" => $closing_account->id,
-            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $close_expense_a_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Close fare",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $closing_account->id,
-            "credit_account_id" => $expense_a_account->id,
-            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $close_expense_b_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Close food and beverage",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $closing_account->id,
-            "credit_account_id" => $expense_b_account->id,
-            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $close_equity_modifier = $modifier_fabricator->setOverrides([
-            "name" => "Close net income",
-            "description" => "This is an example modifier.",
-            "debit_account_id" => $closing_account->id,
-            "credit_account_id" => $equity_account->id,
-            "debit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $operating_cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-
+        /*
         $last_one_month = Time::today()->setDay(1)->subMonths(1);
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
+        $financial_entry_fabricator = new Fabricator(DeprecatedFinancialEntryModel::class);
         $first_recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
             "modifier_id" => $normal_record_modifier->id,
             "debit_amount" => "1000",
@@ -479,5 +303,6 @@ class MakeTestUser extends Seeder
                 ]
             ])
         ])->create();
+        */
     }
 }
