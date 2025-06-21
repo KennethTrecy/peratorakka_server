@@ -22,7 +22,7 @@ class UpgradeCurrencies extends Migration
             $precision_format_entity = new PrecisionFormat();
             $precision_format_entity->fill([
                 "user_id" => $user->id,
-                "name" => "Fiat Currency Precision",
+                "name" => "Fiat Currency",
                 "minimum_presentational_precision" => 0,
                 "maximum_presentational_precision" => 2
             ]);
