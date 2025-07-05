@@ -6,6 +6,7 @@ use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\FlashCache;
 use App\Libraries\Context\Memoizer;
 use Xylemical\Expressions\Context as BaseContext;
+use CodeIgniter\Shield\Entities\User;
 
 class Context extends BaseContext
 {
@@ -75,5 +76,18 @@ class Context extends BaseContext
         $clone->setVariable(ContextKeys::MAX_STACK_COUNT_STATUS, $max_stack_count);
 
         return $clone;
+    }
+
+    public function user(): User
+    {
+        $user = $this->getVariable(ContextKeys::USER, null);
+
+        if ($user === null) {
+            $this->setVariable(ContextKeys::USER, auth()->user());
+
+            return $this->user();
+        } else {
+            return $user;
+        }
     }
 }

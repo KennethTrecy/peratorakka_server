@@ -26,7 +26,7 @@ abstract class ResourceCache extends SingletonCache
 
     public function loadResources(array $target_resource_IDs): void
     {
-        $current_user = auth()->user();
+        $current_user = $this->context->user();
 
         $missing_resource_IDs = array_values(array_diff(
             array_values($target_resource_IDs),

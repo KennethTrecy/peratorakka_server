@@ -43,7 +43,7 @@ class ModifierAtomCache extends ResourceCache
 
     public function loadResourcesFromParentIDs(array $target_parent_IDs): void
     {
-        $current_user = auth()->user();
+        $current_user = $this->context->user();
 
         $loaded_parent_IDs = array_map(fn ($resource) => $resource->modifier_id, $this->resources);
 

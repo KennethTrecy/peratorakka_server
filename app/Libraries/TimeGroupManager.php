@@ -705,7 +705,7 @@ class TimeGroupManager
             $last_frozen_finished_date
         ] = $this->identifyDates();
 
-        $current_user = auth()->user();
+        $current_user = $this->context->user();
 
         [
             $periodic_frozen_accounts,

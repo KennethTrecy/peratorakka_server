@@ -12,6 +12,7 @@ enum ContextKeys: string
     case DESTINATION_CURRENCY_ID = "destination_currency_id";
 
     case TIME_GROUP_MANAGER = "manager";
+    case USER = "user";
     case FLASH_CACHE = "flash_cache";
     case MEMOIZER = "memoizer";
     case PRECISION_FORMAT_CACHE = "precision_format_cache";
