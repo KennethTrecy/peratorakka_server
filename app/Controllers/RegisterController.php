@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-// use CodeIgniter\HTTP\IncomingRequest;
+use CodeIgniter\HTTP\IncomingRequest;
 use App\Helpers\RequireCompatibleTokenExpiration;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -55,13 +55,13 @@ class RegisterController extends BaseRegisterController
 
         // Uncomment if the rebuilding request from new instance is preferred.
         // Do not forget to use necessary classes.
-        // $this->request = new IncomingRequest(
-        //     new App(),
-        //     $this->request->getUri(),
-        //     $this->request->getJSON(true),
-        //     $this->request->getUserAgent()
-        // );
-        $this->request = service("request");
+        $this->request = new IncomingRequest(
+            new App(),
+            $this->request->getUri(),
+            json_encode($this->request->getJSON(true)),
+            $this->request->getUserAgent()
+        );
+        // $this->request = service("request");
 
         if (!$this->hasCompatibleTokenExpirationType($this->request)) {
             return $this->response
