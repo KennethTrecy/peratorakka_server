@@ -41,7 +41,6 @@ class UpgradeNumericalTools extends Migration
             model(FormulaModel::class)->withDeleted()->findAll(),
             fn ($entity) => $entity->created_at->toDateTimeString()
         );
-        log_message("info", json_encode(array_keys($keyed_new_formulae)));
         $old_entities = model(DeprecatedNumericalToolModel::class)
             ->orderBy("created_at", "ASC")
             ->withDeleted()
