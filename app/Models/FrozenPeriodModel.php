@@ -700,6 +700,36 @@ class FrozenPeriodModel extends BaseResourceModel
             }
         }
 
+        // Ensure that frozen accounts are used at least once.
+        $keyed_frozen_accounts = Resource::key(
+            $frozen_accounts,
+            fn ($frozen_account) => $frozen_account->hash
+        );
+        $used_frozen_accounts = [];
+
+        foreach ($real_unadjusted_summaries as $summary_calculation) {
+            $frozen_account_hash = $summary_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
+        foreach ($real_adjusted_summaries as $summary_calculation) {
+            $frozen_account_hash = $summary_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
+        foreach ($real_flows as $flow_calculation) {
+            $frozen_account_hash = $flow_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
+        $frozen_accounts = array_values($used_frozen_accounts);
+
         return [
             $frozen_accounts,
             $real_unadjusted_summaries,
