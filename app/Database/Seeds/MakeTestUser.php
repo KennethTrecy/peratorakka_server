@@ -37,62 +37,11 @@ class MakeTestUser extends Seeder
             'password' => '12345678',
         ]);
         $users->save($user);
+        $user->id = $users->getInsertID();
+        $users->makeInitialData($user);
 
         /*
         $last_one_month = Time::today()->setDay(1)->subMonths(1);
-        $financial_entry_fabricator = new Fabricator(DeprecatedFinancialEntryModel::class);
-        $first_recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_record_modifier->id,
-            "debit_amount" => "1000",
-            "credit_amount" => "1000",
-            "transacted_at" => $last_one_month->toDateTimeString()
-        ])->create();
-        $second_recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_record_modifier->id,
-            "debit_amount" => "1000",
-            "credit_amount" => "1000"
-        ])->create();
-        $second_recorded_loan_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $loan_record_modifier->id,
-            "debit_amount" => "500",
-            "credit_amount" => "500"
-        ])->create();
-        $second_recorded_expense_a_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $expense_a_record_modifier->id,
-            "debit_amount" => "1000",
-            "credit_amount" => "1000"
-        ])->create();
-        $second_recorded_expense_b_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $expense_b_record_modifier->id,
-            "debit_amount" => "250",
-            "credit_amount" => "250"
-        ])->create();
-        $second_recorded_income_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $income_record_modifier->id,
-            "debit_amount" => "1500",
-            "credit_amount" => "1500"
-        ])->create();
-        $second_closed_income_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_income_modifier->id,
-            "debit_amount" => "1500",
-            "credit_amount" => "1500"
-        ])->create();
-        $second_closed_expense_a_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_expense_a_modifier->id,
-            "debit_amount" => "1000",
-            "credit_amount" => "1000"
-        ])->create();
-        $second_closed_expense_b_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_expense_b_modifier->id,
-            "debit_amount" => "250",
-            "credit_amount" => "250"
-        ])->create();
-        $second_closed_equity_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_equity_modifier->id,
-            "debit_amount" => "250",
-            "credit_amount" => "250"
-        ])->create();
-
         $second_frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
         $first_frozen_period = $second_frozen_period_fabricator->setOverrides([
             "user_id" => $user_id,
