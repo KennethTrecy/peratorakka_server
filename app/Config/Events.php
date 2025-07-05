@@ -53,3 +53,6 @@ Events::on('pre_system', static function (): void {
         }
     }
 });
+
+use App\Models\UserModel;
+Events::on("register", [ UserModel::class, "makeInitialData" ]);
