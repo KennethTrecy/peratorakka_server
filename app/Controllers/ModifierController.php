@@ -115,6 +115,40 @@ class ModifierController extends BaseOwnedResourceController
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        $must_include_account = $must_include_all || in_array("accounts", $relationships);
+        $must_include_cash_flow_activity = $must_include_all || in_array(
+            "cash_flow_activities",
+            $relationships
+        );
+        $must_include_modifier_atom = $must_include_all || in_array(
+            "modifier_atoms",
+            $relationships
+        );
+        $must_include_modifier_atom_activity = $must_include_all || in_array(
+            "modifier_atom_activities",
+            $relationships
+        );
+        $modifier_atoms = model(ModifierAtomModel::class, false)
+            ->whereIn("modifier_id", array_column($main_documents, "id"))
+            ->findAll();
+
+        if ($must_include_modifier_atom) {
+            $enriched_document["modifier_atoms"] = $modifier_atoms;
+        }
+
+        if ($must_include_modifier_atom_activity) {
+            $modifier_atom_activities = model(ModifierAtomActivityModel::class, false)
+                ->whereIn("modifier_atom_id", array_column($modifier_atoms, "id"))
+                ->findAll();
+            $enriched_document["modifier_atom_activities"] = $modifier_atom_activities;
+        }
+
+        // TODO: Add other related resources
+
         // [
         //     $accounts,
         //     $cash_flow_activities,
