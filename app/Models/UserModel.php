@@ -356,11 +356,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $first_entry_id,
             "modifier_atom_id" => $record_existing_balance_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1000"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $first_entry_id,
             "modifier_atom_id" => $record_existing_balance_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1000"
         ]);
 
@@ -373,11 +375,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $second_entry_id,
             "modifier_atom_id" => $borrow_cash_from_a_friend_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1000"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $second_entry_id,
             "modifier_atom_id" => $borrow_cash_from_a_friend_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1000"
         ]);
 
@@ -390,11 +394,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $third_entry_id,
             "modifier_atom_id" => $pay_fare_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "100"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $third_entry_id,
             "modifier_atom_id" => $pay_fare_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "100"
         ]);
 
@@ -407,11 +413,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $fourth_entry_id,
             "modifier_atom_id" => $buy_food_and_beverage_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "500"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $fourth_entry_id,
             "modifier_atom_id" => $buy_food_and_beverage_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "500"
         ]);
 
@@ -424,11 +432,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $fifth_entry_id,
             "modifier_atom_id" => $collect_service_income_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "2000"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $fifth_entry_id,
             "modifier_atom_id" => $collect_service_income_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "2000"
         ]);
 
@@ -441,11 +451,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $sixth_entry_id,
             "modifier_atom_id" => $close_service_income_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "2000"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $sixth_entry_id,
             "modifier_atom_id" => $close_service_income_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "2000"
         ]);
 
@@ -458,11 +470,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $seventh_entry_id,
             "modifier_atom_id" => $close_fare_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "100"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $seventh_entry_id,
             "modifier_atom_id" => $close_fare_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "100"
         ]);
 
@@ -475,11 +489,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $eighth_entry_id,
             "modifier_atom_id" => $close_food_and_beverage_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "500"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $eighth_entry_id,
             "modifier_atom_id" => $close_food_and_beverage_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "500"
         ]);
 
@@ -492,11 +508,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $ninth_entry_id,
             "modifier_atom_id" => $close_remaining_balance_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1400"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $ninth_entry_id,
             "modifier_atom_id" => $close_remaining_balance_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1400"
         ]);
 
@@ -547,11 +565,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $tenth_entry_id,
             "modifier_atom_id" => $pay_fare_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "200"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $tenth_entry_id,
             "modifier_atom_id" => $pay_fare_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "200"
         ]);
 
@@ -564,11 +584,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $eleventh_entry_id,
             "modifier_atom_id" => $buy_food_and_beverage_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "600"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $eleventh_entry_id,
             "modifier_atom_id" => $buy_food_and_beverage_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "600"
         ]);
 
@@ -581,11 +603,13 @@ class UserModel extends BaseUserModel
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $twelfth_entry_id,
             "modifier_atom_id" => $collect_service_income_modifier_debit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1800"
         ]);
         $financial_entry_atom_model->insert([
             "financial_entry_id" => $twelfth_entry_id,
             "modifier_atom_id" => $collect_service_income_modifier_credit_atom_id,
+            "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
             "numerical_value" => "1800"
         ]);
     }
