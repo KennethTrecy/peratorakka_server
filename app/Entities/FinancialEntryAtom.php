@@ -2,6 +2,7 @@
 
 namespace App\Entities;
 
+use App\Casts\FinancialEntryAtomKind;
 use App\Casts\RationalNumber;
 
 class FinancialEntryAtom extends BaseResourceEntity
@@ -14,10 +15,12 @@ class FinancialEntryAtom extends BaseResourceEntity
         "id" => "integer",
         "financial_entry_id" => "integer",
         "modifier_atom_id" => "integer",
+        "kind" => "financial_entry_atom_kind",
         "numerical_value" => "rational_number"
     ];
 
     protected $castHandlers = [
-        "rational_number" => RationalNumber::class
+        "rational_number" => RationalNumber::class,
+        "financial_entry_atom_kind" => FinancialEntryAtomKind::class
     ];
 }
