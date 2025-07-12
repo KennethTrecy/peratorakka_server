@@ -220,14 +220,14 @@ define("ACCEPTABLE_MODIFIER_ACTIONS", [
     RECORD_MODIFIER_ACTION,
     CLOSE_MODIFIER_ACTION,
     EXCHANGE_MODIFIER_ACTION,
-    BID_MODIFIER_ACTION,
-    ASK_MODIFIER_ACTION,
-    REPRICE_MODIFIER_ACTION,
-    TRANSFORM_MODIFIER_ACTION,
-    THROW_MODIFIER_ACTION,
-    CATCH_MODIFIER_ACTION,
-    CONDENSE_MODIFIER_ACTION,
-    DILUTE_MODIFIER_ACTION
+    // BID_MODIFIER_ACTION,
+    // ASK_MODIFIER_ACTION,
+    // REPRICE_MODIFIER_ACTION,
+    // TRANSFORM_MODIFIER_ACTION,
+    // THROW_MODIFIER_ACTION,
+    // CATCH_MODIFIER_ACTION,
+    // CONDENSE_MODIFIER_ACTION,
+    // DILUTE_MODIFIER_ACTION
 ]);
 
 define("MODIFIER_ACTIONS", [
@@ -281,8 +281,6 @@ define("MODIFIER_KINDS", [
  |   would be debited on calculations and reduces any paper calculations.
  | - IMAGINARY_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
  |   would be credited on calculations and reduces any paper calculations.
- | - ITEM_COUNT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would
- |   have its number of items to be updated.
  | - PRICE_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked paper account would
  |   have its input as price and may be used as basis of latest price if owned by bid/paper record
  |   modifier.
@@ -292,7 +290,6 @@ define("REAL_DEBIT_MODIFIER_ATOM_KIND", "real_debit");
 define("REAL_CREDIT_MODIFIER_ATOM_KIND", "real_credit");
 define("IMAGINARY_DEBIT_MODIFIER_ATOM_KIND", "imaginary_debit");
 define("IMAGINARY_CREDIT_MODIFIER_ATOM_KIND", "imaginary_credit");
-define("ITEM_COUNT_MODIFIER_ATOM_KIND", "item_count");
 define("PRICE_MODIFIER_ATOM_KIND", "price");
 
 define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
@@ -300,13 +297,47 @@ define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
     REAL_CREDIT_MODIFIER_ATOM_KIND,
     IMAGINARY_DEBIT_MODIFIER_ATOM_KIND,
     IMAGINARY_CREDIT_MODIFIER_ATOM_KIND,
-    ITEM_COUNT_MODIFIER_ATOM_KIND,
     PRICE_MODIFIER_ATOM_KIND
 ]);
 
 define("MODIFIER_ATOM_KINDS", [
     UNKNOWN_MODIFIER_ATOM_KIND,
     ...ACCEPTABLE_MODIFIER_ATOM_KINDS
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Financial Entry Atom Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different financial entry atom kinds that the system can handle.
+ | - UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind is not supported by
+ |   the system at the current version. This case may happen when the system downgraded.
+ | - QUANTITY_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the
+ |   numerical value is a quantity for itemized accounts. Other accounts should not have this kind.
+ |   This is optional if price and total were already associated to an itemized account.
+ | - PRICE_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
+ |   value is a price for itemized accounts. Other accounts should not have this kind.
+ |   This is optional if quantity and total were already associated to an itemized account.
+ | - TOTAL_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
+ |   value is a total value. For itemized accounts, this quantity multiplied by price. For others
+ |   without quantities, this is the net total for a specific period or ent This is optional if
+ |   quantity and price were already associated to an itemized account.
+ */
+define("UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND", "unknown");
+define("QUANTITY_FINANCIAL_ENTRY_ATOM_KIND", "quantity");
+define("PRICE_FINANCIAL_ENTRY_ATOM_KIND", "price");
+define("TOTAL_FINANCIAL_ENTRY_ATOM_KIND", "total");
+
+define("ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS", [
+    TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+    QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+    PRICE_FINANCIAL_ENTRY_ATOM_KIND
+]);
+
+define("FINANCIAL_ENTRY_ATOM_KINDS", [
+    UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND,
+    ...ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS
 ]);
 
 /*
