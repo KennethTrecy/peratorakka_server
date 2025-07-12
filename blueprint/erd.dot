@@ -459,7 +459,7 @@ digraph {
 						kind<br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
-						enum(unknown,real_debit,real_credit,<br align="left"/>imaginary_debit,imaginary_credit,<br align="left"/>item_count,price)<br align="left"/>
+						enum(unknown,real_debit,real_credit,<br align="left"/>imaginary_debit,imaginary_credit)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -628,9 +628,11 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
+						kind<br align="left"/>
 						numerical_value<br align="left"/>
 					</td>
 					<td align="left">
+						enum(unknown,total,quantity,price)<br align="left"/>
 						text<br align="left"/>
 					</td>
 				</tr>
@@ -902,7 +904,7 @@ digraph {
 				<tr>
 					<td></td>
 					<td align="left">
-						remaining_count<br align="left"/>
+						remaining_quantity<br align="left"/>
 					</td>
 					<td align="left">
 						text<br align="left"/>
