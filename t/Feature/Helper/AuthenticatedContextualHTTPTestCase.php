@@ -11,9 +11,9 @@ use Faker\Factory;
 
 class AuthenticatedContextualHTTPTestCase extends AuthenticatedHTTPTestCase
 {
-    protected function tearDown(): void
+    protected function setUp(): void
     {
-        parent::tearDown();
+        parent::setUp();
         Context::clear();
         FinancialEntryAtomInputExaminer::clear();
         ModifierAtomInputExaminer::clear();

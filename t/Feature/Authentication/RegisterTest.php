@@ -10,7 +10,7 @@ class RegisterTest extends HTTPTestCase
 {
     public function testValidDetails()
     {
-        model(UserModel::class, false)->where("id !=", 0)->delete();
+        model(UserModel::class, false)->truncate();
 
         $faker = Factory::create();
         $password = $faker->password();
@@ -55,6 +55,6 @@ class RegisterTest extends HTTPTestCase
         $this->seeNumRecords(6, "real_unadjusted_summary_calculations", []);
         $this->seeNumRecords(5, "real_flow_calculations", []);
 
-        model(UserModel::class, false)->where("id !=", 0)->delete();
+        model(UserModel::class, false)->truncate();
     }
 }
