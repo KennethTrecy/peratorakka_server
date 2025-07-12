@@ -71,7 +71,7 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
-    protected static function processUpdatedDocument(array $input): void {}
+    protected static function processUpdatedDocument(int $id, array $input): void {}
 
     private static function enrichAndOrganizeResponseDocument(
         array $initial_document,
@@ -266,7 +266,7 @@ abstract class BaseOwnedResourceController extends BaseController
 
                     $is_success = $model->save($entity);
                     if ($is_success) {
-                        processUpdatedDocument($info);
+                        static::processUpdatedDocument($id, $info);
 
                         if (static::mustTransactForCreation()) {
                             $database->transCommit();
