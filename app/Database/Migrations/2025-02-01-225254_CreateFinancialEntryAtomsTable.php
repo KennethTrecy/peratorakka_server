@@ -26,6 +26,10 @@ class CreateFinancialEntryAtomsTable extends Migration
                 "type" => "BIGINT",
                 "unsigned" => true
             ],
+            "kind" => [
+                "type" => "INT",
+                "unsigned" => true,
+            ],
             "numerical_value" => [
                 "type" => "TEXT"
             ]

@@ -125,6 +125,7 @@ class UpgradeFinancialEntries extends Migration
                     $new_entity->fill([
                         "financial_entry_id" => $new_financial_entry_id,
                         "modifier_atom_id" => $new_modifier_atom_id,
+                        "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
                         "numerical_value" => $old_entity->debit_amount->simplified()
                     ]);
 
@@ -144,6 +145,7 @@ class UpgradeFinancialEntries extends Migration
                     $new_entity->fill([
                         "financial_entry_id" => $new_financial_entry_id,
                         "modifier_atom_id" => $new_modifier_atom_id,
+                        "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
                         "numerical_value" => $old_entity->credit_amount->simplified()
                     ]);
 
