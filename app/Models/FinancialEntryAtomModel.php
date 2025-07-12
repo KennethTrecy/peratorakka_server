@@ -16,6 +16,7 @@ class FinancialEntryAtomModel extends BaseResourceModel
     protected $allowedFields = [
         "financial_entry_id",
         "modifier_atom_id",
+        "kind",
         "numerical_value"
     ];
     protected $useTimestamps = false;
@@ -30,6 +31,7 @@ class FinancialEntryAtomModel extends BaseResourceModel
     {
         $amount = $faker->regexify("\d{5}\.\d{3}");
         return [
+            "kind" => $faker->randomElement(ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS),
             "numerical_value" => $amount
         ];
     }
@@ -207,7 +209,12 @@ class FinancialEntryAtomModel extends BaseResourceModel
                         ."_"
                         .$entry[2]
                     ]->id,
-                    "numerical_value" => $entry[3]
+                    "kind" => count($entry) > 4
+                        ? $entry[3]
+                        : TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => count($entry) > 4
+                        ? $entry[4]
+                        : $entry[3]
                 ],
                 $entries
             );
