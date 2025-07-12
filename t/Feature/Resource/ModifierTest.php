@@ -83,15 +83,17 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
                 "modifier" => array_merge(
                     $details->toArray(),
                     [
-                        "modifier_atoms" => [
-                            [
-                                "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
-                                "account_id" => $asset_account->id
-                            ],
-                            [
-                                "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
-                                "account_id" => $equity_account->id,
-                                "cash_flow_activity_id" => $cash_flow_activity->id
+                        "@relationship" => [
+                            "modifier_atoms" => [
+                                [
+                                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $asset_account->id
+                                ],
+                                [
+                                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $equity_account->id,
+                                    "cash_flow_activity_id" => $cash_flow_activity->id
+                                ]
                             ]
                         ]
                     ]
@@ -329,15 +331,17 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
                 "modifier" => array_merge(
                     $details->toArray(),
                     [
-                        "modifier_atoms" => [
-                            [
-                                "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
-                                "account_id" => $asset_account->id
-                            ],
-                            [
-                                "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
-                                "account_id" => $equity_account->id,
-                                "cash_flow_activity_id" => $cash_flow_activity->id
+                        "@relationship" => [
+                            "modifier_atoms" => [
+                                [
+                                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $asset_account->id
+                                ],
+                                [
+                                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $equity_account->id,
+                                    "cash_flow_activity_id" => $cash_flow_activity->id
+                                ]
                             ]
                         ]
                     ]
