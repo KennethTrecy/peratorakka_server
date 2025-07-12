@@ -71,6 +71,8 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
+    protected static function processUpdatedDocument(array $input): void {}
+
     private static function enrichAndOrganizeResponseDocument(
         array $initial_document,
         array $relationship
@@ -249,6 +251,13 @@ abstract class BaseOwnedResourceController extends BaseController
                     $current_user = auth()->user();
 
                     $model = static::getModel();
+                    $database = static::mustTransactForCreation()
+                        ? Database::connect()
+                        : null;
+                    if (static::mustTransactForCreation()) {
+                        $database->transBegin();
+                    }
+
                     $info = array_merge(
                         static::prepareRequestData($request_data),
                         [ "id" => $id ]
@@ -257,7 +266,17 @@ abstract class BaseOwnedResourceController extends BaseController
 
                     $is_success = $model->save($entity);
                     if ($is_success) {
+                        processUpdatedDocument($info);
+
+                        if (static::mustTransactForCreation()) {
+                            $database->transCommit();
+                        }
+
                         return $controller->respondNoContent();
+                    }
+
+                    if (static::mustTransactForCreation()) {
+                        $database->transRollback();
                     }
 
                     throw new ServerFailure(
