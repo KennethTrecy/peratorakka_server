@@ -107,6 +107,7 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
                         "@relationship" => [
                             "financial_entry_atoms" => array_map(fn ($atom) => [
                                 "modifier_atom_id" => $atom->id,
+                                "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
                                 "numerical_value" => "100"
                             ], $modifier_atoms)
                         ]
@@ -168,12 +169,14 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
                     RECORD_MODIFIER_ACTION,
                     REAL_DEBIT_MODIFIER_ATOM_KIND,
                     GENERAL_ASSET_ACCOUNT_KIND,
+                    TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
                     "100"
                 ],
                 [
                     RECORD_MODIFIER_ACTION,
                     REAL_CREDIT_MODIFIER_ATOM_KIND,
                     LIQUID_ASSET_ACCOUNT_KIND,
+                    TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
                     "100"
                 ]
             ]
@@ -421,6 +424,7 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
                         "@relationship" => [
                             "financial_entry_atoms" => array_map(fn ($atom) => [
                                 "modifier_atom_id" => $atom->id,
+                                "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
                                 "numerical_value" => "100"
                             ], $modifier_atoms)
                         ]
