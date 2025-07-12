@@ -253,7 +253,12 @@ class FrozenPeriodModel extends BaseResourceModel
                             fn ($time_range_entry_atom) => [
                                 "financial_entry_index" => count($previous_entry_infos[0]),
                                 "modifier_atom_index" => $time_range_entry_atom[0],
-                                "numerical_value" => $time_range_entry_atom[1]
+                                "kind" => count($time_range_entry_atom) > 2
+                                    ? $time_range_entry_atom[1]
+                                    : TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                "numerical_value" => count($time_range_entry_atom) > 2
+                                    ? $time_range_entry_atom[2]
+                                    : $time_range_entry_atom[1]
                             ],
                             $time_range_entry["atoms"]
                         )
@@ -277,6 +282,7 @@ class FrozenPeriodModel extends BaseResourceModel
         $raw_financial_entry_atom_infos = array_map(fn ($info) => [
             "financial_entry_id" => $financial_entries[$info["financial_entry_index"]]->id,
             "modifier_atom_id" => $modifier_atoms[$info["modifier_atom_index"]]->id,
+            "kind" => $info["kind"],
             "numerical_value" => $info["numerical_value"]
         ], $raw_financial_entry_atom_infos);
         [ $financial_entry_atoms ] = FinancialEntryAtomModel::createTestResources(
