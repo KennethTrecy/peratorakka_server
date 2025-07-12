@@ -124,22 +124,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
             ]
         );
         $currency = $currencies[0];
-        $asset_account = $accounts[1];
         $details = $frozen_periods[0];
-        [
-            $precision_formats,
-            $currencies,
-            $asset_accounts,
-            $collections,
-            $details
-        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
-            "ancestor_accounts" => [
-                $precision_formats,
-                $currencies,
-                [ $asset_account ]
-            ]
-        ]);
-        $asset_collection = $collections[0];
 
         $time_groups = [
             new PeriodicTimeGroup($frozen_periods[0]),
