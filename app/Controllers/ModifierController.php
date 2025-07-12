@@ -39,7 +39,7 @@ class ModifierController extends BaseOwnedResourceController
 
         $user_id = $owner->id;
 
-        $atom_key = "$individual_name.modifier_atoms";
+        $atom_key = "$individual_name.@relationship.modifier_atoms";
         $validation->setRule("$atom_key", "group info", [
             "required"
         ]);
@@ -161,10 +161,11 @@ class ModifierController extends BaseOwnedResourceController
         return $enriched_document;
     }
 
-    protected static function processCreatedDocument(array $created_document, $input): array
+    protected static function processCreatedDocument(array $created_document, array $input): array
     {
         $main_document = $created_document[static::getIndividualName()];
         $main_document_id = $main_document["id"];
+        unset($created_document["modifier"]["@relationship"]);
 
         $modifier_atoms = array_map(
             function ($raw_modifier_atom) use ($main_document_id) {
@@ -174,14 +175,16 @@ class ModifierController extends BaseOwnedResourceController
                     "account_id" => $raw_modifier_atom["account_id"],
                     "kind" => $raw_modifier_atom["kind"],
                 ]);
+                $model = model(ModifierAtomModel::class, false);
+                $model->insert($modifier_atom_entity);
+                $modifier_atom_entity->id = $model->getInsertID();
+
                 return $modifier_atom_entity;
             },
-            $input["modifier_atoms"]
+            $input["@relationship"]["modifier_atoms"]
         );
-        model(ModifierAtomModel::class, false)->insertBatch($modifier_atoms);
-        $created_document["modifier_atoms"] = model(ModifierAtomModel::class, false)
-            ->where("modifier_id", $main_document_id)
-            ->findAll();
+
+        $created_document["modifier_atoms"] = $modifier_atoms;
 
         $keyed_modifier_atoms = Resource::key(
             $created_document["modifier_atoms"],
@@ -197,10 +200,11 @@ class ModifierController extends BaseOwnedResourceController
                     "modifier_atom_id" => $modifier_atom->id,
                     "cash_flow_activity_id" => $raw_modifier_atom["cash_flow_activity_id"]
                 ]);
+
                 return $modifier_atom_activity_entity;
             },
             array_filter(
-                $input["modifier_atoms"],
+                $input["@relationship"]["modifier_atoms"],
                 fn ($raw_modifier_atom) => (
                     isset($raw_modifier_atom["cash_flow_activity_id"])
                     && !is_null($raw_modifier_atom["cash_flow_activity_id"])
@@ -211,16 +215,7 @@ class ModifierController extends BaseOwnedResourceController
         if (count($modifier_atom_activities) > 0) {
             model(ModifierAtomActivityModel::class, false)->insertBatch($modifier_atom_activities);
 
-            $created_document["modifier_atom_activities"] = model(
-                ModifierAtomActivityModel::class,
-                false
-            )->whereIn(
-                "modifier_atom_id",
-                model(ModifierAtomModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->where("modifier_id", $main_document_id)
-            )->findAll();
+            $created_document["modifier_atom_activities"] = array_values($modifier_atom_activities);
         }
 
         return $created_document;
