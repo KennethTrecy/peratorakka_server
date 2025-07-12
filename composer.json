@@ -53,13 +53,13 @@
 			"composer run test:offline:all -- --coverage-html hidden_coverage"
 		],
 		"test:offline:fast": [
-			"./vendor/bin/phpunit --testsuite Unit,Feature"
+			"./vendor/bin/phpunit --do-not-cache-result --testsuite Unit,Feature"
 		],
 		"test:offline:slow": [
-			"./vendor/bin/phpunit --testsuite Integration"
+			"./vendor/bin/phpunit --do-not-cache-result --testsuite Integration"
 		],
 		"test:offline:all": [
-			"./vendor/bin/phpunit"
+			"./vendor/bin/phpunit --do-not-cache-result"
 		],
 		"migrate:all": [
 			"php spark migrate -n \"CodeIgniter\\Settings\"",
