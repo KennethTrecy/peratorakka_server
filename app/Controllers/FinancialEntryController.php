@@ -88,10 +88,39 @@ class FinancialEntryController extends BaseOwnedResourceController
         array $relationships
     ): array {
         $enriched_document = array_merge([], $initial_document);
-        $is_single_main_document = isset($initial_document[static::getIndividualName()]);
-        // $main_documents = $is_single_main_document
-        //     ? [ $initial_document[static::getIndividualName()] ]
-        //     : ($initial_document[static::getCollectiveName()] ?? []);
+        $main_documents = isset($initial_document[static::getIndividualName()])
+            ? [ $initial_document[static::getIndividualName()] ]
+            : ($initial_document[static::getCollectiveName()] ?? []);
+
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        $must_include_account = $must_include_all || in_array("accounts", $relationships);
+        $must_include_cash_flow_activity = $must_include_all || in_array(
+            "cash_flow_activities",
+            $relationships
+        );
+        $must_include_modifier_atom = $must_include_all || in_array(
+            "modifier_atoms",
+            $relationships
+        );
+        $must_include_modifier_atom_activity = $must_include_all || in_array(
+            "modifier_atom_activities",
+            $relationships
+        );
+        $must_include_financial_entry_atom = $must_include_all || in_array(
+            "financial_entry_atoms",
+            $relationships
+        );
+
+        if ($must_include_financial_entry_atom) {
+            $enriched_document["financial_entry_atoms"] = model(
+                FinancialEntryAtomModel::class,
+                false
+            )->whereIn("financial_entry_id", array_column($main_documents, "id"))
+            ->findAll();
+        }
 
         // [
         //     $modifiers,
@@ -124,6 +153,8 @@ class FinancialEntryController extends BaseOwnedResourceController
         $financial_entry_atoms = $memoizer->read("#$modifier_id", []);
         $financial_entry_atoms = array_map(function ($atom) use ($main_document_id) {
             $atom->financial_entry_id = $main_document_id;
+            // TODO: Accept different kinds of financial entry in the future
+            $atom->kind = TOTAL_FINANCIAL_ENTRY_ATOM_KIND;
             return $atom;
         }, $financial_entry_atoms);
 
