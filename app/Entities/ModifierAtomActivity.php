@@ -11,7 +11,7 @@ class ModifierAtomActivity extends BaseResourceEntity
     protected $dates = [];
 
     protected $casts = [
-        "modifier_id" => "integer",
-        "cash_flow_activity" => "integer",
+        "modifier_atom_id" => "integer",
+        "cash_flow_activity_id" => "integer"
     ];
 }
