@@ -54,8 +54,10 @@ class FinancialEntryAtomInputExaminer
             fn ($previous_result, $input_element) => (
                 $previous_result
                 && isset($input_element["modifier_atom_id"])
+                && isset($input_element["kind"])
                 && isset($input_element["numerical_value"])
                 && is_int($input_element["modifier_atom_id"])
+                && is_string($input_element["kind"])
                 && is_string($input_element["numerical_value"])
             ),
             true
@@ -194,7 +196,8 @@ class FinancialEntryAtomInputExaminer
                 $financial_entry_atom_entity = new FinancialEntryAtom();
                 $financial_entry_atom_entity->fill([
                     "modifier_atom_id" => $raw_financial_entry_atom["modifier_atom_id"],
-                    "numerical_value" => $raw_financial_entry_atom["numerical_value"],
+                    "kind" => $raw_financial_entry_atom["kind"],
+                    "numerical_value" => $raw_financial_entry_atom["numerical_value"]
                 ]);
                 return $financial_entry_atom_entity;
             },
