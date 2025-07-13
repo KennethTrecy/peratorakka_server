@@ -3,6 +3,8 @@
 namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
+use App\Casts\FinancialEntryAtomKind;
+use App\Entities\FinancialEntryAtom;
 use App\Libraries\Context;
 use App\Libraries\Context\Memoizer;
 use App\Libraries\Resource;
@@ -122,27 +124,10 @@ class FinancialEntryController extends BaseOwnedResourceController
             ->findAll();
         }
 
-        // [
-        //     $modifiers,
-        //     $accounts,
-        //     $cash_flow_activities,
-        //     $currencies,
-        // ] = FinancialEntryModel::selectAncestorsWithResolvedResources($main_documents);
-
-        // if ($is_single_main_document) {
-        //     $enriched_document["modifier"] = $modifiers[0] ?? null;
-        // } else {
-        //     $enriched_document["modifiers"] = $modifiers;
-        // }
-
-        // $enriched_document["accounts"] = $accounts;
-        // $enriched_document["cash_flow_activities"] = $cash_flow_activities;
-        // $enriched_document["currencies"] = $currencies;
-
         return $enriched_document;
     }
 
-    protected static function processCreatedDocument(array $created_document, $input): array
+    protected static function processCreatedDocument(array $created_document, array $input): array
     {
         $main_document = $created_document[static::getIndividualName()];
         $main_document_id = $main_document["id"];
@@ -165,6 +150,22 @@ class FinancialEntryController extends BaseOwnedResourceController
             ->findAll();
 
         return $created_document;
+    }
+
+    protected static function processUpdatedDocument(int $id, array $input): void
+    {
+        $financial_entry_atom_model = model(FinancialEntryAtomModel::class, false);
+        foreach ($input["@relationship"]["financial_entry_atoms"] as $atom) {
+            $atom["financial_entry_id"] = $id;
+            $financial_entry_atom = new FinancialEntryAtom();
+            $financial_entry_atom->fill($atom);
+            $financial_entry_atom_model
+                ->where("financial_entry_id", $id)
+                ->where("modifier_atom_id", $financial_entry_atom->modifier_atom_id)
+                ->where("kind", FinancialEntryAtomKind::set($financial_entry_atom->kind))
+                ->set($financial_entry_atom)
+                ->update();
+        }
     }
 
     private static function makeValidation(): Validation
