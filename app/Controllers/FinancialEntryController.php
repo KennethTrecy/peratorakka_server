@@ -133,17 +133,19 @@ class FinancialEntryController extends BaseOwnedResourceController
         $main_document_id = $main_document["id"];
         $modifier_id = $main_document["modifier_id"];
 
+        $atom_model = model(FinancialEntryAtomModel::class, false);
+
         $context = Context::make();
         $memoizer = Memoizer::make($context);
         $financial_entry_atoms = $memoizer->read("#$modifier_id", []);
-        $financial_entry_atoms = array_map(function ($atom) use ($main_document_id) {
+        $financial_entry_atoms = array_map(function ($atom) use ($main_document_id, $atom_model) {
             $atom->financial_entry_id = $main_document_id;
-            // TODO: Accept different kinds of financial entry in the future
             $atom->kind = TOTAL_FINANCIAL_ENTRY_ATOM_KIND;
+            $atom_model->insert($atom);
+            $atom->id = $atom_model->getInsertID();
+
             return $atom;
         }, $financial_entry_atoms);
-
-        model(FinancialEntryAtomModel::class, false)->insertBatch($financial_entry_atoms);
 
         $created_document["financial_entry_atoms"] = model(FinancialEntryAtomModel::class, false)
             ->where("financial_entry_id", $main_document_id)
