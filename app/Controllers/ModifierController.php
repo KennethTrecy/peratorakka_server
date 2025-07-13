@@ -167,17 +167,18 @@ class ModifierController extends BaseOwnedResourceController
         $main_document_id = $main_document["id"];
         unset($created_document["modifier"]["@relationship"]);
 
+        $atom_model = model(ModifierAtomModel::class, false);
+
         $modifier_atoms = array_map(
-            function ($raw_modifier_atom) use ($main_document_id) {
+            function ($raw_modifier_atom) use ($main_document_id, $atom_model) {
                 $modifier_atom_entity = new ModifierAtom();
                 $modifier_atom_entity->fill([
                     "modifier_id" => $main_document_id,
                     "account_id" => $raw_modifier_atom["account_id"],
                     "kind" => $raw_modifier_atom["kind"],
                 ]);
-                $model = model(ModifierAtomModel::class, false);
-                $model->insert($modifier_atom_entity);
-                $modifier_atom_entity->id = $model->getInsertID();
+                $atom_model->insert($modifier_atom_entity);
+                $modifier_atom_entity->id = $atom_model->getInsertID();
 
                 return $modifier_atom_entity;
             },
