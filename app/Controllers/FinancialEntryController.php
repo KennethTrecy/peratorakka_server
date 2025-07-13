@@ -77,6 +77,7 @@ class FinancialEntryController extends BaseOwnedResourceController
                 SEARCH_NORMALLY
             ])."]",
             "must_have_compound_data_key[$atom_key]",
+            "must_have_compound_data_key[$atom_key.*.id]",
             "has_valid_financial_entry_atom_group_info[$atom_key]",
             "does_own_resources_declared_in_financial_entry_atom_group_info[$atom_key]",
             "has_valid_financial_entry_atom_group_values[$atom_key]"
@@ -161,12 +162,7 @@ class FinancialEntryController extends BaseOwnedResourceController
             $atom["financial_entry_id"] = $id;
             $financial_entry_atom = new FinancialEntryAtom();
             $financial_entry_atom->fill($atom);
-            $financial_entry_atom_model
-                ->where("financial_entry_id", $id)
-                ->where("modifier_atom_id", $financial_entry_atom->modifier_atom_id)
-                ->where("kind", FinancialEntryAtomKind::set($financial_entry_atom->kind))
-                ->set($financial_entry_atom)
-                ->update();
+            $financial_entry_atom_model->update($financial_entry_atom->id, $financial_entry_atom);
         }
     }
 
