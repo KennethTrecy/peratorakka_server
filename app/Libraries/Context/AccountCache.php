@@ -54,4 +54,15 @@ class AccountCache extends ResourceCache
 
         return in_array($kind, NORMAL_DEBIT_ACCOUNT_KINDS);
     }
+
+    public function isNormallyTemporary(int $account_id): bool
+    {
+        if (!isset($this->resources[$account_id])) {
+            return null;
+        }
+
+        $kind = $this->resources[$account_id]->kind;
+
+        return in_array($kind, TEMPORARY_ACCOUNT_KINDS);
+    }
 }
