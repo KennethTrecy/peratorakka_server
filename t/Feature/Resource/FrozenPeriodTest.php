@@ -1555,6 +1555,195 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
         $this->seeNumRecords(2, "real_flow_calculations", []);
     }
 
+    public function testValidClosedCheckWithPermanentAccountAsFinalClose()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "125" ],
+                                [ 3, "125" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "125" ],
+                                [ 5, "125" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ]
+            ]
+        );
+        [ $equity_account, $asset_account, $expense_account, $second_equity_account ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "-125"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1375",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1375"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1375",
+                            "real_liquid_amount_difference" => "1375",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "net_income" => "-125",
+                                    "subtotal" => "1375"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1375",
+                            "credit_total" => "1375"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$asset_account->id]->hash,
+                    "debit_amount" => "1500",
+                    "credit_amount" => "125"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$expense_account->id]->hash,
+                    "debit_amount" => "125",
+                    "credit_amount" => "0"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$asset_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1375"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $second_equity_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "-125"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$expense_account->id]->hash,
+                    "net_amount" => "-125"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
     public function testValidIncompleteChainOpenCheck()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
