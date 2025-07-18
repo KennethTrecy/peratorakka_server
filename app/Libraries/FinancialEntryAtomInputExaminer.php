@@ -102,7 +102,7 @@ class FinancialEntryAtomInputExaminer
             }
 
             case CLOSE_MODIFIER_ACTION: {
-                $is_correct = count($this->input) === 0;
+                $is_correct = count($this->input) === 2;
 
                 if ($is_correct) {
                     $memoizer->write("#$modifier_id", []);
