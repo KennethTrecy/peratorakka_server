@@ -118,14 +118,10 @@ class ExchangeRateCache extends SingletonCache
                 ->builder()
                 ->select("id")
                 ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION));
-            $all_account_subquery = model(AccountModel::class, false)
+            $unknown_account_subquery = model(AccountModel::class, false)
                 ->builder()
                 ->select("id")
-                ->whereIn("currency_id", $all_known_IDs);
-            $new_account_subquery = model(AccountModel::class, false)
-                ->builder()
-                ->select("id")
-                ->whereIn("currency_id", $new_currency_IDs);
+                ->whereIn("currency_id", $unknown_IDs);
 
             $financial_entries = model(FinancialEntryModel::class, false)
                 ->where(
@@ -143,18 +139,13 @@ class ExchangeRateCache extends SingletonCache
                                 ->builder()
                                 ->select("id")
                                 ->whereIn("modifier_id", $exchange_modifier_subquery)
-                                ->whereIn("account_id", $new_account_subquery)
-                        )
-                        ->orWhereIn(
-                            "modifier_atom_id",
-                            model(ModifierAtomModel::class, false)
-                                ->builder()
-                                ->select("id")
-                                ->whereIn("modifier_id", $exchange_modifier_subquery)
-                                ->whereIn("account_id", $all_account_subquery)
+                                ->whereIn("account_id", $unknown_account_subquery)
                         )
                 )
                 ->findAll();
+
+            if (count($financial_entries) === 0) return;
+
             $financial_entries = Resource::key(
                 $financial_entries,
                 fn ($financial_entry) => $financial_entry->id
