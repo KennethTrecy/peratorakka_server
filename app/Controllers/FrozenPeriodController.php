@@ -129,8 +129,9 @@ class FrozenPeriodController extends BaseOwnedResourceController
 
         if (in_array("*", $relationships) || in_array("cash_flow_activities", $relationships)) {
             $cash_flow_activity_cache = CashFlowActivityCache::make($context);
-            $linked_cash_flow_activities
-                = array_unique(RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows));
+            $linked_cash_flow_activities = array_values(array_unique(
+                RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows)
+            ));
             $cash_flow_activity_cache->loadResources($linked_cash_flow_activities);
             $enriched_document["cash_flow_activities"] = array_map(
                 fn ($cash_flow_activity_id) => $cash_flow_activity_cache->getLoadedResource(
@@ -275,6 +276,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
         $exchange_rate_cache = ExchangeRateCache::make($context);
         $last_known_time = Time::parse($main_document["finished_at"]);
         $exchange_rate_cache->setLastExchangeRateTimeOnce($last_known_time);
+        $exchange_rate_cache->loadExchangeRatesForAccounts(array_map(
+            fn ($account) => $account->id,
+            $accounts
+        ));
         $derivator = $exchange_rate_cache->buildDerivator($last_known_time);
 
         [
@@ -346,7 +351,7 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     $response_document = [
                         "@meta" => [
                             "statements" => $statements,
-                            "exchange_rates" => $derivator->exportExchangeRates()
+                            "exchange_rates" => array_values($derivator->exportExchangeRates())
                         ],
                         static::getIndividualName() => $info,
                         "frozen_accounts" => $frozen_accounts,
