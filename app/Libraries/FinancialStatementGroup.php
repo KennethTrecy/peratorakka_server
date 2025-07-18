@@ -245,6 +245,8 @@ class FinancialStatementGroup
             $keyed_adjusted_summary_calculations,
             $keyed_unadjusted_summary_calculations
         );
+        log_message("info", "unchanged summary calculation count: ".count($unchanged_summary_calculations));
+        log_message("info", "unchanged summary calculations: ".json_encode($unchanged_summary_calculations));
 
         foreach ($keyed_unadjusted_summary_calculations as $account_hash => $summary_calculation) {
             if (isset($unchanged_summary_calculations[$account_hash])) continue;
@@ -307,6 +309,13 @@ class FinancialStatementGroup
         }
 
         foreach ($unchanged_summary_calculations as $account_hash => $summary_calculation) {
+            // Some accounts are new and closed at the same period.
+            // This implies their opened amount is zero.
+            // However, the closed amount is not zero and blurs the trial balances.
+            if ($summary_calculation->opened_amount->isZero()) {
+                continue;
+            }
+
             $account_id = $this->frozen_accounts[$account_hash]->account_id;
             $account = $this->accounts[$account_id];
             $source_currency_id = $account->currency_id;
@@ -398,6 +407,17 @@ class FinancialStatementGroup
                 $target_currency_id
             );
             $net_amount = $flow_calculation->net_amount->multipliedBy($exchange_rate);
+
+            // TODO: Fix generation
+            // if ($account->kind !== LIQUID_ASSET_ACCOUNT_KIND && !(
+            //     $account->kind === GENERAL_EXPENSE_ACCOUNT_KIND
+            //     || $account->kind === GENERAL_REVENUE_ACCOUNT_KIND
+            //     || $account->kind === GENERAL_TEMPORARY_ACCOUNT_KIND
+            //     || $account->kind === DIRECT_COST_ACCOUNT_KIND
+            //     || $account->kind === NOMINAL_RETURN_ACCOUNT_KIND
+            // )) {
+            //    $net_amount = $net_amount->negated();
+            // }
 
             $closed_liquid_amount = $closed_liquid_amount->plus($net_amount);
 
