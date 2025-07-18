@@ -108,12 +108,6 @@ class FrozenPeriodModel extends BaseResourceModel
             $financial_entries
         );
 
-        $associated_account_hashes = static::generateAccountHashes(
-            $started_at,
-            $finished_at,
-            $associated_accounts
-        );
-
         [
             // Used to determine previous period
             $earliest_transacted_time,
@@ -123,7 +117,17 @@ class FrozenPeriodModel extends BaseResourceModel
 
         [
             $previous_keyed_real_raw_adjusted_summaries
-        ] = static::loadPreviousSummaryCalculations($earliest_transacted_time);
+        ] = static::loadPreviousSummaryCalculations($context, $earliest_transacted_time);
+
+        $known_linked_accounts = array_unique([
+            ...array_values($associated_accounts),
+            ...array_keys($previous_keyed_real_raw_adjusted_summaries)
+        ]);
+        $associated_account_hashes = static::generateAccountHashes(
+            $started_at,
+            $finished_at,
+            $known_linked_accounts
+        );
 
         [
             $keyed_real_raw_unadjusted_summaries,
@@ -415,13 +419,13 @@ class FrozenPeriodModel extends BaseResourceModel
     private static function generateAccountHashes(
         string $started_at,
         string $finished_at,
-        array $associated_accounts
+        array $account_IDs
     ): array {
         $started_at = $started_at;
         $finished_at = $finished_at;
         $account_hashes = [];
 
-        foreach ($associated_accounts as $account_id) {
+        foreach ($account_IDs as $account_id) {
             $account_hashes[$account_id] = [
                 "account_id" => $account_id,
                 "hash" => FrozenAccountModel::generateAccountHash(
@@ -460,6 +464,7 @@ class FrozenPeriodModel extends BaseResourceModel
     }
 
     private static function loadPreviousSummaryCalculations(
+        Context $context,
         string $earliest_transacted_time
     ): array {
         $previous_frozen_period = FrozenPeriodModel::findLatestPeriod($earliest_transacted_time);
@@ -490,6 +495,9 @@ class FrozenPeriodModel extends BaseResourceModel
                     "closed_amount" => $summary_calculation->closed_amount
                 ];
             }
+
+            $linked_accounts = array_keys($keyed_real_raw_adjusted_summaries);
+            AccountCache::make($context)->loadResources($linked_accounts);
         }
 
         return [
@@ -542,6 +550,17 @@ class FrozenPeriodModel extends BaseResourceModel
             }
         }
 
+        foreach ($previous_keyed_real_raw_adjusted_summaries as $account_id => $raw_summary) {
+            if (!isset($keyed_real_raw_unadjusted_summaries[$account_id])) {
+                $account_hash = $associated_account_hashes[$account_id]["hash"];
+                $keyed_real_raw_adjusted_summaries[$account_id] = [
+                    "frozen_account_hash" => $account_hash,
+                    "opened_amount" => $raw_summary["opened_amount"]->simplified(),
+                    "closed_amount" => $raw_summary["closed_amount"]->simplified()
+                ];
+            }
+        }
+
         return [
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
@@ -574,10 +593,18 @@ class FrozenPeriodModel extends BaseResourceModel
 
             $atom_kind = $modifier_atom_cache->determineModifierAtomKind($modifier_atom_id);
             $is_debited_normally = $account_cache->isDebitedNormally($account_id);
-            $adjusted_value = $is_debited_normally === (
-                $atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
-                || $atom_kind === IMAGINARY_DEBIT_MODIFIER_ATOM_KIND
-            ) ? $numerical_value : $numerical_value->negated();
+            $is_normally_temporary = $account_cache->isNormallyTemporary($account_id);
+            $adjusted_value = (
+                $is_debited_normally === (
+                    $atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
+                    || $atom_kind === IMAGINARY_DEBIT_MODIFIER_ATOM_KIND
+                )
+            ) || (
+                !$is_debited_normally && (
+                    $atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
+                    || $atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
+                )
+            )? $numerical_value : $numerical_value->negated();
 
             $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
                 = $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
@@ -594,10 +621,14 @@ class FrozenPeriodModel extends BaseResourceModel
                             $cash_flow_activity_id = $associated_cash_flow_activities[
                                 $modifier_atom_id
                             ];
+                            $new_net_amount = $keyed_real_raw_flows[
+                                $cash_flow_activity_id
+                            ][$account_id]["net_amount"];
+
+                            $new_net_amount = $new_net_amount->minus($numerical_value);
+
                             $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
-                                = $keyed_real_raw_flows[$cash_flow_activity_id][$account_id][
-                                    "net_amount"
-                                ]->minus($adjusted_value);
+                                = $new_net_amount;
                         }
                         break;
                     }
@@ -610,10 +641,14 @@ class FrozenPeriodModel extends BaseResourceModel
                             $cash_flow_activity_id = $associated_cash_flow_activities[
                                 $modifier_atom_id
                             ];
+                            $new_net_amount = $keyed_real_raw_flows[
+                                $cash_flow_activity_id
+                            ][$account_id]["net_amount"];
+
+                            $new_net_amount = $new_net_amount->plus($numerical_value);
+
                             $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
-                                = $keyed_real_raw_flows[$cash_flow_activity_id][$account_id][
-                                    "net_amount"
-                                ]->plus($adjusted_value);
+                                = $new_net_amount;
                         }
                         break;
                     }
