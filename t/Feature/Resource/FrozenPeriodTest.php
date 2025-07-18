@@ -1546,7 +1546,8 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
             ],
             "accounts" => json_decode(json_encode($accounts), true),
             "currencies" => json_decode(json_encode($currencies), true),
-            "precision_formats" => json_decode(json_encode($precision_formats), true)
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
         $this->seeNumRecords(3, "real_unadjusted_summary_calculations", []);
@@ -1772,7 +1773,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     RECORD_MODIFIER_ACTION,
                     RECORD_MODIFIER_ACTION,
                     CLOSE_MODIFIER_ACTION,
-                    RECORD_MODIFIER_ACTION
+                    EXCHANGE_MODIFIER_ACTION
                 ],
                 "account_combinations" => [
                     [ 0, EQUITY_ACCOUNT_KIND ],
@@ -1879,6 +1880,28 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                             "credit_total" => "0"
                         ]
                     ]
+                ],
+                "exchange_rates" => [
+                    [
+                        "source" => [
+                            "currency_id" => $currency->id,
+                            "value" => "50"
+                        ],
+                        "destination" => [
+                            "currency_id" => $other_currency->id,
+                            "value" => "1"
+                        ]
+                    ],
+                    [
+                        "source" => [
+                            "currency_id" => $other_currency->id,
+                            "value" => "1"
+                        ],
+                        "destination" => [
+                            "currency_id" => $currency->id,
+                            "value" => "50"
+                        ]
+                    ]
                 ]
             ],
             "frozen_period" => $details,
@@ -1942,6 +1965,757 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
         $this->seeNumRecords(4, "real_unadjusted_summary_calculations", []);
         $this->seeNumRecords(3, "real_adjusted_summary_calculations", []);
         $this->seeNumRecords(2, "real_flow_calculations", []);
+    }
+
+    public function testValidCompleteOpenCheckWithUnchanged()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "200" ],
+                                [ 7, "200" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "300" ],
+                                [ 9, "300" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 2,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 8, 1 ]
+                ]
+            ]
+        );
+        [ $equity_account, $asset_a_account, $expense_account, $asset_b_account ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            array_filter(
+                $frozen_accounts,
+                fn ($info) => $info->frozen_period_id !== $frozen_periods[0]->id
+            ),
+            fn ($info) => $info->account_id
+        );
+        $first_cash_flow_activity = $cash_flow_activities[0];
+        $second_cash_flow_activity = $cash_flow_activities[1];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "frozen_period" => $details,
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1000",
+                            "credit_total" => "1000"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "-250"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "750",
+                            "total_liabilities" => "0",
+                            "total_equities" => "750"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "450",
+                            "real_liquid_amount_difference" => "450",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $first_cash_flow_activity->id,
+                                    "net_income" => "-250",
+                                    "subtotal" => "750"
+                                ],
+                                [
+                                    "cash_flow_activity_id" => $second_cash_flow_activity->id,
+                                    "net_income" => "0",
+                                    "subtotal" => "-300"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "750",
+                            "credit_total" => "750"
+                        ]
+                    ]
+                ],
+                "exchange_rates" => []
+            ]
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidCompleteOpenCheckWithUnchangedAndPaidLiability()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 5,
+                            "atoms" => [
+                                [ 10, "100" ],
+                                [ 11, "100" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "200" ],
+                                [ 7, "200" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "300" ],
+                                [ 9, "300" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 6,
+                            "atoms" => [
+                                [ 12, "50" ],
+                                [ 13, "50" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 3,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_ASSET_ACCOUNT_KIND ],
+                    [ 0, LIABILITY_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 5, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 6, 5, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 6, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 8, 1 ],
+                    [ 11, 2 ],
+                    [ 12, 2 ]
+                ]
+            ]
+        );
+        [ $equity_account, $asset_a_account, $expense_account, $asset_b_account ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            array_filter(
+                $frozen_accounts,
+                fn ($info) => $info->frozen_period_id !== $frozen_periods[0]->id
+            ),
+            fn ($info) => $info->account_id
+        );
+        $first_cash_flow_activity = $cash_flow_activities[0];
+        $second_cash_flow_activity = $cash_flow_activities[1];
+        $third_cash_flow_activity = $cash_flow_activities[2];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "frozen_period" => $details,
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1050",
+                            "credit_total" => "1050"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "-250"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "800",
+                            "total_liabilities" => "50",
+                            "total_equities" => "750"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "500",
+                            "real_liquid_amount_difference" => "500",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $first_cash_flow_activity->id,
+                                    "net_income" => "-250",
+                                    "subtotal" => "750"
+                                ],
+                                [
+                                    "cash_flow_activity_id" => $second_cash_flow_activity->id,
+                                    "net_income" => "0",
+                                    "subtotal" => "-300"
+                                ],
+                                [
+                                    "cash_flow_activity_id" => $third_cash_flow_activity->id,
+                                    "net_income" => "0",
+                                    "subtotal" => "50"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "800",
+                            "credit_total" => "800"
+                        ]
+                    ]
+                ],
+                "exchange_rates" => []
+            ]
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidCompleteOpenCheckWithUnchangedAndOverpaidLiability()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 5,
+                            "atoms" => [
+                                [ 10, "100" ],
+                                [ 11, "100" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "200" ],
+                                [ 7, "200" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "300" ],
+                                [ 9, "300" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 6,
+                            "atoms" => [
+                                [ 12, "120" ],
+                                [ 13, "120" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 3,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_ASSET_ACCOUNT_KIND ],
+                    [ 0, LIABILITY_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 5, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 6, 5, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 6, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 8, 1 ],
+                    [ 11, 2 ],
+                    [ 12, 2 ]
+                ]
+            ]
+        );
+        [ $equity_account, $asset_a_account, $expense_account, $asset_b_account ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            array_filter(
+                $frozen_accounts,
+                fn ($info) => $info->frozen_period_id !== $frozen_periods[0]->id
+            ),
+            fn ($info) => $info->account_id
+        );
+        $first_cash_flow_activity = $cash_flow_activities[0];
+        $second_cash_flow_activity = $cash_flow_activities[1];
+        $third_cash_flow_activity = $cash_flow_activities[2];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "frozen_period" => $details,
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "980",
+                            "credit_total" => "980"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "-250"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "730",
+                            "total_liabilities" => "-20",
+                            "total_equities" => "750"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "430",
+                            "real_liquid_amount_difference" => "430",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $first_cash_flow_activity->id,
+                                    "net_income" => "-250",
+                                    "subtotal" => "750"
+                                ],
+                                [
+                                    "cash_flow_activity_id" => $second_cash_flow_activity->id,
+                                    "net_income" => "0",
+                                    "subtotal" => "-300"
+                                ],
+                                [
+                                    "cash_flow_activity_id" => $third_cash_flow_activity->id,
+                                    "net_income" => "0",
+                                    "subtotal" => "-20"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "730",
+                            "credit_total" => "730"
+                        ]
+                    ]
+                ],
+                "exchange_rates" => []
+            ]
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidIncompleteChainOpenCheckWithUnchanged()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "200" ],
+                                [ 7, "200" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "300" ],
+                                [ 9, "300" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "125" ],
+                                [ 3, "125" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "125" ],
+                                [ 5, "125" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 2,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 8, 1 ]
+                ]
+            ]
+        );
+        [ $equity_account, $asset_a_account, $expense_account, $asset_b_account ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            array_filter(
+                $frozen_accounts,
+                fn ($info) => $info->frozen_period_id !== $frozen_periods[0]->id
+            ),
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[1]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "frozen_period" => $details,
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "2250",
+                            "credit_total" => "2250"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "-125"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "2125",
+                            "total_liabilities" => "0",
+                            "total_equities" => "2125"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "450",
+                            "closed_real_liquid_amount" => "1825",
+                            "real_liquid_amount_difference" => "1375",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "net_income" => "-125",
+                                    "subtotal" => "1375"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "2125",
+                            "credit_total" => "2125"
+                        ]
+                    ]
+                ],
+                "exchange_rates" => []
+            ]
+        ]);
+        $this->seeNumRecords(1, "frozen_periods", []);
+        $this->seeNumRecords(5, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(4, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(3, "real_flow_calculations", []);
     }
 
     public function testInvalidUpdate()
