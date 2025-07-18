@@ -4,6 +4,7 @@ namespace App\Libraries;
 
 use App\Casts\RationalNumber;
 use App\Entities\Currency;
+use App\Libraries\Resource;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 
 class FinancialStatementGroup
@@ -108,7 +109,8 @@ class FinancialStatementGroup
             $unadjusted_total_equities
         ] = $this->totalUnadjustedAccountsGroupedByKind(
             $target_currency,
-            $target_real_unadjusted_summaries
+            $target_real_unadjusted_summaries,
+            $target_real_adjusted_summaries
         );
         [
             $adjusted_total_assets,
@@ -221,7 +223,8 @@ class FinancialStatementGroup
 
     private function totalUnadjustedAccountsGroupedByKind(
         Currency $target_currency,
-        array $summary_calculations
+        array $unadjusted_summary_calculations,
+        array $adjusted_summary_calculations
     ): array {
         $target_currency_id = $target_currency->id;
         $total_revenues = RationalNumber::zero();
@@ -230,8 +233,22 @@ class FinancialStatementGroup
         $total_liabilities = RationalNumber::zero();
         $total_equities = RationalNumber::zero();
 
-        foreach ($summary_calculations as $summary_calculation) {
-            $account_hash = $summary_calculation->frozen_account_hash;
+        $keyed_unadjusted_summary_calculations = Resource::key(
+            $unadjusted_summary_calculations,
+            fn ($summary_calculation) => $summary_calculation->frozen_account_hash,
+        );
+        $keyed_adjusted_summary_calculations = Resource::key(
+            $adjusted_summary_calculations,
+            fn ($summary_calculation) => $summary_calculation->frozen_account_hash,
+        );
+        $unchanged_summary_calculations = array_diff_key(
+            $keyed_adjusted_summary_calculations,
+            $keyed_unadjusted_summary_calculations
+        );
+
+        foreach ($keyed_unadjusted_summary_calculations as $account_hash => $summary_calculation) {
+            if (isset($unchanged_summary_calculations[$account_hash])) continue;
+
             $account_id = $this->frozen_accounts[$account_hash]->account_id;
             $account = $this->accounts[$account_id];
             $source_currency_id = $account->currency_id;
@@ -285,6 +302,36 @@ class FinancialStatementGroup
                     $total_equities = $total_equities
                         ->plus($converted_credit_amount)
                         ->minus($converted_debit_amount);
+                    break;
+            }
+        }
+
+        foreach ($unchanged_summary_calculations as $account_hash => $summary_calculation) {
+            $account_id = $this->frozen_accounts[$account_hash]->account_id;
+            $account = $this->accounts[$account_id];
+            $source_currency_id = $account->currency_id;
+            $exchange_rate = $this->derivator->deriveExchangeRate(
+                $source_currency_id,
+                $target_currency_id
+            );
+            $converted_closed_amount = $summary_calculation
+                ->closed_amount
+                ->multipliedBy($exchange_rate);
+
+            switch ($account->kind) {
+                case GENERAL_ASSET_ACCOUNT_KIND:
+                case LIQUID_ASSET_ACCOUNT_KIND:
+                case DEPRECIATIVE_ASSET_ACCOUNT_KIND:
+                case ITEMIZED_ASSET_ACCOUNT_KIND:
+                    $total_assets = $total_assets->plus($converted_closed_amount);
+                    break;
+
+                case LIABILITY_ACCOUNT_KIND:
+                    $total_liabilities = $total_liabilities->plus($converted_closed_amount);
+                    break;
+
+                case EQUITY_ACCOUNT_KIND:
+                    $total_equities = $total_equities->plus($converted_closed_amount);
                     break;
             }
         }
