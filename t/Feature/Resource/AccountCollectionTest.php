@@ -36,9 +36,7 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
             "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "account_collections" => json_decode(json_encode($account_collections)),
-            "accounts" => json_decode(json_encode($accounts)),
-            "collections" => json_decode(json_encode($collections))
+            "account_collections" => json_decode(json_encode($account_collections))
         ]);
     }
 
@@ -183,9 +181,7 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
             "@meta" => [
                 "overall_filtered_count" => 0
             ],
-            "account_collections" => [],
-            "accounts" => [],
-            "collections" => []
+            "account_collections" => []
         ]);
     }
 
@@ -220,7 +216,6 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
                 "overall_filtered_count" => 10
             ],
             "account_collections" => json_decode(json_encode(array_slice($details, 0, 5))),
-            "accounts" => json_decode(json_encode($accounts)),
             "collections" => json_decode(json_encode($collections))
         ]);
     }
