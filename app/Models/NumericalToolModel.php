@@ -6,6 +6,7 @@ use App\Entities\NumericalTool;
 use App\Libraries\Resource;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\FrozenAccountCache;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
@@ -233,9 +234,10 @@ class NumericalToolModel extends BaseResourceModel
                     return $time_group->startedAt()->year;
                 });
 
+                $frozen_account_cache = FrozenAccountCache::make($context);
                 $time_groups = [];
                 for ($year = $earliest_year; $year <= $last_known_year; $year++) {
-                    $yearly_time_group = new YearlyTimeGroup($year, true);
+                    $yearly_time_group = new YearlyTimeGroup($frozen_account_cache, $year, true);
                     if (isset($specific_time_groups[$year])) {
                         foreach ($specific_time_groups[$year] as $time_group) {
                             $yearly_time_group->addTimeGroup($time_group);
@@ -245,8 +247,6 @@ class NumericalToolModel extends BaseResourceModel
                 }
 
                 break;
-            default:
-                return [];
         }
 
         return $time_groups;
