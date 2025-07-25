@@ -225,6 +225,7 @@ class CollectionSource implements NumericalToolSource
             $collective_sum = array_map(
                 function ($time_grouped_totals) {
                     return array_reduce($time_grouped_totals, function ($sum, $total) {
+                        if ($total === null) return $sum;
                         return $sum->plus($total);
                     }, RationalNumber::zero())->simplified();
                 },
