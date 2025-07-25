@@ -85,12 +85,17 @@ class NumericalToolModel extends BaseResourceModel
             );
     }
 
-    public static function showConstellations(NumericalTool $tool): array
+    public static function showConstellations(Time $reference_time, NumericalTool $tool): array
     {
         $context = new Context();
         $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $tool->currency_id);
         $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, $tool->exchange_rate_basis);
-        $raw_time_groups = static::makeTimeGroups($tool->recurrence, $tool->recency);
+        $raw_time_groups = static::makeTimeGroups(
+            $context,
+            $reference_time,
+            $tool->recurrence,
+            $tool->recency
+        );
         $time_groups = new TimeGroupManager($context, $raw_time_groups);
         $constellations = $tool->configuration->calculate($context);
 
@@ -124,15 +129,18 @@ class NumericalToolModel extends BaseResourceModel
         ];
     }
 
-    private static function makeTimeGroups(string $recurrence, int $recency): array
-    {
-        $current_date = Time::today();
-        $maxed_current_date = $current_date->setHour(23)->setMinute(59)->setSecond(59);
+    private static function makeTimeGroups(
+        Context $context,
+        Time $reference_time,
+        string $recurrence,
+        int $recency
+    ): array {
+        $maxed_time = $reference_time->setHour(23)->setMinute(59)->setSecond(59);
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
-            $maxed_current_date->toDateTimeString()
+            $maxed_time->toDateTimeString()
         );
         $latest_known_date = $last_frozen_period === null
-            ? $maxed_current_date
+            ? $maxed_time
             : $last_frozen_period->finished_at;
 
         $frozen_time_group_limit = abs($recency);
@@ -149,15 +157,15 @@ class NumericalToolModel extends BaseResourceModel
                 ->first();
 
             $possible_unfrozen_date = is_null($last_financial_entry)
-                ? $current_date
+                ? $reference_time
                 : $last_financial_entry->transacted_at;
 
             array_push($time_groups, UnfrozenTimeGroup::make(
                 $possible_unfrozen_date,
-                $maxed_current_date
+                $maxed_time
             ));
 
-            $latest_known_date = $maxed_current_date;
+            $latest_known_date = $maxed_time;
 
             return $time_groups;
         }
@@ -168,19 +176,20 @@ class NumericalToolModel extends BaseResourceModel
         $frozen_time_group_limit = abs($recency);
 
         if ($must_include_unfrozen_period) {
-            if ($maxed_current_date->isAfter($possible_unfrozen_date)) {
+            if ($maxed_time->isAfter($possible_unfrozen_date)) {
                 array_push($time_groups, UnfrozenTimeGroup::make(
                     $possible_unfrozen_date,
-                    $maxed_current_date
+                    $maxed_time
                 ));
-            } else {
-                // Sometimes, max current date is less than or equal to possible unfrozen date.
-                // This situation happens when all possible time periods are frozen.
-                // Treat the time group as frozen instead.
-                array_push($time_groups, new PeriodicTimeGroup($last_frozen_period));
+            } else if (count($time_groups) > 1) {
+                // Sometimes, max current date is less than or equal to possible unfrozen date. This
+                // situation happens when all possible time periods are frozen. Since last time
+                // group was already frozen and included in time groups, adjust the frozen time
+                // group limit.
+                $frozen_time_group_limit += 1;
             }
 
-            $latest_known_date = $maxed_current_date;
+            $latest_known_date = $maxed_time;
         }
 
         switch ($recurrence) {
