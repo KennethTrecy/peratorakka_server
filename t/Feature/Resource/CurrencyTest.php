@@ -49,8 +49,7 @@ class CurrencyTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "currency" => json_decode(json_encode($details)),
-            "precision_formats" => json_decode(json_encode($precision_formats))
+            "currency" => json_decode(json_encode($details))
         ]);
     }
 
