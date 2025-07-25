@@ -52,9 +52,7 @@ class AccountTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "account" => json_decode(json_encode($details)),
-            "currencies" => json_decode(json_encode($currencies)),
-            "precision_formats" => json_decode(json_encode($precision_formats))
+            "account" => json_decode(json_encode($details))
         ]);
     }
 
