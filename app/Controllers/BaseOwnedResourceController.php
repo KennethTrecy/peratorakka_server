@@ -59,6 +59,16 @@ abstract class BaseOwnedResourceController extends BaseController
         return false;
     }
 
+    protected function identifyRequiredRelationship(): array {
+        $request = $this->request;
+        $relationship = $request->getVar("relationship") ?? "*";
+        $relationship = is_array($relationship)
+            ? $relationship
+            : ($relationship === "" ? [] : explode(",", $relationship));
+
+        return $relationship;
+    }
+
     protected static function enrichResponseDocument(
         array $initial_document,
         array $relationship
@@ -99,10 +109,7 @@ abstract class BaseOwnedResourceController extends BaseController
         $request = $this->request;
 
         $scoped_model = static::getModel();
-        $relationship = $request->getVar("relationship") ?? "";
-        $relationship = is_array($relationship)
-            ? $relationship
-            : ($relationship === "" ? [] : explode(",", $relationship));
+        $relationship = $this->identifyRequiredRelationship();
         $filter = $request->getVar("filter") ?? [];
         $sort = $request->getVar("sort") ?? [];
         $page = $request->getVar("page") ?? [];
@@ -148,12 +155,8 @@ abstract class BaseOwnedResourceController extends BaseController
         helper([ "auth" ]);
 
         $current_user = auth()->user();
-        $request = $this->request;
 
-        $relationship = $request->getVar("relationship") ?? "*";
-        $relationship = is_array($relationship)
-            ? $relationship
-            : ($relationship === "" ? [] : explode(",", $relationship));
+        $relationship = $this->identifyRequiredRelationship();
 
         $model = static::getModel();
         $data = $model->find($id);
