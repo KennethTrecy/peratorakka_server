@@ -55,6 +55,7 @@ class SimilarityRules
         $modifier = model(ModifierModel::class)->find($modifier_id);
         $accounts = model(AccountModel::class)
             ->whereIn("id", [ $modifier->debit_account_id, $modifier->credit_account_id ])
+            ->withDeleted()
             ->find();
 
         // If the accounts are not in the same currency, allow the debit and credit amount to be
