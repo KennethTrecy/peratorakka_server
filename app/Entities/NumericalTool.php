@@ -2,10 +2,10 @@
 
 namespace App\Entities;
 
+use App\Casts\ExchangeRateBasis;
 use App\Casts\NumericalToolConfiguration;
 use App\Casts\NumericalToolKind;
 use App\Casts\NumericalToolRecurrencePeriod;
-use App\Casts\ExchangeRateBasis;
 
 class NumericalTool extends BaseResourceEntity
 {

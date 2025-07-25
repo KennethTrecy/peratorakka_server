@@ -176,7 +176,7 @@ class CurrencyModel extends BaseResourceModel
                             ->isAfter($raw_entries[$modifier["id"]]->transacted_at)
                         ) {
                             $raw_entries[$modifier["id"]] = $financial_entry;
-                        } else if (
+                        } elseif (
                             $financial_entry
                             ->updated_at
                             ->isAfter($raw_entries[$modifier["id"]]->updated_at)

@@ -4,11 +4,11 @@ namespace App\Libraries\TimeGroup;
 
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
-use App\Entities\RealFlowCalculation;
 use App\Entities\RealAdjustedSummaryCalculation;
+use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
-use App\Libraries\Context\FrozenAccountCache;
 use App\Libraries\Context;
+use App\Libraries\Context\FrozenAccountCache;
 use CodeIgniter\I18n\Time;
 
 /**
@@ -70,7 +70,8 @@ class YearlyTimeGroup implements TimeGroup
         return $does_belong;
     }
 
-    public function frozenPeriodIDs(): array {
+    public function frozenPeriodIDs(): array
+    {
         return array_reduce($this->time_groups, fn ($previous_IDs, $current_time_group) => [
             ...$previous_IDs,
             ...$current_time_group->frozenPeriodIDs()
@@ -200,28 +201,32 @@ class YearlyTimeGroup implements TimeGroup
         }
     }
 
-    public function totalRealOpenedAmount(array $selected_hashes): array {
+    public function totalRealOpenedAmount(array $selected_hashes): array
+    {
         return array_map(
             fn ($time_group) => $time_group->totalRealOpenedAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalRealClosedAmount(array $selected_hashes): array {
+    public function totalRealClosedAmount(array $selected_hashes): array
+    {
         return array_map(
             fn ($time_group) => $time_group->totalRealClosedAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array {
+    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array
+    {
         return array_map(
             fn ($time_group) => $time_group->totalRealUnadjustedDebitAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array {
+    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array
+    {
         return array_map(
             fn ($time_group) => $time_group->totalRealUnadjustedCreditAmount($selected_hashes)[0],
             $this->time_groups

@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Entities\NumericalTool;
-use App\Libraries\Resource;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\FrozenAccountCache;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
+use App\Libraries\Resource;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
@@ -182,7 +182,7 @@ class NumericalToolModel extends BaseResourceModel
                     $possible_unfrozen_date,
                     $maxed_time
                 ));
-            } else if (count($time_groups) > 1) {
+            } elseif (count($time_groups) > 1) {
                 // Sometimes, max current date is less than or equal to possible unfrozen date. This
                 // situation happens when all possible time periods are frozen. Since last time
                 // group was already frozen and included in time groups, adjust the frozen time

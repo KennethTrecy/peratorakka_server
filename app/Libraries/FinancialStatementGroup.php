@@ -4,8 +4,8 @@ namespace App\Libraries;
 
 use App\Casts\RationalNumber;
 use App\Entities\Currency;
-use App\Libraries\Resource;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
+use App\Libraries\Resource;
 
 class FinancialStatementGroup
 {
@@ -249,7 +249,9 @@ class FinancialStatementGroup
         log_message("info", "unchanged summary calculations: ".json_encode($unchanged_summary_calculations));
 
         foreach ($keyed_unadjusted_summary_calculations as $account_hash => $summary_calculation) {
-            if (isset($unchanged_summary_calculations[$account_hash])) continue;
+            if (isset($unchanged_summary_calculations[$account_hash])) {
+                continue;
+            }
 
             $account_id = $this->frozen_accounts[$account_hash]->account_id;
             $account = $this->accounts[$account_id];

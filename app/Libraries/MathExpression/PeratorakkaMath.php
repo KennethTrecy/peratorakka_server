@@ -153,12 +153,16 @@ class PeratorakkaMath implements MathInterface
             [ $dividend, $divisor ] = $operators;
 
             if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
-                if ($divisor->isEqualTo(0)) return null;
+                if ($divisor->isEqualTo(0)) {
+                    return null;
+                }
                 return $dividend->dividedBy($divisor)->simplified();
             } elseif (is_array($dividend) && $divisor instanceof BigRational) {
                 return array_map(
                     function ($subdividend) use ($divisor) {
-                        if ($divisor->isEqualTo(0)) return null;
+                        if ($divisor->isEqualTo(0)) {
+                            return null;
+                        }
                         return $subdividend->dividedBy($divisor)->simplified();
                     },
                     $dividend
@@ -166,7 +170,9 @@ class PeratorakkaMath implements MathInterface
             } elseif ($dividend instanceof BigRational && is_array($divisor)) {
                 return array_map(
                     function ($subdivisor) use ($dividend) {
-                        if ($subdivisor->isEqualTo(0)) return null;
+                        if ($subdivisor->isEqualTo(0)) {
+                            return null;
+                        }
                         return $dividend->dividedBy($subdivisor)->simplified();
                     },
                     $divisor
@@ -174,7 +180,9 @@ class PeratorakkaMath implements MathInterface
             } elseif (is_array($dividend) && is_array($divisor)) {
                 return array_map(
                     function ($subdividend, $subdivisor) {
-                        if ($subdivisor->isEqualTo(0)) return null;
+                        if ($subdivisor->isEqualTo(0)) {
+                            return null;
+                        }
                         return $subdividend->dividedBy($subdivisor)->simplified();
                     },
                     $dividend,

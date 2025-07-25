@@ -3,9 +3,9 @@
 namespace App\Entities\Deprecated;
 
 use App\Casts\Deprecated\NumericalToolConfiguration;
-use App\Entities\BaseResourceEntity;
 use App\Casts\NumericalToolKind;
 use App\Casts\NumericalToolRecurrencePeriod;
+use App\Entities\BaseResourceEntity;
 
 class NumericalTool extends BaseResourceEntity
 {

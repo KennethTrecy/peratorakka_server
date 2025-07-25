@@ -604,7 +604,7 @@ class FrozenPeriodModel extends BaseResourceModel
                     $atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
                     || $atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
                 )
-            )? $numerical_value : $numerical_value->negated();
+            ) ? $numerical_value : $numerical_value->negated();
 
             $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
                 = $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]

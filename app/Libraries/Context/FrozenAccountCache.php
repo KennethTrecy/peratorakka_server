@@ -20,7 +20,8 @@ class FrozenAccountCache extends ResourceCache
         return model(FrozenAccountModel::class, false);
     }
 
-    public function selectAccountHashesByAccountID(array $selected_account_IDs): array {
+    public function selectAccountHashesByAccountID(array $selected_account_IDs): array
+    {
         return array_filter(
             $this->resources,
             fn ($frozen_account_hash_info) => in_array(

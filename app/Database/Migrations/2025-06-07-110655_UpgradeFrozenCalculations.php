@@ -4,19 +4,19 @@ namespace App\Database\Migrations;
 
 use App\Entities\Account;
 use App\Entities\FrozenAccount;
+use App\Entities\RealAdjustedSummaryCalculation;
 use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
-use App\Entities\RealAdjustedSummaryCalculation;
 use App\Libraries\Resource;
 use App\Models\AccountModel;
+use App\Models\Deprecated\DeprecatedAccountModel;
+use App\Models\Deprecated\DeprecatedFlowCalculationModel;
+use App\Models\Deprecated\DeprecatedSummaryCalculationModel;
 use App\Models\FrozenAccountModel;
 use App\Models\FrozenPeriodModel;
+use App\Models\RealAdjustedSummaryCalculationModel;
 use App\Models\RealFlowCalculationModel;
 use App\Models\RealUnadjustedSummaryCalculationModel;
-use App\Models\RealAdjustedSummaryCalculationModel;
-use App\Models\Deprecated\DeprecatedAccountModel;
-use App\Models\Deprecated\DeprecatedSummaryCalculationModel;
-use App\Models\Deprecated\DeprecatedFlowCalculationModel;
 use CodeIgniter\Database\Migration;
 use CodeIgniter\Shield\Models\UserModel;
 

@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Contracts\OwnedResource;
 use App\Casts\FinancialEntryAtomKind;
+use App\Contracts\OwnedResource;
 use App\Entities\FinancialEntryAtom;
 use App\Libraries\Context;
 use App\Libraries\Context\Memoizer;

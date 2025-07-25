@@ -5,8 +5,8 @@ namespace App\Libraries;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\FlashCache;
 use App\Libraries\Context\Memoizer;
-use Xylemical\Expressions\Context as BaseContext;
 use CodeIgniter\Shield\Entities\User;
+use Xylemical\Expressions\Context as BaseContext;
 
 class Context extends BaseContext
 {

@@ -2,14 +2,14 @@
 
 namespace App\Database\Migrations;
 
-use App\Entities\Formula;
 use App\Entities\Currency;
+use App\Entities\Formula;
 use App\Entities\PrecisionFormat;
 use App\Libraries\Resource;
-use App\Models\FormulaModel;
 use App\Models\CurrencyModel;
-use App\Models\Deprecated\DeprecatedFormulaModel;
 use App\Models\Deprecated\DeprecatedCurrencyModel;
+use App\Models\Deprecated\DeprecatedFormulaModel;
+use App\Models\FormulaModel;
 use App\Models\PrecisionFormatModel;
 use CodeIgniter\Database\Migration;
 use CodeIgniter\Shield\Models\UserModel;

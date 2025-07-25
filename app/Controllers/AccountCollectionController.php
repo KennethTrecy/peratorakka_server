@@ -83,7 +83,7 @@ class AccountCollectionController extends BaseOwnedResourceController
             $accounts = [];
             if (count($linked_accounts) > 0) {
                 $accounts = model(AccountModel::class)
-                    ->whereIn("id",$linked_accounts)
+                    ->whereIn("id", $linked_accounts)
                     ->withDeleted()
                     ->findAll();
             }

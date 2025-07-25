@@ -4,8 +4,8 @@ namespace App\Libraries\TimeGroup;
 
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
-use App\Entities\RealFlowCalculation;
 use App\Entities\RealAdjustedSummaryCalculation;
+use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
@@ -49,7 +49,8 @@ abstract class GranularTimeGroup implements TimeGroup
             ->toLocalizedString("MMMM yyyy");
     }
 
-    public function totalRealOpenedAmount(array $selected_hashes): array {
+    public function totalRealOpenedAmount(array $selected_hashes): array
+    {
         return [
             array_reduce(
                 $this->selectRealAdjustedSummaryCalculations($selected_hashes),
@@ -61,7 +62,8 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealClosedAmount(array $selected_hashes): array {
+    public function totalRealClosedAmount(array $selected_hashes): array
+    {
         return [
             array_reduce(
                 $this->selectRealAdjustedSummaryCalculations($selected_hashes),
@@ -73,7 +75,8 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array {
+    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array
+    {
         return [
             array_reduce(
                 $this->selectRealUnadjustedSummaryCalculations($selected_hashes),
@@ -85,7 +88,8 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array {
+    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array
+    {
         return [
             array_reduce(
                 $this->selectRealUnadjustedSummaryCalculations($selected_hashes),
@@ -112,21 +116,24 @@ abstract class GranularTimeGroup implements TimeGroup
         ];
     }
 
-    private function selectRealAdjustedSummaryCalculations(array $selected_hashes): array {
+    private function selectRealAdjustedSummaryCalculations(array $selected_hashes): array
+    {
         return $this->selectSummaryCalculations(
             $this->real_adjusted_summary_calculations,
             $selected_hashes
         );
     }
 
-    private function selectRealUnadjustedSummaryCalculations(array $selected_hashes): array {
+    private function selectRealUnadjustedSummaryCalculations(array $selected_hashes): array
+    {
         return $this->selectSummaryCalculations(
             $this->real_unadjusted_summary_calculations,
             $selected_hashes
         );
     }
 
-    private function selectSummaryCalculations(array $source, array $selected_hashes): array {
+    private function selectSummaryCalculations(array $source, array $selected_hashes): array
+    {
         $raw_summary_calculations = array_map(
             function ($frozen_account_hash) use ($source) {
                 // If summary calculation is not found because it does not exist yet during this

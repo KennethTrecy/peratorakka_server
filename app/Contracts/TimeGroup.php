@@ -2,9 +2,9 @@
 
 namespace App\Contracts;
 
+use App\Entities\RealAdjustedSummaryCalculation;
 use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
-use App\Entities\RealAdjustedSummaryCalculation;
 use App\Libraries\Context;
 use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;

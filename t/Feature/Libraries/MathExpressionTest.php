@@ -5,14 +5,14 @@ namespace Tests\Feature\Libraries;
 use App\Casts\RationalNumber;
 use App\Exceptions\ExpressionException;
 use App\Libraries\Context;
+use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\ExchangeRateCache;
+use App\Libraries\Context\FrozenAccountCache;
 use App\Libraries\MathExpression;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
 use App\Libraries\TimeGroupManager;
-use App\Libraries\Context\AccountCache;
-use App\Libraries\Context\ExchangeRateCache;
-use App\Libraries\Context\FrozenAccountCache;
 use App\Models\AccountCollectionModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
@@ -2633,7 +2633,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicCycleDayCount() {
+    public function testPeriodicCycleDayCount()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / CYCLE_DAY_COUNT";
         $totals = $math_expression->evaluate($formula);
@@ -2644,7 +2645,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlyCycleDayCount() {
+    public function testYearlyCycleDayCount()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / CYCLE_DAY_COUNT";
         $totals = $math_expression->evaluate($formula);
@@ -2654,7 +2656,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicDayPrecountPerYear() {
+    public function testPeriodicDayPrecountPerYear()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "CYCLE_DAY_PRECOUNT_PER_YEAR";
         $totals = $math_expression->evaluate($formula);
@@ -2665,7 +2668,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicDayPostcountPerYear() {
+    public function testPeriodicDayPostcountPerYear()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "CYCLE_DAY_POSTCOUNT_PER_YEAR";
         $totals = $math_expression->evaluate($formula);
@@ -2676,7 +2680,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testLiteralExponentiation() {
+    public function testLiteralExponentiation()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "2 ** 3";
         $totals = $math_expression->evaluate($formula);
@@ -2686,7 +2691,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testConstantExponentiation() {
+    public function testConstantExponentiation()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "2 ** (CYCLE_DAY_PRECOUNT_PER_YEAR - 364)";
         $totals = $math_expression->evaluate($formula);
@@ -2697,7 +2703,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testShiftCycle() {
+    public function testShiftCycle()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "SHIFT_CYCLE(2 ** (CYCLE_DAY_PRECOUNT_PER_YEAR - 364), 1, 128)";
         $totals = $math_expression->evaluate($formula);
@@ -2708,7 +2715,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicSubcycleDayCount() {
+    public function testPeriodicSubcycleDayCount()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / SUBCYCLE_DAY_COUNT";
         $totals = $math_expression->evaluate($formula);
@@ -2719,7 +2727,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlySubcycleDayCount() {
+    public function testYearlySubcycleDayCount()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) / SUBCYCLE_DAY_COUNT";
         $totals = $math_expression->evaluate($formula);
@@ -2729,7 +2738,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicSubcycleIndex() {
+    public function testPeriodicSubcycleIndex()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_INDEX + 1)";
         $totals = $math_expression->evaluate($formula);
@@ -2740,7 +2750,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlySubcycleIndex() {
+    public function testYearlySubcycleIndex()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * SUBCYCLE_INDEX";
         $totals = $math_expression->evaluate($formula);
@@ -2750,7 +2761,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicSubcycleCount() {
+    public function testPeriodicSubcycleCount()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_COUNT + 1)";
         $totals = $math_expression->evaluate($formula);
@@ -2761,7 +2773,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlySubcycleCount() {
+    public function testYearlySubcycleCount()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_COUNT + 1)";
         $totals = $math_expression->evaluate($formula);
@@ -2771,7 +2784,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicSubcycleLiteral() {
+    public function testPeriodicSubcycleLiteral()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_INDEX + SUBCYCLE_LITERAL(1))";
         $totals = $math_expression->evaluate($formula);
@@ -2782,7 +2796,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlySubcycleLiteral() {
+    public function testYearlySubcycleLiteral()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * (SUBCYCLE_LITERAL(SUBCYCLE_COUNT) - SUBCYCLE_INDEX)";
         $totals = $math_expression->evaluate($formula);
@@ -2792,7 +2807,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicCyclicProduct() {
+    public function testPeriodicCyclicProduct()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "CYCLIC_PRODUCT(SUBCYCLE_LITERAL(3))";
         $totals = $math_expression->evaluate($formula);
@@ -2803,7 +2819,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlyCyclicProduct() {
+    public function testYearlyCyclicProduct()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "CYCLIC_PRODUCT(SUBCYCLE_LITERAL(3))";
         $totals = $math_expression->evaluate($formula);
@@ -2813,7 +2830,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicSelectCycleFirstValue() {
+    public function testPeriodicSelectCycleFirstValue()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "SELECT_CYCLE_VALUE(TOTAL_CLOSED_CREDIT_AMOUNT(EQUITY_ACCOUNTS), 0)";
         $totals = $math_expression->evaluate($formula);
@@ -2824,7 +2842,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testPeriodicSelectCycleLastValueAndCycleCount() {
+    public function testPeriodicSelectCycleLastValueAndCycleCount()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $formula = "SELECT_CYCLE_VALUE(TOTAL_CLOSED_CREDIT_AMOUNT(EQUITY_ACCOUNTS), CYCLE_COUNT - 1)";
         $totals = $math_expression->evaluate($formula);
@@ -2835,7 +2854,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlySelectCycleValue() {
+    public function testYearlySelectCycleValue()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $formula = "SELECT_CYCLE_VALUE(TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS) * SUBCYCLE_INDEX, 0)";
         $totals = $math_expression->evaluate($formula);
@@ -2845,7 +2865,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testSolve() {
+    public function testSolve()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         [
             $precision_formats,
@@ -2869,7 +2890,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
     }
 
     // Assumed to be working with other compound values as well
-    public function testPeriodicAccountNetCashFlowAmount() {
+    public function testPeriodicAccountNetCashFlowAmount()
+    {
         $math_expression = $this->makeMathExpressionForPeriodicTests();
         $current_user = model(setting("Auth.userProvider"), false)->first();
         $cash_flow_activity = model(CashFlowActivityModel::class)
@@ -2884,7 +2906,8 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testYearlyAccountNetCashFlowAmount() {
+    public function testYearlyAccountNetCashFlowAmount()
+    {
         $math_expression = $this->makeMathExpressionForYearlyTests();
         $current_user = model(setting("Auth.userProvider"), false)->first();
         $cash_flow_activity = model(CashFlowActivityModel::class)

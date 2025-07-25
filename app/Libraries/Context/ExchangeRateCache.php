@@ -144,7 +144,9 @@ class ExchangeRateCache extends SingletonCache
                 )
                 ->findAll();
 
-            if (count($financial_entries) === 0) return;
+            if (count($financial_entries) === 0) {
+                return;
+            }
 
             $financial_entries = Resource::key(
                 $financial_entries,

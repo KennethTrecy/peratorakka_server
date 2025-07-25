@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\HTTP\IncomingRequest;
 use App\Helpers\RequireCompatibleTokenExpiration;
+use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;

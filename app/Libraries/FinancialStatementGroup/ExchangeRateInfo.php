@@ -38,7 +38,8 @@ class ExchangeRateInfo
         );
     }
 
-    public function rawArray(): array {
+    public function rawArray(): array
+    {
         $source = BigRational::of($this->source_value);
         $destination = BigRational::of($this->destination_value);
         $rate = $destination->dividedBy($source)->simplified();

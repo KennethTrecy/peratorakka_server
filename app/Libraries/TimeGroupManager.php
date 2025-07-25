@@ -4,22 +4,22 @@ namespace App\Libraries;
 
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
-use App\Entities\FrozenPeriod;
 use App\Entities\FrozenAccount;
+use App\Entities\FrozenPeriod;
 use App\Libraries\Context;
-use App\Libraries\Resource;
 use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\CollectionCache;
 use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\CurrencyCache;
 use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\Context\FrozenAccountCache;
+use App\Libraries\Resource;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
-use App\Models\RealFlowCalculationModel;
-use App\Models\RealUnadjustedSummaryCalculationModel;
-use App\Models\RealAdjustedSummaryCalculationModel;
 use App\Models\FrozenAccountModel;
 use App\Models\FrozenPeriodModel;
+use App\Models\RealAdjustedSummaryCalculationModel;
+use App\Models\RealFlowCalculationModel;
+use App\Models\RealUnadjustedSummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 
 /**
@@ -81,7 +81,8 @@ class TimeGroupManager
      *
      * @deprecated
      */
-    public function totalOpenedDebitAmount(array $selected_account_IDs): array {
+    public function totalOpenedDebitAmount(array $selected_account_IDs): array
+    {
         return $this->totalRealOpenedDebitAmount($selected_account_IDs);
     }
 
@@ -90,7 +91,8 @@ class TimeGroupManager
      *
      * @deprecated
      */
-    public function totalOpenedCreditAmount(array $selected_account_IDs): array {
+    public function totalOpenedCreditAmount(array $selected_account_IDs): array
+    {
         return $this->totalRealOpenedCreditAmount($selected_account_IDs);
     }
 
@@ -99,7 +101,8 @@ class TimeGroupManager
      *
      * @deprecated
      */
-    public function totalUnadjustedDebitAmount(array $selected_account_IDs): array {
+    public function totalUnadjustedDebitAmount(array $selected_account_IDs): array
+    {
         return $this->totalRealUnadjustedDebitAmount($selected_account_IDs);
     }
 
@@ -108,7 +111,8 @@ class TimeGroupManager
      *
      * @deprecated
      */
-    public function totalUnadjustedCreditAmount(array $selected_account_IDs): array {
+    public function totalUnadjustedCreditAmount(array $selected_account_IDs): array
+    {
         return $this->totalRealUnadjustedCreditAmount($selected_account_IDs);
     }
 
@@ -117,7 +121,8 @@ class TimeGroupManager
      *
      * @deprecated
      */
-    public function totalClosedDebitAmount(array $selected_account_IDs): array {
+    public function totalClosedDebitAmount(array $selected_account_IDs): array
+    {
         return $this->totalRealClosedDebitAmount($selected_account_IDs);
     }
 
@@ -126,7 +131,8 @@ class TimeGroupManager
      *
      * @deprecated
      */
-    public function totalClosedCreditAmount(array $selected_account_IDs): array {
+    public function totalClosedCreditAmount(array $selected_account_IDs): array
+    {
         return $this->totalRealClosedCreditAmount($selected_account_IDs);
     }
 
@@ -158,7 +164,9 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
@@ -209,7 +217,9 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
@@ -256,7 +266,9 @@ class TimeGroupManager
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
@@ -280,7 +292,9 @@ class TimeGroupManager
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
@@ -308,7 +322,9 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
@@ -363,7 +379,9 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
@@ -418,7 +436,9 @@ class TimeGroupManager
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return [];
+        if (count($frozen_account_hashes) === 0) {
+            return [];
+        }
 
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
@@ -493,7 +513,9 @@ class TimeGroupManager
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
 
-                if (count($frozen_period_IDs) === 0) continue;
+                if (count($frozen_period_IDs) === 0) {
+                    continue;
+                }
 
                 $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                     ? Time::today()
@@ -566,7 +588,9 @@ class TimeGroupManager
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
 
-                if (count($frozen_period_IDs) === 0) continue;
+                if (count($frozen_period_IDs) === 0) {
+                    continue;
+                }
 
                 $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
                     ? Time::today()
@@ -639,7 +663,9 @@ class TimeGroupManager
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
 
-                if (count($frozen_period_IDs) === 0) continue;
+                if (count($frozen_period_IDs) === 0) {
+                    continue;
+                }
 
                 $derivator = $this->exchange_rate_cache->buildDerivator(
                     $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
@@ -788,7 +814,9 @@ class TimeGroupManager
 
         $frozen_account_hashes = $this->frozenAccountHashes($account_IDs);
 
-        if (count($frozen_account_hashes) === 0) return;
+        if (count($frozen_account_hashes) === 0) {
+            return;
+        }
 
         foreach ($periodic_real_unadjusted_summaries as $summary_calculation) {
             $frozen_account_hash = $summary_calculation->frozen_account_hash;
@@ -863,7 +891,8 @@ class TimeGroupManager
         $this->has_loaded_for_unfrozen_time_group = true;
     }
 
-    private function frozenPeriodIDs(): array {
+    private function frozenPeriodIDs(): array
+    {
         return array_reduce(
             $this->time_groups,
             fn ($previous_frozen_periods, $current_time_group) => [
@@ -874,7 +903,8 @@ class TimeGroupManager
         );
     }
 
-    private function frozenAccountHashes($selected_account_IDs): array {
+    private function frozenAccountHashes($selected_account_IDs): array
+    {
         $missing_account_IDs = array_diff(
             $selected_account_IDs,
             array_values($this->loaded_real_unadjusted_summary_calculations),

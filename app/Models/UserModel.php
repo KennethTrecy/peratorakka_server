@@ -3,21 +3,22 @@
 namespace App\Models;
 
 use App\Entities\Account;
-use App\Libraries\Context;
-use App\Libraries\Context\ContextKeys;
+use App\Entities\FrozenPeriod;
 use App\Entities\Modifier;
 use App\Entities\ModifierAtom;
-use App\Entities\FrozenPeriod;
+use App\Entities\RealAdjustedSummaryCalculation;
 use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
-use App\Entities\RealAdjustedSummaryCalculation;
-use CodeIgniter\Shield\Models\UserModel as BaseUserModel;
-use CodeIgniter\Shield\Entities\User;
+use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\Shield\Entities\User;
+use CodeIgniter\Shield\Models\UserModel as BaseUserModel;
 
 class UserModel extends BaseUserModel
 {
-    public static function makeInitialData(User $user) {
+    public static function makeInitialData(User $user)
+    {
         $user_id = $user->id;
 
         $precision_format_model = model(PrecisionFormatModel::class);

@@ -59,7 +59,8 @@ abstract class BaseOwnedResourceController extends BaseController
         return false;
     }
 
-    protected function identifyRequiredRelationship(): array {
+    protected function identifyRequiredRelationship(): array
+    {
         $request = $this->request;
         $relationship = $request->getVar("relationship") ?? "*";
         $relationship = is_array($relationship)
@@ -81,7 +82,9 @@ abstract class BaseOwnedResourceController extends BaseController
         return $initial_document;
     }
 
-    protected static function processUpdatedDocument(int $id, array $input): void {}
+    protected static function processUpdatedDocument(int $id, array $input): void
+    {
+    }
 
     private static function enrichAndOrganizeResponseDocument(
         array $initial_document,

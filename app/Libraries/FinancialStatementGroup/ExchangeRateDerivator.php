@@ -46,7 +46,8 @@ class ExchangeRateDerivator
         return $this->processed_exchange_rate_infos[$exchange_rate_key];
     }
 
-    public function exportExchangeRates(): array {
+    public function exportExchangeRates(): array
+    {
         $raw_exchange_rates = [];
         foreach ($this->processed_exchange_rate_infos as $exchange_rate_key => $exchange_rate) {
             [ $source_currency_id, $destination_currency_id ] = explode("_", $exchange_rate_key);

@@ -3,7 +3,6 @@
 namespace App\Models\Deprecated;
 
 use App\Entities\Deprecated\NumericalTool;
-use App\Models\BaseResourceModel;
 use App\Libraries\Context;
 use App\Libraries\NumericalToolConfiguration\Deprecated\DeprecatedCollectionSource;
 use App\Libraries\Resource;
@@ -11,6 +10,7 @@ use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
 use App\Libraries\TimeGroupManager;
+use App\Models\BaseResourceModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;

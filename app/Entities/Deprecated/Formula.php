@@ -2,9 +2,9 @@
 
 namespace App\Entities\Deprecated;
 
-use App\Entities\BaseResourceEntity;
 use App\Casts\ExchangeRateBasis;
 use App\Casts\FormulaOutputFormat;
+use App\Entities\BaseResourceEntity;
 
 class Formula extends BaseResourceEntity
 {

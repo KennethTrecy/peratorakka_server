@@ -3,14 +3,14 @@
 namespace App\Database\Migrations;
 
 use App\Entities\Account;
-use App\Entities\Currency;
 use App\Entities\AccountCollection;
+use App\Entities\Currency;
 use App\Libraries\Resource;
-use App\Models\AccountModel;
 use App\Models\AccountCollectionModel;
+use App\Models\AccountModel;
+use App\Models\Deprecated\DeprecatedAccountCollectionModel;
 use App\Models\Deprecated\DeprecatedAccountModel;
 use App\Models\Deprecated\DeprecatedCurrencyModel;
-use App\Models\Deprecated\DeprecatedAccountCollectionModel;
 use CodeIgniter\Database\Migration;
 
 class UpgradeAccountCollections extends Migration

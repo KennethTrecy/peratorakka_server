@@ -3,8 +3,8 @@
 namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
-use App\Models\PrecisionFormatModel;
 use App\Models\FormulaModel;
+use App\Models\PrecisionFormatModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 

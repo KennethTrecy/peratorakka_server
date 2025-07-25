@@ -4,8 +4,8 @@ namespace Tests\Feature\Resource;
 
 use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
-use App\Models\AccountModel;
 use App\Models\AccountCollectionModel;
+use App\Models\AccountModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
