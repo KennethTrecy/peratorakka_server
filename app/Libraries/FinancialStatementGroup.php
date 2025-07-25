@@ -323,8 +323,11 @@ class FinancialStatementGroup
                 $source_currency_id,
                 $target_currency_id
             );
-            $converted_closed_amount = $summary_calculation
-                ->closed_amount
+
+            // Since these calculations remained, it is safer to use opened amounts as closed
+            // amounts may be different due to closing entries.
+            $converted_opened_amount = $summary_calculation
+                ->opened_amount
                 ->multipliedBy($exchange_rate);
 
             switch ($account->kind) {
@@ -332,15 +335,15 @@ class FinancialStatementGroup
                 case LIQUID_ASSET_ACCOUNT_KIND:
                 case DEPRECIATIVE_ASSET_ACCOUNT_KIND:
                 case ITEMIZED_ASSET_ACCOUNT_KIND:
-                    $total_assets = $total_assets->plus($converted_closed_amount);
+                    $total_assets = $total_assets->plus($converted_opened_amount);
                     break;
 
                 case LIABILITY_ACCOUNT_KIND:
-                    $total_liabilities = $total_liabilities->plus($converted_closed_amount);
+                    $total_liabilities = $total_liabilities->plus($converted_opened_amount);
                     break;
 
                 case EQUITY_ACCOUNT_KIND:
-                    $total_equities = $total_equities->plus($converted_closed_amount);
+                    $total_equities = $total_equities->plus($converted_opened_amount);
                     break;
             }
         }
