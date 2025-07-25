@@ -245,8 +245,6 @@ class FinancialStatementGroup
             $keyed_adjusted_summary_calculations,
             $keyed_unadjusted_summary_calculations
         );
-        log_message("info", "unchanged summary calculation count: ".count($unchanged_summary_calculations));
-        log_message("info", "unchanged summary calculations: ".json_encode($unchanged_summary_calculations));
 
         foreach ($keyed_unadjusted_summary_calculations as $account_hash => $summary_calculation) {
             if (isset($unchanged_summary_calculations[$account_hash])) {
