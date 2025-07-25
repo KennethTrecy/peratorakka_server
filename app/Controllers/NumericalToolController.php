@@ -7,8 +7,10 @@ use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Models\CurrencyModel;
 use App\Models\NumericalToolModel;
+use App\Exceptions\UnprocessableRequest;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
+use CodeIgniter\I18n\Time;
 
 class NumericalToolController extends BaseOwnedResourceController
 {
@@ -107,6 +109,22 @@ class NumericalToolController extends BaseOwnedResourceController
     {
         helper("auth");
 
+        $current_date = Time::today();
+
+        $request = $this->request;
+        $reference_date = $request->getVar("reference_date") ?? $current_date->toDateString();
+        $relationship = $this->identifyRequiredRelationship();
+
+        $reference_date = $time = Time::createFromFormat(
+            DATE_STRING_FORMAT,
+            $reference_date,
+            DATE_TIME_ZONE
+        );
+
+        if ($reference_date === false) {
+            throw new UnprocessableRequest("Unable to understand the reference date.");
+        }
+
         $current_user = auth()->user();
         $model = static::getModel();
         $data = $model->find($id);
@@ -117,7 +135,7 @@ class NumericalToolController extends BaseOwnedResourceController
             [
                 $time_tags,
                 $constellations
-            ] = NumericalToolModel::showConstellations($data);
+            ] = NumericalToolModel::showConstellations($reference_date, $data);
             $response_document = [
                 "@meta" => [
                     "time_tags" => $time_tags,
@@ -125,10 +143,7 @@ class NumericalToolController extends BaseOwnedResourceController
                 ],
                 static::getIndividualName() => $data
             ];
-            $response_document = static::enrichResponseDocument($response_document, [
-                "precision_formats",
-                "currencies"
-            ]);
+            $response_document = static::enrichResponseDocument($response_document, $relationship);
             ksort($response_document);
 
             return $this->response->setJSON($response_document);
