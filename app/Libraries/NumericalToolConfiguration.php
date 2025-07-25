@@ -123,10 +123,11 @@ class NumericalToolConfiguration
             $results = array_merge($results, $source->calculate($context));
         }
 
+        $results = array_filter($results, fn ($result) => count($result->stars) > 0);
         $results = array_map(function ($result) {
             return $result->toArray();
         }, $results);
-        return $results;
+        return array_values($results);
     }
 
     public function __toString(): string
