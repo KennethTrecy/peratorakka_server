@@ -5,6 +5,7 @@ namespace App\Libraries;
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
 use App\Entities\FrozenPeriod;
+use App\Entities\FrozenAccount;
 use App\Libraries\Context;
 use App\Libraries\Resource;
 use App\Libraries\Context\AccountCache;
@@ -156,6 +157,9 @@ class TimeGroupManager
         $debit_hashes = [];
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
@@ -204,6 +208,9 @@ class TimeGroupManager
         $debit_hashes = [];
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
@@ -248,6 +255,9 @@ class TimeGroupManager
         $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
@@ -269,6 +279,9 @@ class TimeGroupManager
         $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
@@ -294,12 +307,19 @@ class TimeGroupManager
         $debit_hashes = [];
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
         );
 
         foreach ($selected_account_IDs as $account_id) {
+            if (!isset($frozen_account_hash_group[$account_id])) {
+                continue;
+            }
+
             $frozen_account_hashes = array_map(
                 fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
                 $frozen_account_hash_group[$account_id]
@@ -342,12 +362,19 @@ class TimeGroupManager
         $debit_hashes = [];
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
         );
 
         foreach ($selected_account_IDs as $account_id) {
+            if (!isset($frozen_account_hash_group[$account_id])) {
+                continue;
+            }
+
             $frozen_account_hashes = array_map(
                 fn ($frozen_account_hash_info) => $frozen_account_hash_info->hash,
                 $frozen_account_hash_group[$account_id]
@@ -390,6 +417,9 @@ class TimeGroupManager
         $this->loadRealFlowCalculations($selected_account_IDs);
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return [];
+
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
@@ -445,9 +475,12 @@ class TimeGroupManager
             $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
 
             $frozen_account_hashes = $this->frozenAccountHashes($missing_account_IDs);
-            $summary_calculations = model(RealUnadjustedSummaryCalculationModel::class)
-                ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
-                ->findAll();
+
+            $summary_calculations = count($frozen_account_hashes) > 0
+                ? model(RealUnadjustedSummaryCalculationModel::class)
+                    ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
+                    ->findAll()
+                : [];
 
             $exchange_rate_basis = $this->context->getVariable(
                 ContextKeys::EXCHANGE_RATE_BASIS,
@@ -459,6 +492,7 @@ class TimeGroupManager
 
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
+
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
@@ -514,9 +548,12 @@ class TimeGroupManager
             $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
 
             $frozen_account_hashes = $this->frozenAccountHashes($missing_account_IDs);
-            $summary_calculations = model(RealAdjustedSummaryCalculationModel::class)
-                ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
-                ->findAll();
+
+            $summary_calculations = count($frozen_account_hashes) > 0
+                ? model(RealAdjustedSummaryCalculationModel::class)
+                    ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
+                    ->findAll()
+                : [];
 
             $exchange_rate_basis = $this->context->getVariable(
                 ContextKeys::EXCHANGE_RATE_BASIS,
@@ -528,6 +565,7 @@ class TimeGroupManager
 
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
+
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $time_basis = $exchange_rate_basis === LATEST_EXCHANGE_RATE_BASIS
@@ -583,9 +621,12 @@ class TimeGroupManager
             $this->exchange_rate_cache->loadExchangeRatesForAccounts($missing_account_IDs);
 
             $frozen_account_hashes = $this->frozenAccountHashes($missing_account_IDs);
-            $flow_calculations = model(RealFlowCalculationModel::class)
-                ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
-                ->findAll();
+
+            $flow_calculations = count($frozen_account_hashes) > 0
+                ? model(RealFlowCalculationModel::class)
+                    ->whereIn("frozen_account_hash", array_keys($frozen_account_hashes))
+                    ->findAll()
+                : [];
 
             $exchange_rate_basis = $this->context->getVariable(
                 ContextKeys::EXCHANGE_RATE_BASIS,
@@ -597,6 +638,7 @@ class TimeGroupManager
 
             foreach ($this->time_groups as $time_group) {
                 $frozen_period_IDs = $time_group->frozenPeriodIDs();
+
                 if (count($frozen_period_IDs) === 0) continue;
 
                 $derivator = $this->exchange_rate_cache->buildDerivator(
@@ -707,6 +749,10 @@ class TimeGroupManager
 
         $current_user = $this->context->user();
 
+        $started_at = $last_frozen_finished_date
+            ->addDays(1)
+            ->setHour(0)->setMinute(0)->setSecond(0);
+        $finished_at = $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59);
         [
             $periodic_frozen_accounts,
             $periodic_real_unadjusted_summaries,
@@ -715,8 +761,8 @@ class TimeGroupManager
         ] = FrozenPeriodModel::makeRawCalculations(
             $current_user,
             $this->context,
-            $last_frozen_finished_date->addDays(1)->setHour(0)->setMinute(0)->setSecond(0),
-            $latest_finish_date->setHour(23)->setMinute(59)->setSecond(59)
+            $started_at,
+            $finished_at
         );
 
         $this->frozen_account_cache->addPreloadedResources($periodic_frozen_accounts);
@@ -741,6 +787,8 @@ class TimeGroupManager
         );
 
         $frozen_account_hashes = $this->frozenAccountHashes($account_IDs);
+
+        if (count($frozen_account_hashes) === 0) return;
 
         foreach ($periodic_real_unadjusted_summaries as $summary_calculation) {
             $frozen_account_hash = $summary_calculation->frozen_account_hash;
@@ -835,12 +883,16 @@ class TimeGroupManager
         );
 
         if (count($missing_account_IDs) > 0) {
-            $frozen_account_hashes = model(FrozenAccountModel::class, false)
-                ->whereIn("frozen_period_id", $this->frozenPeriodIDs())
-                ->whereIn("account_id", array_unique($missing_account_IDs))
-                ->findAll();
+            $frozen_period_IDs = $this->frozenPeriodIDs();
 
-            $this->frozen_account_cache->addPreloadedResources($frozen_account_hashes);
+            if (count($frozen_period_IDs) !== 0) {
+                $frozen_account_hashes = model(FrozenAccountModel::class, false)
+                    ->whereIn("frozen_period_id", $frozen_period_IDs)
+                    ->whereIn("account_id", array_unique($missing_account_IDs))
+                    ->findAll();
+
+                $this->frozen_account_cache->addPreloadedResources($frozen_account_hashes);
+            }
         }
 
         return $this->frozen_account_cache->selectAccountHashesByAccountID($selected_account_IDs);
