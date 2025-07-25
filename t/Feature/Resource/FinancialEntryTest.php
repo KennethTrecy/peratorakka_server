@@ -52,8 +52,7 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "financial_entry" => json_decode(json_encode($details)),
-            "financial_entry_atoms" => []
+            "financial_entry" => json_decode(json_encode($details))
         ]);
     }
 
