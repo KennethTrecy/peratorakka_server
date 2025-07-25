@@ -112,7 +112,19 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
 
         $result = $authenticated_info
             ->getRequest()
-            ->get("/api/v2/frozen_periods/$details->id");
+            ->get("/api/v2/frozen_periods/$details->id", [
+                "relationship" => [
+                    "accounts",
+                    "cash_flow_activities",
+                    "currencies",
+                    "frozen_accounts",
+                    "frozen_period",
+                    "precision_formats",
+                    "real_adjusted_summary_calculations",
+                    "real_unadjusted_summary_calculations",
+                    "real_flow_calculations"
+                ]
+            ]);
 
         $result->assertOk();
         $result->assertJSONExact([
