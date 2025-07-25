@@ -62,9 +62,7 @@ class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "numerical_tool" => json_decode(json_encode($details)),
-            "currencies" => json_decode(json_encode($currencies)),
-            "precision_formats" => json_decode(json_encode($precision_formats))
+            "numerical_tool" => json_decode(json_encode($details))
         ]);
     }
 
@@ -487,8 +485,6 @@ class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
                     )
                 ])
             ],
-            "currencies" => [ $local_currency ],
-            "precision_formats" => $precision_formats,
             "numerical_tool" => $details
         ]);
     }
@@ -743,8 +739,6 @@ class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
                     )
                 ])
             ],
-            "currencies" => [ $local_currency ],
-            "precision_formats" => $precision_formats,
             "numerical_tool" => $details
         ]);
     }
@@ -1013,8 +1007,6 @@ class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
                     )
                 ])
             ],
-            "currencies" => [ $local_currency ],
-            "precision_formats" => $precision_formats,
             "numerical_tool" => $details
         ]);
     }
@@ -1294,8 +1286,6 @@ class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
                     )
                 ])
             ],
-            "currencies" => [ $local_currency ],
-            "precision_formats" => $precision_formats,
             "numerical_tool" => $details
         ]);
     }
@@ -1606,8 +1596,6 @@ class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
                     )
                 ])
             ],
-            "currencies" => [ $local_currency ],
-            "precision_formats" => $precision_formats,
             "numerical_tool" => $details
         ]);
     }
