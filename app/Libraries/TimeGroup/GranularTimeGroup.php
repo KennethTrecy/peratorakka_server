@@ -46,7 +46,6 @@ abstract class GranularTimeGroup implements TimeGroup
 
         return $finished_date
             ->setTimezone(DATE_TIME_ZONE)
-            ->addHours(-$finished_date->getOffset())
             ->toLocalizedString("MMMM yyyy");
     }
 
