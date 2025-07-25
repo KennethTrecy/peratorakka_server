@@ -50,9 +50,7 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "modifier" => json_decode(json_encode($details)),
-            "modifier_atoms" => [],
-            "modifier_atom_activities" => []
+            "modifier" => json_decode(json_encode($details))
         ]);
     }
 
