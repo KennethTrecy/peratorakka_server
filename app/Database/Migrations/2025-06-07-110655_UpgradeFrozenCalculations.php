@@ -173,9 +173,9 @@ class UpgradeFrozenCalculations extends Migration
                         "debit_amount" => $old_entity->unadjusted_debit_amount->simplified(),
                         "credit_amount" => $old_entity->unadjusted_credit_amount->simplified()
                     ]);
-                }
 
-                array_push($new_unadjusted_entities, $new_unadjusted_entity);
+                    array_push($new_unadjusted_entities, $new_unadjusted_entity);
+                }
             }
 
             if (count($unknown_hashed_frozen_accounts) > 0) {
