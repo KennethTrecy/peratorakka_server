@@ -49,8 +49,7 @@ class FormulaTest extends AuthenticatedHTTPTestCase
 
         $result->assertOk();
         $result->assertJSONExact([
-            "formula" => json_decode(json_encode($details)),
-            "precision_formats" => json_decode(json_encode($precision_formats))
+            "formula" => json_decode(json_encode($details))
         ]);
     }
 
