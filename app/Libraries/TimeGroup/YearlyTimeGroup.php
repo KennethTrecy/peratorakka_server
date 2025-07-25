@@ -4,10 +4,11 @@ namespace App\Libraries\TimeGroup;
 
 use App\Casts\RationalNumber;
 use App\Contracts\TimeGroup;
-use App\Entities\FlowCalculation;
-use App\Entities\SummaryCalculation;
+use App\Entities\RealAdjustedSummaryCalculation;
+use App\Entities\RealFlowCalculation;
+use App\Entities\RealUnadjustedSummaryCalculation;
 use App\Libraries\Context;
-use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\FrozenAccountCache;
 use CodeIgniter\I18n\Time;
 
 /**
@@ -17,12 +18,17 @@ use CodeIgniter\I18n\Time;
  */
 class YearlyTimeGroup implements TimeGroup
 {
+    private FrozenAccountCache $frozen_account_cache;
     private string $year;
     private bool $is_based_on_start_date;
     private array $time_groups = [];
 
-    public function __construct(string $year, bool $is_based_on_start_date)
-    {
+    public function __construct(
+        FrozenAccountCache $frozen_account_cache,
+        string $year,
+        bool $is_based_on_start_date
+    ) {
+        $this->frozen_account_cache = $frozen_account_cache;
         $this->year = $year;
         $this->is_based_on_start_date = $is_based_on_start_date;
     }
@@ -64,6 +70,14 @@ class YearlyTimeGroup implements TimeGroup
         return $does_belong;
     }
 
+    public function frozenPeriodIDs(): array
+    {
+        return array_reduce($this->time_groups, fn ($previous_IDs, $current_time_group) => [
+            ...$previous_IDs,
+            ...$current_time_group->frozenPeriodIDs()
+        ], []);
+    }
+
     public function startedAt(): Time
     {
         if (empty($this->time_groups)) {
@@ -84,6 +98,17 @@ class YearlyTimeGroup implements TimeGroup
         return $time_group->finishedAt();
     }
 
+    public function lastFrozenAt(): ?Time
+    {
+        $time_group_count = count($this->time_groups);
+        $time_group = $this->time_groups[$time_group_count - 1];
+        if ($this->hasSomeUnfrozenDetails() && $time_group_count >= 2) {
+            $time_group = $this->time_groups[$time_group_count - 2];
+        }
+
+        return $time_group->finishedAt();
+    }
+
     public function granularTimeRanges(): array
     {
         return array_map(
@@ -99,6 +124,9 @@ class YearlyTimeGroup implements TimeGroup
     public function timeTag(): string
     {
         $finished_date = $this->finishedAt();
+        $finished_date = $finished_date
+            ->setTimezone(DATE_TIME_ZONE)
+            ->addHours(-$finished_date->getOffset());
 
         return "$finished_date->year";
     }
@@ -114,135 +142,106 @@ class YearlyTimeGroup implements TimeGroup
         return false;
     }
 
-    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool
-    {
+    public function addRealUnadjustedSummaryCalculation(
+        RealUnadjustedSummaryCalculation $summary_calculation
+    ): void {
+        $frozen_account_hash = $summary_calculation->frozen_account_hash;
+        $frozen_account_hash_info = $this->frozen_account_cache->getLoadedResource(
+            $frozen_account_hash
+        );
+        $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
+
         foreach ($this->time_groups as $time_group) {
-            if ($time_group->doesOwnSummaryCalculation($summary_calculation)) {
-                return true;
+            $frozen_period_IDs = $time_group->frozenPeriodIDs();
+            if (in_array($frozen_period_id, $frozen_period_IDs) || (
+                !$frozen_period_id && count($frozen_period_IDs) === 0
+            )) {
+                $time_group->addRealUnadjustedSummaryCalculation($summary_calculation);
+                return;
             }
         }
-
-        return false;
     }
 
-    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool
-    {
+    public function addRealAdjustedSummaryCalculation(
+        RealAdjustedSummaryCalculation $summary_calculation
+    ): void {
+        $frozen_account_hash = $summary_calculation->frozen_account_hash;
+        $frozen_account_hash_info = $this->frozen_account_cache->getLoadedResource(
+            $frozen_account_hash
+        );
+        $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
+
         foreach ($this->time_groups as $time_group) {
-            if ($time_group->doesOwnFlowCalculation($flow_calculation)) {
-                return true;
+            $frozen_period_IDs = $time_group->frozenPeriodIDs();
+            if (in_array($frozen_period_id, $frozen_period_IDs) || (
+                !$frozen_period_id && count($frozen_period_IDs) === 0
+            )) {
+                $time_group->addRealAdjustedSummaryCalculation($summary_calculation);
+                return;
             }
         }
-
-        return false;
     }
 
-    public function addSummaryCalculation(SummaryCalculation $summary_calculation): bool
+    public function addRealFlowCalculation(RealFlowCalculation $flow_calculation): void
     {
+        $frozen_account_hash = $flow_calculation->frozen_account_hash;
+        $frozen_account_hash_info = $this->frozen_account_cache->getLoadedResource(
+            $frozen_account_hash
+        );
+        $frozen_period_id = $frozen_account_hash_info->frozen_period_id;
+
         foreach ($this->time_groups as $time_group) {
-            if ($time_group->addSummaryCalculation($summary_calculation)) {
-                return true;
+            $frozen_period_IDs = $time_group->frozenPeriodIDs();
+            if (in_array($frozen_period_id, $frozen_period_IDs) || (
+                !$frozen_period_id && count($frozen_period_IDs) === 0
+            )) {
+                $time_group->addRealFlowCalculation($flow_calculation);
+                return;
             }
         }
-
-        return false;
     }
 
-    public function addFlowCalculation(FlowCalculation $flow_calculation): bool
+    public function totalRealOpenedAmount(array $selected_hashes): array
     {
-        foreach ($this->time_groups as $time_group) {
-            if ($time_group->addFlowCalculation($flow_calculation)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function totalOpenedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalOpenedDebitAmount($context, $selected_account_IDs)[0];
-            },
+            fn ($time_group) => $time_group->totalRealOpenedAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalOpenedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
+    public function totalRealClosedAmount(array $selected_hashes): array
+    {
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalOpenedCreditAmount($context, $selected_account_IDs)[0];
-            },
+            fn ($time_group) => $time_group->totalRealClosedAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalUnadjustedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
+    public function totalRealUnadjustedDebitAmount(array $selected_hashes): array
+    {
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalUnadjustedDebitAmount($context, $selected_account_IDs)[0];
-            },
+            fn ($time_group) => $time_group->totalRealUnadjustedDebitAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalUnadjustedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
+    public function totalRealUnadjustedCreditAmount(array $selected_hashes): array
+    {
         return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalUnadjustedCreditAmount($context, $selected_account_IDs)[0];
-            },
+            fn ($time_group) => $time_group->totalRealUnadjustedCreditAmount($selected_hashes)[0],
             $this->time_groups
         );
     }
 
-    public function totalClosedDebitAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
-        return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalClosedDebitAmount($context, $selected_account_IDs)[0];
-            },
-            $this->time_groups
-        );
-    }
-
-    public function totalClosedCreditAmount(
-        Context $context,
-        array $selected_account_IDs
-    ): array {
-        return array_map(
-            function ($time_group) use ($context, $selected_account_IDs) {
-                return $time_group->totalClosedCreditAmount($context, $selected_account_IDs)[0];
-            },
-            $this->time_groups
-        );
-    }
-
-    public function totalNetCashFlowAmount(
-        Context $context,
+    public function totalRealNetCashFlowAmount(
         array $cash_flow_activity_IDs,
-        array $selected_account_IDs
+        array $selected_hashes
     ): array {
         return array_map(
-            function ($time_group) use ($context, $cash_flow_activity_IDs, $selected_account_IDs) {
-                return $time_group->totalNetCashFlowAmount(
-                    $context,
-                    $cash_flow_activity_IDs,
-                    $selected_account_IDs
-                )[0];
-            },
+            fn ($time_group) => $time_group->totalRealNetCashFlowAmount(
+                $cash_flow_activity_IDs,
+                $selected_hashes
+            )[0],
             $this->time_groups
         );
     }

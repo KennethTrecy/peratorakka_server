@@ -59,26 +59,47 @@ abstract class BaseOwnedResourceController extends BaseController
         return false;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
+    protected function identifyRequiredRelationship(): array
+    {
+        $request = $this->request;
+        $relationship = $request->getVar("relationship") ?? "*";
+        $relationship = is_array($relationship)
+            ? $relationship
+            : ($relationship === "" ? [] : explode(",", $relationship));
+
+        return $relationship;
+    }
+
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationship
+    ): array {
+        return $initial_document;
+    }
+
+    protected static function processCreatedDocument(array $initial_document, array $input): array
     {
         return $initial_document;
     }
 
-    protected static function processCreatedDocument(array $initial_document): array
+    protected static function processUpdatedDocument(int $id, array $input): void
     {
-        return $initial_document;
     }
 
-    private static function enrichAndOrganizeResponseDocument(array $initial_document): array
-    {
-        $enriched_document = static::enrichResponseDocument($initial_document);
+    private static function enrichAndOrganizeResponseDocument(
+        array $initial_document,
+        array $relationship
+    ): array {
+        $enriched_document = static::enrichResponseDocument($initial_document, $relationship);
         ksort($enriched_document);
         return $enriched_document;
     }
 
-    private static function processAndOrganizeCreatedDocument(array $initial_document): array
-    {
-        $processed_document = static::processCreatedDocument($initial_document);
+    private static function processAndOrganizeCreatedDocument(
+        array $initial_document,
+        array $input
+    ): array {
+        $processed_document = static::processCreatedDocument($initial_document, $input);
         ksort($processed_document);
         return $processed_document;
     }
@@ -91,6 +112,7 @@ abstract class BaseOwnedResourceController extends BaseController
         $request = $this->request;
 
         $scoped_model = static::getModel();
+        $relationship = $this->identifyRequiredRelationship();
         $filter = $request->getVar("filter") ?? [];
         $sort = $request->getVar("sort") ?? [];
         $page = $request->getVar("page") ?? [];
@@ -118,12 +140,15 @@ abstract class BaseOwnedResourceController extends BaseController
         $overall_filtered_count = $overall_filtered_count->countAllResults();
 
         $response_document = [
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => $overall_filtered_count
             ],
             static::getCollectiveName() => $scoped_model->findAll($limit, $offset)
         ];
-        $response_document = static::enrichAndOrganizeResponseDocument($response_document);
+        $response_document = static::enrichAndOrganizeResponseDocument(
+            $response_document,
+            $relationship
+        );
 
         return response()->setJSON($response_document);
     }
@@ -133,6 +158,9 @@ abstract class BaseOwnedResourceController extends BaseController
         helper([ "auth" ]);
 
         $current_user = auth()->user();
+
+        $relationship = $this->identifyRequiredRelationship();
+
         $model = static::getModel();
         $data = $model->find($id);
 
@@ -142,7 +170,10 @@ abstract class BaseOwnedResourceController extends BaseController
             $response_document = [
                 static::getIndividualName() => $data
             ];
-            $response_document = static::enrichAndOrganizeResponseDocument($response_document);
+            $response_document = static::enrichAndOrganizeResponseDocument(
+                $response_document,
+                $relationship
+            );
 
             return response()->setJSON($response_document);
         } else {
@@ -183,7 +214,8 @@ abstract class BaseOwnedResourceController extends BaseController
                                 )
                             ];
                             $response_document = static::processAndOrganizeCreatedDocument(
-                                $response_document
+                                $response_document,
+                                $info
                             );
 
                             if (static::mustTransactForCreation()) {
@@ -225,6 +257,13 @@ abstract class BaseOwnedResourceController extends BaseController
                     $current_user = auth()->user();
 
                     $model = static::getModel();
+                    $database = static::mustTransactForCreation()
+                        ? Database::connect()
+                        : null;
+                    if (static::mustTransactForCreation()) {
+                        $database->transBegin();
+                    }
+
                     $info = array_merge(
                         static::prepareRequestData($request_data),
                         [ "id" => $id ]
@@ -233,7 +272,17 @@ abstract class BaseOwnedResourceController extends BaseController
 
                     $is_success = $model->save($entity);
                     if ($is_success) {
+                        static::processUpdatedDocument($id, $info);
+
+                        if (static::mustTransactForCreation()) {
+                            $database->transCommit();
+                        }
+
                         return $controller->respondNoContent();
+                    }
+
+                    if (static::mustTransactForCreation()) {
+                        $database->transRollback();
                     }
 
                     throw new ServerFailure(

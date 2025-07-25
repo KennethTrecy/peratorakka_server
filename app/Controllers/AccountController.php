@@ -80,26 +80,38 @@ class AccountController extends BaseOwnedResourceController
                 "id=$resource_id"
             ])."]"
         ]);
+        // TODO: Make validation to allow this field if the entity was not yet updated
         $validation->setRule("$individual_name.kind", "kind", [
             "required",
             "min_length[3]",
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]",
-            // TODO: Make validation to allow this field if the entity was not yet updated
         ]);
 
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        [ $currencies ] = AccountModel::selectAncestorsWithResolvedResources($main_documents);
-        $enriched_document["currencies"] = $currencies;
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        if ($must_include_precision_format || $must_include_currency) {
+            [
+                $currencies,
+                $precision_formats
+            ] = AccountModel::selectAncestorsWithResolvedResources($main_documents);
+            $enriched_document["precision_formats"] = $precision_formats;
+            $enriched_document["currencies"] = $currencies;
+        }
 
         return $enriched_document;
     }

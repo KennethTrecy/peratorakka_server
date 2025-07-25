@@ -51,4 +51,9 @@ class Resource
         $duration = $day_difference + 1;
         return $duration;
     }
+
+    public static function retainExistingElements(array $resources): array
+    {
+        return array_filter($resources, fn ($resource) => $resource !== null);
+    }
 }

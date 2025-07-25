@@ -8,13 +8,14 @@ use Faker\Generator;
 
 class AccountModel extends BaseResourceModel
 {
-    protected $table = "accounts";
+    protected $table = "accounts_v2";
     protected $returnType = Account::class;
     protected $allowedFields = [
         "currency_id",
         "name",
         "description",
         "kind",
+        "created_at",
         "deleted_at"
     ];
 
@@ -42,8 +43,35 @@ class AccountModel extends BaseResourceModel
                 model(CurrencyModel::class, false)
                     ->builder()
                     ->select("id")
-                    ->where("user_id", $user->id)
+                    ->whereIn(
+                        "precision_format_id",
+                        model(PrecisionFormatModel::class, false)
+                            ->builder()
+                            ->select("id")
+                            ->where("user_id", $user->id)
+                    )
             );
+    }
+
+    protected static function createAncestorResources(int $user_id, array $options): array
+    {
+        [
+            $precision_formats,
+            $currency
+        ] = CurrencyModel::createTestResource(
+            $user_id,
+            $options["currency_options"] ?? []
+        );
+
+        $parent_links = static::permutateParentLinks([
+            "currency_id" => [ $currency->id ],
+            "kind" => $options["expected_kinds"] ?? []
+        ], $options);
+
+        return [
+            [ $precision_formats, [ $currency ] ],
+            $parent_links
+        ];
     }
 
     protected static function identifyAncestors(): array

@@ -3,6 +3,8 @@
 namespace App\Validation;
 
 use App\Contracts\OwnedResource;
+use App\Libraries\FinancialEntryAtomInputExaminer;
+use App\Libraries\ModifierAtomInputExaminer;
 use App\Models\BaseResourceModel;
 use InvalidArgumentException;
 
@@ -247,5 +249,34 @@ class DatabaseRules
         }
 
         return true;
+    }
+
+    // !: Validate data with `must_have_compound_data_key` first before putting this validator.
+    public function does_own_resources_declared_in_modifier_atom_group_info(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+        $modifier_atom_input_examiner = ModifierAtomInputExaminer::make($parameters[0], $data);
+
+        return $modifier_atom_input_examiner->validateOwnership();
+    }
+
+    // !: Validate data with `must_have_compound_data_key` first before putting this validator.
+    public function does_own_resources_declared_in_financial_entry_atom_group_info(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        $parameters = explode(",", $parameters);
+        $financial_entry_atom_input_examiner = FinancialEntryAtomInputExaminer::make(
+            $parameters[0],
+            $data
+        );
+
+        return $financial_entry_atom_input_examiner->validateOwnership($value);
     }
 }

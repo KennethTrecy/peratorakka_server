@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-// use CodeIgniter\HTTP\IncomingRequest;
 use App\Helpers\RequireCompatibleTokenExpiration;
+use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
@@ -21,7 +21,6 @@ class RegisterController extends BaseRegisterController
         helper([ "auth", "setting", "session" ]);
 
         $session = session();
-
 
         // Remove the following keys to prevent log in errors
         $session->remove("errors");
@@ -56,13 +55,13 @@ class RegisterController extends BaseRegisterController
 
         // Uncomment if the rebuilding request from new instance is preferred.
         // Do not forget to use necessary classes.
-        // $this->request = new IncomingRequest(
-        //     new App(),
-        //     $this->request->getUri(),
-        //     $this->request->getJSON(true),
-        //     $this->request->getUserAgent()
-        // );
-        $this->request = service("request");
+        $this->request = new IncomingRequest(
+            new App(),
+            $this->request->getUri(),
+            json_encode($this->request->getJSON(true)),
+            $this->request->getUserAgent()
+        );
+        // $this->request = service("request");
 
         if (!$this->hasCompatibleTokenExpirationType($this->request)) {
             return $this->response
@@ -92,7 +91,7 @@ class RegisterController extends BaseRegisterController
                 $new_response = $new_response
                     ->setStatusCode(200)
                     ->setJSON([
-                        "meta" => [
+                        "@meta" => [
                             "id" => $current_user->id,
                             "username" => $current_user->username,
                             "message" => $message,

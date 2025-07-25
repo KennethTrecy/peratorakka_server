@@ -3,10 +3,12 @@
 namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
+use App\Exceptions\UnprocessableRequest;
 use App\Libraries\Context;
 use App\Libraries\Context\ContextKeys;
 use App\Models\CurrencyModel;
 use App\Models\NumericalToolModel;
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
@@ -32,8 +34,14 @@ class NumericalToolController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $user_id = $owner->id;
-
+        $validation->setRule("$individual_name.currency_id", "currency", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                CurrencyModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[2]",
@@ -42,7 +50,7 @@ class NumericalToolController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "user_id=$user_id"
+                    "currency_id->$individual_name.currency_id"
                 ])
             ])."]"
         ]);
@@ -55,8 +63,6 @@ class NumericalToolController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $user_id = $owner->id;
-
         $validation->setRule("$individual_name.name", "name", [
             "required",
             "min_length[3]",
@@ -65,7 +71,7 @@ class NumericalToolController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "user_id=$user_id"
+                    "currency_id->$individual_name.currency_id"
                 ]),
                 "id=$resource_id"
             ])."]"
@@ -74,48 +80,50 @@ class NumericalToolController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        $linked_currencies = array_filter(array_map(function ($main_document) {
-            $output_format = explode(
-                "#",
-                $main_document->configuration->sources[0]->outputFormatCode()
-            );
-            if ($output_format[0] === CURRENCY_FORMULA_OUTPUT_FORMAT) {
-                return intval($output_format[1]);
-            }
-
-            return null;
-        }, $main_documents), function ($currency_id) {
-            return $currency_id !== null;
-        });
-        if (count($linked_currencies) > 0) {
-            $currencies = model(CurrencyModel::class)
-                ->selectUsingMultipleIDs($linked_currencies);
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        if ($must_include_precision_format || $must_include_currency) {
+            [
+                $currencies,
+                $precision_formats
+            ] = NumericalToolModel::selectAncestorsWithResolvedResources($main_documents);
+            $enriched_document["precision_formats"] = $precision_formats;
             $enriched_document["currencies"] = $currencies;
         }
 
         return $enriched_document;
     }
 
-    protected static function prepareRequestData(array $raw_request_data): array
-    {
-        $current_user = auth()->user();
-
-        return array_merge(
-            [ "user_id" => $current_user->id ],
-            $raw_request_data
-        );
-    }
-
     public function calculate(int $id)
     {
         helper("auth");
+
+        $current_date = Time::today();
+
+        $request = $this->request;
+        $reference_date = $request->getVar("reference_date") ?? $current_date->toDateString();
+        $relationship = $this->identifyRequiredRelationship();
+
+        $reference_date = $time = Time::createFromFormat(
+            DATE_STRING_FORMAT,
+            $reference_date,
+            DATE_TIME_ZONE
+        );
+
+        if ($reference_date === false) {
+            throw new UnprocessableRequest("Unable to understand the reference date.");
+        }
 
         $current_user = auth()->user();
         $model = static::getModel();
@@ -127,7 +135,7 @@ class NumericalToolController extends BaseOwnedResourceController
             [
                 $time_tags,
                 $constellations
-            ] = NumericalToolModel::showConstellations($data);
+            ] = NumericalToolModel::showConstellations($reference_date, $data);
             $response_document = [
                 "@meta" => [
                     "time_tags" => $time_tags,
@@ -135,7 +143,7 @@ class NumericalToolController extends BaseOwnedResourceController
                 ],
                 static::getIndividualName() => $data
             ];
-            $response_document = static::enrichResponseDocument($response_document);
+            $response_document = static::enrichResponseDocument($response_document, $relationship);
             ksort($response_document);
 
             return $this->response->setJSON($response_document);

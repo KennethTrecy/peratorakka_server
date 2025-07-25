@@ -10,14 +10,14 @@ use Faker\Generator;
 
 class FinancialEntryModel extends BaseResourceModel
 {
-    protected $table = "financial_entries";
+    protected $table = "financial_entries_v2";
     protected $returnType = FinancialEntry::class;
     protected $allowedFields = [
         "modifier_id",
         "transacted_at",
-        "debit_amount",
-        "credit_amount",
         "remarks",
+        "created_at",
+        "updated_at",
         "deleted_at"
     ];
 
@@ -30,11 +30,8 @@ class FinancialEntryModel extends BaseResourceModel
 
     public function fake(Generator &$faker)
     {
-        $amount = $faker->regexify("\d{5}\.\d{3}");
         return [
             "transacted_at"  => Time::today()->toDateTimeString(),
-            "debit_amount"  => $amount,
-            "credit_amount"  => $amount,
             "remarks"  => $faker->paragraph(),
         ];
     }
@@ -51,12 +48,20 @@ class FinancialEntryModel extends BaseResourceModel
         if (!is_null($filter_account_id)) {
             $query_builder = $query_builder
                 ->whereIn(
-                    "modifier_id",
-                    model(ModifierModel::class, false)
+                    "id",
+                    model(FinancialEntryAtomModel::class, false)
                         ->builder()
-                        ->select("id")
-                        ->where("debit_account_id", $filter_account_id)
-                        ->orWhere("credit_account_id", $filter_account_id)
+                        ->select("financial_entry_id")
+                        ->where(
+                            "modifier_atom_id",
+                            model(ModifierModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->where(
+                                    "account_id",
+                                    $filter_account_id
+                                )
+                        )
                 );
         }
 
@@ -86,38 +91,37 @@ class FinancialEntryModel extends BaseResourceModel
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
-        $account_subquery = model(AccountModel::class, false)
-            ->builder()
-            ->select("id")
-            ->whereIn(
-                "currency_id",
-                model(CurrencyModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->where("user_id", $user->id)
-            );
-        $cash_flow_activity_subquery = model(CashFlowActivityModel::class, false)
-            ->builder()
-            ->select("id")
-            ->where("user_id", $user->id);
-
         return $query_builder
             ->whereIn(
                 "modifier_id",
                 model(ModifierModel::class, false)
                     ->builder()
                     ->select("id")
-                    ->whereIn("debit_account_id", $account_subquery)
-                    ->whereIn("credit_account_id", $account_subquery)
-                    ->groupStart()
-                        ->whereIn("debit_cash_flow_activity_id", $cash_flow_activity_subquery)
-                        ->orWhere("debit_cash_flow_activity_id IS NULL")
-                    ->groupEnd()
-                    ->groupStart()
-                        ->whereIn("credit_cash_flow_activity_id", $cash_flow_activity_subquery)
-                        ->orWhere("credit_cash_flow_activity_id IS NULL")
-                    ->groupEnd()
+                    ->where("user_id", $user->id)
             );
+    }
+
+    protected static function createAncestorResources(int $user_id, array $options): array
+    {
+        [
+            $modifiers
+        ] = isset($options["parent_modifiers"])
+            ? [ $options["parent_modifiers"] ]
+            : ModifierModel::createTestResources($user_id, 1, $options["modifier_options"] ?? []);
+
+        $filtered_parent_links = static::permutateParentLinks([
+            "modifier_id" => array_map(
+                fn ($modifier) => $modifier->id,
+                $modifiers
+            )
+        ], $options);
+
+        return [
+            [
+                $modifiers
+            ],
+            $filtered_parent_links
+        ];
     }
 
     protected static function identifyAncestors(): array

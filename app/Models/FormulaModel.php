@@ -2,22 +2,21 @@
 
 namespace App\Models;
 
-use App\Entities\Formula;
+use App\Entities\Deprecated\Formula;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
 class FormulaModel extends BaseResourceModel
 {
-    protected $table = "formulae";
+    protected $table = "formulae_v2";
     protected $returnType = Formula::class;
     protected $allowedFields = [
-        "currency_id",
+        "precision_format_id",
         "name",
         "description",
         "output_format",
-        "exchange_rate_basis",
-        "presentational_precision",
-        "formula",
+        "expression",
+        "created_at",
         "deleted_at"
     ];
 
@@ -34,9 +33,7 @@ class FormulaModel extends BaseResourceModel
             "name"  => $faker->unique()->firstName(),
             "description"  => $faker->paragraph(),
             "output_format"  => $faker->randomElement(ACCEPTABLE_FORMULA_OUTPUT_FORMATS),
-            "exchange_rate_basis"  => $faker->randomElement(ACCEPTABLE_EXCHANGE_RATE_BASES),
-            "presentational_precision"  => $faker->randomElement([ 0, 1, 2, 3, 4, 12 ]),
-            "formula"  => " 1 + 1"
+            "expression"  => " 1 + 1"
         ];
     }
 
@@ -44,28 +41,33 @@ class FormulaModel extends BaseResourceModel
     {
         return $query_builder
             ->whereIn(
-                "currency_id",
-                model(CurrencyModel::class, false)
+                "precision_format_id",
+                model(PrecisionFormatModel::class, false)
                     ->builder()
                     ->select("id")
                     ->where("user_id", $user->id)
             );
     }
 
-    protected static function identifyAncestors(): array
+    protected static function createAncestorResources(int $user_id, array $options): array
     {
+        [
+            $precision_format
+        ] = $options["precision_format_parent"] ?? PrecisionFormatModel::createTestResource(
+            $user_id,
+            $options["precision_format_options"] ?? []
+        );
+
         return [
-            CurrencyModel::class => [ "currency_id" ]
+            [ [ $precision_format ] ],
+            [ [ "precision_format_id" => $precision_format->id ] ]
         ];
     }
 
-    public static function extractLinkedCurrencies(array $formulae): array
+    protected static function identifyAncestors(): array
     {
-        return array_map(
-            function ($formula) {
-                return $formula->currency_id;
-            },
-            $formulae
-        );
+        return [
+            PrecisionFormatModel::class => [ "precision_format_id" ]
+        ];
     }
 }

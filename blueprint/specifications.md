@@ -29,17 +29,35 @@ mechanism is dependent to the developer's preference.
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - General Asset
      - Liability
-     - Equity
-     - Expense
-     - Income
+     - General Equity
+     - General Expense
+     - General Income
      - Liquid Asset
      - Depreciative Asset
-4. An cash flow activity has the following information:
+     - General Temporary
+     - Itemized Asset
+     - Direct Cost
+     - Direct Sale
+4.  An item info has the following information:
    - Primary ID
    - User ID
    - Name
    - Description
-5. An event has the following information:
+5.  An item configuration has the following information:
+    - Primary ID
+    - Account ID
+    - Item Info ID
+    - Valuation Method
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Weighted Average
+      - FIFO
+      - LIFO
+6. An cash flow activity has the following information:
+   - Primary ID
+   - User ID
+   - Name
+   - Description
+7. An event has the following information:
    - Primary ID
    - User ID
    - Name
@@ -49,24 +67,20 @@ mechanism is dependent to the developer's preference.
      - Timeout
      - Interval
      - Manual
-6. A timeout event has the following information:
+8. A timeout event has the following information:
    - Primary ID
    - Event ID
    - Expiration date and time
-7. An interval event has the following information:
+9. An interval event has the following information:
    - Primary ID
    - Event ID
    - Schedule as CRON expression
-8. An event started time has the following information:
+10. An event started time has the following information:
    - Primary ID
    - Event ID
    - Started time
-9.  A modifier has the following information:
+11. A modifier has the following information:
    - Primary ID
-   - Debit Cash Flow Activity ID
-   - Debit Account ID
-   - Credit Cash Flow Activity ID
-   - Credit account ID
    - Name
    - Description (optional)
    - Action (enumeration)
@@ -74,12 +88,20 @@ mechanism is dependent to the developer's preference.
      - Record
      - Close
      - Exchange
+     - Reprice
+     - Bid
+     - Ask
+     - Transform
+     - Throw
+     - Catch
+     - Condense
+     - Dilute
    - Kind (enumeration)
      - Unknown (to represent kinds in later versions in case the user downgraded)
      - Reactive
      - Dependent
      - Manual Input
-10. A reactive modifier has the following special information:
+12. A reactive modifier has the following special information:
    - Primary ID
    - Modifier ID
    - Event ID
@@ -88,7 +110,7 @@ mechanism is dependent to the developer's preference.
      - Adder
      - Multiplier
      - Value
-11. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
+13. A dependent modifier should not loop back to themselves to prevent infinite loop. It has the
     following special information:
     - Primary ID
     - Modifier ID
@@ -98,46 +120,84 @@ mechanism is dependent to the developer's preference.
       - Adder
       - Multiplier
     - Value
-12. A financial entry has the following information:
+14. A modifier atom has the following information
+    - Primary ID
+    - Modifier ID
+    - Account ID
+    - Field Kind
+      - Real Debit
+      - Real Credit
+      - Imaginary Debit
+      - Imaginary Credit
+      - Item Count
+      - Price
+15. A modifier atom activity has the following information:
+    - Primary ID
+    - Modifier Atom ID
+    - Cash Flow Activity ID
+16. A financial entry has the following information
     - Primary ID
     - Modifier ID
     - Transaction Date
-    - Debit Amount
-    - Credit Amount
     - Remarks
-13. A frozen period has the following information:
+17. A financial entry atom has the following information
+    - Primary ID
+    - Financial Entry ID
+    - Modifier Atom ID
+    - Numerical Value
+18. A frozen period has the following information:
     - Primary ID
     - User ID
     - Started date and time
     - Finished date and time
-14. A summary calculation has the following information:
-    - Primary ID
+19. A frozen account has the following information:
+    - Primary Hash
     - Frozen Period ID
     - Account ID
-    - Opened Debit Amount
+20. A real unadjusted summary calculation has the following information:
+    - Frozen Account Hash
     - Unadjusted Debit Amount
+    - Unadjusted Credit Amount
+21. A real adjusted summary calculation has the following information
+    - Frozen Account Hash
+    - Opened Debit Amount
     - Closed Debit Amount
     - Opened Credit Amount
-    - Unadjusted Credit Amount
     - Closed Credit Amount
-15. A flow calculation has the following information:
-    - Primary ID
-    - Frozen Period ID
+22. A real flow calculation has the following information:
+    - Frozen Account Hash
     - Cash Flow Activity ID
-    - Account ID
     - Net amount
-16. A collection has the following information:
+23. An item calculation has the following information:
+    - Frozen Account Hash
+    - Financial Entry ID
+    - Remaining Count
+24. An imaginary unadjusted summary calculation has the following information:
+    - Frozen Account Hash
+    - Unadjusted Debit Amount
+    - Unadjusted Credit Amount
+25. An imaginary adjusted summary calculation has the following information
+    - Frozen Account Hash
+    - Opened Debit Amount
+    - Closed Debit Amount
+    - Opened Credit Amount
+    - Closed Credit Amount
+26. An imaginary flow calculation has the following information:
+    - Frozen Account Hash
+    - Cash Flow Activity ID
+    - Net amount
+27. A collection has the following information:
     - Primary ID
     - User ID
     - Name
     - Description
-17. An account collection has the following information:
+28. An account collection has the following information:
     - Primary ID
     - Collection ID
     - Account ID
-18. A formula has the following information:
+29. A formula has the following information:
     - Primary ID
-    - Currency ID
+    - Precision Format ID
     - Name
     - Description
     - Output Format
@@ -145,15 +205,10 @@ mechanism is dependent to the developer's preference.
       - Raw
       - Percentage
       - Currency
-    - Exchange Rate Basis
-      - Unknown (to represent kinds in later versions in case the user downgraded)
-      - Periodic
-      - Latest
-    - Presentational Precision
-    - Formula
-19. A numerical tool has the following information:
+    - Expression
+30. A numerical tool has the following information:
     - Primary ID
-    - User ID
+    - Currency ID
     - Name
     - Kind
       - Unknown (to represent kinds in later versions in case the user downgraded)
@@ -165,6 +220,36 @@ mechanism is dependent to the developer's preference.
       - Periodic
       - Yearly
     - Recency
+    - Recency
+    - Exchange Rate Basis
+      - Unknown (to represent kinds in later versions in case the user downgraded)
+      - Periodic
+      - Latest
     - Order
     - Notes
     - Configuration
+
+### Migration Plan
+Next version would have a major upgrade.
+
+#### Migration Plan I
+- Make another table for modifier atoms
+- Make another table for modifier atom activity
+- Convert some columns of modifier to modifier atoms
+- Make another table for financial entry atoms
+- Convert some columns of financial entry to financial entry atoms
+- Make another table for unadjusted summary calculation
+- Make another table for adjusted summary calculation
+- Convert some columns of summary calculations to respective calculations
+
+#### Migration Plan II
+- Delete converted columns of modifier
+- Delete converted columns of financial entry
+
+#### Migration Plan III
+- Make another table for papered summary calculation
+
+## Frozen Period Specifications
+Before the financial statements are completely frozen, certain conditions must be met:
+- All temporary accounts have zero real balances
+- All imaginary balances should be equal on both sides

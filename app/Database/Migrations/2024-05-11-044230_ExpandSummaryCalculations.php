@@ -2,8 +2,8 @@
 
 namespace App\Database\Migrations;
 
+use App\Models\Deprecated\DeprecatedSummaryCalculation;
 use App\Models\FrozenPeriodModel;
-use App\Models\SummaryCalculationModel;
 use CodeIgniter\Database\Exceptions\DatabaseException;
 use CodeIgniter\Database\Migration;
 

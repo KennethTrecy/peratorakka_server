@@ -3,7 +3,6 @@
 namespace App\Validation;
 
 use App\Models\AccountModel;
-use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
 use InvalidArgumentException;
 
@@ -41,38 +40,6 @@ class SimilarityRules
         return $this->mayAllowForDualCurrency($modifier_id);
     }
 
-    public function must_be_same_for_financial_entry(
-        $debit_value,
-        string $parameters,
-        array $data,
-        ?string &$error = null
-    ): bool {
-        helper("array");
-
-        $parameters = explode(",", $parameters);
-
-        if (
-            count($parameters) < 2
-            || is_null(dot_array_search($parameters[1], $data))
-        ) {
-            throw new InvalidArgumentException(
-                '"must_be_same_for_financial_entry" needs a key to financial entry ID and key to'
-                .' credit value to check the required similarity for field.'
-            );
-        }
-
-        $credit_value = dot_array_search($parameters[1], $data);
-        if ($credit_value === $debit_value) {
-            return true;
-        }
-
-        $financial_entry_id = intval($parameters[0]);
-        $financial_entry = model(FinancialEntryModel::class)->find($financial_entry_id);
-        $modifier_id = $financial_entry->modifier_id;
-
-        return $this->mayAllowForDualCurrency($modifier_id);
-    }
-
     public function must_be_same_as_password_of_current_user(
         $given_password,
         ?string &$error = null
@@ -88,6 +55,7 @@ class SimilarityRules
         $modifier = model(ModifierModel::class)->find($modifier_id);
         $accounts = model(AccountModel::class)
             ->whereIn("id", [ $modifier->debit_account_id, $modifier->credit_account_id ])
+            ->withDeleted()
             ->find();
 
         // If the accounts are not in the same currency, allow the debit and credit amount to be

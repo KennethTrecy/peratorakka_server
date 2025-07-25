@@ -13,63 +13,37 @@ use App\Libraries\Constellation\Star;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\NumericalToolConfiguration\FormulaSource;
 use App\Models\AccountCollectionModel;
-use App\Models\AccountModel;
-use App\Models\CashFlowActivityModel;
-use App\Models\CollectionModel;
-use App\Models\CurrencyModel;
-use App\Models\FinancialEntryModel;
-use App\Models\FlowCalculationModel;
 use App\Models\FormulaModel;
 use App\Models\FrozenPeriodModel;
-use App\Models\ModifierModel;
 use App\Models\NumericalToolModel;
-use App\Models\SummaryCalculationModel;
 use CodeIgniter\I18n\Time;
-use CodeIgniter\Test\Fabricator;
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 use Throwable;
 
-class NumericalToolTest extends AuthenticatedHTTPTestCase
+class NumericalToolTest extends AuthenticatedContextualHTTPTestCase
 {
     public function testDefaultIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tools = $numerical_tool_fabricator->create(10);
+        [
+            $precision_formats,
+            $currencies,
+            $numerical_tools
+        ] = NumericalToolModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/numerical_tools");
+        $result = $authenticated_info->getRequest()->get("/api/v2/numerical_tools");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "numerical_tools" => json_decode(json_encode($numerical_tools)),
-            "currencies" => [ $currency ]
+            "numerical_tools" => json_decode(json_encode($numerical_tools))
         ]);
     }
 
@@ -77,39 +51,20 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info->getRequest()
-            ->get("/api/v1/numerical_tools/$numerical_tool->id");
+            ->get("/api/v2/numerical_tools/$details->id");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "numerical_tool" => json_decode(json_encode($numerical_tool)),
-            "currencies" => [ $currency ]
+            "numerical_tool" => json_decode(json_encode($details)),
+            "currencies" => json_decode(json_encode($currencies)),
+            "precision_formats" => json_decode(json_encode($precision_formats))
         ]);
     }
 
@@ -117,42 +72,22 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->make();
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::makeTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/numerical_tools", [
-                "numerical_tool" => $numerical_tool->toArray()
+            ->post("/api/v2/numerical_tools", [
+                "numerical_tool" => $details->toArray()
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "numerical_tool" => $numerical_tool->toArray()
+            "numerical_tool" => $details->toArray()
         ]);
     }
 
@@ -160,44 +95,27 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        $new_details = $numerical_tool_fabricator->make();
+        [
+            $precision_formats,
+            $currencies,
+            $details,
+            $new_details
+        ] = NumericalToolModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            []
+        );
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/numerical_tools/$numerical_tool->id", [
+            ->put("/api/v2/numerical_tools/$details->id", [
                 "numerical_tool" => $new_details->toArray()
             ]);
 
         $result->assertStatus(204);
-        $this->seeInDatabase("numerical_tools", array_merge(
-            [ "id" => $numerical_tool->id ],
-            array_merge($new_details->toArray(), [
+        $this->seeInDatabase("numerical_tools_v2", array_merge(
+            [ "id" => $details->id ],
+            array_merge($new_details->toRawArray(), [
                 "kind" => NumericalToolKind::set($new_details->kind),
                 "recurrence" => NumericalToolRecurrencePeriod::set($new_details->recurrence)
             ])
@@ -208,42 +126,22 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/numerical_tools/$numerical_tool->id");
+            ->delete("/api/v2/numerical_tools/$details->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("numerical_tools", array_merge(
-            [ "id" => $numerical_tool->id ]
+        $this->seeInDatabase("numerical_tools_v2", array_merge(
+            [ "id" => $details->id ]
         ));
-        $this->dontSeeInDatabase("numerical_tools", [
-            "id" => $numerical_tool->id,
+        $this->dontSeeInDatabase("numerical_tools_v2", [
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -252,40 +150,20 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        model(NumericalToolModel::class)->delete($numerical_tool->id);
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(NumericalToolModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/numerical_tools/$numerical_tool->id");
+            ->patch("/api/v2/numerical_tools/$details->id");
 
         $result->assertStatus(204);
-        $this->seeInDatabase("numerical_tools", [
-            "id" => $numerical_tool->id,
+        $this->seeInDatabase("numerical_tools_v2", [
+            "id" => $details->id,
             "deleted_at" => null
         ]);
     }
@@ -294,50 +172,30 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        model(NumericalToolModel::class)->delete($numerical_tool->id);
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(NumericalToolModel::class)->delete($details->id);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/numerical_tools/$numerical_tool->id/force");
+            ->delete("/api/v2/numerical_tools/$details->id/force");
 
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "numerical_tools", []);
+        $this->seeNumRecords(0, "numerical_tools_v2", []);
     }
 
     public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/numerical_tools");
+        $result = $authenticated_info->getRequest()->get("/api/v2/numerical_tools");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 0
             ],
             "numerical_tools" => []
@@ -348,314 +206,220 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tools = $numerical_tool_fabricator->create(10);
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/numerical_tools", [
+        $result = $authenticated_info->getRequest()->get("/api/v2/numerical_tools", [
             "page" => [
                 "limit" => 5
+            ],
+            "relationship" => [
+                "precision_formats",
+                "currencies"
             ]
         ]);
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 10
             ],
-            "numerical_tools" => json_decode(json_encode(array_slice($numerical_tools, 0, 5))),
-            "currencies" => [ $currency ]
+            "numerical_tools" => json_decode(json_encode(array_slice($details, 0, 5))),
+            "currencies" => json_decode(json_encode($currencies)),
+            "precision_formats" => json_decode(json_encode($precision_formats))
         ]);
     }
 
-    public function testCalculatedFrozenOnlyMultiCurrencyCollection()
+    public function testCalculatedFrozenOnlyAppendedMultiCurrencyCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "10",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "10"
-        ])->create();
-        $first_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "10",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "10",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "10"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "10",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "30",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "30"
-        ])->create();
-        $second_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "10",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "30",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "30",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "20"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => 2,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => $asset_collection->id,
-                        "currency_id" => $currency_a->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
+        $current_time = Time::now();
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "2" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "2" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
                     ]
                 ]
-            ])
+            ],
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $local_currency = $currencies[0];
+        [
+            $local_equity_account,
+            $local_asset_account,
+            $expense_account,
+            $foreign_equity_account,
+            $foreign_asset_account
+        ] = $accounts;
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources($authenticated_info->getUser()->id, 1, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $local_asset_account, $foreign_asset_account ]
+            ]
         ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        $asset_collection = $collections[0];
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, [
+            "parents" => [ $precision_formats, $local_currency ],
+            "overrides" => [
+                "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+                "recency" => 2,
+                "currency_id" => $local_currency->id,
+                "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
+                "configuration" => json_encode([
+                    "sources" => [
+                        [
+                            "type" => CollectionSource::sourceType(),
+                            "collection_id" => $asset_collection->id,
+                            "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
+                            "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
+                            "must_show_individual_amounts" => true,
+                            "must_show_collective_sum" => true,
+                            "must_show_collective_average" => true
+                        ]
+                    ]
+                ])
+            ]
+        ]);
 
         $result = $authenticated_info->getRequest()->get(
-            "/api/v1/numerical_tools/calculate/{$numerical_tool->id}"
+            "/api/v2/numerical_tools/calculate/{$details->id}"
         );
 
         $result->assertOk();
@@ -666,30 +430,30 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                     return $constellation->toArray();
                 }, [
                     new Constellation(
-                        $asset_a_account->name,
+                        $local_asset_account->name,
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "2000.00",
-                                RationalNumber::get("2000")
+                                "750.00",
+                                RationalNumber::get("750")
                             ),
                             new Star(
-                                "3500.00",
-                                RationalNumber::get("3500")
+                                "1250.00",
+                                RationalNumber::get("1250")
                             )
                         ]
                     ),
                     new Constellation(
-                        $asset_b_account->name,
+                        $foreign_asset_account->name,
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "1000.00",
-                                RationalNumber::get("1000")
+                                "0.00",
+                                RationalNumber::get("0")
                             ),
                             new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
+                                "250.00",
+                                RationalNumber::get("250")
                             )
                         ]
                     ),
@@ -697,14 +461,14 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         "Total of $asset_collection->name",
                         AcceptableConstellationKind::Sum,
                         [
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        ),
-                        new Star(
-                            "6500.00",
-                            RationalNumber::get("6500")
-                        )
+                            new Star(
+                                "750.00",
+                                RationalNumber::get("750")
+                            ),
+                            new Star(
+                                "1500.00",
+                                RationalNumber::get("1500")
+                            )
                         ]
                     ),
                     new Constellation(
@@ -712,288 +476,206 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "1500.00",
-                                RationalNumber::get("1500")
+                                "375.00",
+                                RationalNumber::get("375")
                             ),
                             new Star(
-                                "3250.00",
-                                RationalNumber::get("3250")
+                                "750.00",
+                                RationalNumber::get("750")
                             )
                         ]
                     )
                 ])
             ],
-            "currencies" => [ $currency_a ],
-            "numerical_tool" => $numerical_tool
+            "currencies" => [ $local_currency ],
+            "precision_formats" => $precision_formats,
+            "numerical_tool" => $details
         ]);
     }
 
-    public function testCalculatedNearlyMixedMultiCurrencyCollection()
+    public function testCalculatedFrozenOnlyTemporaryMultiCurrencyCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "10",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "10"
-        ])->create();
-        $first_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "10",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "10",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "10"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "10",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "30",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "30"
-        ])->create();
-        $second_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "10",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "30",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "30",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "20"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => -2,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => $asset_collection->id,
-                        "currency_id" => $currency_a->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
+        $current_time = Time::now();
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "3" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
                     ]
                 ]
-            ])
+            ],
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $local_currency = $currencies[0];
+        [
+            $local_equity_account,
+            $local_asset_account,
+            $expense_account,
+            $foreign_equity_account,
+            $foreign_asset_account
+        ] = $accounts;
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources($authenticated_info->getUser()->id, 1, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $local_asset_account, $foreign_asset_account ]
+            ]
         ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        $asset_collection = $collections[0];
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, [
+            "parents" => [ $precision_formats, $local_currency ],
+            "overrides" => [
+                "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+                "recency" => 2,
+                "currency_id" => $local_currency->id,
+                "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
+                "configuration" => json_encode([
+                    "sources" => [
+                        [
+                            "type" => CollectionSource::sourceType(),
+                            "collection_id" => $asset_collection->id,
+                            "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
+                            "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
+                            "must_show_individual_amounts" => true,
+                            "must_show_collective_sum" => true,
+                            "must_show_collective_average" => true
+                        ]
+                    ]
+                ])
+            ]
+        ]);
 
         $result = $authenticated_info->getRequest()->get(
-            "/api/v1/numerical_tools/calculate/{$numerical_tool->id}"
+            "/api/v2/numerical_tools/calculate/{$details->id}"
         );
 
         $result->assertOk();
@@ -1004,412 +686,30 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                     return $constellation->toArray();
                 }, [
                     new Constellation(
-                        $asset_a_account->name,
+                        $local_asset_account->name,
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "2000.00",
-                                RationalNumber::get("2000")
+                                "500.00",
+                                RationalNumber::get("500")
                             ),
                             new Star(
-                                "3500.00",
-                                RationalNumber::get("3500")
+                                "1250.00",
+                                RationalNumber::get("1250")
                             )
                         ]
                     ),
                     new Constellation(
-                        $asset_b_account->name,
+                        $foreign_asset_account->name,
                         AcceptableConstellationKind::Account,
                         [
                             new Star(
-                                "1000.00",
-                                RationalNumber::get("1000")
+                                "250.00",
+                                RationalNumber::get("250")
                             ),
                             new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        "Total of $asset_collection->name",
-                        AcceptableConstellationKind::Sum,
-                        [
-                        new Star(
-                            "3000.00",
-                            RationalNumber::get("3000")
-                        ),
-                        new Star(
-                            "6500.00",
-                            RationalNumber::get("6500")
-                        )
-                        ]
-                    ),
-                    new Constellation(
-                        "Average of $asset_collection->name",
-                        AcceptableConstellationKind::Average,
-                        [
-                        new Star(
-                            "1500.00",
-                            RationalNumber::get("1500")
-                        ),
-                        new Star(
-                            "3250.00",
-                            RationalNumber::get("3250")
-                        )
-                    ]
-                    )
-                ])
-            ],
-            "currencies" => [ $currency_a ],
-            "numerical_tool" => $numerical_tool
-        ]);
-    }
-
-    public function testCalculatedTrulyMixedMultiCurrencyCollection()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $equity_a_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $expense_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $expense_account->id,
-            "credit_account_id" => $asset_a_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => null,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $close_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $equity_a_account->id,
-            "credit_account_id" => $expense_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_record_modifier->id,
-            "debit_amount" => "1000",
-            "credit_amount" => "1000"
-        ])->create();
-        $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $expense_record_modifier->id,
-            "debit_amount" => "250",
-            "credit_amount" => "250"
-        ])->create();
-        $closed_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_modifier->id,
-            "debit_amount" => $recorded_expense_financial_entry->credit_amount,
-            "credit_amount" => $recorded_expense_financial_entry->debit_amount
-        ])->create();
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-4 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-3 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "10",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "10"
-        ])->create();
-        $first_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "10",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "10",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "10"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "10",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "30",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "30"
-        ])->create();
-        $second_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "10",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "30",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "30",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "20"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => -2,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => $asset_collection->id,
-                        "currency_id" => $currency_a->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-
-        $result = $authenticated_info->getRequest()->get(
-            "/api/v1/numerical_tools/calculate/{$numerical_tool->id}"
-        );
-
-        $result->assertOk();
-        $result->assertJSONExact([
-            "@meta" => [
-                "time_tags" => array_fill(0, 3, Time::now()->toLocalizedString("MMMM yyyy")),
-                "constellations" => array_map(function ($constellation) {
-                    return $constellation->toArray();
-                }, [
-                    new Constellation(
-                        $asset_a_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
-                            new Star(
-                                "2000.00",
-                                RationalNumber::get("2000")
-                            ),
-                            new Star(
-                                "3500.00",
-                                RationalNumber::get("3500")
-                            ),
-                            new Star(
-                                "4250.00",
-                                RationalNumber::get("4250")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        $asset_b_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
-                            new Star(
-                                "1000.00",
-                                RationalNumber::get("1000")
-                            ),
-                            new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
-                            ),
-                            new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
+                                "250.00",
+                                RationalNumber::get("250")
                             )
                         ]
                     ),
@@ -1418,367 +718,12 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Sum,
                         [
                             new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
+                                "750.00",
+                                RationalNumber::get("750")
                             ),
-                            new Star(
-                                "6500.00",
-                                RationalNumber::get("6500")
-                            ),
-                            new Star(
-                                "7250.00",
-                                RationalNumber::get("7250")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        "Average of $asset_collection->name",
-                        AcceptableConstellationKind::Average,
-                        [
                             new Star(
                                 "1500.00",
                                 RationalNumber::get("1500")
-                            ),
-                            new Star(
-                                "3250.00",
-                                RationalNumber::get("3250")
-                            ),
-                            new Star(
-                                "3625.00",
-                                RationalNumber::get("3625")
-                            )
-                        ]
-                    )
-                ])
-            ],
-            "currencies" => [ $currency_a ],
-            "numerical_tool" => $numerical_tool
-        ]);
-    }
-
-    public function testCalculatedRecentOnlyMultiCurrencyCollection()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $equity_a_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $expense_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $expense_account->id,
-            "credit_account_id" => $asset_a_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => null,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $close_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $equity_a_account->id,
-            "credit_account_id" => $expense_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-4 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-3 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "10",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "10"
-        ])->create();
-        $first_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "10",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "10",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "10"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "10",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "30",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "30"
-        ])->create();
-        $second_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "10",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "30",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "30",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "20"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => 0,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => $asset_collection->id,
-                        "currency_id" => $currency_a->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-
-        $result = $authenticated_info->getRequest()->get(
-            "/api/v1/numerical_tools/calculate/{$numerical_tool->id}"
-        );
-
-        $result->assertOk();
-        $result->assertJSONExact([
-            "@meta" => [
-                "time_tags" => array_fill(0, 1, Time::now()->toLocalizedString("MMMM yyyy")),
-                "constellations" => array_map(function ($constellation) {
-                    return $constellation->toArray();
-                }, [
-                    new Constellation(
-                        $asset_a_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
-                            new Star(
-                                "4250.00",
-                                RationalNumber::get("4250")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        $asset_b_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
-                            new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        "Total of $asset_collection->name",
-                        AcceptableConstellationKind::Sum,
-                        [
-                            new Star(
-                                "7250.00",
-                                RationalNumber::get("7250")
                             )
                         ]
                     ),
@@ -1787,562 +732,254 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "3625.00",
-                                RationalNumber::get("3625")
+                                "375.00",
+                                RationalNumber::get("375")
+                            ),
+                            new Star(
+                                "750.00",
+                                RationalNumber::get("750")
                             )
                         ]
                     )
                 ])
             ],
-            "currencies" => [ $currency_a ],
-            "numerical_tool" => $numerical_tool
+            "currencies" => [ $local_currency ],
+            "precision_formats" => $precision_formats,
+            "numerical_tool" => $details
         ]);
     }
 
-    public function testUncalculatableCollection()
+    public function testCalculatedFrozenOnlyPeristentMultiCurrencyCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $equity_a_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $expense_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $expense_account->id,
-            "credit_account_id" => $asset_a_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => null,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $close_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $equity_a_account->id,
-            "credit_account_id" => $expense_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => 0,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => $asset_collection->id,
-                        "currency_id" => $currency_a->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
+        $current_time = Time::now();
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "3" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "2" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "2" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
                     ]
                 ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-
-        $result = $authenticated_info->getRequest()->get(
-            "/api/v1/numerical_tools/calculate/{$numerical_tool->id}"
-        );
-
-        $result->assertOk();
-        $result->assertJSONExact([
-            "@meta" => [
-                "time_tags" => array_fill(0, 1, Time::now()->toLocalizedString("MMMM yyyy")),
-                "constellations" => array_map(function ($constellation) {
-                    return $constellation->toArray();
-                }, [
-                    new Constellation(
-                        $asset_a_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
-                            new Star(
-                                "4250.00",
-                                RationalNumber::get("4250")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        $asset_b_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
-                            new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        "Total of $asset_collection->name",
-                        AcceptableConstellationKind::Sum,
-                        [
-                            new Star(
-                                "7250.00",
-                                RationalNumber::get("7250")
-                            )
-                        ]
-                    ),
-                    new Constellation(
-                        "Average of $asset_collection->name",
-                        AcceptableConstellationKind::Average,
-                        [
-                            new Star(
-                                "3625.00",
-                                RationalNumber::get("3625")
-                            )
-                        ]
-                    )
-                ])
             ],
-            "currencies" => [ $currency_a ],
-            "numerical_tool" => $numerical_tool
-        ]);
-    }
-
-    public function testCalculatedTrulyMixedMultiCurrencyCollectionAndFormula()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $equity_a_account->id,
-            "debit_cash_flow_activity_id" => null,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $expense_record_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $expense_account->id,
-            "credit_account_id" => $asset_a_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => null,
-            "action" => RECORD_MODIFIER_ACTION
-        ])->create();
-        $close_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $equity_a_account->id,
-            "credit_account_id" => $expense_account->id,
-            "debit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "credit_cash_flow_activity_id" => $cash_flow_activity->id,
-            "action" => CLOSE_MODIFIER_ACTION
-        ])->create();
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $recorded_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_record_modifier->id,
-            "debit_amount" => "1000",
-            "credit_amount" => "1000"
-        ])->create();
-        $recorded_expense_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $expense_record_modifier->id,
-            "debit_amount" => "250",
-            "credit_amount" => "250"
-        ])->create();
-        $closed_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $close_modifier->id,
-            "debit_amount" => $recorded_expense_financial_entry->credit_amount,
-            "credit_amount" => $recorded_expense_financial_entry->debit_amount
-        ])->create();
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-4 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-3 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "10",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "10"
-        ])->create();
-        $first_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "10",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "10",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "10"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "10",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "30",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "30"
-        ])->create();
-        $second_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "10",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "30",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "30",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "20"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $formula_fabricator = new Fabricator(FormulaModel::class);
-        $formula_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "output_format" => CURRENCY_FORMULA_OUTPUT_FORMAT,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-            "presentational_precision" => 2,
-            "formula" => "TOTAL_UNADJUSTED_DEBIT_AMOUNT(COLLECTION[$asset_collection->id])"
-        ]);
-        $formula = $formula_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
-            "recency" => -2,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => $asset_collection->id,
-                        "currency_id" => $currency_a->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ],
-                    [
-                        "type" => FormulaSource::sourceType(),
-                        "formula_id" => $formula->id
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
                     ]
                 ]
-            ])
+            ]
+        );
+        $local_currency = $currencies[0];
+        [
+            $local_equity_account,
+            $local_asset_account,
+            $expense_account,
+            $foreign_equity_account,
+            $foreign_asset_account
+        ] = $accounts;
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources($authenticated_info->getUser()->id, 1, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $local_asset_account, $foreign_asset_account ]
+            ]
         ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        $asset_collection = $collections[0];
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, [
+            "parents" => [ $precision_formats, $local_currency ],
+            "overrides" => [
+                "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+                "recency" => 2,
+                "currency_id" => $local_currency->id,
+                "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
+                "configuration" => json_encode([
+                    "sources" => [
+                        [
+                            "type" => CollectionSource::sourceType(),
+                            "collection_id" => $asset_collection->id,
+                            "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
+                            "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
+                            "must_show_individual_amounts" => true,
+                            "must_show_collective_sum" => true,
+                            "must_show_collective_average" => true
+                        ]
+                    ]
+                ])
+            ]
+        ]);
 
         $result = $authenticated_info->getRequest()->get(
-            "/api/v1/numerical_tools/calculate/{$numerical_tool->id}"
+            "/api/v2/numerical_tools/calculate/{$details->id}"
         );
 
         $result->assertOk();
         $result->assertJSONExact([
             "@meta" => [
-                "time_tags" => array_fill(0, 3, Time::now()->toLocalizedString("MMMM yyyy")),
+                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM yyyy")),
                 "constellations" => array_map(function ($constellation) {
                     return $constellation->toArray();
                 }, [
                     new Constellation(
-                        $asset_a_account->name,
+                        $local_asset_account->name,
                         AcceptableConstellationKind::Account,
                         [
-                        new Star(
-                            "2000.00",
-                            RationalNumber::get("2000")
-                        ),
-                        new Star(
-                            "3500.00",
-                            RationalNumber::get("3500")
-                        ),
-                        new Star(
-                            "4250.00",
-                            RationalNumber::get("4250")
-                        )
-                        ]
-                    ),
-                    new Constellation(
-                        $asset_b_account->name,
-                        AcceptableConstellationKind::Account,
-                        [
+                            new Star(
+                                "500.00",
+                                RationalNumber::get("500")
+                            ),
                             new Star(
                                 "1000.00",
                                 RationalNumber::get("1000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $foreign_asset_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "250.00",
+                                RationalNumber::get("250")
                             ),
                             new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
-                            ),
-                            new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
+                                "625.00",
+                                RationalNumber::get("625")
                             )
                         ]
                     ),
@@ -2351,16 +988,12 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Sum,
                         [
                             new Star(
-                                "3000.00",
-                                RationalNumber::get("3000")
+                                "750.00",
+                                RationalNumber::get("750")
                             ),
                             new Star(
-                                "6500.00",
-                                RationalNumber::get("6500")
-                            ),
-                            new Star(
-                                "7250.00",
-                                RationalNumber::get("7250")
+                                "1625.00",
+                                RationalNumber::get("1625")
                             )
                         ]
                     ),
@@ -2369,41 +1002,613 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
                         AcceptableConstellationKind::Average,
                         [
                             new Star(
-                                "1500.00",
-                                RationalNumber::get("1500")
+                                "375.00",
+                                RationalNumber::get("375")
                             ),
                             new Star(
-                                "3250.00",
-                                RationalNumber::get("3250")
+                                "812.50",
+                                RationalNumber::get("812.50")
+                            )
+                        ]
+                    )
+                ])
+            ],
+            "currencies" => [ $local_currency ],
+            "precision_formats" => $precision_formats,
+            "numerical_tool" => $details
+        ]);
+    }
+
+    public function testCalculatedFrozenOnlyParallelMultiCurrencyCollection()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $current_time = Time::now();
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "3" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "2" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "2" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 5,
+                            "atoms" => [
+                                [ 10, "3" ],
+                                [ 11, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ],
+                    [ 11, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $local_currency = $currencies[0];
+        [
+            $local_equity_account,
+            $local_asset_account,
+            $expense_account,
+            $foreign_equity_account,
+            $foreign_asset_account
+        ] = $accounts;
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources($authenticated_info->getUser()->id, 1, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $local_asset_account, $foreign_asset_account ]
+            ]
+        ]);
+        $asset_collection = $collections[0];
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, [
+            "parents" => [ $precision_formats, $local_currency ],
+            "overrides" => [
+                "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+                "recency" => 2,
+                "currency_id" => $local_currency->id,
+                "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
+                "configuration" => json_encode([
+                    "sources" => [
+                        [
+                            "type" => CollectionSource::sourceType(),
+                            "collection_id" => $asset_collection->id,
+                            "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
+                            "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
+                            "must_show_individual_amounts" => true,
+                            "must_show_collective_sum" => true,
+                            "must_show_collective_average" => true
+                        ]
+                    ]
+                ])
+            ]
+        ]);
+
+        $result = $authenticated_info->getRequest()->get(
+            "/api/v2/numerical_tools/calculate/{$details->id}"
+        );
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "@meta" => [
+                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM yyyy")),
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
+                    new Constellation(
+                        $local_asset_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "500.00",
+                                RationalNumber::get("500")
                             ),
                             new Star(
-                                "3625.00",
-                                RationalNumber::get("3625")
+                                "1000.00",
+                                RationalNumber::get("1000")
                             )
                         ]
                     ),
                     new Constellation(
-                        $formula->name,
+                        $foreign_asset_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "250.00",
+                                RationalNumber::get("250")
+                            ),
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
+                            new Star(
+                                "750.00",
+                                RationalNumber::get("750")
+                            ),
+                            new Star(
+                                "2000.00",
+                                RationalNumber::get("2000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "375.00",
+                                RationalNumber::get("375")
+                            ),
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            )
+                        ]
+                    )
+                ])
+            ],
+            "currencies" => [ $local_currency ],
+            "precision_formats" => $precision_formats,
+            "numerical_tool" => $details
+        ]);
+    }
+
+    public function testCalculatedFrozenOnlyParallelMultiCurrencyCollectionAndFormula()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        $current_time = Time::now();
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "3" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "2" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "2" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 5,
+                            "atoms" => [
+                                [ 10, "3" ],
+                                [ 11, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ],
+                    [ 11, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $local_currency = $currencies[0];
+        [
+            $local_equity_account,
+            $local_asset_account,
+            $expense_account,
+            $foreign_equity_account,
+            $foreign_asset_account
+        ] = $accounts;
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources($authenticated_info->getUser()->id, 1, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $local_asset_account, $foreign_asset_account ]
+            ]
+        ]);
+        $asset_collection = $collections[0];
+        [
+            $precision_formats,
+            $formula_details
+        ] = FormulaModel::createTestResource(
+            $authenticated_info->getUser()->id,
+            [
+                "overrides" => [
+                    "expression" => "TOTAL_UNADJUSTED_DEBIT_AMOUNT(EXPENSE_ACCOUNTS)",
+                    "output_format" => CURRENCY_FORMULA_OUTPUT_FORMAT
+                ],
+                "precision_format_parent" => $precision_formats
+            ]
+        );
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, [
+            "parents" => [ $precision_formats, $local_currency ],
+            "overrides" => [
+                "recurrence" => PERIODIC_NUMERICAL_TOOL_RECURRENCE_PERIOD,
+                "recency" => 2,
+                "currency_id" => $local_currency->id,
+                "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
+                "configuration" => json_encode([
+                    "sources" => [
+                        [
+                            "type" => CollectionSource::sourceType(),
+                            "collection_id" => $asset_collection->id,
+                            "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
+                            "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
+                            "must_show_individual_amounts" => true,
+                            "must_show_collective_sum" => true,
+                            "must_show_collective_average" => true
+                        ],
+                        [
+                            "type" => FormulaSource::sourceType(),
+                            "formula_id" => $formula_details->id
+                        ]
+                    ]
+                ])
+            ]
+        ]);
+
+        $result = $authenticated_info->getRequest()->get(
+            "/api/v2/numerical_tools/calculate/{$details->id}"
+        );
+
+        $result->assertOk();
+        $result->assertJSONExact([
+            "@meta" => [
+                "time_tags" => array_fill(0, 2, Time::now()->toLocalizedString("MMMM yyyy")),
+                "constellations" => array_map(function ($constellation) {
+                    return $constellation->toArray();
+                }, [
+                    new Constellation(
+                        $local_asset_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "500.00",
+                                RationalNumber::get("500")
+                            ),
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $foreign_asset_account->name,
+                        AcceptableConstellationKind::Account,
+                        [
+                            new Star(
+                                "250.00",
+                                RationalNumber::get("250")
+                            ),
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Total of $asset_collection->name",
+                        AcceptableConstellationKind::Sum,
+                        [
+                            new Star(
+                                "750.00",
+                                RationalNumber::get("750")
+                            ),
+                            new Star(
+                                "2000.00",
+                                RationalNumber::get("2000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        "Average of $asset_collection->name",
+                        AcceptableConstellationKind::Average,
+                        [
+                            new Star(
+                                "375.00",
+                                RationalNumber::get("375")
+                            ),
+                            new Star(
+                                "1000.00",
+                                RationalNumber::get("1000")
+                            )
+                        ]
+                    ),
+                    new Constellation(
+                        $formula_details->name,
                         AcceptableConstellationKind::Formula,
                         [
                             new Star(
-                                "3500.00",
-                                RationalNumber::get("3500")
+                                "250.00",
+                                RationalNumber::get("250")
                             ),
                             new Star(
-                                "7000.00",
-                                RationalNumber::get("7000")
-                            ),
-                            new Star(
-                                "7500.00",
-                                RationalNumber::get("7500")
+                                "250.00",
+                                RationalNumber::get("250")
                             )
                         ]
                     )
                 ])
             ],
-            "currencies" => [ $currency_a ],
-            "numerical_tool" => $numerical_tool
+            "currencies" => [ $local_currency ],
+            "precision_formats" => $precision_formats,
+            "numerical_tool" => $details
         ]);
     }
 
@@ -2411,55 +1616,39 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        $numerical_tool->id = $numerical_tool->id + 1;
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, []);
+        $details->id = $details->id + 1;
 
         $this->expectException(MissingResource::class);
         $this->expectExceptionCode(404);
-        $result = $authenticated_info->getRequest()->get("/api/v1/numerical_tools/$numerical_tool->id");
+        $result = $authenticated_info->getRequest()->get("/api/v2/numerical_tools/$details->id");
     }
 
     public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "name" => "@only alphanumeric characters only"
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::makeTestResource($authenticated_info->getUser()->id, [
+            "overrides" => [
+                "name" => "@only alphanumeric characters only"
+            ]
         ]);
-        $numerical_tool = $numerical_tool_fabricator->make();
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/numerical_tools", [
-                "numerical_tool" => $numerical_tool->toArray()
+            ->post("/api/v2/numerical_tools", [
+                "numerical_tool" => $details->toArray()
             ]);
     }
 
@@ -2467,42 +1656,26 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
+        [
+            $precision_formats,
+            $currencies,
+            $details,
+            $new_details
+        ] = NumericalToolModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            [
+                "make_overrides" => [
+                    "name" => "@only alphanumeric characters only"
                 ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        $numerical_tool_fabricator->setOverrides([
-            "name" => "@only alphanumeric characters only"
-        ]);
-        $new_details = $numerical_tool_fabricator->make();
+            ]
+        );
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/numerical_tools/$numerical_tool->id", [
+            ->put("/api/v2/numerical_tools/$details->id", [
                 "numerical_tool" => $new_details->toArray()
             ]);
     }
@@ -2512,25 +1685,25 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($another_user->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/numerical_tools/$numerical_tool->id");
+                ->delete("/api/v2/numerical_tools/$details->id");
             $this->assertTrue(false);
         } catch (MissingResource $error) {
-            $this->seeInDatabase("numerical_tools", array_merge(
-                [ "id" => $numerical_tool->id ]
+            $this->seeInDatabase("numerical_tools_v2", array_merge(
+                [ "id" => $details->id ]
             ));
-            $this->seeInDatabase("numerical_tools", [
-                "id" => $numerical_tool->id,
+            $this->seeInDatabase("numerical_tools_v2", [
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -2544,25 +1717,25 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        model(NumericalToolModel::class)->delete($numerical_tool->id);
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($another_user->id, []);
+        model(NumericalToolModel::class)->delete($details->id);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/numerical_tools/$numerical_tool->id");
+                ->delete("/api/v2/numerical_tools/$details->id");
         } catch (MissingResource $error) {
-            $this->seeInDatabase("numerical_tools", array_merge(
-                [ "id" => $numerical_tool->id ]
+            $this->seeInDatabase("numerical_tools_v2", array_merge(
+                [ "id" => $details->id ]
             ));
-            $this->dontSeeInDatabase("numerical_tools", [
-                "id" => $numerical_tool->id,
+            $this->dontSeeInDatabase("numerical_tools_v2", [
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -2576,21 +1749,21 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($another_user->id, []);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->patch("/api/v1/numerical_tools/$numerical_tool->id");
+                ->patch("/api/v2/numerical_tools/$details->id");
         } catch (MissingResource $error) {
-            $this->seeInDatabase("numerical_tools", [
-                "id" => $numerical_tool->id,
+            $this->seeInDatabase("numerical_tools_v2", [
+                "id" => $details->id,
                 "deleted_at" => null
             ]);
             throw $error;
@@ -2603,38 +1776,18 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "configuration" => json_encode([
-                "sources" => [
-                    [
-                        "type" => CollectionSource::sourceType(),
-                        "collection_id" => 1,
-                        "currency_id" => $currency->id,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-                        "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-                        "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-                        "must_show_individual_amounts" => true,
-                        "must_show_collective_sum" => true,
-                        "must_show_collective_average" => true
-                    ]
-                ]
-            ])
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/numerical_tools/$numerical_tool->id/force");
+            ->delete("/api/v2/numerical_tools/$details->id/force");
 
         $result->assertStatus(204);
-        $this->seeNumRecords(0, "numerical_tools", []);
+        $this->seeNumRecords(0, "numerical_tools_v2", []);
     }
 
     public function testDoubleForceDelete()
@@ -2642,21 +1795,21 @@ class NumericalToolTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $numerical_tool_fabricator = new Fabricator(NumericalToolModel::class);
-        $numerical_tool_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $numerical_tool = $numerical_tool_fabricator->create();
-        model(NumericalToolModel::class)->delete($numerical_tool->id, true);
+        [
+            $precision_formats,
+            $currencies,
+            $details
+        ] = NumericalToolModel::createTestResource($another_user->id, []);
+        model(NumericalToolModel::class)->delete($details->id, true);
 
         try {
             $this->expectException(MissingResource::class);
             $this->expectExceptionCode(404);
             $result = $authenticated_info
                 ->getRequest()
-                ->delete("/api/v1/numerical_tools/$numerical_tool->id/force");
+                ->delete("/api/v2/numerical_tools/$details->id/force");
         } catch (MissingResource $error) {
-            $this->seeNumRecords(0, "numerical_tools", []);
+            $this->seeNumRecords(0, "numerical_tools_v2", []);
             throw $error;
         } catch (Throwable $error) {
             $this->assertTrue(false);

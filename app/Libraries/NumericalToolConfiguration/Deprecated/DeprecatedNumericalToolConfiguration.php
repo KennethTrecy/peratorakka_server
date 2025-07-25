@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Libraries\NumericalToolConfiguration\Deprecated;
+
+use App\Contracts\NumericalToolSource;
+use App\Exceptions\NumericalToolConfigurationException;
+use App\Libraries\Context;
+use App\Libraries\Context\ContextKeys;
+use App\Libraries\NumericalToolConfiguration\Deprecated\DeprecatedCollectionSource;
+use App\Libraries\NumericalToolConfiguration\Deprecated\DeprecatedFormulaSource;
+
+class DeprecatedNumericalToolConfiguration
+{
+    public static function parseConfiguration(
+        array $configuration
+    ): DeprecatedNumericalToolConfiguration {
+        if (
+            isset($configuration["sources"])
+            && is_array($configuration["sources"])
+            && count($configuration["sources"])
+        ) {
+            $sources = $configuration["sources"];
+            $parsed_sources = [];
+            foreach ($sources as $i => $source) {
+                if (isset($source["type"])) {
+                    switch ($source["type"]) {
+                        case DeprecatedCollectionSource::sourceType(): {
+                            $parsed_source = DeprecatedCollectionSource::parseConfiguration($source);
+
+                            if (is_null($parsed_source)) {
+                                throw new NumericalToolConfigurationException(
+                                    "Incorrect configuration for source #".($i + 1)
+                                    ." which is a ". $source["type"] . " source."
+                                );
+                            }
+
+                            array_push($parsed_sources, $parsed_source);
+
+                            break;
+                        }
+
+                        case DeprecatedFormulaSource::sourceType(): {
+                            $parsed_source = DeprecatedFormulaSource::parseConfiguration($source);
+
+                            if (is_null($parsed_source)) {
+                                throw new NumericalToolConfigurationException(
+                                    "Incorrect configuration for source #".($i + 1)
+                                    ." which is a ". $source["type"] . " source."
+                                );
+                            }
+
+                            array_push($parsed_sources, $parsed_source);
+
+                            break;
+                        }
+
+                        default:
+                            throw new NumericalToolConfigurationException(
+                                "Unknown source type: ".$source["type"] .
+                                " for source #".($i + 1)
+                            );
+                    }
+                } else {
+                    throw new NumericalToolConfigurationException(
+                        "Missing type for source #".($i + 1)
+                    );
+                }
+
+                $output_format_code = $parsed_sources[$i]->outputFormatCode();
+
+                if ($parsed_sources[0]->outputFormatCode() !== $output_format_code) {
+                    throw new NumericalToolConfigurationException(
+                        "Source #".($i + 1) + " has different output format."
+                        ." Every source must have same output format."
+                    );
+                }
+            }
+
+            return new DeprecatedNumericalToolConfiguration($parsed_sources);
+        } else {
+            throw new NumericalToolConfigurationException("Missing sources");
+        }
+    }
+
+    public readonly array $sources;
+
+    private function __construct(array $sources)
+    {
+        $this->sources = $sources;
+    }
+
+    public function calculate(Context $context): array
+    {
+        $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
+
+        $collection_IDs = [];
+        foreach ($this->sources as $source) {
+            if ($source instanceof DeprecatedCollectionSource) {
+                array_push($collection_IDs, $source->collection_id);
+            }
+        }
+
+        if (count($collection_IDs) > 0) {
+            $collection_cache->loadCollectedAccounts($collection_IDs);
+
+            $account_IDs = [];
+            foreach ($collection_IDs as $collection_id) {
+                $account_IDs = [
+                    ...$account_IDs,
+                    ...$collection_cache->determineAccountIDs($collection_id)
+                ];
+            }
+
+            $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
+            $account_cache->loadAccounts(array_unique($account_IDs));
+        }
+
+        $results = [];
+        foreach ($this->sources as $source) {
+            $results = array_merge($results, $source->calculate($context));
+        }
+
+        $results = array_map(function ($result) {
+            return $result->toArray();
+        }, $results);
+        return $results;
+    }
+
+    public function __toString(): string
+    {
+        return json_encode([
+            "sources" => array_map(
+                function (NumericalToolSource $source) {
+                    return $source->toArray();
+                },
+                $this->sources
+            )
+        ]);
+    }
+}

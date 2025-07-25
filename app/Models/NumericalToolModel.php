@@ -4,22 +4,25 @@ namespace App\Models;
 
 use App\Entities\NumericalTool;
 use App\Libraries\Context;
-use App\Libraries\Context\TimeGroupManager;
+use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\FrozenAccountCache;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\Resource;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
 use App\Libraries\TimeGroup\UnfrozenTimeGroup;
 use App\Libraries\TimeGroup\YearlyTimeGroup;
+use App\Libraries\TimeGroupManager;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
 class NumericalToolModel extends BaseResourceModel
 {
-    protected $table = "numerical_tools";
+    protected $table = "numerical_tools_v2";
     protected $returnType = NumericalTool::class;
     protected $allowedFields = [
-        "user_id",
+        "currency_id",
+        "exchange_rate_basis",
         "name",
         "kind",
         "recurrence",
@@ -27,6 +30,7 @@ class NumericalToolModel extends BaseResourceModel
         "order",
         "notes",
         "configuration",
+        "created_at",
         "deleted_at"
     ];
 
@@ -43,6 +47,7 @@ class NumericalToolModel extends BaseResourceModel
         return [
             "name"  => $faker->unique()->firstName(),
             "kind"  => $faker->randomElement(ACCEPTABLE_NUMERICAL_TOOL_KINDS),
+            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "recurrence"  => $faker->randomElement(ACCEPTABLE_NUMERICAL_TOOL_RECURRENCE_PERIODS),
             "recency"  => $faker->numberBetween(-100, 100),
             "order"  => $faker->numberBetween(0, 100),
@@ -52,8 +57,6 @@ class NumericalToolModel extends BaseResourceModel
                     [
                         "type" => CollectionSource::sourceType(),
                         "collection_id" => 1,
-                        "currency_id" => 1,
-                        "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
                         "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
                         "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
                         "must_show_individual_amounts" => true,
@@ -67,30 +70,78 @@ class NumericalToolModel extends BaseResourceModel
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
-        return $query_builder->where("user_id", $user->id);
+        return $query_builder
+            ->whereIn(
+                "currency_id",
+                model(CurrencyModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->whereIn(
+                        "precision_format_id",
+                        model(PrecisionFormatModel::class, false)
+                            ->builder()
+                            ->select("id")
+                            ->where("user_id", $user->id)
+                    )
+            );
     }
 
-    public static function showConstellations(NumericalTool $tool): array
+    public static function showConstellations(Time $reference_time, NumericalTool $tool): array
     {
         $context = new Context();
-        $time_groups = new TimeGroupManager(
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $tool->currency_id);
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, $tool->exchange_rate_basis);
+        $raw_time_groups = static::makeTimeGroups(
             $context,
-            static::makeTimeGroups($tool->recurrence, $tool->recency)
+            $reference_time,
+            $tool->recurrence,
+            $tool->recency
         );
+        $time_groups = new TimeGroupManager($context, $raw_time_groups);
         $constellations = $tool->configuration->calculate($context);
 
         return [ $time_groups->timeTags(), $constellations ];
     }
 
-    private static function makeTimeGroups(string $recurrence, int $recency): array
+    protected static function createAncestorResources(int $user_id, array $options): array
     {
-        $current_date = Time::today();
-        $maxed_current_date = $current_date->setHour(23)->setMinute(59)->setSecond(59);
+        [
+            $precision_formats,
+            $currency
+        ] = $options["parents"] ?? CurrencyModel::createTestResource(
+            $user_id,
+            $options["currency_options"] ?? []
+        );
+
+        $parent_links = static::permutateParentLinks([
+            "currency_id" => [ $currency->id ]
+        ], $options);
+
+        return [
+            [ $precision_formats, [ $currency ] ],
+            $parent_links
+        ];
+    }
+
+    protected static function identifyAncestors(): array
+    {
+        return [
+            CurrencyModel::class => [ "currency_id" ]
+        ];
+    }
+
+    private static function makeTimeGroups(
+        Context $context,
+        Time $reference_time,
+        string $recurrence,
+        int $recency
+    ): array {
+        $maxed_time = $reference_time->setHour(23)->setMinute(59)->setSecond(59);
         $last_frozen_period = FrozenPeriodModel::findLatestPeriod(
-            $maxed_current_date->toDateTimeString()
+            $maxed_time->toDateTimeString()
         );
         $latest_known_date = $last_frozen_period === null
-            ? $maxed_current_date
+            ? $maxed_time
             : $last_frozen_period->finished_at;
 
         $frozen_time_group_limit = abs($recency);
@@ -107,15 +158,15 @@ class NumericalToolModel extends BaseResourceModel
                 ->first();
 
             $possible_unfrozen_date = is_null($last_financial_entry)
-                ? $current_date
+                ? $reference_time
                 : $last_financial_entry->transacted_at;
 
             array_push($time_groups, UnfrozenTimeGroup::make(
                 $possible_unfrozen_date,
-                $maxed_current_date
+                $maxed_time
             ));
 
-            $latest_known_date = $maxed_current_date;
+            $latest_known_date = $maxed_time;
 
             return $time_groups;
         }
@@ -125,13 +176,21 @@ class NumericalToolModel extends BaseResourceModel
             ->setHour(0)->setMinute(0)->setSecond(0);
         $frozen_time_group_limit = abs($recency);
 
-        if ($must_include_unfrozen_period && $current_date->isAfter($possible_unfrozen_date)) {
-            array_push($time_groups, UnfrozenTimeGroup::make(
-                $possible_unfrozen_date,
-                $maxed_current_date
-            ));
+        if ($must_include_unfrozen_period) {
+            if ($maxed_time->isAfter($possible_unfrozen_date)) {
+                array_push($time_groups, UnfrozenTimeGroup::make(
+                    $possible_unfrozen_date,
+                    $maxed_time
+                ));
+            } elseif (count($time_groups) > 1) {
+                // Sometimes, max current date is less than or equal to possible unfrozen date. This
+                // situation happens when all possible time periods are frozen. Since last time
+                // group was already frozen and included in time groups, adjust the frozen time
+                // group limit.
+                $frozen_time_group_limit += 1;
+            }
 
-            $latest_known_date = $maxed_current_date;
+            $latest_known_date = $maxed_time;
         }
 
         switch ($recurrence) {
@@ -175,9 +234,10 @@ class NumericalToolModel extends BaseResourceModel
                     return $time_group->startedAt()->year;
                 });
 
+                $frozen_account_cache = FrozenAccountCache::make($context);
                 $time_groups = [];
                 for ($year = $earliest_year; $year <= $last_known_year; $year++) {
-                    $yearly_time_group = new YearlyTimeGroup($year, true);
+                    $yearly_time_group = new YearlyTimeGroup($frozen_account_cache, $year, true);
                     if (isset($specific_time_groups[$year])) {
                         foreach ($specific_time_groups[$year] as $time_group) {
                             $yearly_time_group->addTimeGroup($time_group);
@@ -187,8 +247,6 @@ class NumericalToolModel extends BaseResourceModel
                 }
 
                 break;
-            default:
-                return [];
         }
 
         return $time_groups;

@@ -2,7 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Casts\FinancialEntryAtomKind;
 use App\Contracts\OwnedResource;
+use App\Entities\FinancialEntryAtom;
+use App\Libraries\Context;
+use App\Libraries\Context\Memoizer;
+use App\Libraries\Resource;
+use App\Models\FinancialEntryAtomModel;
 use App\Models\FinancialEntryModel;
 use App\Models\ModifierModel;
 use CodeIgniter\Shield\Entities\User;
@@ -30,6 +36,12 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
+        $atom_key = "$individual_name.@relationship.financial_entry_atoms";
+        $validation->setRule("$atom_key", "entry value", [ "required" ]);
+        $validation->setRule("$atom_key.*.numerical_value", "numerical value", [
+            "required",
+            "is_valid_currency_amount"
+        ]);
         $validation->setRule("$individual_name.modifier_id", "modifier", [
             "required",
             "is_natural_no_zero",
@@ -37,19 +49,10 @@ class FinancialEntryController extends BaseOwnedResourceController
                 ModifierModel::class,
                 SEARCH_NORMALLY
             ])."]",
-            "has_column_value_in_list[".implode(",", [
-                ModifierModel::class,
-                "kind",
-                MANUAL_MODIFIER_KIND
-            ])."]"
-        ]);
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_currency_amount",
-            "must_be_same_for_modifier[$individual_name.modifier_id,$individual_name.credit_amount]"
+            "must_have_compound_data_key[$atom_key]",
+            "has_valid_financial_entry_atom_group_info[$atom_key]",
+            "does_own_resources_declared_in_financial_entry_atom_group_info[$atom_key]",
+            "has_valid_financial_entry_atom_group_values[$atom_key]"
         ]);
 
         return $validation;
@@ -60,44 +63,107 @@ class FinancialEntryController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
 
-        $validation->setRule("$individual_name.debit_amount", "debit amount", [
+        $atom_key = "$individual_name.@relationship.financial_entry_atoms";
+        $validation->setRule("$atom_key", "entry value", [ "required" ]);
+        $validation->setRule("$atom_key.*.numerical_value", "numerical value", [
             "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_currency_amount",
-            "must_be_same_for_financial_entry[$resource_id,$individual_name.credit_amount]"
+            "is_valid_currency_amount"
+        ]);
+        $validation->setRule("$individual_name.modifier_id", "modifier", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                ModifierModel::class,
+                SEARCH_NORMALLY
+            ])."]",
+            "must_have_compound_data_key[$atom_key]",
+            "must_have_compound_data_key[$atom_key.*.id]",
+            "has_valid_financial_entry_atom_group_info[$atom_key]",
+            "does_own_resources_declared_in_financial_entry_atom_group_info[$atom_key]",
+            "has_valid_financial_entry_atom_group_values[$atom_key]"
         ]);
 
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
-        $is_single_main_document = isset($initial_document[static::getIndividualName()]);
-        $main_documents = $is_single_main_document
+        $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        [
-            $modifiers,
-            $accounts,
-            $cash_flow_activities,
-            $currencies,
-        ] = FinancialEntryModel::selectAncestorsWithResolvedResources($main_documents);
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        $must_include_account = $must_include_all || in_array("accounts", $relationships);
+        $must_include_cash_flow_activity = $must_include_all || in_array(
+            "cash_flow_activities",
+            $relationships
+        );
+        $must_include_modifier_atom = $must_include_all || in_array(
+            "modifier_atoms",
+            $relationships
+        );
+        $must_include_modifier_atom_activity = $must_include_all || in_array(
+            "modifier_atom_activities",
+            $relationships
+        );
+        $must_include_financial_entry_atom = $must_include_all || in_array(
+            "financial_entry_atoms",
+            $relationships
+        );
 
-        if ($is_single_main_document) {
-            $enriched_document["modifier"] = $modifiers[0] ?? null;
-        } else {
-            $enriched_document["modifiers"] = $modifiers;
+        if ($must_include_financial_entry_atom) {
+            $enriched_document["financial_entry_atoms"] = model(
+                FinancialEntryAtomModel::class,
+                false
+            )->whereIn("financial_entry_id", array_column($main_documents, "id"))
+            ->findAll();
         }
 
-        $enriched_document["accounts"] = $accounts;
-        $enriched_document["cash_flow_activities"] = $cash_flow_activities;
-        $enriched_document["currencies"] = $currencies;
-
         return $enriched_document;
+    }
+
+    protected static function processCreatedDocument(array $created_document, array $input): array
+    {
+        $main_document = $created_document[static::getIndividualName()];
+        $main_document_id = $main_document["id"];
+        $modifier_id = $main_document["modifier_id"];
+
+        $atom_model = model(FinancialEntryAtomModel::class, false);
+
+        $context = Context::make();
+        $memoizer = Memoizer::make($context);
+        $financial_entry_atoms = $memoizer->read("#$modifier_id", []);
+        $financial_entry_atoms = array_map(function ($atom) use ($main_document_id, $atom_model) {
+            $atom->financial_entry_id = $main_document_id;
+            $atom->kind = TOTAL_FINANCIAL_ENTRY_ATOM_KIND;
+            $atom_model->insert($atom);
+            $atom->id = $atom_model->getInsertID();
+
+            return $atom;
+        }, $financial_entry_atoms);
+
+        $created_document["financial_entry_atoms"] = model(FinancialEntryAtomModel::class, false)
+            ->where("financial_entry_id", $main_document_id)
+            ->findAll();
+
+        return $created_document;
+    }
+
+    protected static function processUpdatedDocument(int $id, array $input): void
+    {
+        $financial_entry_atom_model = model(FinancialEntryAtomModel::class, false);
+        foreach ($input["@relationship"]["financial_entry_atoms"] as $atom) {
+            $atom["financial_entry_id"] = $id;
+            $financial_entry_atom = new FinancialEntryAtom();
+            $financial_entry_atom->fill($atom);
+            $financial_entry_atom_model->update($financial_entry_atom->id, $financial_entry_atom);
+        }
     }
 
     private static function makeValidation(): Validation
@@ -107,13 +173,6 @@ class FinancialEntryController extends BaseOwnedResourceController
 
         $validation->setRule($individual_name, "financial entry info", [
             "required"
-        ]);
-        $validation->setRule("$individual_name.credit_amount", "credit amount", [
-            "required",
-            "string",
-            "min_length[1]",
-            "max_length[255]",
-            "is_valid_currency_amount"
         ]);
         $validation->setRule("$individual_name.transacted_at", "transacted date", [
             "required",

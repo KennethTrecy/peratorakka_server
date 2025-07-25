@@ -79,6 +79,11 @@ defined("EXIT__AUTO_MIN")      || define("EXIT__AUTO_MIN", 9);      // lowest au
 defined("EXIT__AUTO_MAX")      || define("EXIT__AUTO_MAX", 125);    // highest automatically-assigned error code
 
 define("DATE_TIME_STRING_FORMAT", "Y-m-d H:i:s");
+define("DATE_STRING_FORMAT", "Y-m-d");
+define("DATE_TIME_ZONE", "Atlantic/Faroe");
+// define("DATE_TIME_ZONE", "Asia/Manila");
+// define("DATE_TIME_ZONE", "Pacific/Wallis");
+date_default_timezone_set(DATE_TIME_ZONE);
 
 /*
  | --------------------------------------------------------------------------
@@ -106,12 +111,26 @@ define("SEARCH_ONLY_DELETED", "ONLY_DELETED");
  | - GENERAL_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts with no special
  |   behavior when it comes to changes in cash flow statement.
  | - LIABILITY_ACCOUNT_KIND. Account kind that may represent liability accounts.
- | - EQUITY_ACCOUNT_KIND. Account kind that may represent equity accounts.
- | - EXPENSE_ACCOUNT_KIND. Account kind that may represent expense accounts.
- | - INCOME_ACCOUNT_KIND. Account kind that may represent income accounts.
- | - LIQUID_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that highly-liquid.
+ | - EQUITY_ACCOUNT_KIND. Account kind that may represent equity accounts with no special behavior
+ |   when it comes to changes in cash flow statement.
+ | - GENERAL_EXPENSE_ACCOUNT_KIND. Account kind that may represent expense accounts with no special
+ |   behavior when it comes to changes in cash flow statement.
+ | - GENERAL_REVENUE_ACCOUNT_KIND. Account kind that may represent income accounts with no special
+ |   behavior when it comes to changes in cash flow statement.
+ | - LIQUID_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that highly-liquid
+ |   and forbids cash flow activity to be associated.
  | - DEPRECIATIVE_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that crediting
  |   their value means depreciation.
+ | - GENERAL_TEMPORARY_ACCOUNT_KIND. Account kind that may represent any temporary account and
+ |   should be closed first before freezing a period.
+ | - ITEMIZED_ASSET_ACCOUNT_KIND. Account kind that may represent asset accounts that have certain
+ |   number of items holding its value.
+ | - DIRECT_COST_ACCOUNT_KIND. Account kind that may represent costs for itemized asset accounts.
+ |   Cash flow statement is deducted on positive paper flow and vice-versa. Income statement is
+ |   deducted on negative real flow.
+ | - NOMINAL_RETURN_ACCOUNT_KIND. Account kind that may represent gross gains or gross losses from
+ |   itemized asset accounts. Only shows to cash flow statement and income statement on non-zero
+ |   real flow.
  |
  | When the user creates an account, certain kinds can be accepted by the server.
  | When the server finds an account kind not existing in the current version,
@@ -121,24 +140,48 @@ define("UNKNOWN_ACCOUNT_KIND", "unknown");
 define("GENERAL_ASSET_ACCOUNT_KIND", "general_asset");
 define("LIABILITY_ACCOUNT_KIND", "liability");
 define("EQUITY_ACCOUNT_KIND", "equity");
-define("EXPENSE_ACCOUNT_KIND", "expense");
-define("INCOME_ACCOUNT_KIND", "income");
+define("GENERAL_EXPENSE_ACCOUNT_KIND", "general_expense");
+define("GENERAL_REVENUE_ACCOUNT_KIND", "general_revenue");
 define("LIQUID_ASSET_ACCOUNT_KIND", "liquid_asset");
 define("DEPRECIATIVE_ASSET_ACCOUNT_KIND", "depreciative_asset");
+define("GENERAL_TEMPORARY_ACCOUNT_KIND", "general_temporary");
+define("ITEMIZED_ASSET_ACCOUNT_KIND", "itemized_asset");
+define("DIRECT_COST_ACCOUNT_KIND", "direct_cost");
+define("NOMINAL_RETURN_ACCOUNT_KIND", "nominal_return");
 
 define("ACCEPTABLE_ACCOUNT_KINDS", [
     GENERAL_ASSET_ACCOUNT_KIND,
     LIABILITY_ACCOUNT_KIND,
     EQUITY_ACCOUNT_KIND,
-    EXPENSE_ACCOUNT_KIND,
-    INCOME_ACCOUNT_KIND,
+    GENERAL_EXPENSE_ACCOUNT_KIND,
+    GENERAL_REVENUE_ACCOUNT_KIND,
     LIQUID_ASSET_ACCOUNT_KIND,
-    DEPRECIATIVE_ASSET_ACCOUNT_KIND
+    DEPRECIATIVE_ASSET_ACCOUNT_KIND,
+    GENERAL_TEMPORARY_ACCOUNT_KIND,
+    DIRECT_COST_ACCOUNT_KIND,
+    NOMINAL_RETURN_ACCOUNT_KIND,
+    // ITEMIZED_ASSET_ACCOUNT_KIND
 ]);
 
 define("ACCOUNT_KINDS", [
     UNKNOWN_ACCOUNT_KIND,
     ...ACCEPTABLE_ACCOUNT_KINDS
+]);
+
+define("NORMAL_DEBIT_ACCOUNT_KINDS", [
+    GENERAL_ASSET_ACCOUNT_KIND,
+    GENERAL_EXPENSE_ACCOUNT_KIND,
+    LIQUID_ASSET_ACCOUNT_KIND,
+    DEPRECIATIVE_ASSET_ACCOUNT_KIND,
+    DIRECT_COST_ACCOUNT_KIND,
+    // ITEMIZED_ASSET_ACCOUNT_KIND
+]);
+define("TEMPORARY_ACCOUNT_KINDS", [
+    GENERAL_EXPENSE_ACCOUNT_KIND,
+    GENERAL_REVENUE_ACCOUNT_KIND,
+    GENERAL_TEMPORARY_ACCOUNT_KIND,
+    DIRECT_COST_ACCOUNT_KIND,
+    NOMINAL_RETURN_ACCOUNT_KIND
 ]);
 
 /*
@@ -152,16 +195,40 @@ define("ACCOUNT_KINDS", [
  | - RECORD_MODIFIER_ACTION. A modifier with this action can create normal journal entries.
  | - CLOSE_MODIFIER_ACTION. A modifier with this action can create closing journal entries.
  | - EXCHANGE_MODIFIER_ACTION. A modifier with this action can create exchange journal entries.
+ | - BID_MODIFIER_ACTION. A modifier with this action can create bid journal entries.
+ | - ASK_MODIFIER_ACTION. A modifier with this action can create ask journal entries.
+ | - TRANSFORM_MODIFIER_ACTION. A modifier with this action can create transform journal entries.
+ | - THROW_MODIFIER_ACTION. A modifier with this action can create throw journal entries.
+ | - CATCH_MODIFIER_ACTION. A modifier with this action can create catch journal entries.
+ | - CONDENSE_MODIFIER_ACTION. A modifier with this action can create condense journal entries.
+ | - DILUTE_MODIFIER_ACTION. A modifier with this action can create dilute journal entries.
+ | - REPRICE_MODIFIER_ACTION. A modifier with this action can create imaginary journal entries.
  */
 define("UNKNOWN_MODIFIER_ACTION", "unknown");
 define("RECORD_MODIFIER_ACTION", "record");
 define("CLOSE_MODIFIER_ACTION", "close");
 define("EXCHANGE_MODIFIER_ACTION", "exchange");
+define("BID_MODIFIER_ACTION", "bid");
+define("ASK_MODIFIER_ACTION", "ask");
+define("REPRICE_MODIFIER_ACTION", "paper_record");
+define("TRANSFORM_MODIFIER_ACTION", "transform");
+define("THROW_MODIFIER_ACTION", "throw");
+define("CATCH_MODIFIER_ACTION", "catch");
+define("CONDENSE_MODIFIER_ACTION", "condense");
+define("DILUTE_MODIFIER_ACTION", "dilute");
 
 define("ACCEPTABLE_MODIFIER_ACTIONS", [
     RECORD_MODIFIER_ACTION,
     CLOSE_MODIFIER_ACTION,
     EXCHANGE_MODIFIER_ACTION,
+    // BID_MODIFIER_ACTION,
+    // ASK_MODIFIER_ACTION,
+    // REPRICE_MODIFIER_ACTION,
+    // TRANSFORM_MODIFIER_ACTION,
+    // THROW_MODIFIER_ACTION,
+    // CATCH_MODIFIER_ACTION,
+    // CONDENSE_MODIFIER_ACTION,
+    // DILUTE_MODIFIER_ACTION
 ]);
 
 define("MODIFIER_ACTIONS", [
@@ -197,6 +264,81 @@ define("ACCEPTABLE_MODIFIER_KINDS", [
 define("MODIFIER_KINDS", [
     UNKNOWN_MODIFIER_KIND,
     ...ACCEPTABLE_MODIFIER_KINDS
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Modifier Atom Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different modifier atom kinds that the system can handle.
+ | - UNKNOWN_MODIFIER_ATOM_KIND. A modifier atom with this kind is not supported by the system at
+ |   the current version. This case may happen when the system downgraded.
+ | - REAL_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would be
+ |   debited on calculations and reduces any paper calculations.
+ | - REAL_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would
+ |   be credited on calculations and reduces any paper calculations.
+ | - IMAGINARY_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be debited on calculations and reduces any paper calculations.
+ | - IMAGINARY_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be credited on calculations and reduces any paper calculations.
+ | - PRICE_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked paper account would
+ |   have its input as price and may be used as basis of latest price if owned by bid/paper record
+ |   modifier.
+ */
+define("UNKNOWN_MODIFIER_ATOM_KIND", "unknown");
+define("REAL_DEBIT_MODIFIER_ATOM_KIND", "real_debit");
+define("REAL_CREDIT_MODIFIER_ATOM_KIND", "real_credit");
+define("IMAGINARY_DEBIT_MODIFIER_ATOM_KIND", "imaginary_debit");
+define("IMAGINARY_CREDIT_MODIFIER_ATOM_KIND", "imaginary_credit");
+define("PRICE_MODIFIER_ATOM_KIND", "price");
+
+define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
+    REAL_DEBIT_MODIFIER_ATOM_KIND,
+    REAL_CREDIT_MODIFIER_ATOM_KIND,
+    IMAGINARY_DEBIT_MODIFIER_ATOM_KIND,
+    IMAGINARY_CREDIT_MODIFIER_ATOM_KIND,
+    PRICE_MODIFIER_ATOM_KIND
+]);
+
+define("MODIFIER_ATOM_KINDS", [
+    UNKNOWN_MODIFIER_ATOM_KIND,
+    ...ACCEPTABLE_MODIFIER_ATOM_KINDS
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Financial Entry Atom Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different financial entry atom kinds that the system can handle.
+ | - UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind is not supported by
+ |   the system at the current version. This case may happen when the system downgraded.
+ | - QUANTITY_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the
+ |   numerical value is a quantity for itemized accounts. Other accounts should not have this kind.
+ |   This is optional if price and total were already associated to an itemized account.
+ | - PRICE_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
+ |   value is a price for itemized accounts. Other accounts should not have this kind.
+ |   This is optional if quantity and total were already associated to an itemized account.
+ | - TOTAL_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
+ |   value is a total value. For itemized accounts, this quantity multiplied by price. For others
+ |   without quantities, this is the net total for a specific period or ent This is optional if
+ |   quantity and price were already associated to an itemized account.
+ */
+define("UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND", "unknown");
+define("QUANTITY_FINANCIAL_ENTRY_ATOM_KIND", "quantity");
+define("PRICE_FINANCIAL_ENTRY_ATOM_KIND", "price");
+define("TOTAL_FINANCIAL_ENTRY_ATOM_KIND", "total");
+
+define("ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS", [
+    TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+    QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+    PRICE_FINANCIAL_ENTRY_ATOM_KIND
+]);
+
+define("FINANCIAL_ENTRY_ATOM_KINDS", [
+    UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND,
+    ...ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS
 ]);
 
 /*

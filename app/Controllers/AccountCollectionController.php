@@ -58,43 +58,54 @@ class AccountCollectionController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $is_single_main_document = isset($initial_document[static::getIndividualName()]);
         $main_documents = $is_single_main_document
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        $linked_accounts = [];
-        foreach ($main_documents as $document) {
-            $account_id = $document->account_id;
-            array_push($linked_accounts, $account_id);
+        $must_include_all = in_array("*", $relationships);
+        $must_include_account = $must_include_all || in_array("accounts", $relationships);
+        $must_include_collection = $must_include_all || in_array("collections", $relationships);
+
+        if ($must_include_account) {
+            $linked_accounts = [];
+            foreach ($main_documents as $document) {
+                $account_id = $document->account_id;
+                array_push($linked_accounts, $account_id);
+            }
+            $linked_accounts = array_unique($linked_accounts);
+
+            $accounts = [];
+            if (count($linked_accounts) > 0) {
+                $accounts = model(AccountModel::class)
+                    ->whereIn("id", $linked_accounts)
+                    ->withDeleted()
+                    ->findAll();
+            }
+            $enriched_document["accounts"] = $accounts;
         }
 
-        $accounts = [];
-        if (count($linked_accounts) > 0) {
-            $accounts = model(AccountModel::class)
-                ->whereIn("id", array_unique($linked_accounts))
-                ->withDeleted()
-                ->findAll();
-        }
-        $enriched_document["accounts"] = $accounts;
+        if ($must_include_collection) {
+            $linked_collections = [];
+            foreach ($main_documents as $document) {
+                $collection_id = $document->collection_id;
+                array_push($linked_collections, $collection_id);
+            }
 
-        $linked_collections = [];
-        foreach ($main_documents as $document) {
-            $collection_id = $document->collection_id;
-            array_push($linked_collections, $collection_id);
+            $collections = [];
+            if (count($linked_collections) > 0) {
+                $collections = model(CollectionModel::class)
+                    ->whereIn("id", array_unique($linked_collections))
+                    ->withDeleted()
+                    ->findAll();
+            }
+            $enriched_document["collections"] = $collections;
         }
-
-        $collections = [];
-        if (count($linked_collections) > 0) {
-            $collections = model(CollectionModel::class)
-                ->whereIn("id", array_unique($linked_collections))
-                ->withDeleted()
-                ->findAll();
-        }
-        $enriched_document["collections"] = $collections;
 
         return $enriched_document;
     }

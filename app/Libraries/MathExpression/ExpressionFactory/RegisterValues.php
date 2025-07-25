@@ -33,6 +33,7 @@ trait RegisterValues
         $this->addValue("FORMULA\[\d+\]", "evaluateFormula");
         $this->addValue("CASH_FLOW_ACTIVITY\[\d+\]", "evaluateCashFlowActivity");
         $this->addValue("ACCOUNT\[\d+\]", "evaluateAccount");
+        $this->addValue("(EXPENSE|INCOME)_ACCOUNTS", "evaluateDeprecatedAccountKind");
         $this->addValue(
             "(".join("|", ACCEPTABLE_ACCOUNT_KINDS).")_ACCOUNTS",
             "evaluateAccountKind"
@@ -57,7 +58,7 @@ trait RegisterValues
     private function evaluateAccountKind(array $values, Context $context, Token $token): string
     {
         $raw_kind = explode("_", $token->getValue());
-        $kind = strtolower($raw_kind[0]);
+        $kind = strtolower(implode("_", array_slice($raw_kind, 0, count($raw_kind) - 1)));
 
         $builder = model(AccountModel::class, false)
             ->builder()
@@ -224,6 +225,27 @@ trait RegisterValues
         $builder = model(AccountModel::class, false)
             ->builder()
             ->where("id", $account_id);
+
+        $key = $this->cache->store($builder);
+
+        return $key;
+    }
+
+    private function evaluateDeprecatedAccountKind(
+        array $values,
+        Context $context,
+        Token $token
+    ): string {
+        $raw_kind = explode("_", $token->getValue());
+        $deprecated_kind = $raw_kind[0];
+        $updated_kind = strtolower([
+            "INCOME" => GENERAL_REVENUE_ACCOUNT_KIND,
+            "EXPENSE" => GENERAL_EXPENSE_ACCOUNT_KIND
+        ][$deprecated_kind]);
+
+        $builder = model(AccountModel::class, false)
+            ->builder()
+            ->where("kind", AccountKind::set($updated_kind));
 
         $key = $this->cache->store($builder);
 

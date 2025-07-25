@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Entities;
+namespace App\Entities\Deprecated;
 
 use App\Casts\RationalNumber;
+use App\Entities\BaseResourceEntity;
 
 class SummaryCalculation extends BaseResourceEntity
 {

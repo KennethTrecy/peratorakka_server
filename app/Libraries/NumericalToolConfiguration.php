@@ -88,6 +88,7 @@ class NumericalToolConfiguration
         $this->sources = $sources;
     }
 
+    // Before invoking this method, ensure destination currency ID and exchange rate basis were set
     public function calculate(Context $context): array
     {
         $collection_cache = $context->getVariable(ContextKeys::COLLECTION_CACHE);
@@ -111,7 +112,10 @@ class NumericalToolConfiguration
             }
 
             $account_cache = $context->getVariable(ContextKeys::ACCOUNT_CACHE);
-            $account_cache->loadAccounts(array_unique($account_IDs));
+            $account_cache->loadResources(array_unique($account_IDs));
+
+            $exchange_rate_cache = $context->getVariable(ContextKeys::EXCHANGE_RATE_CACHE);
+            $exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
         }
 
         $results = [];
@@ -119,10 +123,11 @@ class NumericalToolConfiguration
             $results = array_merge($results, $source->calculate($context));
         }
 
+        $results = array_filter($results, fn ($result) => count($result->stars) > 0);
         $results = array_map(function ($result) {
             return $result->toArray();
         }, $results);
-        return $results;
+        return array_values($results);
     }
 
     public function __toString(): string

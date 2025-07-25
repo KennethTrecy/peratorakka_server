@@ -24,13 +24,13 @@ class PeratorakkaMath implements MathInterface
             [ $addend, $adder ] = $operators;
 
             if ($addend instanceof BigRational && $adder instanceof BigRational) {
-                return $addend->plus($adder);
+                return $addend->plus($adder ?? 0);
             } elseif (is_array($addend) && $adder instanceof BigRational) {
                 $subelement_count = count($addend);
                 $subadder = $adder->dividedBy($subelement_count);
                 return array_map(
                     function ($subaddend) use ($subadder) {
-                        return $subaddend->plus($subadder);
+                        return $subaddend->plus($subadder ?? 0);
                     },
                     $addend
                 );
@@ -39,14 +39,14 @@ class PeratorakkaMath implements MathInterface
                 $subaddend = $addend->dividedBy($subelement_count);
                 return array_map(
                     function ($subadder) use ($subaddend) {
-                        return $subaddend->plus($subadder);
+                        return $subaddend->plus($subadder ?? 0);
                     },
                     $adder
                 );
             } elseif (is_array($addend) && is_array($adder)) {
                 return array_map(
                     function ($subaddend, $subadder) {
-                        return $subaddend->plus($subadder);
+                        return $subaddend->plus($subadder ?? 0);
                     },
                     $addend,
                     $adder
@@ -69,25 +69,33 @@ class PeratorakkaMath implements MathInterface
             [ $multiplicand, $multiplier ] = $operators;
 
             if ($multiplicand instanceof BigRational && $multiplier instanceof BigRational) {
-                return $multiplicand->multipliedBy($multiplier)->simplified();
+                return is_null($multiplicand)
+                    ? $multiplier
+                    : $multiplicand->multipliedBy($multiplier)->simplified();
             } elseif (is_array($multiplicand) && $multiplier instanceof BigRational) {
                 return array_map(
                     function ($submultiplicand) use ($multiplier) {
-                        return $submultiplicand->multipliedBy($multiplier)->simplified();
+                        return is_null($submultiplicand)
+                            ? $multiplier
+                            : $submultiplicand->multipliedBy($multiplier)->simplified();
                     },
                     $multiplicand
                 );
             } elseif ($multiplicand instanceof BigRational && is_array($multiplier)) {
                 return array_map(
                     function ($submultiplier) use ($multiplicand) {
-                        return $multiplicand->multipliedBy($submultiplier)->simplified();
+                        return is_null($multiplicand)
+                            ? $submultiplier
+                            : $multiplicand->multipliedBy($submultiplier)->simplified();
                     },
                     $multiplier
                 );
             } elseif (is_array($multiplicand) && is_array($multiplier)) {
                 return array_map(
                     function ($submultiplicand, $submultiplier) {
-                        return $submultiplicand->multipliedBy($submultiplier)->simplified();
+                        return is_null($submultiplicand)
+                            ? $submultiplier
+                            : $submultiplicand->multipliedBy($submultiplier)->simplified();
                     },
                     $multiplicand,
                     $multiplier
@@ -145,10 +153,16 @@ class PeratorakkaMath implements MathInterface
             [ $dividend, $divisor ] = $operators;
 
             if ($dividend instanceof BigRational && $divisor instanceof BigRational) {
+                if ($divisor->isEqualTo(0)) {
+                    return null;
+                }
                 return $dividend->dividedBy($divisor)->simplified();
             } elseif (is_array($dividend) && $divisor instanceof BigRational) {
                 return array_map(
                     function ($subdividend) use ($divisor) {
+                        if ($divisor->isEqualTo(0)) {
+                            return null;
+                        }
                         return $subdividend->dividedBy($divisor)->simplified();
                     },
                     $dividend
@@ -156,6 +170,9 @@ class PeratorakkaMath implements MathInterface
             } elseif ($dividend instanceof BigRational && is_array($divisor)) {
                 return array_map(
                     function ($subdivisor) use ($dividend) {
+                        if ($subdivisor->isEqualTo(0)) {
+                            return null;
+                        }
                         return $dividend->dividedBy($subdivisor)->simplified();
                     },
                     $divisor
@@ -163,13 +180,16 @@ class PeratorakkaMath implements MathInterface
             } elseif (is_array($dividend) && is_array($divisor)) {
                 return array_map(
                     function ($subdividend, $subdivisor) {
+                        if ($subdivisor->isEqualTo(0)) {
+                            return null;
+                        }
                         return $subdividend->dividedBy($subdivisor)->simplified();
                     },
                     $dividend,
                     $divisor
                 );
             } elseif ($divisor instanceof BigRational) {
-                return RationalNumber::zero();
+                return null;
             }
 
             return null;
@@ -287,7 +307,7 @@ class PeratorakkaMath implements MathInterface
                     return is_array($elements)
                         ? array_map(
                             function ($element) use ($scale) {
-                                return BigRational::of($element, $scale);
+                                return is_null($element) ? null : BigRational::of($element, $scale);
                             },
                             $elements
                         )

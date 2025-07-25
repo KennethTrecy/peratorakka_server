@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
 use App\Models\CurrencyModel;
+use App\Models\PrecisionFormatModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
@@ -30,8 +31,6 @@ class CurrencyController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $user_id = $owner->id;
-
         $validation->setRule("$individual_name.code", "code", [
             "required",
             "min_length[2]",
@@ -41,7 +40,7 @@ class CurrencyController extends BaseOwnedResourceController
                 implode("|", [
                     static::getModelName().":"."code",
                     "name->$individual_name.name",
-                    "user_id=$user_id"
+                    "precision_format_id->$individual_name.precision_format_id"
                 ])
             ])."]"
         ]);
@@ -54,7 +53,7 @@ class CurrencyController extends BaseOwnedResourceController
                 implode("|", [
                     static::getModelName().":"."name",
                     "code->$individual_name.code",
-                    "user_id=$user_id"
+                    "precision_format_id->$individual_name.precision_format_id"
                 ])
             ])."]"
         ]);
@@ -79,7 +78,7 @@ class CurrencyController extends BaseOwnedResourceController
                 implode("|", [
                     static::getModelName().":"."code",
                     "name->$individual_name.name",
-                    "user_id=$user_id"
+                    "precision_format_id->$individual_name.precision_format_id"
                 ]),
                 "id=$resource_id"
             ])."]"
@@ -93,31 +92,35 @@ class CurrencyController extends BaseOwnedResourceController
                 implode("|", [
                     static::getModelName().":"."name",
                     "code->$individual_name.code",
-                    "user_id=$user_id"
+                    "precision_format_id->$individual_name.precision_format_id"
                 ]),
                 "id=$resource_id"
             ])."]"
         ]);
-        $validation->setRule(
-            "$individual_name.presentational_precision",
-            "presentational precision",
-            [
-                "required",
-                "is_natural"
-            ]
-        );
 
         return $validation;
     }
 
-    protected static function prepareRequestData(array $raw_request_data): array
-    {
-        $current_user = auth()->user();
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
+        $enriched_document = array_merge([], $initial_document);
+        $main_documents = isset($initial_document[static::getIndividualName()])
+            ? [ $initial_document[static::getIndividualName()] ]
+            : ($initial_document[static::getCollectiveName()] ?? []);
 
-        return array_merge(
-            [ "user_id" => $current_user->id ],
-            $raw_request_data
-        );
+        if (in_array("*", $relationships) || in_array("precision_formats", $relationships)) {
+            [
+                $precision_formats
+            ] = CurrencyModel::selectAncestorsWithResolvedResources(
+                $main_documents,
+                $relationships
+            );
+            $enriched_document["precision_formats"] = $precision_formats;
+        }
+
+        return $enriched_document;
     }
 
     private static function makeValidation(): Validation
@@ -128,14 +131,14 @@ class CurrencyController extends BaseOwnedResourceController
         $validation->setRule($individual_name, "currency info", [
             "required"
         ]);
-        $validation->setRule(
-            "$individual_name.presentational_precision",
-            "presentational precision",
-            [
-                "required",
-                "is_natural"
-            ]
-        );
+        $validation->setRule("$individual_name.precision_format_id", "precision format", [
+            "required",
+            "is_natural_no_zero",
+            "ensure_ownership[".implode(",", [
+                PrecisionFormatModel::class,
+                SEARCH_NORMALLY
+            ])."]"
+        ]);
 
         return $validation;
     }

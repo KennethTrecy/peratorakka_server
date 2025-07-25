@@ -4,7 +4,9 @@ namespace App\Libraries\MathExpression\ExpressionFactory;
 
 use App\Exceptions\ExpressionException;
 use App\Libraries\Context;
+use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\ContextKeys;
+use App\Libraries\Context\ExchangeRateCache;
 use App\Libraries\Context\FlashCache;
 use App\Libraries\MathExpression;
 use App\Models\AccountCollectionModel;
@@ -124,7 +126,7 @@ trait RegisterProcedures
 
                     $math_expression = new MathExpression($time_group_manager);
 
-                    $totals = $math_expression->evaluate($formula_info->formula);
+                    $totals = $math_expression->evaluate($formula_info->expression);
 
                     $result = json_encode($totals);
 
@@ -221,6 +223,10 @@ trait RegisterProcedures
                 lcfirst(ucwords($function_name, "_"))
             )
         );
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources($linked_accounts);
+        $exchange_rate_cache = ExchangeRateCache::make($context);
+        $exchange_rate_cache->loadExchangeRatesForAccounts($linked_accounts);
 
         $result = json_encode(
             $time_group_manager->$native_procedure_name($linked_accounts)

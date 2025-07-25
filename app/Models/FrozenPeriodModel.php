@@ -3,13 +3,21 @@
 namespace App\Models;
 
 use App\Casts\RationalNumber;
-use App\Entities\FlowCalculation;
+use App\Entities\FrozenAccount;
 use App\Entities\FrozenPeriod;
-use App\Entities\SummaryCalculation;
+use App\Entities\RealAdjustedSummaryCalculation;
+use App\Entities\RealFlowCalculation;
+use App\Entities\RealUnadjustedSummaryCalculation;
+use App\Libraries\Context;
+use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\ModifierAtomActivityCache;
+use App\Libraries\Context\ModifierAtomCache;
+use App\Libraries\Context\ModifierCache;
 use App\Libraries\Resource;
+use App\Models\FrozenAccountModel;
+use App\Models\RealAdjustedSummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
-use DateTimeInterface;
 use Faker\Generator;
 
 class FrozenPeriodModel extends BaseResourceModel
@@ -50,12 +58,30 @@ class FrozenPeriodModel extends BaseResourceModel
             ->first();
     }
 
+    public static function createAncestorResources(int $user_id, array $options): array
+    {
+        return [
+            [],
+            isset($options["time_ranges"])
+                ? array_map(fn ($range) => [
+                    "started_at" => $range[0],
+                    "finished_at" => $range[1],
+                    "user_id" => $user_id
+                ], $options["time_ranges"]) : [
+                    [
+                        "user_id" => $user_id
+                    ]
+                ]
+        ];
+    }
+
     public static function makeRawCalculations(
         User $user,
+        Context $context,
         string $started_at,
         string $finished_at
     ): array {
-        $financial_entry_model = model(FinancialEntryModel::class);
+        $financial_entry_model = model(FinancialEntryModel::class, false);
         $financial_entries = $financial_entry_model
             ->limitSearchToUser($financial_entry_model, $user)
             ->where("transacted_at >=", $started_at)
@@ -66,24 +92,21 @@ class FrozenPeriodModel extends BaseResourceModel
         // Happens for new users
         if (count($financial_entries) === 0) {
             return [
-                [], // cash flow activities
-                [], // accounts
-                [], // summary calculations
-                [], // flow calculations
-                [] // raw exchange rates
+                [], // frozen accounts
+                [], // real unadjusted summary calculations
+                [], // real adjusted summary calculations
+                [], // real flow calculations
             ];
         }
 
         [
-            $modifiers,
-            $accounts,
-            $cash_flow_activities
-        ] = static::findLinkedResources($financial_entries);
-
-        [
-            $keyed_raw_summary_calculations,
-            $keyed_raw_flow_calculations
-        ] = static::prepareRawCalculations($modifiers, $accounts, $cash_flow_activities);
+            $associated_accounts,
+            $associated_cash_flow_activities,
+            $financial_entry_atoms
+        ] = static::loadLinkedResourcesAndFinancialEntryAtoms(
+            $context,
+            $financial_entries
+        );
 
         [
             // Used to determine previous period
@@ -93,171 +116,327 @@ class FrozenPeriodModel extends BaseResourceModel
         ] = static::minMaxTransactedTimes($financial_entries);
 
         [
-            $keyed_raw_summary_calculations,
-            $missing_accounts
-        ] = static::mergePreviousSummaryCalculations(
-            $earliest_transacted_time,
-            $keyed_raw_summary_calculations
+            $previous_keyed_real_raw_adjusted_summaries
+        ] = static::loadPreviousSummaryCalculations($context, $earliest_transacted_time);
+
+        $known_linked_accounts = array_unique([
+            ...array_values($associated_accounts),
+            ...array_keys($previous_keyed_real_raw_adjusted_summaries)
+        ]);
+        $associated_account_hashes = static::generateAccountHashes(
+            $started_at,
+            $finished_at,
+            $known_linked_accounts
         );
 
         [
-            $keyed_raw_summary_calculations,
-            $keyed_raw_flow_calculations
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows
+        ] = static::initiateRawCalculations(
+            $context,
+            $associated_accounts,
+            $associated_cash_flow_activities,
+            $associated_account_hashes,
+            $previous_keyed_real_raw_adjusted_summaries
+        );
+
+        [
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows
         ] = static::consolidateRawCalculations(
+            $context,
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows,
+            $associated_accounts,
+            $associated_cash_flow_activities,
             $financial_entries,
-            $modifiers,
-            $keyed_raw_summary_calculations,
-            $keyed_raw_flow_calculations
+            $financial_entry_atoms
         );
 
         [
-            $summary_calculations,
-            $flow_calculations
-        ] = static::makeResources($keyed_raw_summary_calculations, $keyed_raw_flow_calculations);
-
-        $accounts = static::removeUnusedAccounts(
-            array_merge($accounts, $missing_accounts),
-            $summary_calculations,
-            $flow_calculations
-        );
-
-        $linked_currencies = AccountModel::extractLinkedCurrencies($accounts);
-        $raw_exchange_rates = CurrencyModel::makeExchangeRates(
-            $latest_entry_transacted_time,
-            $linked_currencies
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows
+        ] = static::makeResources(
+            $associated_account_hashes,
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows
         );
 
         return [
-            array_values($cash_flow_activities),
-            array_values($accounts),
-            array_values($summary_calculations),
-            array_values($flow_calculations),
-            $raw_exchange_rates
+            array_values($frozen_accounts),
+            array_values($real_unadjusted_summaries),
+            array_values($real_adjusted_summaries),
+            array_values($real_flows)
         ];
     }
 
-    private static function findLinkedResources(array $financial_entries): array
-    {
+    public static function createTestPeriods(
+        User $user,
+        array $time_range_entry_groups,
+        array $dependencies
+    ): array {
+        $currency_count = $dependencies["currency_count"];
+        $cash_flow_activity_count = $dependencies["cash_flow_activity_count"];
+        $modifier_actions = $dependencies["expected_modifier_actions"];
+
+        [
+            $precision_formats,
+            $currencies
+        ] = CurrencyModel::createTestResources(
+            $user->id,
+            $currency_count,
+            $dependencies["currency_options"] ?? []
+        );
+
+        [
+            $cash_flow_activities
+        ] = $cash_flow_activity_count === 0
+            ? [ [] ]
+            : CashFlowActivityModel::createTestResources($user->id, $cash_flow_activity_count, []);
+        [
+            $modifiers
+        ] = ModifierModel::createTestResources($user->id, 1, [
+            "expected_actions" => $modifier_actions
+        ]);
+
+        $raw_account_infos = array_map(fn ($combination) => [
+            "currency_id" => $currencies[$combination[0]]->id,
+            "kind" => $combination[1]
+        ], $dependencies["account_combinations"]);
+        [ $accounts ] = AccountModel::createTestResources($user->id, 1, [
+            "ancestor_data" => [
+                [],
+                $raw_account_infos
+            ]
+        ]);
+
+        $raw_modifier_atom_infos = array_map(fn ($combination) => [
+            "modifier_id" => $modifiers[$combination[0]]->id,
+            "account_id" => $accounts[$combination[1]]->id,
+            "kind" => $combination[2]
+        ], $dependencies["modifier_atom_combinations"]);
+        [ $modifier_atoms ] = ModifierAtomModel::createTestResources($user->id, 1, [
+            "ancestor_data" => [
+                [],
+                $raw_modifier_atom_infos
+            ]
+        ]);
+
+        if (count($dependencies["modifier_atom_activity_combinations"]) > 0) {
+            $raw_modifier_atom_activity_infos = array_map(fn ($combination) => [
+                "modifier_atom_id" => $modifier_atoms[$combination[0]]->id,
+                "cash_flow_activity_id" => $cash_flow_activities[$combination[1]]->id
+            ], $dependencies["modifier_atom_activity_combinations"]);
+
+            model(ModifierAtomActivityModel::class, false)
+                ->insertBatch($raw_modifier_atom_activity_infos);
+        }
+        $modifier_atom_activities = model(ModifierAtomActivityModel::class, false)->findAll();
+
+        [ $raw_financial_entry_infos, $raw_financial_entry_atom_infos ] = array_reduce(
+            $time_range_entry_groups,
+            fn ($previous_infos, $time_range_entry_group) => array_reduce(
+                $time_range_entry_group["entries"],
+                fn ($previous_entry_infos, $time_range_entry) => [
+                    [
+                        ...$previous_entry_infos[0],
+                        [
+                            "modifier_id" => $modifiers[$time_range_entry["modifier_index"]]->id,
+                            "transacted_at" => $time_range_entry_group["started_at"]
+                        ]
+                    ],
+                    [
+                        ...$previous_entry_infos[1],
+                        ...array_map(
+                            fn ($time_range_entry_atom) => [
+                                "financial_entry_index" => count($previous_entry_infos[0]),
+                                "modifier_atom_index" => $time_range_entry_atom[0],
+                                "kind" => count($time_range_entry_atom) > 2
+                                    ? $time_range_entry_atom[1]
+                                    : TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                "numerical_value" => count($time_range_entry_atom) > 2
+                                    ? $time_range_entry_atom[2]
+                                    : $time_range_entry_atom[1]
+                            ],
+                            $time_range_entry["atoms"]
+                        )
+                    ]
+                ],
+                $previous_infos
+            ),
+            [ [], [] ]
+        );
+        [ $financial_entries ] = FinancialEntryModel::createTestResources(
+            $user->id,
+            1,
+            [
+                "ancestor_data" => [
+                    [],
+                    $raw_financial_entry_infos
+                ]
+            ]
+        );
+
+        $raw_financial_entry_atom_infos = array_map(fn ($info) => [
+            "financial_entry_id" => $financial_entries[$info["financial_entry_index"]]->id,
+            "modifier_atom_id" => $modifier_atoms[$info["modifier_atom_index"]]->id,
+            "kind" => $info["kind"],
+            "numerical_value" => $info["numerical_value"]
+        ], $raw_financial_entry_atom_infos);
+        [ $financial_entry_atoms ] = FinancialEntryAtomModel::createTestResources(
+            $user->id,
+            1,
+            [
+                "ancestor_data" => [
+                    [],
+                    $raw_financial_entry_atom_infos
+                ]
+            ]
+        );
+
+        $frozen_periods = [];
+        $frozen_accounts = [];
+        $real_adjusted_summaries = [];
+        $real_unadjusted_summaries = [];
+        $real_flows = [];
+        foreach ($time_range_entry_groups as $time_range_entry_group) {
+            $started_at = $time_range_entry_group["started_at"];
+
+            [
+                $periodic_frozen_accounts,
+                $periodic_real_unadjusted_summaries,
+                $periodic_real_adjusted_summaries,
+                $periodic_real_flows
+            ] = FrozenPeriodModel::makeRawCalculations(
+                $user,
+                Context::make(),
+                $started_at,
+                $time_range_entry_group["finished_at"] ?? Time::now()
+            );
+
+            if (isset($time_range_entry_group["finished_at"])) {
+                $finished_at = $time_range_entry_group["finished_at"];
+
+                [ $frozen_period ] = FrozenPeriodModel::createTestResource(
+                    $user->id,
+                    [
+                        "overrides" => [
+                            "started_at" => $started_at,
+                            "finished_at" => $finished_at
+                        ]
+                    ]
+                );
+
+                foreach ($periodic_frozen_accounts as $frozen_account) {
+                    $frozen_account->frozen_period_id = $frozen_period->id;
+                }
+                model(FrozenAccountModel::class)->insertBatch($periodic_frozen_accounts);
+                model(RealAdjustedSummaryCalculationModel::class)
+                    ->insertBatch($periodic_real_adjusted_summaries);
+                model(RealUnadjustedSummaryCalculationModel::class)
+                    ->insertBatch($periodic_real_unadjusted_summaries);
+                if (count($periodic_real_flows) > 0) {
+                    model(RealFlowCalculationModel::class)->insertBatch($periodic_real_flows);
+                }
+                array_push($frozen_periods, $frozen_period);
+            } else {
+                array_push($frozen_periods, (new FrozenPeriod())->fill([
+                    "started_at" => $time_range_entry_group["started_at"]
+                ]));
+            }
+
+            array_push($frozen_accounts, ...$periodic_frozen_accounts);
+            array_push($real_unadjusted_summaries, ...$periodic_real_unadjusted_summaries);
+            array_push($real_adjusted_summaries, ...$periodic_real_adjusted_summaries);
+            array_push($real_flows, ...$periodic_real_flows);
+        }
+
+        return [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ];
+    }
+
+    private static function loadLinkedResourcesAndFinancialEntryAtoms(
+        Context $context,
+        array $financial_entries
+    ): array {
         $linked_modifiers = [];
         foreach ($financial_entries as $document) {
             $modifier_id = $document->modifier_id;
             array_push($linked_modifiers, $modifier_id);
         }
+        $linked_modifiers = array_unique($linked_modifiers);
 
-        $modifiers = [];
-        if (count($linked_modifiers) > 0) {
-            $modifiers = model(ModifierModel::class)
-                ->whereIn("id", array_unique($linked_modifiers))
-                ->withDeleted()
-                ->findAll();
+        ModifierCache::make($context)->loadResources($linked_modifiers);
+        $modifier_atom_cache = ModifierAtomCache::make($context);
+        $modifier_atom_cache->loadResourcesFromParentIDs($linked_modifiers);
+
+        $associated_accounts = $modifier_atom_cache->extractAssociatedAccountIDs();
+        $linked_accounts = array_unique(array_values($associated_accounts));
+        AccountCache::make($context)->loadResources($linked_accounts);
+
+        $linked_modifier_atoms = array_keys($associated_accounts);
+        $modifier_atom_activity_cache = ModifierAtomActivityCache::make($context);
+        $modifier_atom_activity_cache->loadResourcesFromParentIDs($linked_modifier_atoms);
+
+        $associated_cash_flow_activities = $modifier_atom_activity_cache
+            ->extractAssociatedCashFlowActivityIDs();
+
+        $linked_financial_entries = [];
+        foreach ($financial_entries as $document) {
+            $id = $document->id;
+            array_push($linked_financial_entries, $id);
         }
 
-        $linked_accounts = [];
-        foreach ($modifiers as $document) {
-            $debit_account_id = $document->debit_account_id;
-            $credit_account_id = $document->credit_account_id;
-            array_push($linked_accounts, $debit_account_id, $credit_account_id);
-        }
-
-        $accounts = [];
-        if (count($linked_accounts) > 0) {
-            $accounts = model(AccountModel::class)
-                ->whereIn("id", array_unique($linked_accounts))
-                ->withDeleted()
-                ->findAll();
-        }
-
-        $linked_cash_flow_activities = [];
-        foreach ($modifiers as $document) {
-            $debit_cash_flow_activity_id = $document->debit_cash_flow_activity_id;
-            $credit_cash_flow_activity_id = $document->credit_cash_flow_activity_id;
-            array_push(
-                $linked_cash_flow_activities,
-                $debit_cash_flow_activity_id,
-                $credit_cash_flow_activity_id
-            );
-        }
-
-        $cash_flow_activities = [];
-        if (count($linked_cash_flow_activities) > 0) {
-            $cash_flow_activities = model(CashFlowActivityModel::class)
-                ->whereIn("id", array_unique($linked_cash_flow_activities))
-                ->withDeleted()
+        $financial_entry_atoms = [];
+        if (count($linked_financial_entries) > 0) {
+            $financial_entry_atoms = model(FinancialEntryAtomModel::class)
+                ->whereIn("financial_entry_id", array_unique($linked_financial_entries))
                 ->findAll();
         }
 
         return [
-            $modifiers,
-            $accounts,
-            $cash_flow_activities,
+            $associated_accounts,
+            $associated_cash_flow_activities,
+            $financial_entry_atoms
         ];
     }
 
-    private static function prepareRawCalculations(
-        array $modifiers,
-        array $accounts,
-        array $cash_flow_activities
+    private static function generateAccountHashes(
+        string $started_at,
+        string $finished_at,
+        array $account_IDs
     ): array {
-        $keyed_raw_summary_calculations = array_reduce(
-            $accounts,
-            function ($raw_calculations, $account) {
-                $raw_calculations[$account->id] = [
-                    "account_id" => $account->id,
-                    "opened_debit_amount" => RationalNumber::zero(),
-                    "opened_credit_amount" => RationalNumber::zero(),
-                    "unadjusted_debit_amount" => RationalNumber::zero(),
-                    "unadjusted_credit_amount" => RationalNumber::zero(),
-                    "closed_debit_amount" => RationalNumber::zero(),
-                    "closed_credit_amount" => RationalNumber::zero()
-                ];
+        $started_at = $started_at;
+        $finished_at = $finished_at;
+        $account_hashes = [];
 
-                return $raw_calculations;
-            },
-            []
-        );
+        foreach ($account_IDs as $account_id) {
+            $account_hashes[$account_id] = [
+                "account_id" => $account_id,
+                "hash" => FrozenAccountModel::generateAccountHash(
+                    $started_at,
+                    $finished_at,
+                    $account_id
+                )
+            ];
+        }
 
-        $keyed_raw_flow_calculations = array_reduce(
-            $modifiers,
-            function ($raw_calculations, $modifier) {
-                if ($modifier->debit_cash_flow_activity_id !== null) {
-                    $activity_id = $modifier->debit_cash_flow_activity_id;
-                    $account_id = $modifier->debit_account_id;
-
-                    if (!isset($raw_calculations[$activity_id])) {
-                        $raw_calculations[$activity_id] = [];
-                    }
-
-                    $raw_calculations[$activity_id][$account_id] = [
-                        "cash_flow_activity_id" => $activity_id,
-                        "account_id" => $account_id,
-                        "net_amount" => RationalNumber::zero()
-                    ];
-                }
-
-                if ($modifier->credit_cash_flow_activity_id !== null) {
-                    $activity_id = $modifier->credit_cash_flow_activity_id;
-                    $account_id = $modifier->credit_account_id;
-
-                    if (!isset($raw_calculations[$activity_id])) {
-                        $raw_calculations[$activity_id] = [];
-                    }
-
-                    $raw_calculations[$activity_id][$account_id] = [
-                        "cash_flow_activity_id" => $activity_id,
-                        "account_id" => $account_id,
-                        "net_amount" => RationalNumber::zero()
-                    ];
-                }
-
-                return $raw_calculations;
-            },
-            []
-        );
-
-        return [
-            $keyed_raw_summary_calculations,
-            $keyed_raw_flow_calculations
-        ];
+        return $account_hashes;
     }
 
     private static function minMaxTransactedTimes(array $financial_entries): array
@@ -284,272 +463,319 @@ class FrozenPeriodModel extends BaseResourceModel
         return [ $earliest_transacted_time, $latest_transacted_time ];
     }
 
-    private static function mergePreviousSummaryCalculations(
-        string $earliest_transacted_time,
-        array $keyed_raw_summary_calculations
+    private static function loadPreviousSummaryCalculations(
+        Context $context,
+        string $earliest_transacted_time
     ): array {
         $previous_frozen_period = FrozenPeriodModel::findLatestPeriod($earliest_transacted_time);
 
-        $missing_accounts = [];
+        $keyed_real_raw_adjusted_summaries = [];
 
         if ($previous_frozen_period) {
-            $missing_linked_accounts = [];
-
-            $previous_summary_calculations = model(SummaryCalculationModel::class, false)
+            $previous_frozen_accounts = model(FrozenAccountModel::class, false)
                 ->where("frozen_period_id", $previous_frozen_period->id)
                 ->findAll();
+            $keyed_frozen_accounts = Resource::key(
+                $previous_frozen_accounts,
+                fn ($frozen_account) => $frozen_account->hash,
+            );
+            $frozen_account_hashes = array_keys($keyed_frozen_accounts);
 
-            foreach ($previous_summary_calculations as $previous_summary_calculation) {
-                $account_id = $previous_summary_calculation->account_id;
+            $previous_real_adjusted_summaries = model(
+                RealAdjustedSummaryCalculationModel::class,
+                false
+            )->whereIn("frozen_account_hash", $frozen_account_hashes)->findAll();
 
-                if (isset($keyed_raw_summary_calculations[$account_id])) {
-                    $keyed_raw_summary_calculations[$account_id]["opened_debit_amount"]
-                        = $keyed_raw_summary_calculations[$account_id]["opened_debit_amount"]
-                            ->plus($previous_summary_calculation->closed_debit_amount);
-                    $keyed_raw_summary_calculations[$account_id]["opened_credit_amount"]
-                        = $keyed_raw_summary_calculations[$account_id]["opened_credit_amount"]
-                            ->plus($previous_summary_calculation->closed_credit_amount);
+            foreach ($previous_real_adjusted_summaries as $summary_calculation) {
+                $frozen_account_hash = $summary_calculation->frozen_account_hash;
+                $account_id = $keyed_frozen_accounts[$frozen_account_hash]->account_id;
 
-                    $keyed_raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
-                        = $keyed_raw_summary_calculations[$account_id]["unadjusted_debit_amount"]
-                            ->plus($previous_summary_calculation->closed_debit_amount);
-                    $keyed_raw_summary_calculations[$account_id]["unadjusted_credit_amount"]
-                        = $keyed_raw_summary_calculations[$account_id]["unadjusted_credit_amount"]
-                            ->plus($previous_summary_calculation->closed_credit_amount);
-
-                    $keyed_raw_summary_calculations[$account_id]["closed_debit_amount"]
-                        = $keyed_raw_summary_calculations[$account_id]["closed_debit_amount"]
-                            ->plus($previous_summary_calculation->closed_debit_amount);
-                    $keyed_raw_summary_calculations[$account_id]["closed_credit_amount"]
-                        = $keyed_raw_summary_calculations[$account_id]["closed_credit_amount"]
-                            ->plus($previous_summary_calculation->closed_credit_amount);
-                } else {
-                    $keyed_raw_summary_calculations[$account_id] = [
-                        "account_id" => $account_id,
-                        "opened_debit_amount"
-                            => $previous_summary_calculation->closed_debit_amount,
-                        "opened_credit_amount"
-                            => $previous_summary_calculation->closed_credit_amount,
-                        "unadjusted_debit_amount"
-                            => $previous_summary_calculation->closed_debit_amount,
-                        "unadjusted_credit_amount"
-                            => $previous_summary_calculation->closed_credit_amount,
-                        "closed_debit_amount"
-                            => $previous_summary_calculation->closed_debit_amount,
-                        "closed_credit_amount"
-                            => $previous_summary_calculation->closed_credit_amount
-                    ];
-
-                    array_push($missing_linked_accounts, $account_id);
-                }
+                $keyed_real_raw_adjusted_summaries[$account_id] = [
+                    "opened_amount" => $summary_calculation->closed_amount,
+                    "closed_amount" => $summary_calculation->closed_amount
+                ];
             }
 
-            if (count($missing_linked_accounts) > 0) {
-                $missing_accounts = model(AccountModel::class, false)
-                    ->whereIn("id", array_unique($missing_linked_accounts))
-                    ->withDeleted()
-                    ->findAll();
+            $linked_accounts = array_keys($keyed_real_raw_adjusted_summaries);
+            AccountCache::make($context)->loadResources($linked_accounts);
+        }
+
+        return [
+            $keyed_real_raw_adjusted_summaries
+        ];
+    }
+
+    private static function initiateRawCalculations(
+        Context $context,
+        array $associated_accounts,
+        array $associated_cash_flow_activities,
+        array $associated_account_hashes,
+        array $previous_keyed_real_raw_adjusted_summaries
+    ): array {
+        $account_cache = AccountCache::make($context);
+        $keyed_real_raw_unadjusted_summaries = [];
+        $keyed_real_raw_adjusted_summaries = [];
+        $keyed_real_raw_flows = [];
+
+        foreach ($associated_accounts as $modifier_atom_id => $account_id) {
+            $account_hash = $associated_account_hashes[$account_id]["hash"];
+            $keyed_real_raw_adjusted_summaries[$account_id] = isset(
+                $previous_keyed_real_raw_adjusted_summaries[$account_id]
+            ) ? $previous_keyed_real_raw_adjusted_summaries[$account_id] : [
+                "opened_amount" => RationalNumber::zero(),
+                "closed_amount" => RationalNumber::zero()
+            ];
+            $keyed_real_raw_adjusted_summaries[$account_id]["frozen_account_hash"] = $account_hash;
+
+            $is_debited_normally = $account_cache->isDebitedNormally($account_id);
+            $current_balance = $keyed_real_raw_adjusted_summaries[$account_id]["opened_amount"];
+
+            $keyed_real_raw_unadjusted_summaries[$account_id] = [
+                "frozen_account_hash" => $account_hash,
+                "debit_amount" => $is_debited_normally ? $current_balance : RationalNumber::zero(),
+                "credit_amount" => $is_debited_normally ? RationalNumber::zero() : $current_balance
+            ];
+
+            if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                $cash_flow_activity_id = $associated_cash_flow_activities[$modifier_atom_id];
+                if (!isset($keyed_raw_flows[$cash_flow_activity_id])) {
+                    $keyed_raw_flows[$cash_flow_activity_id] = [];
+                }
+
+                $keyed_real_raw_flows[$cash_flow_activity_id][$account_id] = [
+                    "frozen_account_hash" => $account_hash,
+                    "cash_flow_activity_id" => $cash_flow_activity_id,
+                    "net_amount" => RationalNumber::zero()
+                ];
+            }
+        }
+
+        foreach ($previous_keyed_real_raw_adjusted_summaries as $account_id => $raw_summary) {
+            if (!isset($keyed_real_raw_unadjusted_summaries[$account_id])) {
+                $account_hash = $associated_account_hashes[$account_id]["hash"];
+                $keyed_real_raw_adjusted_summaries[$account_id] = [
+                    "frozen_account_hash" => $account_hash,
+                    "opened_amount" => $raw_summary["opened_amount"]->simplified(),
+                    "closed_amount" => $raw_summary["closed_amount"]->simplified()
+                ];
             }
         }
 
         return [
-            $keyed_raw_summary_calculations,
-            $missing_accounts
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows
         ];
     }
 
     private static function consolidateRawCalculations(
+        Context $context,
+        array $keyed_real_raw_unadjusted_summaries,
+        array $keyed_real_raw_adjusted_summaries,
+        array $keyed_real_raw_flows,
+        array $associated_accounts,
+        array $associated_cash_flow_activities,
         array $financial_entries,
-        array $modifiers,
-        array $keyed_raw_summary_calculations,
-        array $keyed_raw_flow_calculations
+        array $financial_entry_atoms
     ): array {
-        $grouped_financial_entries = Resource::group(
-            $financial_entries,
-            function ($financial_entry) {
-                return $financial_entry->modifier_id;
+        $account_cache = AccountCache::make($context);
+        $modifier_cache = ModifierCache::make($context);
+        $modifier_atom_cache = ModifierAtomCache::make($context);
+        $keyed_financial_entries = Resource::key($financial_entries, fn ($entry) => $entry->id);
+
+        foreach ($financial_entry_atoms as $financial_entry_atom) {
+            $financial_entry_id = $financial_entry_atom->financial_entry_id;
+            $financial_entry = $keyed_financial_entries[$financial_entry_id];
+            $modifier_id = $financial_entry->modifier_id;
+            $modifier_atom_id = $financial_entry_atom->modifier_atom_id;
+            $account_id = $modifier_atom_cache->determineModifierAtomAccountID($modifier_atom_id);
+            $numerical_value = $financial_entry_atom->numerical_value;
+
+            $atom_kind = $modifier_atom_cache->determineModifierAtomKind($modifier_atom_id);
+            $is_debited_normally = $account_cache->isDebitedNormally($account_id);
+            $is_normally_temporary = $account_cache->isNormallyTemporary($account_id);
+            $adjusted_value = (
+                $is_debited_normally === (
+                    $atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
+                    || $atom_kind === IMAGINARY_DEBIT_MODIFIER_ATOM_KIND
+                )
+            ) || (
+                !$is_debited_normally && (
+                    $atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
+                    || $atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
+                )
+            ) ? $numerical_value : $numerical_value->negated();
+
+            $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
+                = $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
+                    ->plus($adjusted_value);
+
+            if ($modifier_cache->determineModifierAction($modifier_id) !== CLOSE_MODIFIER_ACTION) {
+                switch ($atom_kind) {
+                    case REAL_DEBIT_MODIFIER_ATOM_KIND: {
+                        $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
+                            = $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
+                                ->plus($numerical_value);
+
+                        if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                            $cash_flow_activity_id = $associated_cash_flow_activities[
+                                $modifier_atom_id
+                            ];
+                            $new_net_amount = $keyed_real_raw_flows[
+                                $cash_flow_activity_id
+                            ][$account_id]["net_amount"];
+
+                            $new_net_amount = $new_net_amount->minus($numerical_value);
+
+                            $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                                = $new_net_amount;
+                        }
+                        break;
+                    }
+                    case REAL_CREDIT_MODIFIER_ATOM_KIND: {
+                        $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
+                            = $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
+                                ->plus($numerical_value);
+
+                        if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                            $cash_flow_activity_id = $associated_cash_flow_activities[
+                                $modifier_atom_id
+                            ];
+                            $new_net_amount = $keyed_real_raw_flows[
+                                $cash_flow_activity_id
+                            ][$account_id]["net_amount"];
+
+                            $new_net_amount = $new_net_amount->plus($numerical_value);
+
+                            $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                                = $new_net_amount;
+                        }
+                        break;
+                    }
+                        // TODO: Implement calculation for imaginary values.
+                    case IMAGINARY_DEBIT_MODIFIER_ATOM_KIND: {
+                        break;
+                    }
+                    case IMAGINARY_CREDIT_MODIFIER_ATOM_KIND: {
+                        break;
+                    }
+                    case ITEM_COUNT_MODIFIER_ATOM_KIND: {
+                        break;
+                    }
+                    case PRICE_MODIFIER_ATOM_KIND: {
+                        break;
+                    }
+                }
             }
-        );
-
-        $keyed_raw_summary_calculations = array_reduce(
-            $modifiers,
-            function ($raw_calculations, $modifier) use ($grouped_financial_entries) {
-                $financial_entries = $grouped_financial_entries[$modifier->id];
-
-                foreach ($financial_entries as $financial_entry) {
-                    $debit_account_id = $modifier->debit_account_id;
-                    $debit_amount = $financial_entry->debit_amount;
-
-                    $credit_account_id = $modifier->credit_account_id;
-                    $credit_amount = $financial_entry->credit_amount;
-
-                    if ($modifier->action !== CLOSE_MODIFIER_ACTION) {
-                        $raw_calculations[$debit_account_id]["unadjusted_debit_amount"]
-                            = $raw_calculations[$debit_account_id]["unadjusted_debit_amount"]
-                                ->plus($debit_amount);
-                        $raw_calculations[$credit_account_id]["unadjusted_credit_amount"]
-                            = $raw_calculations[$credit_account_id]["unadjusted_credit_amount"]
-                                ->plus($credit_amount);
-                    }
-
-                    $raw_calculations[$debit_account_id]["closed_debit_amount"]
-                    = $raw_calculations[$debit_account_id]["closed_debit_amount"]
-                        ->plus($debit_amount);
-                    $raw_calculations[$credit_account_id]["closed_credit_amount"]
-                        = $raw_calculations[$credit_account_id]["closed_credit_amount"]
-                            ->plus($credit_amount);
-                }
-
-                return $raw_calculations;
-            },
-            $keyed_raw_summary_calculations
-        );
-
-        $non_closing_modifiers = array_filter($modifiers, function ($modifier) {
-            return $modifier->action !== CLOSE_MODIFIER_ACTION;
-        });
-        $keyed_raw_flow_calculations = array_reduce(
-            $non_closing_modifiers,
-            function ($raw_calculations, $modifier) use ($grouped_financial_entries) {
-                $financial_entries = $grouped_financial_entries[$modifier->id];
-
-                foreach ($financial_entries as $financial_entry) {
-                    $debit_account_id = $modifier->debit_account_id;
-                    $debit_activity_id = $modifier->debit_cash_flow_activity_id;
-                    $debit_amount = $financial_entry->debit_amount;
-
-                    $credit_account_id = $modifier->credit_account_id;
-                    $credit_activity_id = $modifier->credit_cash_flow_activity_id;
-                    $credit_amount = $financial_entry->credit_amount;
-
-                    if ($debit_activity_id !== null) {
-                        $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                            = $raw_calculations[$debit_activity_id][$debit_account_id]["net_amount"]
-                                ->minus($debit_amount);
-                    }
-
-                    if ($credit_activity_id !== null) {
-                        $raw_calculations[$credit_activity_id][$credit_account_id]["net_amount"]
-                            = $raw_calculations
-                                [$credit_activity_id][$credit_account_id]["net_amount"]
-                                ->plus($credit_amount);
-                    }
-                }
-
-                return $raw_calculations;
-            },
-            $keyed_raw_flow_calculations
-        );
+        }
 
         return [
-            $keyed_raw_summary_calculations,
-            $keyed_raw_flow_calculations
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows
         ];
     }
 
     private static function makeResources(
-        array $keyed_raw_summary_calculations,
-        array $keyed_raw_flow_calculations
+        array $associated_accounts,
+        array $keyed_real_raw_unadjusted_summaries,
+        array $keyed_real_raw_adjusted_summaries,
+        array $keyed_real_raw_flows
     ): array {
-        $keyed_raw_summary_calculations = array_filter(
-            $keyed_raw_summary_calculations,
-            function ($keyed_raw_summary_calculation) {
-                return $keyed_raw_summary_calculation["unadjusted_debit_amount"]->getSign() !== 0
-                    || $keyed_raw_summary_calculation["unadjusted_credit_amount"]->getSign() !== 0
-                    || $keyed_raw_summary_calculation["closed_debit_amount"]->getSign() !== 0
-                    || $keyed_raw_summary_calculation["closed_credit_amount"]->getSign() !== 0;
+        $frozen_accounts = array_values(array_map(
+            fn ($raw_associated_account) => (new FrozenAccount())->fill($raw_associated_account),
+            $associated_accounts
+        ));
+
+        $keyed_real_raw_unadjusted_summaries = array_filter(
+            $keyed_real_raw_unadjusted_summaries,
+            function ($real_raw_unadjusted_summary) {
+                return $real_raw_unadjusted_summary["debit_amount"]->getSign() !== 0
+                    || $real_raw_unadjusted_summary["credit_amount"]->getSign() !== 0;
             }
         );
-        $summary_calculations = array_map(
+        $real_unadjusted_summaries = array_map(
             function ($raw_calculation) {
-                $closed_debit_amount = $raw_calculation["closed_debit_amount"];
-                $closed_credit_amount = $raw_calculation["closed_credit_amount"];
+                $raw_calculation["debit_amount"] = $raw_calculation["debit_amount"]->simplified();
+                $raw_calculation["credit_amount"] = $raw_calculation["credit_amount"]->simplified();
 
-                $adjusted_balance = $closed_debit_amount
-                    ->minus($closed_credit_amount)
-                    ->simplified();
-
-                $is_adjusted_balance_positive = $adjusted_balance->getSign() > 0;
-                $is_adjusted_balance_negative = $adjusted_balance->getSign() < 0;
-
-                $raw_calculation["opened_debit_amount"]
-                    = $raw_calculation["opened_debit_amount"]->simplified();
-                $raw_calculation["opened_credit_amount"]
-                    = $raw_calculation["opened_credit_amount"]->simplified();
-                $raw_calculation["unadjusted_debit_amount"]
-                    = $raw_calculation["unadjusted_debit_amount"]->simplified();
-                $raw_calculation["unadjusted_credit_amount"]
-                    = $raw_calculation["unadjusted_credit_amount"]->simplified();
-                $raw_calculation["closed_debit_amount"] = $is_adjusted_balance_positive
-                    ? $adjusted_balance->simplified()
-                    : RationalNumber::zero();
-                $raw_calculation["closed_credit_amount"] = $is_adjusted_balance_negative
-                    ? $adjusted_balance->negated()->simplified()
-                    : RationalNumber::zero();
-                $raw_calculation = (new SummaryCalculation())->fill($raw_calculation);
+                $raw_calculation = (new RealUnadjustedSummaryCalculation())->fill($raw_calculation);
 
                 return $raw_calculation;
             },
-            array_values($keyed_raw_summary_calculations)
+            $keyed_real_raw_unadjusted_summaries
         );
-        $flow_calculations = array_merge(
-            ...array_map(
-                function ($raw_calculations_per_account) {
-                    return array_map(
-                        function ($raw_calculation) {
-                            $raw_calculation["net_amount"] = $raw_calculation["net_amount"]
-                                ->simplified();
-                            return (new FlowCalculation())->fill($raw_calculation);
-                        },
-                        array_values($raw_calculations_per_account)
-                    );
-                },
-                array_values($keyed_raw_flow_calculations)
-            )
-        );
-        $flow_calculations = array_filter(
-            $flow_calculations,
-            function ($flow_calculation) {
-                return $flow_calculation->net_amount->getSign() !== 0;
+
+        $keyed_real_raw_adjusted_summaries = array_filter(
+            $keyed_real_raw_adjusted_summaries,
+            function ($real_raw_adjusted_summary) {
+                return $real_raw_adjusted_summary["opened_amount"]->getSign() !== 0
+                    || $real_raw_adjusted_summary["closed_amount"]->getSign() !== 0;
             }
         );
+        $real_adjusted_summaries = array_map(
+            function ($raw_calculation, $account_id) {
+                $raw_calculation["opened_amount"] = $raw_calculation["opened_amount"]->simplified();
+                $raw_calculation["closed_amount"] = $raw_calculation["closed_amount"]->simplified();
+
+                $raw_calculation = (new RealAdjustedSummaryCalculation())->fill($raw_calculation);
+
+                return $raw_calculation;
+            },
+            $keyed_real_raw_adjusted_summaries,
+            array_keys($keyed_real_raw_adjusted_summaries)
+        );
+
+        $real_flows = [];
+        foreach ($keyed_real_raw_flows as $cash_flow_activity_id => $real_flows_per_activity) {
+            foreach ($real_flows_per_activity as $account_id => $real_flow) {
+                if (!$real_flow["net_amount"]->isZero()) {
+                    $raw_calculation = (new RealFlowCalculation())->fill([
+                        "frozen_account_hash" => $real_flow["frozen_account_hash"],
+                        "cash_flow_activity_id" => $cash_flow_activity_id,
+                        "net_amount" => $real_flow["net_amount"]->simplified()
+                    ]);
+
+                    array_push($real_flows, $raw_calculation);
+                }
+            }
+        }
+
+        // Ensure that frozen accounts are used at least once.
+        $keyed_frozen_accounts = Resource::key(
+            $frozen_accounts,
+            fn ($frozen_account) => $frozen_account->hash
+        );
+        $used_frozen_accounts = [];
+
+        foreach ($real_unadjusted_summaries as $summary_calculation) {
+            $frozen_account_hash = $summary_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
+        foreach ($real_adjusted_summaries as $summary_calculation) {
+            $frozen_account_hash = $summary_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
+        foreach ($real_flows as $flow_calculation) {
+            $frozen_account_hash = $flow_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
+        $frozen_accounts = array_values($used_frozen_accounts);
 
         return [
-            $summary_calculations,
-            $flow_calculations
+            $frozen_accounts,
+            $real_unadjusted_summaries,
+            $real_adjusted_summaries,
+            $real_flows
         ];
-    }
-
-    private static function removeUnusedAccounts(
-        array $accounts,
-        array $summary_calculations,
-        array $flow_calculations
-    ): array {
-        $retained_accounts_on_summary_calculations = array_map(
-            function ($summary_calculation) {
-                return $summary_calculation->account_id;
-            },
-            $summary_calculations
-        );
-
-        $retained_accounts_on_flow_calculations = array_map(
-            function ($flow_calculation) {
-                return $flow_calculation->account_id;
-            },
-            $flow_calculations
-        );
-        $retained_accounts_on_calculations = array_unique(array_merge(
-            $retained_accounts_on_summary_calculations,
-            $retained_accounts_on_flow_calculations
-        ));
-
-        $accounts = array_filter(
-            $accounts,
-            function ($account) use ($retained_accounts_on_calculations) {
-                return in_array($account->id, $retained_accounts_on_calculations);
-            }
-        );
-
-        return $accounts;
     }
 }

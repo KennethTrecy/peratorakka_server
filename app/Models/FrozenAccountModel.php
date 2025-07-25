@@ -2,42 +2,33 @@
 
 namespace App\Models;
 
-use App\Entities\FlowCalculation;
+use App\Entities\FrozenAccount;
 use CodeIgniter\Shield\Entities\User;
-use DateTimeInterface;
 use Faker\Generator;
 
-class FlowCalculationModel extends BaseResourceModel
+class FrozenAccountModel extends BaseResourceModel
 {
-    protected $table = "flow_calculations";
-    protected $returnType = FlowCalculation::class;
+    protected $table = "frozen_accounts";
+    protected $primaryKey = "hash";
+    protected $returnType = FrozenAccount::class;
     protected $allowedFields = [
+        "hash",
         "frozen_period_id",
-        "cash_flow_activity_id",
-        "account_id",
-        "net_amount"
+        "account_id"
     ];
     protected $useTimestamps = false;
     protected $useSoftDeletes = false;
 
+    protected $sortable_fields = [];
+
     public function fake(Generator &$faker)
     {
-        $amount = $faker->regexify("\d{5}\.\d{3}");
-        return [
-            "net_amount"  => $amount
-        ];
+        return [];
     }
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
         return $query_builder
-            ->whereIn(
-                "cash_flow_activity_id",
-                model(CashFlowActivityModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->where("user_id", $user->id)
-            )
             ->whereIn(
                 "frozen_period_id",
                 model(FrozenPeriodModel::class, false)
@@ -55,18 +46,29 @@ class FlowCalculationModel extends BaseResourceModel
                         model(CurrencyModel::class, false)
                             ->builder()
                             ->select("id")
-                            ->where("user_id", $user->id)
+                            ->whereIn(
+                                "precision_format_id",
+                                model(PrecisionFormatModel::class, false)
+                                    ->builder()
+                                    ->select("id")
+                                    ->where("user_id", $user->id)
+                            )
                     )
             );
     }
 
-    public static function extractLinkedCashFlowActivities(array $flow_calculations): array
+    public static function extractLinkedAccounts(array $frozen_accounts): array
     {
-        return array_map(
-            function ($flow_calculation) {
-                return $flow_calculation->cash_flow_activity_id;
-            },
-            $flow_calculations
-        );
+        return array_map(fn ($frozen_account) => $frozen_account->account_id, $frozen_accounts);
+    }
+
+    public static function generateAccountHash(
+        string $started_at,
+        string $finished_at,
+        int $account_id
+    ): string {
+        $key = $account_id.$finished_at.$started_at;
+
+        return sha1($key).md5($key);
     }
 }

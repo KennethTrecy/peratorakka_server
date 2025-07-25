@@ -14,9 +14,8 @@ class Currency extends BaseResourceEntity
 
     protected $casts = [
         "id" => "integer",
-        "user_id" => "integer",
+        "precision_format_id" => "integer",
         "code" => "string",
-        "name" => "string",
-        "presentational_precision" => "integer"
+        "name" => "string"
     ];
 }

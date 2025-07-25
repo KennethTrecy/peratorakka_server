@@ -5,34 +5,49 @@ namespace App\Libraries;
 use App\Casts\RationalNumber;
 use App\Entities\Currency;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
+use App\Libraries\Resource;
 
 class FinancialStatementGroup
 {
     private readonly array $accounts;
-    private readonly array $summary_calculations;
-    private readonly array $flow_calculations;
+    private readonly array $frozen_accounts;
+    private readonly array $real_unadjusted_summaries;
+    private readonly array $real_adjusted_summaries;
+    private readonly array $real_flows;
     private readonly ExchangeRateDerivator $derivator;
 
     public function __construct(
         array $accounts,
-        array $summary_calculations,
-        array $flow_calculations,
+        array $frozen_accounts,
+        array $real_unadjusted_summaries,
+        array $real_adjusted_summaries,
+        array $real_flows,
         ExchangeRateDerivator $derivator
     ) {
-        $this->accounts = Resource::key($accounts, function ($account) {
-            return $account->id;
-        });
-        $this->summary_calculations = Resource::key(
-            $summary_calculations,
-            function ($summary_calculation) {
-                return $summary_calculation->account_id;
-            }
+        $this->accounts = Resource::key($accounts, fn ($account) => $account->id);
+
+        $hashed_frozen_accounts = Resource::key(
+            $frozen_accounts,
+            fn ($frozen_account) => $frozen_account->hash
         );
-        $this->flow_calculations = Resource::group(
-            $flow_calculations,
-            function ($flow_calculation) {
-                return $flow_calculation->account_id;
-            }
+        $this->frozen_accounts = $hashed_frozen_accounts;
+        $this->real_unadjusted_summaries = Resource::key(
+            $real_unadjusted_summaries,
+            fn ($summary_calculation) => $hashed_frozen_accounts[
+                $summary_calculation->frozen_account_hash
+            ]->account_id
+        );
+        $this->real_adjusted_summaries = Resource::key(
+            $real_adjusted_summaries,
+            fn ($summary_calculation) => $hashed_frozen_accounts[
+                $summary_calculation->frozen_account_hash
+            ]->account_id
+        );
+        $this->real_flows = Resource::group(
+            $real_flows,
+            fn ($flow_calculation) => $hashed_frozen_accounts[
+                $flow_calculation->frozen_account_hash
+            ]->account_id
         );
         $this->derivator = $derivator;
     }
@@ -52,20 +67,36 @@ class FinancialStatementGroup
             return null;
         }
 
-        $target_summary_calculations = [];
-        $target_flow_calculations = [];
+        $target_real_unadjusted_summaries = [];
+        $target_real_adjusted_summaries = [];
+        $target_real_flows = [];
 
         foreach ($filtered_accounts as $account) {
-            if (isset($this->summary_calculations[$account->id])) {
-                array_push($target_summary_calculations, $this->summary_calculations[$account->id]);
+            if (isset($this->real_unadjusted_summaries[$account->id])) {
+                array_push(
+                    $target_real_unadjusted_summaries,
+                    $this->real_unadjusted_summaries[$account->id]
+                );
             }
-
-            if (isset($this->flow_calculations[$account->id])) {
-                array_push($target_flow_calculations, ...$this->flow_calculations[$account->id]);
+            if (isset($this->real_adjusted_summaries[$account->id])) {
+                array_push(
+                    $target_real_adjusted_summaries,
+                    $this->real_adjusted_summaries[$account->id]
+                );
+            }
+            if (isset($this->real_flows[$account->id])) {
+                array_push(
+                    $target_real_flows,
+                    ...$this->real_flows[$account->id]
+                );
             }
         }
 
-        if (count($target_summary_calculations) === 0 && count($target_flow_calculations) === 0) {
+        if (
+            count($target_real_unadjusted_summaries) === 0
+            && count($target_real_adjusted_summaries) === 0
+            && count($target_real_flows) === 0
+        ) {
             return null;
         }
 
@@ -76,21 +107,18 @@ class FinancialStatementGroup
             $unadjusted_total_assets,
             $unadjusted_total_liabilities,
             $unadjusted_total_equities
-        ] = $this->totalAccountsGroupByKind(
-            "unadjusted",
+        ] = $this->totalUnadjustedAccountsGroupedByKind(
             $target_currency,
-            $target_summary_calculations
+            $target_real_unadjusted_summaries,
+            $target_real_adjusted_summaries
         );
         [
-            $adjusted_total_incomes,
-            $adjusted_total_expenses,
             $adjusted_total_assets,
             $adjusted_total_liabilities,
             $adjusted_total_equities
-        ] = $this->totalAccountsGroupByKind(
-            "closed",
+        ] = $this->totalAdjustedAccountsGroupedByKind(
             $target_currency,
-            $target_summary_calculations
+            $target_real_adjusted_summaries
         );
 
         $unadjusted_trial_balance_debit_total = $unadjusted_total_expenses
@@ -100,18 +128,244 @@ class FinancialStatementGroup
             ->plus($unadjusted_total_incomes);
         $income_statement_total = $unadjusted_total_incomes
             ->minus($unadjusted_total_expenses);
-        $adjusted_trial_balance_debit_total = $adjusted_total_expenses
-            ->plus($adjusted_total_assets);
+        $adjusted_trial_balance_debit_total = $adjusted_total_assets;
         $adjusted_trial_balance_credit_total = $adjusted_total_equities
-            ->plus($adjusted_total_liabilities)
-            ->plus($adjusted_total_incomes);
+            ->plus($adjusted_total_liabilities);
 
-        // Compute for cash flow statement
+        // Compute for real cash flow statement
+        [
+            $opened_real_liquid_amount,
+            $closed_real_liquid_amount,
+            $real_illiquid_cash_flow_activity_subtotals
+        ] = $this->totalFlowCalculations(
+            $target_currency,
+            $target_real_adjusted_summaries,
+            $target_real_flows
+        );
+
+        return [
+            "currency_id" => $source_currency === null ? null : $source_currency->id,
+            "unadjusted_trial_balance" => [
+                "debit_total" => $unadjusted_trial_balance_debit_total->simplified(),
+                "credit_total" => $unadjusted_trial_balance_credit_total->simplified()
+            ],
+            "income_statement" => [
+                "net_total" => $income_statement_total->simplified()
+            ],
+            "balance_sheet" => [
+                "total_assets" => $unadjusted_total_assets->simplified(),
+                "total_liabilities" => $unadjusted_total_liabilities->simplified(),
+                "total_equities" => $unadjusted_total_equities
+                    ->plus($income_statement_total)
+                    ->simplified()
+            ],
+            "cash_flow_statement" => [
+                "opened_real_liquid_amount" => $opened_real_liquid_amount->simplified(),
+                "closed_real_liquid_amount" => $closed_real_liquid_amount->simplified(),
+                "real_liquid_amount_difference" => $closed_real_liquid_amount->minus(
+                    $opened_real_liquid_amount
+                )->simplified(),
+                "subtotals" => $real_illiquid_cash_flow_activity_subtotals
+            ],
+            "adjusted_trial_balance" => [
+                "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
+                "credit_total" => $adjusted_trial_balance_credit_total->simplified()
+            ]
+        ];
+    }
+
+    private function totalAdjustedAccountsGroupedByKind(
+        Currency $target_currency,
+        array $summary_calculations
+    ): array {
+        $target_currency_id = $target_currency->id;
+        $total_assets = RationalNumber::zero();
+        $total_liabilities = RationalNumber::zero();
+        $total_equities = RationalNumber::zero();
+
+        foreach ($summary_calculations as $summary_calculation) {
+            $account_hash = $summary_calculation->frozen_account_hash;
+            $account_id = $this->frozen_accounts[$account_hash]->account_id;
+            $account = $this->accounts[$account_id];
+            $source_currency_id = $account->currency_id;
+            $exchange_rate = $this->derivator->deriveExchangeRate(
+                $source_currency_id,
+                $target_currency_id
+            );
+            $converted_closed_amount = $summary_calculation
+                ->closed_amount
+                ->multipliedBy($exchange_rate);
+
+            switch ($account->kind) {
+                case GENERAL_ASSET_ACCOUNT_KIND:
+                case LIQUID_ASSET_ACCOUNT_KIND:
+                case DEPRECIATIVE_ASSET_ACCOUNT_KIND:
+                case ITEMIZED_ASSET_ACCOUNT_KIND:
+                    $total_assets = $total_assets->plus($converted_closed_amount);
+                    break;
+
+                case LIABILITY_ACCOUNT_KIND:
+                    $total_liabilities = $total_liabilities->plus($converted_closed_amount);
+                    break;
+
+                case EQUITY_ACCOUNT_KIND:
+                    $total_equities = $total_equities->plus($converted_closed_amount);
+                    break;
+            }
+        }
+
+        return [
+            $total_assets,
+            $total_liabilities,
+            $total_equities
+        ];
+    }
+
+    private function totalUnadjustedAccountsGroupedByKind(
+        Currency $target_currency,
+        array $unadjusted_summary_calculations,
+        array $adjusted_summary_calculations
+    ): array {
+        $target_currency_id = $target_currency->id;
+        $total_revenues = RationalNumber::zero();
+        $total_expenses = RationalNumber::zero();
+        $total_assets = RationalNumber::zero();
+        $total_liabilities = RationalNumber::zero();
+        $total_equities = RationalNumber::zero();
+
+        $keyed_unadjusted_summary_calculations = Resource::key(
+            $unadjusted_summary_calculations,
+            fn ($summary_calculation) => $summary_calculation->frozen_account_hash,
+        );
+        $keyed_adjusted_summary_calculations = Resource::key(
+            $adjusted_summary_calculations,
+            fn ($summary_calculation) => $summary_calculation->frozen_account_hash,
+        );
+        $unchanged_summary_calculations = array_diff_key(
+            $keyed_adjusted_summary_calculations,
+            $keyed_unadjusted_summary_calculations
+        );
+
+        foreach ($keyed_unadjusted_summary_calculations as $account_hash => $summary_calculation) {
+            if (isset($unchanged_summary_calculations[$account_hash])) {
+                continue;
+            }
+
+            $account_id = $this->frozen_accounts[$account_hash]->account_id;
+            $account = $this->accounts[$account_id];
+            $source_currency_id = $account->currency_id;
+            $exchange_rate = $this->derivator->deriveExchangeRate(
+                $source_currency_id,
+                $target_currency_id
+            );
+            $converted_credit_amount = $summary_calculation
+                ->credit_amount
+                ->multipliedBy($exchange_rate);
+            $converted_debit_amount = $summary_calculation
+                ->debit_amount
+                ->multipliedBy($exchange_rate);
+
+            switch ($account->kind) {
+                case GENERAL_REVENUE_ACCOUNT_KIND:
+                case NOMINAL_RETURN_ACCOUNT_KIND:
+                    $total_revenues = $total_revenues
+                        ->plus($converted_credit_amount)
+                        ->minus($converted_debit_amount);
+                    break;
+
+                case GENERAL_EXPENSE_ACCOUNT_KIND:
+                case DIRECT_COST_ACCOUNT_KIND:
+                    $total_expenses = $total_expenses
+                        ->plus($converted_debit_amount)
+                        ->minus($converted_credit_amount);
+                    break;
+
+                case GENERAL_TEMPORARY_ACCOUNT_KIND:
+                    $total_expenses = $total_expenses->plus($converted_debit_amount);
+                    $total_revenues = $total_revenues->plus($converted_credit_amount);
+                    break;
+
+                case GENERAL_ASSET_ACCOUNT_KIND:
+                case LIQUID_ASSET_ACCOUNT_KIND:
+                case DEPRECIATIVE_ASSET_ACCOUNT_KIND:
+                case ITEMIZED_ASSET_ACCOUNT_KIND:
+                    $total_assets = $total_assets
+                        ->plus($converted_debit_amount)
+                        ->minus($converted_credit_amount);
+                    break;
+
+                case LIABILITY_ACCOUNT_KIND:
+                    $total_liabilities = $total_liabilities
+                        ->plus($converted_credit_amount)
+                        ->minus($converted_debit_amount);
+                    break;
+
+                case EQUITY_ACCOUNT_KIND:
+                    $total_equities = $total_equities
+                        ->plus($converted_credit_amount)
+                        ->minus($converted_debit_amount);
+                    break;
+            }
+        }
+
+        foreach ($unchanged_summary_calculations as $account_hash => $summary_calculation) {
+            // Some accounts are new and closed at the same period.
+            // This implies their opened amount is zero.
+            // However, the closed amount is not zero and blurs the trial balances.
+            if ($summary_calculation->opened_amount->isZero()) {
+                continue;
+            }
+
+            $account_id = $this->frozen_accounts[$account_hash]->account_id;
+            $account = $this->accounts[$account_id];
+            $source_currency_id = $account->currency_id;
+            $exchange_rate = $this->derivator->deriveExchangeRate(
+                $source_currency_id,
+                $target_currency_id
+            );
+            $converted_closed_amount = $summary_calculation
+                ->closed_amount
+                ->multipliedBy($exchange_rate);
+
+            switch ($account->kind) {
+                case GENERAL_ASSET_ACCOUNT_KIND:
+                case LIQUID_ASSET_ACCOUNT_KIND:
+                case DEPRECIATIVE_ASSET_ACCOUNT_KIND:
+                case ITEMIZED_ASSET_ACCOUNT_KIND:
+                    $total_assets = $total_assets->plus($converted_closed_amount);
+                    break;
+
+                case LIABILITY_ACCOUNT_KIND:
+                    $total_liabilities = $total_liabilities->plus($converted_closed_amount);
+                    break;
+
+                case EQUITY_ACCOUNT_KIND:
+                    $total_equities = $total_equities->plus($converted_closed_amount);
+                    break;
+            }
+        }
+
+        return [
+            $total_revenues,
+            $total_expenses,
+            $total_assets,
+            $total_liabilities,
+            $total_equities
+        ];
+    }
+
+    private function totalFlowCalculations(
+        Currency $target_currency,
+        array $summary_calculations,
+        array $flow_calculations
+    ): array {
         $target_currency_id = $target_currency->id;
         $opened_liquid_amount = array_reduce(
-            $target_summary_calculations,
+            $summary_calculations,
             function ($previous_total, $summary_calculation) use ($target_currency_id) {
-                $account = $this->accounts[$summary_calculation->account_id];
+                $account_hash = $summary_calculation->frozen_account_hash;
+                $account_id = $this->frozen_accounts[$account_hash]->account_id;
+                $account = $this->accounts[$account_id];
 
                 if ($account->kind !== LIQUID_ASSET_ACCOUNT_KIND) {
                     return $previous_total;
@@ -122,18 +376,18 @@ class FinancialStatementGroup
                     $source_currency_id,
                     $target_currency_id
                 );
-                $converted_debit_amount = $summary_calculation
-                    ->opened_debit_amount
+                $converted_opened_amount = $summary_calculation
+                    ->opened_amount
                     ->multipliedBy($exchange_rate);
 
-                return $previous_total->plus($converted_debit_amount);
+                return $previous_total->plus($converted_opened_amount);
             },
             RationalNumber::zero()
         );
         $closed_liquid_amount = $opened_liquid_amount;
         $illiquid_cash_flow_activity_subtotals = [];
 
-        foreach ($target_flow_calculations as $flow_calculation) {
+        foreach ($flow_calculations as $flow_calculation) {
             $activity_id = $flow_calculation->cash_flow_activity_id;
 
             if (!isset($illiquid_cash_flow_activity_subtotals[$activity_id])) {
@@ -144,7 +398,9 @@ class FinancialStatementGroup
                 ];
             }
 
-            $account = $this->accounts[$flow_calculation->account_id];
+            $account_hash = $flow_calculation->frozen_account_hash;
+            $account_id = $this->frozen_accounts[$account_hash]->account_id;
+            $account = $this->accounts[$account_id];
             $source_currency_id = $account->currency_id;
             $exchange_rate = $this->derivator->deriveExchangeRate(
                 $source_currency_id,
@@ -152,13 +408,30 @@ class FinancialStatementGroup
             );
             $net_amount = $flow_calculation->net_amount->multipliedBy($exchange_rate);
 
+            // TODO: Fix generation
+            // if ($account->kind !== LIQUID_ASSET_ACCOUNT_KIND && !(
+            //     $account->kind === GENERAL_EXPENSE_ACCOUNT_KIND
+            //     || $account->kind === GENERAL_REVENUE_ACCOUNT_KIND
+            //     || $account->kind === GENERAL_TEMPORARY_ACCOUNT_KIND
+            //     || $account->kind === DIRECT_COST_ACCOUNT_KIND
+            //     || $account->kind === NOMINAL_RETURN_ACCOUNT_KIND
+            // )) {
+            //    $net_amount = $net_amount->negated();
+            // }
+
             $closed_liquid_amount = $closed_liquid_amount->plus($net_amount);
 
             $illiquid_cash_flow_activity_subtotals[$activity_id]["subtotal"]
                 = $illiquid_cash_flow_activity_subtotals[$activity_id]["subtotal"]
                     ->plus($net_amount);
 
-            if ($account->kind === EXPENSE_ACCOUNT_KIND || $account->kind === INCOME_ACCOUNT_KIND) {
+            if (
+                $account->kind === GENERAL_EXPENSE_ACCOUNT_KIND
+                || $account->kind === GENERAL_REVENUE_ACCOUNT_KIND
+                || $account->kind === GENERAL_TEMPORARY_ACCOUNT_KIND
+                || $account->kind === DIRECT_COST_ACCOUNT_KIND
+                || $account->kind === NOMINAL_RETURN_ACCOUNT_KIND
+            ) {
                 $illiquid_cash_flow_activity_subtotals[$activity_id]["net_income"]
                     = $illiquid_cash_flow_activity_subtotals[$activity_id]["net_income"]
                         ->plus($net_amount);
@@ -181,105 +454,9 @@ class FinancialStatementGroup
         );
 
         return [
-            "currency_id" => $source_currency === null ? null : $source_currency->id,
-            "unadjusted_trial_balance" => [
-                "debit_total" => $unadjusted_trial_balance_debit_total->simplified(),
-                "credit_total" => $unadjusted_trial_balance_credit_total->simplified()
-            ],
-            "income_statement" => [
-                "net_total" => $income_statement_total->simplified()
-            ],
-            "balance_sheet" => [
-                "total_assets" => $unadjusted_total_assets->simplified(),
-                "total_liabilities" => $unadjusted_total_liabilities->simplified(),
-                "total_equities" => $unadjusted_total_equities
-                    ->plus($income_statement_total)
-                    ->simplified()
-            ],
-            "cash_flow_statement" => [
-                "opened_liquid_amount" => $opened_liquid_amount->simplified(),
-                "closed_liquid_amount" => $closed_liquid_amount->simplified(),
-                "liquid_amount_difference" => $closed_liquid_amount->minus(
-                    $opened_liquid_amount
-                )->simplified(),
-                "subtotals" => $illiquid_cash_flow_activity_subtotals
-            ],
-            "adjusted_trial_balance" => [
-                "debit_total" => $adjusted_trial_balance_debit_total->simplified(),
-                "credit_total" => $adjusted_trial_balance_credit_total->simplified()
-            ]
-        ];
-    }
-
-    private function totalAccountsGroupByKind(
-        string $stage,
-        Currency $target_currency,
-        array $summary_calculations
-    ): array {
-        $target_currency_id = $target_currency->id;
-        $total_incomes = RationalNumber::zero();
-        $total_expenses = RationalNumber::zero();
-        $total_assets = RationalNumber::zero();
-        $total_liabilities = RationalNumber::zero();
-        $total_equities = RationalNumber::zero();
-
-        foreach ($summary_calculations as $summary_calculation) {
-            $debit_key = "{$stage}_debit_amount";
-            $credit_key = "{$stage}_credit_amount";
-            $account = $this->accounts[$summary_calculation->account_id];
-            $source_currency_id = $account->currency_id;
-            $exchange_rate = $this->derivator->deriveExchangeRate(
-                $source_currency_id,
-                $target_currency_id
-            );
-            $converted_credit_amount = $summary_calculation
-                ->$credit_key
-                ->multipliedBy($exchange_rate);
-            $converted_debit_amount = $summary_calculation
-                ->$debit_key
-                ->multipliedBy($exchange_rate);
-
-            switch ($account->kind) {
-                case INCOME_ACCOUNT_KIND:
-                    $total_incomes = $total_incomes
-                        ->plus($converted_credit_amount)
-                        ->minus($converted_debit_amount);
-                    break;
-
-                case EXPENSE_ACCOUNT_KIND:
-                    $total_expenses = $total_expenses
-                        ->plus($converted_debit_amount)
-                        ->minus($converted_credit_amount);
-                    break;
-
-                case GENERAL_ASSET_ACCOUNT_KIND:
-                case LIQUID_ASSET_ACCOUNT_KIND:
-                case DEPRECIATIVE_ASSET_ACCOUNT_KIND:
-                    $total_assets = $total_assets
-                        ->plus($converted_debit_amount)
-                        ->minus($converted_credit_amount);
-                    break;
-
-                case LIABILITY_ACCOUNT_KIND:
-                    $total_liabilities = $total_liabilities
-                        ->plus($converted_credit_amount)
-                        ->minus($converted_debit_amount);
-                    break;
-
-                case EQUITY_ACCOUNT_KIND:
-                    $total_equities = $total_equities
-                        ->plus($converted_credit_amount)
-                        ->minus($converted_debit_amount);
-                    break;
-            }
-        }
-
-        return [
-            $total_incomes,
-            $total_expenses,
-            $total_assets,
-            $total_liabilities,
-            $total_equities
+            $opened_liquid_amount,
+            $closed_liquid_amount,
+            $illiquid_cash_flow_activity_subtotals
         ];
     }
 }

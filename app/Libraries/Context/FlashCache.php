@@ -2,8 +2,15 @@
 
 namespace App\Libraries\Context;
 
-class FlashCache
+use App\Libraries\Context\ContextKeys;
+
+class FlashCache extends SingletonCache
 {
+    protected static function contextKey(): ContextKeys
+    {
+        return ContextKeys::FLASH_CACHE;
+    }
+
     private array $cache = [];
 
     public function store(mixed $value): string

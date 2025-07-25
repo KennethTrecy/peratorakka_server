@@ -11,20 +11,19 @@ use Faker\Generator;
 
 class CurrencyModel extends BaseResourceModel
 {
-    protected $table = "currencies";
+    protected $table = "currencies_v2";
     protected $returnType = Currency::class;
     protected $allowedFields = [
-        "user_id",
+        "precision_format_id",
         "code",
         "name",
-        "presentational_precision",
+        "created_at",
         "deleted_at"
     ];
 
     protected $sortable_fields = [
         "code",
         "name",
-        "presentational_precision",
         "created_at",
         "updated_at",
         "deleted_at"
@@ -34,14 +33,42 @@ class CurrencyModel extends BaseResourceModel
     {
         return [
             "code"  => $faker->unique()->currencyCode(),
-            "name"  => $faker->unique()->firstName(),
-            "presentational_precision"  => $faker->randomElement([ 0, 1, 2, 3, 4, 12 ])
+            "name"  => $faker->unique()->firstName()
         ];
     }
 
     public function limitSearchToUser(BaseResourceModel $query_builder, User $user)
     {
-        return $query_builder->where("user_id", $user->id);
+        return $query_builder
+            ->whereIn(
+                "precision_format_id",
+                model(PrecisionFormatModel::class, false)
+                    ->builder()
+                    ->select("id")
+                    ->where("user_id", $user->id)
+            );
+    }
+
+    protected static function createAncestorResources(int $user_id, array $options): array
+    {
+        [
+            $precision_format
+        ] = $options["precision_format_parent"] ?? PrecisionFormatModel::createTestResource(
+            $user_id,
+            $options["precision_format_options"] ?? []
+        );
+
+        return [
+            [ [ $precision_format ] ],
+            [ [ "precision_format_id" => $precision_format->id ] ]
+        ];
+    }
+
+    protected static function identifyAncestors(): array
+    {
+        return [
+            PrecisionFormatModel::class => [ "precision_format_id" ]
+        ];
     }
 
     public static function makeExchangeRates(
@@ -59,7 +86,7 @@ class CurrencyModel extends BaseResourceModel
             ->where("action", ModifierAction::set(EXCHANGE_MODIFIER_ACTION))
             ->whereIn(
                 "id",
-                model(FinancialEntryModel::class, false)
+                model(DeprecatedFinancialEntryModel::class, false)
                     ->builder()
                     ->select("modifier_id")
                     ->where(
@@ -88,7 +115,7 @@ class CurrencyModel extends BaseResourceModel
         }
 
         $financial_entries = count($exchange_modifiers) > 0
-            ? model(FinancialEntryModel::class)
+            ? model(DeprecatedFinancialEntryModel::class)
                 ->whereIn("modifier_id", array_map(
                     function ($modifier) {
                         return $modifier->id;
@@ -145,6 +172,12 @@ class CurrencyModel extends BaseResourceModel
                     if (isset($raw_entries[$modifier["id"]])) {
                         if (
                             $financial_entry
+                            ->transacted_at
+                            ->isAfter($raw_entries[$modifier["id"]]->transacted_at)
+                        ) {
+                            $raw_entries[$modifier["id"]] = $financial_entry;
+                        } elseif (
+                            $financial_entry
                             ->updated_at
                             ->isAfter($raw_entries[$modifier["id"]]->updated_at)
                         ) {
@@ -194,11 +227,13 @@ class CurrencyModel extends BaseResourceModel
                 if (isset($raw_exchanges[$exchange_id])) {
                     if (
                         $financial_entry
-                            ->updated_at
+                            ->transacted_at
                             ->isAfter($raw_exchanges[$exchange_id]["updated_at"])
                     ) {
                         $raw_exchanges[$exchange_id]["source"]["value"] = $source_value;
                         $raw_exchanges[$exchange_id]["destination"]["value"] = $destination_value;
+                        $raw_exchanges[$exchange_id]["updated_at"] = $financial_entry
+                            ->transacted_at;
                     }
                 } else {
                     $raw_exchanges[$exchange_id] = [
@@ -210,7 +245,7 @@ class CurrencyModel extends BaseResourceModel
                             "currency_id" => $destination_currency_id,
                             "value" => $destination_value
                         ],
-                        "updated_at" => $financial_entry->updated_at->toDateTimeString()
+                        "updated_at" => $financial_entry->transacted_at
                     ];
                 }
 
@@ -227,6 +262,8 @@ class CurrencyModel extends BaseResourceModel
 
                 $raw_exchange_rate["source"]["value"] = $rate->getDenominator();
                 $raw_exchange_rate["destination"]["value"] = $rate->getNumerator();
+                $raw_exchange_rate["updated_at"] = $raw_exchange_rate["updated_at"]
+                    ->toDateTimeString();
                 return $raw_exchange_rate;
             },
             $raw_exchange_rates

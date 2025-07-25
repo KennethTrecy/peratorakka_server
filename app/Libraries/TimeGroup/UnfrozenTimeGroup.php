@@ -2,10 +2,10 @@
 
 namespace App\Libraries\TimeGroup;
 
-use App\Casts\RationalNumber;
-use App\Entities\FlowCalculation;
 use App\Entities\FrozenPeriod;
-use App\Entities\SummaryCalculation;
+use App\Entities\RealAdjustedSummaryCalculation;
+use App\Entities\RealFlowCalculation;
+use App\Entities\RealUnadjustedSummaryCalculation;
 use CodeIgniter\I18n\Time;
 
 /**
@@ -39,6 +39,11 @@ class UnfrozenTimeGroup extends GranularTimeGroup
         $this->inclusive_finish_date = $inclusive_finish_date;
     }
 
+    public function frozenPeriodIDs(): array
+    {
+        return [];
+    }
+
     public function startedAt(): Time
     {
         return $this->inclusive_start_date;
@@ -49,44 +54,38 @@ class UnfrozenTimeGroup extends GranularTimeGroup
         return $this->inclusive_finish_date;
     }
 
+    public function lastFrozenAt(): ?Time
+    {
+        return null;
+    }
+
     public function hasSomeUnfrozenDetails(): bool
     {
         return true;
     }
 
-    public function doesOwnSummaryCalculation(SummaryCalculation $summary_calculation): bool
-    {
-        return $summary_calculation->frozen_period_id === 0;
+    public function addRealUnadjustedSummaryCalculation(
+        RealUnadjustedSummaryCalculation $summary_calculation
+    ): void {
+        $frozen_account_hash = $summary_calculation->frozen_account_hash;
+        $this->real_unadjusted_summary_calculations[$frozen_account_hash] = $summary_calculation;
     }
 
-    public function doesOwnFlowCalculation(FlowCalculation $flow_calculation): bool
-    {
-        return $flow_calculation->frozen_period_id === 0;
+    public function addRealAdjustedSummaryCalculation(
+        RealAdjustedSummaryCalculation $summary_calculation
+    ): void {
+        $frozen_account_hash = $summary_calculation->frozen_account_hash;
+        $this->real_adjusted_summary_calculations[$frozen_account_hash] = $summary_calculation;
     }
 
-    public function addSummaryCalculation(SummaryCalculation $summary_calculation): bool
+    public function addRealFlowCalculation(RealFlowCalculation $flow_calculation): void
     {
-        $does_own_resource = $this->doesOwnSummaryCalculation($summary_calculation);
-        if ($does_own_resource) {
-            $this->summary_calculations[$summary_calculation->account_id] = $summary_calculation;
+        $activity_id = $flow_calculation->cash_flow_activity_id;
+        if (!isset($this->real_flow_calculations[$activity_id])) {
+            $this->real_flow_calculations[$activity_id] = [];
         }
 
-        return $does_own_resource;
-    }
-
-    public function addFlowCalculation(FlowCalculation $flow_calculation): bool
-    {
-        $does_own_resource = $this->doesOwnFlowCalculation($flow_calculation);
-        if ($does_own_resource) {
-            $activity_id = $flow_calculation->cash_flow_activity_id;
-            if (!isset($this->flow_calculations[$activity_id])) {
-                $this->flow_calculations[$activity_id] = [];
-            }
-
-            $account_id = $flow_calculation->account_id;
-            $this->flow_calculations[$activity_id][$account_id] = $flow_calculation;
-        }
-
-        return $does_own_resource;
+        $frozen_account_hash = $flow_calculation->frozen_account_hash;
+        $this->real_flow_calculations[$activity_id][$frozen_account_hash] = $flow_calculation;
     }
 }

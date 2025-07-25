@@ -35,14 +35,61 @@ class ExchangeRateDerivator
     ): BigRational {
         $exchange_rate_key = $source_currency_id."_".$destination_currency_id;
 
-        if (!isset($processed_exchange_rate_infos[$exchange_rate_key])) {
-            $processed_exchange_rate_infos[$exchange_rate_key] = $this->shortenExchangeRatePath(
-                $source_currency_id,
-                $destination_currency_id
-            );
+        if (!isset($this->processed_exchange_rate_infos[$exchange_rate_key])) {
+            $this->processed_exchange_rate_infos[$exchange_rate_key]
+                = $this->shortenExchangeRatePath(
+                    $source_currency_id,
+                    $destination_currency_id
+                );
         }
 
-        return $processed_exchange_rate_infos[$exchange_rate_key];
+        return $this->processed_exchange_rate_infos[$exchange_rate_key];
+    }
+
+    public function exportExchangeRates(): array
+    {
+        $raw_exchange_rates = [];
+        foreach ($this->processed_exchange_rate_infos as $exchange_rate_key => $exchange_rate) {
+            [ $source_currency_id, $destination_currency_id ] = explode("_", $exchange_rate_key);
+            if ($source_currency_id !== $destination_currency_id) {
+                $raw_exchange_rates[$exchange_rate_key] = [
+                    "source" => [
+                        "currency_id" => $source_currency_id,
+                        "value" => $exchange_rate->getDenominator()
+                    ],
+                    "destination" => [
+                        "currency_id" => $destination_currency_id,
+                        "value" => $exchange_rate->getNumerator()
+                    ]
+                ];
+            }
+        }
+
+        foreach ($this->exchange_rate_infos as $exchange_rate_info) {
+            $source_currency_id = $exchange_rate_info->source_currency_id;
+            $destination_currency_id = $exchange_rate_info->destination_currency_id;
+            $exchange_rate_key = $source_currency_id."_".$destination_currency_id;
+
+            if (!isset($raw_exchange_rates[$exchange_rate_key])) {
+                $exchange_rate = $this->shortenExchangeRatePath(
+                    $source_currency_id,
+                    $destination_currency_id
+                );
+
+                $raw_exchange_rates[$exchange_rate_key] = [
+                    "source" => [
+                        "currency_id" => $source_currency_id,
+                        "value" => $exchange_rate->getDenominator()
+                    ],
+                    "destination" => [
+                        "currency_id" => $destination_currency_id,
+                        "value" => $exchange_rate->getNumerator()
+                    ]
+                ];
+            }
+        }
+
+        return $raw_exchange_rates;
     }
 
     private function shortenExchangeRatePath(

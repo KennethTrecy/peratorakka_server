@@ -6,8 +6,6 @@ use App\Exceptions\InvalidRequest;
 use App\Exceptions\MissingResource;
 use App\Models\AccountCollectionModel;
 use App\Models\AccountModel;
-use App\Models\CollectionModel;
-use App\Models\CurrencyModel;
 use CodeIgniter\Exceptions\PageNotFoundException;
 use CodeIgniter\Test\Fabricator;
 use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
@@ -19,38 +17,28 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $account_collections
+        ] = AccountCollectionModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/account_collections");
+        $result = $authenticated_info->getRequest()->get("/api/v2/account_collections");
 
         $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
-                "overall_filtered_count" => 1
+            "@meta" => [
+                "overall_filtered_count" => 10
             ],
-            "collections" => json_decode(json_encode([ $collection ])),
-            "accounts" => json_decode(json_encode([ $account ])),
-            "account_collections" => json_decode(json_encode([ $account_collection ]))
+            "account_collections" => json_decode(json_encode($account_collections)),
+            "accounts" => json_decode(json_encode($accounts)),
+            "collections" => json_decode(json_encode($collections))
         ]);
     }
 
@@ -58,71 +46,44 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $this->expectException(PageNotFoundException::class);
         $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
-            ->get("/api/v1/account_collections/$account_collection->id");
+            ->withBodyFormat("json")
+            ->get("/api/v2/account_collections/$details->id");
     }
 
     public function testDefaultCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->make();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::makeTestResource($authenticated_info->getUser()->id, []);
 
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/account_collections", [
-                "account_collection" => $account_collection->toArray()
+            ->post("/api/v2/account_collections", [
+                "account_collection" => $details->toArray()
             ]);
 
         $result->assertOk();
         $result->assertJSONFragment([
-            "account_collection" => $account_collection->toArray()
+            "account_collection" => $details->toArray()
         ]);
     }
 
@@ -130,166 +91,101 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
-        $new_details = $account_collection_fabricator->make();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details,
+            $new_details
+        ] = AccountCollectionModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            []
+        );
 
         $this->expectException(PageNotFoundException::class);
         $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->put("/api/v1/account_collections/$account_collection->id", [
-                "collection" => $new_details->toArray()
+            ->put("/api/v2/account_collections/$details->id", [
+                "account_collection" => $new_details->toArray()
             ]);
-
-        $this->seeInDatabase("account_collections", array_merge(
-            [ "id" => $account_collection->id ],
-            $account_collection->toArray()
-        ));
     }
 
     public function testDefaultDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, []);
 
         $this->expectException(PageNotFoundException::class);
         $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/account_collections/$collection->id");
-
-        $this->seeInDatabase("account_collections", array_merge(
-            [ "id" => $account_collection->id ]
-        ));
+            ->delete("/api/v2/account_collections/$details->id");
     }
 
     public function testDefaultRestore()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
-        model(AccountCollectionModel::class)->delete($account_collection->id);
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(AccountCollectionModel::class)->delete($details->id);
 
         $this->expectException(PageNotFoundException::class);
         $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
-            ->patch("/api/v1/account_collections/$account_collection->id");
-
-        $this->dontSeeInDatabase("account_collections", [
-            "id" => $account_collection->id
-        ]);
+            ->patch("/api/v2/account_collections/$details->id");
     }
 
     public function testDefaultForceDelete()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        model(AccountCollectionModel::class)->delete($details->id);
 
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
         $result = $authenticated_info
             ->getRequest()
-            ->delete("/api/v1/account_collections/$account_collection->id/force");
-
-        $result->assertStatus(204);
-        $this->seeNumRecords(0, "account_collections", []);
+            ->delete("/api/v2/account_collections/$details->id/force");
     }
 
     public function testEmptyIndex()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/account_collections");
+        $result = $authenticated_info->getRequest()->get("/api/v2/account_collections");
 
+        $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
+            "@meta" => [
                 "overall_filtered_count" => 0
             ],
-            "collections" => [],
+            "account_collections" => [],
             "accounts" => [],
-            "account_collections" => []
+            "collections" => []
         ]);
     }
 
@@ -297,40 +193,35 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources(
+            $authenticated_info->getUser()->id,
+            10,
+            []
+        );
 
-        $result = $authenticated_info->getRequest()->get("/api/v1/account_collections", [
+        $result = $authenticated_info->getRequest()->get("/api/v2/account_collections", [
             "page" => [
                 "limit" => 5
+            ],
+            "relationship" => [
+                "collections"
             ]
         ]);
+
+        $result->assertOk();
         $result->assertJSONExact([
-            "meta" => [
-                "overall_filtered_count" => 1
+            "@meta" => [
+                "overall_filtered_count" => 10
             ],
-            "collections" => json_decode(json_encode([ $collection ])),
-            "accounts" => json_decode(json_encode([ $account ])),
-            "account_collections" => json_decode(json_encode([ $account_collection ]))
+            "account_collections" => json_decode(json_encode(array_slice($details, 0, 5))),
+            "accounts" => json_decode(json_encode($accounts)),
+            "collections" => json_decode(json_encode($collections))
         ]);
     }
 
@@ -338,52 +229,72 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ]);
-        $collection = $collection_fabricator->create();
-        $collection->id = $collection->id + 1;
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+        $details->id = $details->id + 1;
 
         $this->expectException(PageNotFoundException::class);
         $this->expectExceptionCode(404);
-        $result = $authenticated_info->getRequest()->get("/api/v1/account_collections/$collection->id");
+        $result = $authenticated_info->getRequest()
+            ->get("/api/v2/account_collections/$details->id");
     }
 
     public function testInvalidCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
-        $another_user = $this->makeUser();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->make();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::makeTestResource($authenticated_info->getUser()->id, []);
 
         $this->expectException(InvalidRequest::class);
         $this->expectExceptionCode(400);
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->post("/api/v1/account_collections", [
-                "account_collection" => $account_collection->toArray()
+            ->post("/api/v2/account_collections", [
+                "account_collection" => [
+                    "collection_id" => $details->collection_id
+                ]
+            ]);
+    }
+
+    public function testInvalidUpdate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details,
+            $new_details
+        ] = AccountCollectionModel::createAndMakeTestResources(
+            $authenticated_info->getUser()->id,
+            [
+                "make_overrides" => [
+                    "name" => "@only alphanumeric characters only"
+                ]
+            ]
+        );
+
+        $this->expectException(PageNotFoundException::class);
+        $this->expectExceptionCode(404);
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->put("/api/v2/account_collections/$details->id", [
+                "account_collection" => $new_details->toArray()
             ]);
     }
 
@@ -392,45 +303,100 @@ class AccountCollectionTest extends AuthenticatedHTTPTestCase
         $authenticated_info = $this->makeAuthenticatedInfo();
         $another_user = $this->makeUser();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_fabricator->setOverrides([
-            "user_id" => $another_user->id
-        ]);
-        $currency = $currency_fabricator->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $account_fabricator->setOverrides([
-            "currency_id" => $currency->id
-        ]);
-        $account = $account_fabricator->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-        ]);
-        $collection = $collection_fabricator->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $account_collection_fabricator->setOverrides([
-            "collection_id" => $collection->id,
-            "account_id" => $account->id
-        ]);
-        $account_collection = $account_collection_fabricator->create();
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($another_user->id, []);
 
-        try {
-            $this->expectException(MissingResource::class);
-            $this->expectExceptionCode(404);
-            $result = $authenticated_info
-                ->getRequest()
-                ->delete("/api/v1/account_collections/$account_collection->id/force");
-            $this->assertTrue(false);
-        } catch (MissingResource $error) {
-            $this->seeInDatabase("account_collections", array_merge(
-                [ "id" => $account_collection->id ]
-            ));
-            $this->seeInDatabase("account_collections", [
-                "id" => $account_collection->id
-            ]);
-            throw $error;
-        } catch (Throwable $error) {
-            $this->assertTrue(false);
-        }
+        $this->expectException(PageNotFoundException::class);
+        $this->expectExceptionCode(404);
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v2/account_collections/$details->id");
+    }
+
+    public function testDoubleDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($another_user->id, []);
+        model(AccountCollectionModel::class)->delete($details->id);
+
+        $this->expectException(PageNotFoundException::class);
+        $this->expectExceptionCode(404);
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v2/account_collections/$details->id");
+    }
+
+    public function testDoubleRestore()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($another_user->id, []);
+
+        $this->expectException(PageNotFoundException::class);
+        $this->expectExceptionCode(404);
+        $result = $authenticated_info
+            ->getRequest()
+            ->patch("/api/v2/account_collections/$details->id");
+    }
+
+    public function testImmediateForceDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, []);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v2/account_collections/$details->id/force");
+
+        $result->assertStatus(204);
+        $this->seeNumRecords(0, "account_collections_v2", []);
+    }
+
+    public function testDoubleForceDelete()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+        $another_user = $this->makeUser();
+
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($another_user->id, []);
+        model(AccountCollectionModel::class)->delete($details->id, true);
+
+        $this->expectException(MissingResource::class);
+        $this->expectExceptionCode(404);
+        $result = $authenticated_info
+            ->getRequest()
+            ->delete("/api/v2/account_collections/$details->id/force");
     }
 }

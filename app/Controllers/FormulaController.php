@@ -3,8 +3,8 @@
 namespace App\Controllers;
 
 use App\Contracts\OwnedResource;
-use App\Models\CurrencyModel;
 use App\Models\FormulaModel;
+use App\Models\PrecisionFormatModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
@@ -31,11 +31,11 @@ class FormulaController extends BaseOwnedResourceController
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
 
-        $validation->setRule("$individual_name.currency_id", "currency", [
+        $validation->setRule("$individual_name.precision_format_id", "precision_format", [
             "required",
             "is_natural_no_zero",
             "ensure_ownership[".implode(",", [
-                CurrencyModel::class,
+                PrecisionFormatModel::class,
                 SEARCH_NORMALLY
             ])."]"
         ]);
@@ -47,7 +47,7 @@ class FormulaController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "currency_id->$individual_name.currency_id"
+                    "precision_format_id->$individual_name.precision_format_id"
                 ])
             ])."]"
         ]);
@@ -69,7 +69,7 @@ class FormulaController extends BaseOwnedResourceController
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
-                    "currency_id->$individual_name.currency_id"
+                    "precision_format_id->$individual_name.precision_format_id"
                 ]),
                 "id=$resource_id"
             ])."]"
@@ -78,15 +78,22 @@ class FormulaController extends BaseOwnedResourceController
         return $validation;
     }
 
-    protected static function enrichResponseDocument(array $initial_document): array
-    {
+    protected static function enrichResponseDocument(
+        array $initial_document,
+        array $relationships
+    ): array {
         $enriched_document = array_merge([], $initial_document);
         $main_documents = isset($initial_document[static::getIndividualName()])
             ? [ $initial_document[static::getIndividualName()] ]
             : ($initial_document[static::getCollectiveName()] ?? []);
 
-        [ $currencies ] = FormulaModel::selectAncestorsWithResolvedResources($main_documents);
-        $enriched_document["currencies"] = $currencies;
+        if (in_array("*", $relationships) || in_array("precision_formats", $relationships)) {
+            [ $precision_formats ] = FormulaModel::selectAncestorsWithResolvedResources(
+                $main_documents,
+                $relationships
+            );
+            $enriched_document["precision_formats"] = $precision_formats;
+        }
 
         return $enriched_document;
     }
@@ -110,21 +117,7 @@ class FormulaController extends BaseOwnedResourceController
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_FORMULA_OUTPUT_FORMATS)."]"
         ]);
-        $validation->setRule("$individual_name.exchange_rate_basis", "exchange rate basis", [
-            "required",
-            "min_length[3]",
-            "max_length[255]",
-            "in_list[".implode(",", ACCEPTABLE_EXCHANGE_RATE_BASES)."]"
-        ]);
-        $validation->setRule(
-            "$individual_name.presentational_precision",
-            "presentational precision",
-            [
-                "required",
-                "is_natural"
-            ]
-        );
-        $validation->setRule("$individual_name.formula", "formula", [
+        $validation->setRule("$individual_name.expression", "expression", [
             "required",
             "max_length[5000]",
             "string"

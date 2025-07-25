@@ -82,7 +82,7 @@ class LoginController extends BaseLoginController
                 $new_response = $new_response
                     ->setStatusCode(200)
                     ->setJSON([
-                        "meta" => [
+                        "@meta" => [
                             "id" => $current_user->id,
                             "username" => $current_user->username,
                             "token" => [
@@ -96,11 +96,14 @@ class LoginController extends BaseLoginController
                     ]);
             }
         } else {
-            $formalized_errors = [
-                [
-                    "message" => $raw_error
-                ]
-            ];
+            $formalized_errors = [];
+
+            foreach ($raw_error as $field => $message) {
+                array_push($formalized_errors, [
+                    "field" => $field,
+                    "message" => $message
+                ]);
+            }
 
             $new_response = $new_response
                 ->setStatusCode(401)
@@ -156,11 +159,14 @@ class LoginController extends BaseLoginController
                     "message" => $session->getFlashdata("message")
                 ]);
         } else {
-            $formalized_errors = [
-                [
-                    "message" => $raw_error
-                ]
-            ];
+            $formalized_errors = [];
+
+            foreach ($raw_error as $field => $message) {
+                array_push($formalized_errors, [
+                    "field" => $field,
+                    "message" => $message
+                ]);
+            }
 
             $new_response = $new_response
                 ->setStatusCode(401)

@@ -23,7 +23,7 @@ class UserTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->patch("/api/v1/user", [
+            ->patch("/api/v2/user", [
                 "user" => $user_data
             ]);
 
@@ -54,7 +54,7 @@ class UserTest extends AuthenticatedHTTPTestCase
         $result = $authenticated_info
             ->getRequest()
             ->withBodyFormat("json")
-            ->patch("/api/v1/user/password", [
+            ->patch("/api/v2/user/password", [
                 "user" => $password_data
             ]);
 

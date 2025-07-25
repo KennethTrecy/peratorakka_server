@@ -99,7 +99,7 @@ class UserController extends BaseRegisterController
             config("Auth")->emailValidationRules["rules"],
             [
                 sprintf(
-                    "is_unique[%s.secret,id,$current_user_id]",
+                    "is_unique[%s.secret,user_id,$current_user_id]",
                     $table_names["identities"]
                 )
             ]

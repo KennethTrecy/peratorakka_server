@@ -3,201 +3,171 @@
 namespace Tests\Feature\Libraries\NumericalToolConfiguration;
 
 use App\Casts\RationalNumber;
+use App\Exceptions\ExpressionException;
 use App\Libraries\Constellation;
 use App\Libraries\Constellation\AcceptableConstellationKind;
 use App\Libraries\Constellation\Star;
 use App\Libraries\Context;
+use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\CollectionCache;
 use App\Libraries\Context\ContextKeys;
-use App\Libraries\Context\TimeGroupManager;
+use App\Libraries\Context\ExchangeRateCache;
+use App\Libraries\Context\FrozenAccountCache;
+use App\Libraries\MathExpression;
 use App\Libraries\NumericalToolConfiguration\CollectionSource;
 use App\Libraries\TimeGroup\PeriodicTimeGroup;
+use App\Libraries\TimeGroupManager;
 use App\Models\AccountCollectionModel;
-use App\Models\AccountModel;
 use App\Models\CashFlowActivityModel;
 use App\Models\CollectionModel;
-use App\Models\CurrencyModel;
-use App\Models\FinancialEntryModel;
-use App\Models\FlowCalculationModel;
+use App\Models\FormulaModel;
 use App\Models\FrozenPeriodModel;
-use App\Models\ModifierModel;
-use App\Models\SummaryCalculationModel;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Test\Fabricator;
-use Tests\Feature\Helper\AuthenticatedHTTPTestCase;
+use Tests\Feature\Helper\AuthenticatedContextualHTTPTestCase;
 
-class CollectionSourceTest extends AuthenticatedHTTPTestCase
+class CollectionSourceTest extends AuthenticatedContextualHTTPTestCase
 {
-    public function testTotalUnadjustedDebitAmountForExpenseKind()
+    public function testTotalUnadjustedDebitAmountForAssetKind()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $asset_account = $accounts[1];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $asset_account ]
+            ]
         ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        $asset_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $expense_collection->id ]);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
-            "collection_id" => $expense_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
+            "collection_id" => $asset_collection->id,
             "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -207,218 +177,377 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($expense_account->name, AcceptableConstellationKind::Account, [
+            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
                 new Star(
-                    "500.00",
-                    RationalNumber::get("500")
+                    "1000.00",
+                    RationalNumber::get("1000")
                 ),
                 new Star(
-                    "500.00",
-                    RationalNumber::get("500")
+                    "1750.00",
+                    RationalNumber::get("1750")
                 )
             ]),
             new Constellation(
-                "Total of $expense_collection->name",
+                "Total of $asset_collection->name",
                 AcceptableConstellationKind::Sum,
                 [
                     new Star(
-                        "500.00",
-                        RationalNumber::get("500")
+                        "1000.00",
+                        RationalNumber::get("1000")
                     ),
                     new Star(
-                        "500.00",
-                        RationalNumber::get("500")
+                        "1750.00",
+                        RationalNumber::get("1750")
                     )
                 ]
             ),
             new Constellation(
-                "Average of $expense_collection->name",
+                "Average of $asset_collection->name",
                 AcceptableConstellationKind::Average,
                 [
                     new Star(
-                        "500.00",
-                        RationalNumber::get("500")
+                        "1000.00",
+                        RationalNumber::get("1000")
                     ),
                     new Star(
-                        "500.00",
-                        RationalNumber::get("500")
+                        "1750.00",
+                        RationalNumber::get("1750")
                     )
                 ]
             )
         ]);
     }
 
-    public function testTotalOpenedDebitAmountForAssetCollection()
+    public function testTotalUnadjustedCreditAmountForEquityKind()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $equity_account = $accounts[0];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $equity_account ]
+            ]
         ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        $equity_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $asset_collection->id ]);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $equity_collection->id ]);
+
+        $collection_source = CollectionSource::parseConfiguration([
+            "collection_id" => $equity_collection->id,
+            "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
+            "side_basis" => CREDIT_AMOUNT_SIDE_BASIS,
+            "must_show_individual_amounts" => true,
+            "must_show_collective_sum" => true,
+            "must_show_collective_average" => true
+        ]);
+        $constellations = $collection_source->calculate($context);
+
+        $this->assertEquals($constellations, [
+            new Constellation($equity_account->name, AcceptableConstellationKind::Account, [
+                new Star(
+                    "1000.00",
+                    RationalNumber::get("1000")
+                ),
+                new Star(
+                    "1750.00",
+                    RationalNumber::get("1750")
+                )
+            ]),
+            new Constellation(
+                "Total of $equity_collection->name",
+                AcceptableConstellationKind::Sum,
+                [
+                    new Star(
+                        "1000.00",
+                        RationalNumber::get("1000")
+                    ),
+                    new Star(
+                        "1750.00",
+                        RationalNumber::get("1750")
+                    )
+                ]
+            ),
+            new Constellation(
+                "Average of $equity_collection->name",
+                AcceptableConstellationKind::Average,
+                [
+                    new Star(
+                        "1000.00",
+                        RationalNumber::get("1000")
+                    ),
+                    new Star(
+                        "1750.00",
+                        RationalNumber::get("1750")
+                    )
+                ]
+            )
+        ]);
+    }
+
+    public function testTotalOpenedDebitAmountForAssetKind()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $asset_account = $accounts[1];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $asset_account ]
+            ]
+        ]);
+        $asset_collection = $collections[0];
+
+        $time_groups = [
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
+        ];
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
+        $time_group_manager = new TimeGroupManager($context, $time_groups);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => OPENED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -434,8 +563,8 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("0")
                 ),
                 new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
+                    "750.00",
+                    RationalNumber::get("750")
                 )
             ]),
             new Constellation(
@@ -447,8 +576,8 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                         RationalNumber::get("0")
                     ),
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     )
                 ]
             ),
@@ -461,185 +590,154 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                         RationalNumber::get("0")
                     ),
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     )
                 ]
             )
         ]);
     }
 
-    public function testTotalOpenedCreditAmountForEquityCollection()
+    public function testTotalOpenedCreditAmountForEquityKind()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $equity_account = $accounts[0];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $equity_account ]
+            ]
         ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        $equity_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $equity_collection->id ]);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $equity_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => OPENED_AMOUNT_STAGE_BASIS,
             "side_basis" => CREDIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -655,8 +753,8 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                     RationalNumber::get("0")
                 ),
                 new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
+                    "750.00",
+                    RationalNumber::get("750")
                 )
             ]),
             new Constellation(
@@ -668,8 +766,8 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                         RationalNumber::get("0")
                     ),
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     )
                 ]
             ),
@@ -682,627 +780,154 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                         RationalNumber::get("0")
                     ),
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     )
                 ]
             )
         ]);
     }
 
-    public function testTotalUnadjustedNetDebitAmountForAssetCollection()
+    public function testTotalClosedDebitAmountForAssetKind()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $asset_account = $accounts[1];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $asset_account ]
+            ]
         ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        $asset_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $asset_collection->id ]);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-            "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-            "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
-            "must_show_individual_amounts" => true,
-            "must_show_collective_sum" => true,
-            "must_show_collective_average" => true
-        ]);
-        $constellations = $collection_source->calculate($context);
-
-        $this->assertEquals($constellations, [
-            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ]),
-            new Constellation(
-                "Total of $asset_collection->name",
-                AcceptableConstellationKind::Sum,
-                [
-                    new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
-                    ),
-                    new Star(
-                        "3500.00",
-                        RationalNumber::get("3500")
-                    )
-                ]
-            ),
-            new Constellation(
-                "Average of $asset_collection->name",
-                AcceptableConstellationKind::Average,
-                [
-                    new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
-                    ),
-                    new Star(
-                        "3500.00",
-                        RationalNumber::get("3500")
-                    )
-                ]
-            )
-        ]);
-    }
-
-    public function testTotalUnadjustedNetCreditAmountForAssetCollection()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-
-        $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
-        ];
-        $context = new Context();
-        $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $asset_collection->id ]);
-
-        $collection_source = CollectionSource::parseConfiguration([
-            "collection_id" => $asset_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-            "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-            "side_basis" => NET_CREDIT_AMOUNT_SIDE_BASIS,
-            "must_show_individual_amounts" => true,
-            "must_show_collective_sum" => true,
-            "must_show_collective_average" => true
-        ]);
-        $constellations = $collection_source->calculate($context);
-
-        $this->assertEquals($constellations, [
-            new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
-                new Star(
-                    "-2000.00",
-                    RationalNumber::get("-2000")
-                ),
-                new Star(
-                    "-3500.00",
-                    RationalNumber::get("-3500")
-                )
-            ]),
-            new Constellation(
-                "Total of $asset_collection->name",
-                AcceptableConstellationKind::Sum,
-                [
-                    new Star(
-                        "-2000.00",
-                        RationalNumber::get("-2000")
-                    ),
-                    new Star(
-                        "-3500.00",
-                        RationalNumber::get("-3500")
-                    )
-                ]
-            ),
-            new Constellation(
-                "Average of $asset_collection->name",
-                AcceptableConstellationKind::Average,
-                [
-                    new Star(
-                        "-2000.00",
-                        RationalNumber::get("-2000")
-                    ),
-                    new Star(
-                        "-3500.00",
-                        RationalNumber::get("-3500")
-                    )
-                ]
-            )
-        ]);
-    }
-
-    public function testTotalClosedDebitAmountForAssetCollection()
-    {
-        $authenticated_info = $this->makeAuthenticatedInfo();
-
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
-        ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-
-        $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
-        ];
-        $context = new Context();
-        $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $asset_collection->id ]);
-
-        $collection_source = CollectionSource::parseConfiguration([
-            "collection_id" => $asset_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1314,12 +939,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $this->assertEquals($constellations, [
             new Constellation($asset_account->name, AcceptableConstellationKind::Account, [
                 new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
+                    "750.00",
+                    RationalNumber::get("750")
                 ),
                 new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
+                    "1500.00",
+                    RationalNumber::get("1500")
                 )
             ]),
             new Constellation(
@@ -1327,12 +952,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Sum,
                 [
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     ),
                     new Star(
-                        "3500.00",
-                        RationalNumber::get("3500")
+                        "1500.00",
+                        RationalNumber::get("1500")
                     )
                 ]
             ),
@@ -1341,189 +966,158 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Average,
                 [
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     ),
                     new Star(
-                        "3500.00",
-                        RationalNumber::get("3500")
+                        "1500.00",
+                        RationalNumber::get("1500")
                     )
                 ]
             )
         ]);
     }
 
-    public function testTotalClosedCreditAmountForEquityCollection()
+    public function testTotalClosedCreditAmountForEquityKind()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_asset_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $equity_account = $accounts[0];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $equity_account ]
+            ]
         ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        $equity_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $equity_collection->id ]);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $equity_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $equity_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
             "side_basis" => CREDIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1535,12 +1129,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $this->assertEquals($constellations, [
             new Constellation($equity_account->name, AcceptableConstellationKind::Account, [
                 new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
+                    "750.00",
+                    RationalNumber::get("750")
                 ),
                 new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
+                    "1500.00",
+                    RationalNumber::get("1500")
                 )
             ]),
             new Constellation(
@@ -1548,12 +1142,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Sum,
                 [
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     ),
                     new Star(
-                        "3500.00",
-                        RationalNumber::get("3500")
+                        "1500.00",
+                        RationalNumber::get("1500")
                     )
                 ]
             ),
@@ -1562,12 +1156,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Average,
                 [
                     new Star(
-                        "2000.00",
-                        RationalNumber::get("2000")
+                        "750.00",
+                        RationalNumber::get("750")
                     ),
                     new Star(
-                        "3500.00",
-                        RationalNumber::get("3500")
+                        "1500.00",
+                        RationalNumber::get("1500")
                     )
                 ]
             )
@@ -1578,169 +1172,143 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(3),
+                    "finished_at" => Time::now()->subDays(2),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "finished_at" => Time::now(),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $currency = $currencies[0];
+        $asset_account = $accounts[1];
+        $details = $frozen_periods[0];
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $asset_account ]
+            ]
         ]);
-        $first_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        model(AccountCollectionModel::class, false)->where("id", $details->id)->delete();
+        $asset_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $currency->id);
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $asset_collection->id ]);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
-            "currency_id" => $currency->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
             "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
             "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
@@ -1752,264 +1320,207 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $this->assertEquals($constellations, []);
     }
 
-    public function testExchangedTotalOpenedDebitAmountForAssetCollection()
+    public function testExchangedTotalClosedDebitAmountForAssetCollection()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
-        $currency_fabricator = new Fabricator(CurrencyModel::class);
-        $currency_a = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $currency_b = $currency_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "presentational_precision" => 2
-        ])->create();
-        $cash_flow_activity_fabricator = new Fabricator(CashFlowActivityModel::class);
-        $cash_flow_activity = $cash_flow_activity_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id
-        ])->create();
-        $account_fabricator = new Fabricator(AccountModel::class);
-        $equity_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $equity_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => EQUITY_ACCOUNT_KIND
-        ])->create();
-        $asset_a_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $asset_b_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_b->id,
-            "kind" => LIQUID_ASSET_ACCOUNT_KIND
-        ])->create();
-        $expense_account = $account_fabricator->setOverrides([
-            "currency_id" => $currency_a->id,
-            "kind" => EXPENSE_ACCOUNT_KIND
-        ])->create();
-        $collection_fabricator = new Fabricator(CollectionModel::class);
-        $equity_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Equities"
-        ])->create();
-        $asset_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Assets"
-        ])->create();
-        $expense_collection = $collection_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "name" => "All Expenses"
-        ])->create();
-        $account_collection_fabricator = new Fabricator(AccountCollectionModel::class);
-        $collected_equity_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_a_account->id
-        ])->create();
-        $collected_equity_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $equity_collection->id,
-            "account_id" => $equity_b_account->id
-        ])->create();
-        $collected_asset_a_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_a_account->id
-        ])->create();
-        $collected_asset_b_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $asset_collection->id,
-            "account_id" => $asset_b_account->id
-        ])->create();
-        $collected_expense_account = $account_collection_fabricator->setOverrides([
-            "collection_id" => $expense_collection->id,
-            "account_id" => $expense_account->id
-        ])->create();
-        $modifier_fabricator = new Fabricator(ModifierModel::class);
-        $normal_exchange_modifier = $modifier_fabricator->setOverrides([
-            "debit_account_id" => $asset_a_account->id,
-            "credit_account_id" => $asset_b_account->id,
-            "action" => EXCHANGE_MODIFIER_ACTION
-        ])->create();
-        $financial_entry_fabricator = new Fabricator(FinancialEntryModel::class);
-        $exchange_normal_financial_entry = $financial_entry_fabricator->setOverrides([
-            "modifier_id" => $normal_exchange_modifier->id,
-            "debit_amount" => "100",
-            "credit_amount" => "1",
-            "transacted_at" => Time::parse("-4 day")->toDateTimeString()
-        ])->create();
-        $frozen_period_fabricator = new Fabricator(FrozenPeriodModel::class);
-        $first_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::parse("-3 day")->toDateTimeString(),
-            "finished_at" => Time::parse("-2 day")->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator = new Fabricator(SummaryCalculationModel::class);
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id
+        $current_time = Time::now();
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => $current_time->subDays(4),
+                    "finished_at" => $current_time->subDays(3),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "3" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ],
+                [
+                    "started_at" => $current_time->subDays(1),
+                    "finished_at" => $current_time,
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1000" ],
+                                [ 1, "1000" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, "250" ],
+                                [ 3, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 6, "250" ],
+                                [ 7, "2" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, "2" ],
+                                [ 9, "250" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 5,
+                            "atoms" => [
+                                [ 10, "3" ],
+                                [ 11, "3" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "250" ],
+                                [ 5, "250" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 2,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    EXCHANGE_MODIFIER_ACTION,
+                    RECORD_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, GENERAL_EXPENSE_ACCOUNT_KIND ],
+                    [ 1, EQUITY_ACCOUNT_KIND ],
+                    [ 1, LIQUID_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 4, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 4, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 5, 3, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 6, 0 ],
+                    [ 7, 0 ],
+                    [ 11, 0 ]
+                ],
+                "currency_options" => [
+                    "precision_format_options" => [
+                        "overrides" => [
+                            "minimum_presentational_precision" => 2,
+                            "maximum_presentational_precision" => 2
+                        ]
+                    ]
+                ]
+            ]
+        );
+        $local_currency = $currencies[0];
+        [
+            $local_equity_account,
+            $local_asset_account,
+            $expense_account,
+            $foreign_equity_account,
+            $foreign_asset_account
+        ] = $accounts;
+        [
+            $precision_formats,
+            $currencies,
+            $asset_accounts,
+            $collections,
+            $details
+        ] = AccountCollectionModel::createTestResources($authenticated_info->getUser()->id, 1, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $local_asset_account, $foreign_asset_account ]
+            ]
         ]);
-        $first_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "2500",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "2000"
-        ])->create();
-        $first_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "2500",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "2000",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $first_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "10",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "10"
-        ])->create();
-        $first_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "10",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "10",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $first_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "2500"
-        ])->create();
-        $first_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "10"
-        ])->create();
-        $first_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $first_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
-        $second_frozen_period = $frozen_period_fabricator->setOverrides([
-            "user_id" => $authenticated_info->getUser()->id,
-            "started_at" => Time::yesterday()->toDateTimeString(),
-            "finished_at" => Time::now()->toDateTimeString()
-        ])->create();
-        $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id
-        ]);
-        $second_equity_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_a_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "2000",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "4000",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "3500"
-        ])->create();
-        $second_asset_a_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_a_account->id,
-            "opened_debit_amount" => "2000",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "4000",
-            "unadjusted_credit_amount" => "500",
-            "closed_debit_amount" => "3500",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_expense_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $expense_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "500",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $second_equity_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $equity_b_account->id,
-            "opened_debit_amount" => "0",
-            "opened_credit_amount" => "10",
-            "unadjusted_debit_amount" => "0",
-            "unadjusted_credit_amount" => "30",
-            "closed_debit_amount" => "0",
-            "closed_credit_amount" => "30"
-        ])->create();
-        $second_asset_b_summary_calculation = $summary_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "account_id" => $asset_b_account->id,
-            "opened_debit_amount" => "10",
-            "opened_credit_amount" => "0",
-            "unadjusted_debit_amount" => "30",
-            "unadjusted_credit_amount" => "0",
-            "closed_debit_amount" => "30",
-            "closed_credit_amount" => "0"
-        ])->create();
-        $flow_calculation_fabricator = new Fabricator(FlowCalculationModel::class);
-        $second_equity_a_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_a_account->id,
-            "net_amount" => "500"
-        ])->create();
-        $second_equity_b_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $equity_b_account->id,
-            "net_amount" => "20"
-        ])->create();
-        $second_expense_flow_calculation = $flow_calculation_fabricator->setOverrides([
-            "frozen_period_id" => $second_frozen_period->id,
-            "cash_flow_activity_id" => $cash_flow_activity->id,
-            "account_id" => $expense_account->id,
-            "net_amount" => "0"
-        ])->create();
+        $asset_collection = $collections[0];
 
         $time_groups = [
-            new PeriodicTimeGroup($first_frozen_period),
-            new PeriodicTimeGroup($second_frozen_period)
+            new PeriodicTimeGroup($frozen_periods[0]),
+            new PeriodicTimeGroup($frozen_periods[1])
         ];
-        $context = new Context();
+        $context = Context::make();
+        $context->setVariable(ContextKeys::EXCHANGE_RATE_BASIS, PERIODIC_EXCHANGE_RATE_BASIS);
+        $context->setVariable(ContextKeys::DESTINATION_CURRENCY_ID, $local_currency->id);
+        $account_IDs = array_map(fn ($account) => $account->id, $accounts);
+        $account_cache = AccountCache::make($context);
+        $account_cache->loadResources($account_IDs);
+        $exchange_rate_cache = ExchangeRateCache::make($context);
+        $exchange_rate_cache->loadExchangeRatesForAccounts($account_IDs);
+        $exchange_rate_cache->setLastExchangeRateTimeOnce($current_time->addDays(1));
         $time_group_manager = new TimeGroupManager($context, $time_groups);
-        $context
-            ->getVariable(ContextKeys::COLLECTION_CACHE)
-            ->loadCollectedAccounts([ $asset_collection->id ]);
+        $collection_cache = CollectionCache::make($context);
+        $collection_cache->loadCollectedAccounts([ $asset_collection->id ]);
 
         $collection_source = CollectionSource::parseConfiguration([
             "collection_id" => $asset_collection->id,
-            "currency_id" => $currency_a->id,
-            "exchange_rate_basis" => PERIODIC_EXCHANGE_RATE_BASIS,
-            "stage_basis" => UNADJUSTED_AMOUNT_STAGE_BASIS,
-            "side_basis" => NET_DEBIT_AMOUNT_SIDE_BASIS,
+            "stage_basis" => CLOSED_AMOUNT_STAGE_BASIS,
+            "side_basis" => DEBIT_AMOUNT_SIDE_BASIS,
             "must_show_individual_amounts" => true,
             "must_show_collective_sum" => true,
             "must_show_collective_average" => true
@@ -2017,37 +1528,45 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
         $constellations = $collection_source->calculate($context);
 
         $this->assertEquals($constellations, [
-            new Constellation($asset_a_account->name, AcceptableConstellationKind::Account, [
-                new Star(
-                    "2000.00",
-                    RationalNumber::get("2000")
-                ),
-                new Star(
-                    "3500.00",
-                    RationalNumber::get("3500")
-                )
-            ]),
-            new Constellation($asset_b_account->name, AcceptableConstellationKind::Account, [
-                new Star(
-                    "1000.00",
-                    RationalNumber::get("1000")
-                ),
-                new Star(
-                    "3000.00",
-                    RationalNumber::get("3000")
-                )
-            ]),
+            new Constellation(
+                $local_asset_account->name,
+                AcceptableConstellationKind::Account,
+                [
+                    new Star(
+                        "500.00",
+                        RationalNumber::get("500")
+                    ),
+                    new Star(
+                        "1000.00",
+                        RationalNumber::get("1000")
+                    )
+                ]
+            ),
+            new Constellation(
+                $foreign_asset_account->name,
+                AcceptableConstellationKind::Account,
+                [
+                    new Star(
+                        "250.00",
+                        RationalNumber::get("250")
+                    ),
+                    new Star(
+                        "1000.00",
+                        RationalNumber::get("1000")
+                    )
+                ]
+            ),
             new Constellation(
                 "Total of $asset_collection->name",
                 AcceptableConstellationKind::Sum,
                 [
                     new Star(
-                        "3000.00",
-                        RationalNumber::get("3000")
+                        "750.00",
+                        RationalNumber::get("750")
                     ),
                     new Star(
-                        "6500.00",
-                        RationalNumber::get("6500")
+                        "2000.00",
+                        RationalNumber::get("2000")
                     )
                 ]
             ),
@@ -2056,12 +1575,12 @@ class CollectionSourceTest extends AuthenticatedHTTPTestCase
                 AcceptableConstellationKind::Average,
                 [
                     new Star(
-                        "1500.00",
-                        RationalNumber::get("1500")
+                        "375.00",
+                        RationalNumber::get("375")
                     ),
                     new Star(
-                        "3250.00",
-                        RationalNumber::get("3250")
+                        "1000.00",
+                        RationalNumber::get("1000")
                     )
                 ]
             )
