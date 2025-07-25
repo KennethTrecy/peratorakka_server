@@ -62,7 +62,7 @@ abstract class BaseOwnedResourceController extends BaseController
     protected function identifyRequiredRelationship(): array
     {
         $request = $this->request;
-        $relationship = $request->getVar("relationship") ?? "*";
+        $relationship = $request->getVar("relationship") ?? "";
         $relationship = is_array($relationship)
             ? $relationship
             : ($relationship === "" ? [] : explode(",", $relationship));
