@@ -135,6 +135,7 @@ class FrozenPeriodModel extends BaseResourceModel
             $keyed_real_raw_flows
         ] = static::initiateRawCalculations(
             $context,
+            $associated_accounts,
             $associated_cash_flow_activities,
             $associated_account_hashes,
             $previous_keyed_real_raw_adjusted_summaries
@@ -149,6 +150,7 @@ class FrozenPeriodModel extends BaseResourceModel
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows,
+            $associated_accounts,
             $associated_cash_flow_activities,
             $financial_entries,
             $financial_entry_atoms
@@ -505,6 +507,7 @@ class FrozenPeriodModel extends BaseResourceModel
 
     private static function initiateRawCalculations(
         Context $context,
+        array $associated_accounts,
         array $associated_cash_flow_activities,
         array $associated_account_hashes,
         array $previous_keyed_real_raw_adjusted_summaries
@@ -514,8 +517,8 @@ class FrozenPeriodModel extends BaseResourceModel
         $keyed_real_raw_adjusted_summaries = [];
         $keyed_real_raw_flows = [];
 
-        foreach ($associated_account_hashes as $account_id => $raw_frozen_account) {
-            $account_hash = $raw_frozen_account["hash"];
+        foreach ($associated_accounts as $modifier_atom_id => $account_id) {
+            $account_hash = $associated_account_hashes[$account_id]["hash"];
             $keyed_real_raw_adjusted_summaries[$account_id] = isset(
                 $previous_keyed_real_raw_adjusted_summaries[$account_id]
             ) ? $previous_keyed_real_raw_adjusted_summaries[$account_id] : [
@@ -570,6 +573,7 @@ class FrozenPeriodModel extends BaseResourceModel
         array $keyed_real_raw_unadjusted_summaries,
         array $keyed_real_raw_adjusted_summaries,
         array $keyed_real_raw_flows,
+        array $associated_accounts,
         array $associated_cash_flow_activities,
         array $financial_entries,
         array $financial_entry_atoms
