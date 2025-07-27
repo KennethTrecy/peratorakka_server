@@ -220,7 +220,7 @@ trait RegisterProcedures
             "",
             explode(
                 "_",
-                lcfirst(ucwords($function_name, "_"))
+                lcfirst(ucwords(strtolower($function_name), "_"))
             )
         );
         $account_cache = AccountCache::make($context);
