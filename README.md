@@ -63,8 +63,8 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 1. Copy `.env.lax.example` to `.env` and tailor the configuration for your
    machine, specifically the `baseURL` and any database settings.
 2. Run `composer install --no-dev`. Install dependencies for production.
-3. Run `composer run migrate:all`. It is recommended to run the command every
-   update.
+3. Run `composer run migrate:all` for new setups.
+4. If there are updates in the future, run `php spark migrate`.
 
 #### Instructions (if you want containerized server)
 Below are instructions to host your application in a container. However, they
