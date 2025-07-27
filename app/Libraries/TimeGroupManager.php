@@ -164,10 +164,6 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
-
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
@@ -217,10 +213,6 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
-
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
@@ -266,10 +258,6 @@ class TimeGroupManager
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
-
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
         return array_map(
@@ -291,10 +279,6 @@ class TimeGroupManager
         $this->loadRealUnadjustedSummaryCalculations($selected_account_IDs);
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
-
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
 
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
@@ -321,10 +305,6 @@ class TimeGroupManager
         $debit_hashes = [];
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
-
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
 
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
@@ -379,10 +359,6 @@ class TimeGroupManager
         $credit_hashes = [];
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
 
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
-
         $frozen_account_hash_group = Resource::group(
             $frozen_account_hashes,
             fn ($frozen_account_hash_info) => $frozen_account_hash_info->account_id
@@ -435,10 +411,6 @@ class TimeGroupManager
         $this->loadRealFlowCalculations($selected_account_IDs);
 
         $frozen_account_hashes = $this->frozenAccountHashes($selected_account_IDs);
-
-        if (count($frozen_account_hashes) === 0) {
-            return [];
-        }
 
         $frozen_account_hashes = array_keys($frozen_account_hashes);
 
