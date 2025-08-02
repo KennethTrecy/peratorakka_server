@@ -105,6 +105,7 @@ use App\Controllers\CurrencyController;
 use App\Controllers\FinancialEntryController;
 use App\Controllers\FormulaController;
 use App\Controllers\FrozenPeriodController;
+use App\Controllers\ItemDetailController;
 use App\Controllers\ModifierController;
 use App\Controllers\NumericalToolController;
 use App\Controllers\PrecisionFormatController;
@@ -114,11 +115,12 @@ make_owned_resource_routes($routes, AccountController::class);
 make_owned_resource_routes($routes, CashFlowActivityController::class);
 make_owned_resource_routes($routes, CollectionController::class);
 make_owned_resource_routes($routes, CurrencyController::class);
-make_owned_resource_routes($routes, PrecisionFormatController::class);
 make_owned_resource_routes($routes, FinancialEntryController::class);
-make_owned_resource_routes($routes, ModifierController::class);
 make_owned_resource_routes($routes, FormulaController::class);
+make_owned_resource_routes($routes, ItemDetailController::class);
+make_owned_resource_routes($routes, ModifierController::class);
 make_owned_resource_routes($routes, NumericalToolController::class);
+make_owned_resource_routes($routes, PrecisionFormatController::class);
 make_owned_resource_routes($routes, FrozenPeriodController::class, [
     "forceDelete",
     "show",
