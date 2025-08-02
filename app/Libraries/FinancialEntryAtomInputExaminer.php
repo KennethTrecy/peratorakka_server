@@ -305,6 +305,14 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
     private function checkBalance(array $financial_entry_atoms): bool
     {
         $modifier_atom_cache = ModifierAtomCache::make($this->context);
+        $account_cache = AccountCache::make($this->context);
+        $account_cache->loadResources(array_unique(array_map(
+            fn ($financial_entry_atom) => $modifier_atom_cache->determineModifierAtomAccountID(
+                $financial_entry_atom->modifier_atom_id
+            ),
+            $financial_entry_atoms
+        )));
+
         $unresolved_itemized_entry_atoms = [];
 
         $real_debit_total = RationalNumber::zero();
@@ -319,7 +327,6 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
             $account_id = $modifier_atom_cache->determineModifierAtomAccountID(
                 $modifier_atom_id
             );
-            $account_cache = AccountCache::make($this->context);
             $account_kind = $account_cache->determineAccountKind($account_id);
 
             if ($account_kind === ITEMIZED_ASSET_ACCOUNT_KIND) {
