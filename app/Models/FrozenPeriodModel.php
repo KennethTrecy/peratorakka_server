@@ -582,14 +582,53 @@ class FrozenPeriodModel extends BaseResourceModel
         $modifier_cache = ModifierCache::make($context);
         $modifier_atom_cache = ModifierAtomCache::make($context);
         $keyed_financial_entries = Resource::key($financial_entries, fn ($entry) => $entry->id);
+        $unresolved_financial_entry_atoms = [];
 
         foreach ($financial_entry_atoms as $financial_entry_atom) {
+            $numerical_value = $financial_entry_atom->numerical_value;
             $financial_entry_id = $financial_entry_atom->financial_entry_id;
             $financial_entry = $keyed_financial_entries[$financial_entry_id];
+            $financial_entry_atom_key = $financial_entry->transacted_at->toDateTimeString()
+                ."_".$financial_entry->modifier_id
+                ."_".$financial_entry_atom->modifier_atom_id;
+
             $modifier_id = $financial_entry->modifier_id;
             $modifier_atom_id = $financial_entry_atom->modifier_atom_id;
             $account_id = $modifier_atom_cache->determineModifierAtomAccountID($modifier_atom_id);
-            $numerical_value = $financial_entry_atom->numerical_value;
+
+            if ($financial_entry_atom->kind === TOTAL_FINANCIAL_ENTRY_ATOM_KIND) {
+                if (isset($unresolved_financial_entry_atoms[$financial_entry_atom_key])) {
+                    unset($unresolved_financial_entry_atoms[$financial_entry_atom_key]);
+                } else {
+                    $account_kind = $account_cache->determineAccountKind($account_id);
+                    if ($account_kind === ITEMIZED_ASSET_ACCOUNT_KIND) {
+                        $unresolved_financial_entry_atoms[$financial_entry_atom_key]
+                            = $financial_entry_atom;
+                        continue;
+                    }
+                }
+            } else {
+                // Assumes that current financial entry atom represent the partial value of itemized
+                // asset.
+                if (isset($unresolved_financial_entry_atoms[$financial_entry_atom_key])) {
+                    $previous_financial_entry_atom = $unresolved_financial_entry_atoms[
+                        $financial_entry_atom_key
+                    ];
+                    unset($unresolved_financial_entry_atoms[$financial_entry_atom_key]);
+
+                    if ($previous_financial_entry_atom->kind === TOTAL_FINANCIAL_ENTRY_ATOM_KIND) {
+                        continue;
+                    }
+
+                    $numerical_value = $numerical_value->multipliedBy(
+                        $previous_financial_entry_atom->numerical_value
+                    );
+                } else {
+                    $unresolved_financial_entry_atoms[$financial_entry_atom_key]
+                        = $financial_entry_atom;
+                    continue;
+                }
+            }
 
             $atom_kind = $modifier_atom_cache->determineModifierAtomKind($modifier_atom_id);
             $is_debited_normally = $account_cache->isDebitedNormally($account_id);
