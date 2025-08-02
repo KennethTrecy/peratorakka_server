@@ -2,6 +2,7 @@
 
 namespace App\Validation;
 
+use App\Contracts\FreezableResource;
 use App\Contracts\OwnedResource;
 use App\Libraries\FinancialEntryAtomInputExaminer;
 use App\Libraries\ModifierAtomInputExaminer;
@@ -95,7 +96,7 @@ class DatabaseRules
         if (
             count($parameters) < 4
             || !(model($parameters[0]) instanceof BaseResourceModel)
-            || !in_array($parameters[2], model($parameters[0])->allowedFields)
+            || !in_array($parameters[2], model($parameters[0], false)->allowedFields)
         ) {
             throw new InvalidArgumentException(
                 'A resource model, parameter name of the ID, column to check in resource, and'
@@ -278,5 +279,44 @@ class DatabaseRules
         );
 
         return $financial_entry_atom_input_examiner->validateOwnership($value);
+    }
+
+    public function permit_change_if_not_yet_frozen(
+        $value,
+        string $parameters,
+        array $data,
+        ?string &$error = null
+    ): bool {
+        helper("array");
+
+        $parameters = explode(",", $parameters);
+
+        if (
+            count($parameters) < 3
+            || !(model($parameters[0]) instanceof FreezableResource)
+            || !in_array($parameters[2], model($parameters[0], false)->allowedFields)
+        ) {
+            throw new InvalidArgumentException(
+                'A freezable resource model, resource ID,'
+                .' and column to check in resource is in "permit_change_if_not_yet_frozen"'
+                .' to check if the selected resource is able to change a particular attribute.'
+            );
+        }
+
+        $model = model($parameters[0]);
+        $id = +$parameters[1];
+
+        if ($id === null) {
+            return false;
+        }
+
+        $column = $parameters[2];
+        $entity = $model->findFrozen($id);
+
+        log_message(
+            "info",
+            var_export($entity, true)
+        );
+        return $entity === null || $entity->$column === $value;
     }
 }
