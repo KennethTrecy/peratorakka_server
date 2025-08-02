@@ -5,44 +5,10 @@ namespace App\Libraries;
 use App\Libraries\Context;
 use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\CashFlowActivityCache;
-use App\Libraries\Context\ContextKeys;
 use App\Models\AccountModel;
 
-class ModifierAtomInputExaminer
+class ModifierAtomInputExaminer extends InputExaminer
 {
-    /**
-     * @type ModifierAtomInputExaminer[]
-     */
-    private static array $instances = [];
-
-    private readonly array $input;
-    private readonly Context $context;
-
-    public static function make(string $key, array $data): ModifierAtomInputExaminer
-    {
-        helper("array");
-
-        if (!isset(self::$instances[$key])) {
-            self::$instances[$key] = new self(dot_array_search($key, $data));
-        }
-
-        return self::$instances[$key];
-    }
-
-    public static function clear()
-    {
-        self::$instances = [];
-    }
-
-    private function __construct(array $input)
-    {
-        $this->context = Context::make();
-        $this->input = $input;
-
-        AccountCache::make($this->context);
-        CashFlowActivityCache::make($this->context);
-    }
-
     public function validateSchema(): bool
     {
         return is_array($this->input) && array_reduce(
@@ -68,13 +34,11 @@ class ModifierAtomInputExaminer
         $account_IDs = $this->extractAccountIDs();
         $cash_flow_activity_IDs = $this->extractCashFlowActivityIDs();
 
-        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $account_cache = AccountCache::make($this->context);
         $account_cache->loadResources($account_IDs);
         $account_count = $account_cache->countLoadedResources();
 
-        $cash_flow_activity_cache = $this->context->getVariable(
-            ContextKeys::CASH_FLOW_ACTIVITY_CACHE
-        );
+        $cash_flow_activity_cache = CashFlowActivityCache::make($this->context);
         $cash_flow_activity_cache->loadResources($cash_flow_activity_IDs);
         $cash_flow_activity_count = $cash_flow_activity_cache->countLoadedResources();
 
@@ -84,7 +48,7 @@ class ModifierAtomInputExaminer
 
     public function validateCashFlowActivityAssociations(string $action): bool
     {
-        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $account_cache = AccountCache::make($this->context);
         $account_tally = [];
         foreach ($this->input as $atom) {
             $modifier_atom_kind = $atom["kind"];
@@ -133,8 +97,9 @@ class ModifierAtomInputExaminer
 
         $allowed_account_kinds_per_atom_kind = $permission_matrix[$action];
 
-        $account_cache = $this->context->getVariable(ContextKeys::ACCOUNT_CACHE);
+        $account_cache = AccountCache::make($this->context);
         $account_tally = [];
+
         foreach ($this->input as $atom) {
             $modifier_atom_kind = $atom["kind"];
             $account_kind = $account_cache->determineAccountKind($atom["account_id"]);
