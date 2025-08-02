@@ -5,48 +5,14 @@ namespace App\Libraries;
 use App\Casts\RationalNumber;
 use App\Entities\FinancialEntryAtom;
 use App\Libraries\Context;
-use App\Libraries\Context\ContextKeys;
 use App\Libraries\Context\Memoizer;
 use App\Libraries\Context\ModifierAtomCache;
 use App\Libraries\Context\ModifierCache;
-use App\Models\AccountModel;
+use App\Libraries\Context\AccountCache;
+use App\Libraries\Resource;
 
-class FinancialEntryAtomInputExaminer
+class FinancialEntryAtomInputExaminer extends InputExaminer
 {
-    /**
-     * @type FinancialEntryAtomInputExaminer[]
-     */
-    private static array $instances = [];
-
-    private readonly array $input;
-    private readonly Context $context;
-
-    public static function make(string $key, array $data): FinancialEntryAtomInputExaminer
-    {
-        helper("array");
-
-        if (!isset(self::$instances[$key])) {
-            self::$instances[$key] = new self(dot_array_search($key, $data) ?? []);
-        }
-
-        return self::$instances[$key];
-    }
-
-    public static function clear()
-    {
-        self::$instances = [];
-    }
-
-    private function __construct(array $input)
-    {
-        $this->context = Context::make();
-        $this->input = $input;
-
-        Memoizer::make($this->context);
-        ModifierCache::make($this->context);
-        ModifierAtomCache::make($this->context);
-    }
-
     public function validateSchema(): bool
     {
         return is_array($this->input) && array_reduce(
@@ -66,13 +32,13 @@ class FinancialEntryAtomInputExaminer
 
     public function validateOwnership(int $modifier_id): bool
     {
-        $modifier_cache = $this->context->getVariable(ContextKeys::MODIFIER_CACHE);
+        $modifier_cache = ModifierCache::make($this->context);
         $modifier_cache->loadResources([ $modifier_id ]);
         $modifier_count = $modifier_cache->countLoadedResources();
 
         $modifier_atom_IDs = $this->extractModifierAtomIDs();
 
-        $modifier_atom_cache = $this->context->getVariable(ContextKeys::MODIFIER_ATOM_CACHE);
+        $modifier_atom_cache = ModifierAtomCache::make($this->context);
         $modifier_atom_cache->loadResources($modifier_atom_IDs);
         $modifier_atom_count = $modifier_atom_cache->countLoadedResources();
 
@@ -81,12 +47,12 @@ class FinancialEntryAtomInputExaminer
 
     public function validateCurrencyValues(int $modifier_id): bool
     {
-        $memoizer = $this->context->getVariable(ContextKeys::MEMOIZER);
-        $modifier_cache = $this->context->getVariable(ContextKeys::MODIFIER_CACHE);
+        $memoizer = Memoizer::make($this->context);
+        $modifier_cache = ModifierCache::make($this->context);
         $modifier_cache->loadResources([ $modifier_id ]);
         $modifier_action = $modifier_cache->determineModifierAction($modifier_id);
 
-        $modifier_atom_cache = $this->context->getVariable(ContextKeys::MODIFIER_ATOM_CACHE);
+        $modifier_atom_cache = ModifierAtomCache::make($this->context);
 
         switch ($modifier_action) {
             case RECORD_MODIFIER_ACTION: {
