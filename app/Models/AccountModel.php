@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Contracts\FreezableResource;
 use App\Entities\Account;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
-class AccountModel extends BaseResourceModel
+class AccountModel extends BaseResourceModel implements FreezableResource
 {
     protected $table = "accounts_v2";
     protected $returnType = Account::class;
@@ -58,10 +59,12 @@ class AccountModel extends BaseResourceModel
         [
             $precision_formats,
             $currency
-        ] = CurrencyModel::createTestResource(
-            $user_id,
-            $options["currency_options"] ?? []
-        );
+        ] = isset($options["ancestor_currency"])
+            ? $options["ancestor_currency"]
+            : CurrencyModel::createTestResource(
+                $user_id,
+                $options["currency_options"] ?? []
+            );
 
         $parent_links = static::permutateParentLinks([
             "currency_id" => [ $currency->id ],
@@ -89,5 +92,16 @@ class AccountModel extends BaseResourceModel
             },
             $accounts
         );
+    }
+
+    public function findFrozen(int $resource_id): ?Account
+    {
+        return $this->whereIn(
+            "id",
+            model(FrozenAccountModel::class, false)
+                ->builder()
+                ->select("account_id")
+                ->where("account_id", $resource_id)
+        )->first();
     }
 }
