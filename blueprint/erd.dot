@@ -181,7 +181,7 @@ digraph {
 						kind<br align="left"/><br align="left"/><br align="left"/><br align="left"/>
 					</td>
 					<td align="left">
-						enum(unknown,general_asset,liability,<br align="left"/>equity,general_expense,general_income,<br align="left"/>liquid_asset,depreciative_asset,<br align="left"/>general_temporary,itemized_asset,<br align="left"/>direct_cost,direct_sale)<br align="left"/>
+						enum(unknown,general_asset,liability,<br align="left"/>equity,general_expense,general_income,<br align="left"/>liquid_asset,depreciative_asset,<br align="left"/>general_temporary,itemized_asset,<br align="left"/>direct_cost,nominal_return)<br align="left"/>
 					</td>
 				</tr>
 			</table>
@@ -211,9 +211,11 @@ digraph {
 					<td></td>
 					<td align="left">
 						name<br align="left"/>
+						unit<br align="left"/>
 						description<br align="left"/>
 					</td>
 					<td align="left">
+						varchar(255)<br align="left"/>
 						varchar(255)<br align="left"/>
 						nullable text<br align="left"/>
 					</td>
@@ -232,18 +234,13 @@ digraph {
 					</td>
 				</tr>
 				<tr>
-					<td>PK</td>
-					<td align="left">id</td>
+					<td>FK</td>
+					<td align="left">account_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
 					<td>FK</td>
 					<td align="left">item_detail_id</td>
-					<td align="left">bigint</td>
-				</tr>
-				<tr>
-					<td>FK</td>
-					<td align="left">account_id</td>
 					<td align="left">bigint</td>
 				</tr>
 				<tr>
@@ -1091,6 +1088,7 @@ digraph {
 		reactive_modifiers -> modifiers
 		dependent_modifiers -> modifiers
 		modifier_atom_activities -> cash_flow_activities
+		item_configurations -> accounts
 	}
 
 	{
@@ -1130,7 +1128,6 @@ digraph {
 		numerical_tools -> currencies
 		modifiers -> users
 		account_collections -> accounts
-		item_configurations -> accounts
 		precision_formats -> users
 		imaginary_flow_calculations -> cash_flow_activities
 	}
