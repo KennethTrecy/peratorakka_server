@@ -160,7 +160,7 @@ define("ACCEPTABLE_ACCOUNT_KINDS", [
     GENERAL_TEMPORARY_ACCOUNT_KIND,
     DIRECT_COST_ACCOUNT_KIND,
     NOMINAL_RETURN_ACCOUNT_KIND,
-    // ITEMIZED_ASSET_ACCOUNT_KIND
+    ITEMIZED_ASSET_ACCOUNT_KIND
 ]);
 
 define("ACCOUNT_KINDS", [
@@ -174,7 +174,7 @@ define("NORMAL_DEBIT_ACCOUNT_KINDS", [
     LIQUID_ASSET_ACCOUNT_KIND,
     DEPRECIATIVE_ASSET_ACCOUNT_KIND,
     DIRECT_COST_ACCOUNT_KIND,
-    // ITEMIZED_ASSET_ACCOUNT_KIND
+    ITEMIZED_ASSET_ACCOUNT_KIND
 ]);
 define("TEMPORARY_ACCOUNT_KINDS", [
     GENERAL_EXPENSE_ACCOUNT_KIND,
@@ -256,8 +256,8 @@ define("ACCEPTABLE_MODIFIER_ACTIONS", [
     RECORD_MODIFIER_ACTION,
     CLOSE_MODIFIER_ACTION,
     EXCHANGE_MODIFIER_ACTION,
-    // BID_MODIFIER_ACTION,
-    // ASK_MODIFIER_ACTION,
+    BID_MODIFIER_ACTION,
+    ASK_MODIFIER_ACTION,
     // REPRICE_MODIFIER_ACTION,
     // TRANSFORM_MODIFIER_ACTION,
     // THROW_MODIFIER_ACTION,
@@ -310,9 +310,11 @@ define("MODIFIER_KINDS", [
  | - UNKNOWN_MODIFIER_ATOM_KIND. A modifier atom with this kind is not supported by the system at
  |   the current version. This case may happen when the system downgraded.
  | - REAL_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would be
- |   debited on calculations and reduces any paper calculations.
+ |   debited on calculations.
  | - REAL_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would
- |   be credited on calculations and reduces any paper calculations.
+ |   be credited on calculations.
+ | - REAL_EMERGENT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be debited or credited only when calculation happens depending on the modifier action.
  | - IMAGINARY_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
  |   would be debited on calculations and reduces any paper calculations.
  | - IMAGINARY_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
@@ -324,6 +326,7 @@ define("MODIFIER_KINDS", [
 define("UNKNOWN_MODIFIER_ATOM_KIND", "unknown");
 define("REAL_DEBIT_MODIFIER_ATOM_KIND", "real_debit");
 define("REAL_CREDIT_MODIFIER_ATOM_KIND", "real_credit");
+define("REAL_EMERGENT_MODIFIER_ATOM_KIND", "real_potential");
 define("IMAGINARY_DEBIT_MODIFIER_ATOM_KIND", "imaginary_debit");
 define("IMAGINARY_CREDIT_MODIFIER_ATOM_KIND", "imaginary_credit");
 define("PRICE_MODIFIER_ATOM_KIND", "price");
@@ -331,9 +334,13 @@ define("PRICE_MODIFIER_ATOM_KIND", "price");
 define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
     REAL_DEBIT_MODIFIER_ATOM_KIND,
     REAL_CREDIT_MODIFIER_ATOM_KIND,
-    IMAGINARY_DEBIT_MODIFIER_ATOM_KIND,
-    IMAGINARY_CREDIT_MODIFIER_ATOM_KIND,
-    PRICE_MODIFIER_ATOM_KIND
+    REAL_EMERGENT_MODIFIER_ATOM_KIND
+    // Below were uncommented in v0.6.0 but not in v0.6.1. It is safe to remove since parent
+    // requirements needed to use them is not yet available.
+
+    // IMAGINARY_DEBIT_MODIFIER_ATOM_KIND,
+    // IMAGINARY_CREDIT_MODIFIER_ATOM_KIND,
+    // PRICE_MODIFIER_ATOM_KIND
 ]);
 
 define("MODIFIER_ATOM_KINDS", [
