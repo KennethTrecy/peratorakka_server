@@ -90,16 +90,15 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
 
             case BID_MODIFIER_ACTION: {
                 $premade_financial_entry_atoms = $this->makeFinancialEntryAtoms($this->input);
-                $filled_financial_entry_atoms = $this->fillSourceAndSinkAtomsAutomatically(
-                    $premade_financial_entry_atoms,
-                    REAL_CREDIT_MODIFIER_ATOM_KIND,
-                    REAL_DEBIT_MODIFIER_ATOM_KIND
-                );
 
-                $is_balanced = $this->checkBalance($filled_financial_entry_atoms);
+                if (!$this->hasNecessaryItemizedInputs($premade_financial_entry_atoms)) {
+                    return false;
+                }
+
+                $is_balanced = $this->checkBalance($premade_financial_entry_atoms);
 
                 if ($is_balanced) {
-                    $memoizer->write("#$modifier_id", $filled_financial_entry_atoms);
+                    $memoizer->write("#$modifier_id", $premade_financial_entry_atoms);
                 }
 
                 return $is_balanced;
@@ -169,6 +168,39 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
             },
             $input
         );
+    }
+
+    private function hasNecessaryItemizedInputs(array $premade_financial_entry_atoms): bool
+    {
+        $unresolved_itemized_entry_atoms = [];
+
+        $modifier_atom_cache = ModifierAtomCache::make($this->context);
+        $modifier_atom_IDs = $this->extractModifierAtomIDs();
+        $modifier_atom_cache->loadResources($modifier_atom_IDs);
+        $modifier_atoms = Resource::key(
+            $modifier_atom_cache->getLoadedResources($modifier_atom_IDs),
+            fn ($resource) => $resource->id
+        );
+        $account_cache = AccountCache::make($this->context);
+        $account_cache->loadResources($modifier_atom_cache->extractAssociatedAccountIDs());
+
+        foreach ($premade_financial_entry_atoms as $premade_financial_entry_atom) {
+            $modifier_atom_id = $premade_financial_entry_atom->modifier_atom_id;
+            $account_id = $modifier_atom_cache->determineModifierAtomAccountID(
+                $modifier_atom_id
+            );
+            $account_kind = $account_cache->determineAccountKind($account_id);
+
+            if ($account_kind === ITEMIZED_ASSET_ACCOUNT_KIND) {
+                if (isset($unresolved_itemized_entry_atoms[$modifier_atom_id])) {
+                    unset($unresolved_itemized_entry_atoms[$modifier_atom_id]);
+                } else {
+                    $unresolved_itemized_entry_atoms[$modifier_atom_id] = true;
+                }
+            }
+        }
+
+        return count($unresolved_itemized_entry_atoms) === 0;
     }
 
     private function fillSourceAndSinkAtomsAutomatically(
@@ -273,11 +305,10 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
     private function checkBalance(array $financial_entry_atoms): bool
     {
         $modifier_atom_cache = ModifierAtomCache::make($this->context);
+        $unresolved_itemized_entry_atoms = [];
 
         $real_debit_total = RationalNumber::zero();
         $real_credit_total = RationalNumber::zero();
-        $imaginary_debit_total = RationalNumber::zero();
-        $imaginary_credit_total = RationalNumber::zero();
 
         foreach ($financial_entry_atoms as $financial_entry_atom) {
             $modifier_atom_id = $financial_entry_atom->modifier_atom_id;
@@ -285,6 +316,57 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
             $modifier_atom_kind = $modifier_atom_cache->determineModifierAtomKind(
                 $modifier_atom_id
             );
+            $account_id = $modifier_atom_cache->determineModifierAtomAccountID(
+                $modifier_atom_id
+            );
+            $account_cache = AccountCache::make($this->context);
+            $account_kind = $account_cache->determineAccountKind($account_id);
+
+            if ($account_kind === ITEMIZED_ASSET_ACCOUNT_KIND) {
+                if (isset($unresolved_itemized_entry_atoms[$modifier_atom_id])) {
+                    $previous_financial_entry_atom = $unresolved_itemized_entry_atoms[
+                        $modifier_atom_id
+                    ];
+                    unset($unresolved_itemized_entry_atoms[$modifier_atom_id]);
+
+                    $entry_atoms = [
+                        $previous_financial_entry_atom,
+                        $financial_entry_atom
+                    ];
+
+                    $price_atom = array_values(array_filter(
+                        $entry_atoms,
+                        fn ($atom) => $atom->kind === PRICE_FINANCIAL_ENTRY_ATOM_KIND
+                    ))[0] ?? null;
+
+                    $quantity_atom = array_values(array_filter(
+                        $entry_atoms,
+                        fn ($atom) => $atom->kind === QUANTITY_FINANCIAL_ENTRY_ATOM_KIND
+                    ))[0] ?? null;
+
+                    $total_atom = array_values(array_filter(
+                        $entry_atoms,
+                        fn ($atom) => $atom->kind === TOTAL_FINANCIAL_ENTRY_ATOM_KIND
+                    ))[0] ?? null;
+
+                    $is_quantified_total_pair = $quantity_atom !== null && $total_atom !== null;
+                    $is_priced_quantity_pair = $price_atom !== null && $quantity_atom !== null;
+                    $is_priced_total_pair = $price_atom !== null && $total_atom !== null;
+
+                    if ($is_quantified_total_pair || $is_priced_total_pair) {
+                        $numerical_value = $total_atom->numerical_value;
+                    } elseif ($is_priced_quantity_pair) {
+                        $numerical_value = $quantity_atom->numerical_value->multipliedBy(
+                            $price_atom->numerical_value
+                        );
+                    } else {
+                        return false;
+                    }
+                } else {
+                    $unresolved_itemized_entry_atoms[$modifier_atom_id] = $financial_entry_atom;
+                    continue;
+                }
+            }
 
             switch ($modifier_atom_kind) {
                 case REAL_DEBIT_MODIFIER_ATOM_KIND:
@@ -293,21 +375,22 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
                 case REAL_CREDIT_MODIFIER_ATOM_KIND:
                     $real_credit_total = $real_credit_total->plus($numerical_value);
                     break;
-                case IMAGINARY_DEBIT_MODIFIER_ATOM_KIND:
-                    $imaginary_debit_total = $imaginary_debit_total->plus(
-                        $numerical_value
-                    );
-                    break;
-                case IMAGINARY_CREDIT_MODIFIER_ATOM_KIND:
-                    $imaginary_credit_total = $imaginary_credit_total->plus(
-                        $numerical_value
-                    );
+                case REAL_EMERGENT_MODIFIER_ATOM_KIND:
+                    // TODO: To finish this problem, there must be a way to keep track of item
+                    // TODO: calculations.
+                    $real_credit_total = $real_credit_total->plus($numerical_value);
                     break;
             }
         }
 
-        $is_balanced = $real_debit_total->minus($real_credit_total)->isZero()
-            && $imaginary_debit_total->minus($imaginary_credit_total)->isZero();
+        $imaginary_debit_total = RationalNumber::zero();
+        $imaginary_credit_total = RationalNumber::zero();
+
+        if (count($unresolved_itemized_entry_atoms) > 0) {
+            return false;
+        }
+
+        $is_balanced = $real_debit_total->minus($real_credit_total)->isZero();
 
         return $is_balanced;
     }
