@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
+use App\Models\ItemConfigurationModel;
+use App\Entities\ItemConfiguration;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
@@ -30,6 +32,7 @@ class AccountController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
+        $item_configuration_key = "$individual_name.@relationship.item_configuration";
 
         $validation->setRule("$individual_name.currency_id", "currency", [
             "required",
@@ -55,7 +58,12 @@ class AccountController extends BaseOwnedResourceController
             "required",
             "min_length[3]",
             "max_length[255]",
-            "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]"
+            "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]",
+            "must_have_compound_data_key_if_document_value_matches[".implode(",", [
+                ITEMIZED_ASSET_ACCOUNT_KIND,
+                $item_configuration_key
+            ])."]",
+            "has_valid_item_configuration_if_present[$item_configuration_key]"
         ]);
 
         return $validation;
@@ -66,6 +74,7 @@ class AccountController extends BaseOwnedResourceController
         $validation = static::makeValidation();
         $individual_name = static::getIndividualName();
         $table_name = static::getCollectiveName();
+        $item_configuration_key = "$individual_name.@relationship.item_configuration";
 
         $validation->setRule("$individual_name.name", "name", [
             "required",
@@ -86,9 +95,19 @@ class AccountController extends BaseOwnedResourceController
             "min_length[3]",
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]",
+            "must_have_compound_data_key_if_document_value_matches[".implode(",", [
+                ITEMIZED_ASSET_ACCOUNT_KIND,
+                $item_configuration_key
+            ])."]",
+            "has_valid_item_configuration_if_present[$item_configuration_key]"
         ]);
 
         return $validation;
+    }
+
+    protected static function mustTransactForCreation(): bool
+    {
+        return true;
     }
 
     protected static function enrichResponseDocument(
@@ -114,6 +133,30 @@ class AccountController extends BaseOwnedResourceController
         }
 
         return $enriched_document;
+    }
+
+    protected static function processCreatedDocument(array $created_document, array $input): array
+    {
+        $main_document = $created_document[static::getIndividualName()];
+        $main_document_id = $main_document["id"];
+        unset($created_document["account"]["@relationship"]);
+
+        if (isset($input["@relationship"]["item_configuration"])) {
+            $item_configuration_model = model(ItemConfigurationModel::class, false);
+            $raw_item_configuration = $input["@relationship"]["item_configuration"];
+            $item_configuration_entity = new ItemConfiguration();
+            $item_configuration_entity->fill([
+                "account_id" => $main_document_id,
+                "item_detail_id" => $raw_item_configuration["item_detail_id"],
+                "valuation_method" => $raw_item_configuration["valuation_method"],
+            ]);
+            $item_configuration_model->insert($item_configuration_entity);
+            $item_configuration_entity->id = $item_configuration_model->getInsertID();
+
+            $created_document["item_configuration"] = $item_configuration_entity;
+        }
+
+        return $created_document;
     }
 
     private static function makeValidation(): Validation
