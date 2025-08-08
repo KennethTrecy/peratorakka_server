@@ -221,7 +221,8 @@ class AccountTest extends AuthenticatedContextualHTTPTestCase
             ],
             "relationship" => [
                 "precision_formats",
-                "currencies"
+                "currencies",
+                "item_configurations"
             ]
         ]);
 
@@ -232,7 +233,8 @@ class AccountTest extends AuthenticatedContextualHTTPTestCase
             ],
             "accounts" => json_decode(json_encode(array_slice($details, 0, 5))),
             "currencies" => json_decode(json_encode($currencies)),
-            "precision_formats" => json_decode(json_encode($precision_formats))
+            "precision_formats" => json_decode(json_encode($precision_formats)),
+            "item_configurations" => []
         ]);
     }
 
