@@ -90,12 +90,17 @@ class AccountController extends BaseOwnedResourceController
                 "id=$resource_id"
             ])."]"
         ]);
-        // TODO: Make validation to allow this field if the entity was not yet updated
+
         $validation->setRule("$individual_name.kind", "kind", [
             "required",
             "min_length[3]",
             "max_length[255]",
             "in_list[".implode(",", ACCEPTABLE_ACCOUNT_KINDS)."]",
+            "permit_change_if_not_yet_frozen[".implode(",", [
+                static::getModelName(),
+                $resource_id,
+                "kind"
+            ])."]",
             "must_have_compound_data_key_if_document_value_matches[".implode(",", [
                 ITEMIZED_ASSET_ACCOUNT_KIND,
                 $item_configuration_key

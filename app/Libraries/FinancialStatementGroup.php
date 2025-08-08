@@ -165,7 +165,7 @@ class FinancialStatementGroup
                 "real_liquid_amount_difference" => $closed_real_liquid_amount->minus(
                     $opened_real_liquid_amount
                 )->simplified(),
-                "subtotals" => $real_illiquid_cash_flow_activity_subtotals
+                "subtotals" => array_values($real_illiquid_cash_flow_activity_subtotals)
             ],
             "adjusted_trial_balance" => [
                 "debit_total" => $adjusted_trial_balance_debit_total->simplified(),

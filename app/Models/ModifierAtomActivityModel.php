@@ -72,7 +72,7 @@ class ModifierAtomActivityModel extends BaseResourceModel
                     $combination_options,
                     fn ($previous_combinations, $combination) => [
                         ...$previous_combinations,
-                        $combination[3]
+                        ...$combination[3]
                     ],
                     []
                 )
@@ -116,38 +116,31 @@ class ModifierAtomActivityModel extends BaseResourceModel
             );
 
             $filtered_parent_links = Resource::retainExistingElements(array_reduce(
-                $options["combinations"],
+                $combination_options,
                 fn ($parent_links, $combination) => [
                     ...$parent_links,
-                    ...array_reduce(
-                        $combination_options,
-                        fn ($previous_combination, $combination) => [
-                            ...$previous_combination,
-                            ...array_map(
-                                fn (
-                                    $kind_combination,
-                                    $account_combination,
+                    ...array_map(
+                        fn (
+                            $kind_combination,
+                            $account_combination,
+                            $activity_combination
+                        ) => is_null($activity_combination)
+                            ? null
+                            : [
+                                "modifier_atom_id" => $keyed_modifier_atoms[
+                                    $combination[0]
+                                    ."_"
+                                    .$kind_combination
+                                    ."_"
+                                    .$account_combination
+                                ]->id,
+                                "cash_flow_activity_id" => $cash_flow_activities[
                                     $activity_combination
-                                ) => is_null($activity_combination)
-                                    ? null
-                                    : [
-                                        "modifier_atom_id" => $keyed_modifier_atoms[
-                                            $combination[0]
-                                            ."_"
-                                            .$kind_combination
-                                            ."_"
-                                            .$account_combination
-                                        ]->id,
-                                        "cash_flow_activity_id" => $cash_flow_activities[
-                                            $activity_combination
-                                        ]->id
-                                    ],
-                                $combination[1],
-                                $combination[2],
-                                $combination[3]
-                            )
-                        ],
-                        []
+                                ]->id
+                            ],
+                        $combination[1],
+                        $combination[2],
+                        $combination[3]
                     )
                 ],
                 []

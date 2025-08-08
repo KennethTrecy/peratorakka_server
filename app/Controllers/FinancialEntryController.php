@@ -141,7 +141,6 @@ class FinancialEntryController extends BaseOwnedResourceController
         $financial_entry_atoms = $memoizer->read("#$modifier_id", []);
         $financial_entry_atoms = array_map(function ($atom) use ($main_document_id, $atom_model) {
             $atom->financial_entry_id = $main_document_id;
-            $atom->kind = TOTAL_FINANCIAL_ENTRY_ATOM_KIND;
             $atom_model->insert($atom);
             $atom->id = $atom_model->getInsertID();
 
