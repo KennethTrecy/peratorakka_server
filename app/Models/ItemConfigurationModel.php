@@ -8,6 +8,7 @@ use Faker\Generator;
 
 class ItemConfigurationModel extends BaseResourceModel
 {
+    protected $primaryKey = "account_id";
     protected $table = "item_configurations";
     protected $returnType = ItemConfiguration::class;
     protected $allowedFields = [
@@ -19,7 +20,7 @@ class ItemConfigurationModel extends BaseResourceModel
     protected $useSoftDeletes = false;
 
     protected $sortable_fields = [
-        "id"
+        "account_id"
     ];
 
     public function fake(Generator &$faker)
@@ -50,26 +51,13 @@ class ItemConfigurationModel extends BaseResourceModel
                                     ->where("user_id", $user->id)
                             )
                     )
-            )
-            ->whereIn(
-                "item_detail_id",
-                model(ItemDetailModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->whereIn(
-                        "precision_format_id",
-                        model(PrecisionFormatModel::class, false)
-                            ->builder()
-                            ->select("id")
-                            ->where("user_id", $user->id)
-                    )
             );
     }
 
     protected static function createAncestorResources(int $user_id, array $options): array
     {
         [
-            $item_detail
+            $item_details
         ] = $options["item_detail_parent"] ?? ItemDetailModel::createTestResource(
             $user_id,
             $options["item_detail_options"] ?? []
@@ -87,11 +75,12 @@ class ItemConfigurationModel extends BaseResourceModel
 
         $parent_links = static::permutateParentLinks([
             "account_id" => array_map(fn ($account) => $account->id, $accounts),
-            "item_detail_id" => [ $item_detail->id ]
+            "item_detail_id" => [ $item_details[0]->id ],
+            "valuation_method" => $options["expected_valuation_methods"] ?? []
         ], $options);
 
         return [
-            [ $precision_formats, $currencies, $accounts, [ $item_detail ] ],
+            [ $precision_formats, $currencies, $accounts, $item_details ],
             $parent_links
         ];
     }
