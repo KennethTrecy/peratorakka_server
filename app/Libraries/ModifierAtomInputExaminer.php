@@ -64,6 +64,7 @@ class ModifierAtomInputExaminer extends InputExaminer
                         (
                             $modifier_atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
                             || $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
+                            || $modifier_atom_kind === REAL_EMERGENT_MODIFIER_ATOM_KIND
                         ) && (
                             (
                                 $account_kind !== LIQUID_ASSET_ACCOUNT_KIND
@@ -79,6 +80,12 @@ class ModifierAtomInputExaminer extends InputExaminer
                             || $modifier_atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
                         ) && $account_kind !== LIQUID_ASSET_ACCOUNT_KIND
                         && isset($atom["cash_flow_activity_id"])
+                    ) || (
+                        (
+                            $modifier_atom_kind === REAL_DEBITEM_MODIFIER_ATOM_KIND
+                            || $modifier_atom_kind === REAL_CREDITEM_MODIFIER_ATOM_KIND
+                        ) && $account_kind === ITEMIZED_ASSET_ACCOUNT_KIND
+                        && !isset($atom["cash_flow_activity_id"])
                     )
                 )
             );
@@ -354,18 +361,18 @@ class ModifierAtomInputExaminer extends InputExaminer
                     ]
                 ]
             ],
-            CONDENSE_MODIFIER_ACTION => [
-                REAL_DEBIT_MODIFIER_ATOM_KIND => [
+            DILUTE_MODIFIER_ACTION => [
+                REAL_DEBITEM_MODIFIER_ATOM_KIND => [
                     [
-                        "any",
+                        "all",
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ]
             ],
-            DILUTE_MODIFIER_ACTION => [
-                REAL_CREDIT_MODIFIER_ATOM_KIND => [
+            CONDENSE_MODIFIER_ACTION => [
+                REAL_CREDITEM_MODIFIER_ATOM_KIND => [
                     [
-                        "any",
+                        "all",
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ]
