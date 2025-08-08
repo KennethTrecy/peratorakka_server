@@ -198,13 +198,15 @@ class FrozenPeriodController extends BaseOwnedResourceController
         bool $must_be_strict
     ): array {
         $account_cache = AccountCache::make($context);
+        $currency_cache = CurrencyCache::make($context);
         $current_user = auth()->user();
 
         [
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
-            $real_flows
+            $real_flows,
+            $item_calculations
         ] = FrozenPeriodModel::makeRawCalculations(
             $current_user,
             $context,
@@ -235,13 +237,75 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     );
                 }
             }
+
+            $accounts = array_filter(array_map(
+                fn ($frozen_info) => $account_cache->getLoadedResource($frozen_info->account_id),
+                $frozen_accounts
+            ), fn ($account) => !is_null($account));
+
+            $linked_currencies = array_values(array_unique(
+                AccountModel::extractLinkedCurrencies($accounts)
+            ));
+            $currency_cache->loadResources($linked_currencies);
+            $currencies = array_map(
+                fn ($id) => $currency_cache->getLoadedResource($id),
+                $linked_currencies
+            );
+
+            $exchange_rate_cache = ExchangeRateCache::make($context);
+            $finished_at = Time::parse($main_document["finished_at"]);
+            $exchange_rate_cache->setLastExchangeRateTimeOnce($finished_at);
+            $derivator = $exchange_rate_cache->buildDerivator($finished_at);
+
+            $financial_statement_group = new FinancialStatementGroup(
+                $accounts,
+                $frozen_accounts,
+                $real_unadjusted_summaries,
+                $real_adjusted_summaries,
+                $real_flows,
+                $derivator
+            );
+
+            $are_all_statements_balanced = array_reduce(
+                $currencies,
+                function ($are_previous_statements_valid, $currency) use (
+                    $financial_statement_group
+                ) {
+                    $statement_set = $financial_statement_group
+                        ->generateFinancialStatements($currency, $currency);
+
+                    if ($statement_set === null) {
+                        // Include currencies only used in statements
+                        return $are_previous_statements_valid;
+                    }
+
+                    return $are_previous_statements_valid
+                        && $statement_set["unadjusted_trial_balance"]["debit_total"]->isEqualTo(
+                            $statement_set["unadjusted_trial_balance"]["credit_total"]
+                        ) && $statement_set["adjusted_trial_balance"]["debit_total"]->isEqualTo(
+                            $statement_set["adjusted_trial_balance"]["credit_total"]
+                        ) && $statement_set["balance_sheet"]["total_assets"]->isEqualTo(
+                            $statement_set["balance_sheet"]["total_liabilities"]->plus(
+                                $statement_set["balance_sheet"]["total_equities"]
+                            )
+                        );
+                },
+                true
+            );
+
+            if (!$are_all_statements_balanced) {
+                throw new UnprocessableRequest(
+                    "Some statements are not balanced."
+                );
+            }
         }
 
         return [
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
-            $real_flows
+            $real_flows,
+            $item_calculations
         ];
     }
 
