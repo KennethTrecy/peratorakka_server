@@ -12,7 +12,8 @@ class ItemCalculationModel extends BaseResourceModel
     protected $returnType = ItemCalculation::class;
     protected $allowedFields = [
         "frozen_account_hash",
-        "cash_flow_activity_id",
+        "financial_entry_id",
+        "unit_price",
         "remaining_quantity"
     ];
     protected $useTimestamps = false;
@@ -61,18 +62,22 @@ class ItemCalculationModel extends BaseResourceModel
                     )
             )->whereIn(
                 "financial_entry_id",
-                model(CashFlowActivityModel::class, false)
-                    ->builder()
-                    ->select("id")
-                    ->where("user_id", $user->id)
+                model(FinancialEntryModel::class, false)
+                    ->whereIn(
+                        "modifier_id",
+                        model(ModifierModel::class, false)
+                            ->builder()
+                            ->select("id")
+                            ->where("user_id", $user->id)
+                    )
             );
     }
 
-    public static function extractLinkedCashFlowActivities(array $flow_calculations): array
+    public static function extractLinkedFinancialEntries(array $item_calculations): array
     {
         return array_map(
-            fn ($flow_calculation) => $flow_calculation->cash_flow_activity_id,
-            $flow_calculations
+            fn ($item_calculation) => $item_calculation->financial_entry_id,
+            $item_calculations
         );
     }
 }
