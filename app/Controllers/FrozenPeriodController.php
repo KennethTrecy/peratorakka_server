@@ -10,7 +10,10 @@ use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\CashFlowActivityCache;
 use App\Libraries\Context\CurrencyCache;
 use App\Libraries\Context\ExchangeRateCache;
+use App\Libraries\Context\ItemDetailCache;
+use App\Libraries\Context\ItemConfigurationCache;
 use App\Libraries\Context\ModifierAtomActivityCache;
+use App\Libraries\Context\PrecisionFormatCache;
 use App\Libraries\FinancialStatementGroup;
 use App\Libraries\FinancialStatementGroup\ExchangeRateDerivator;
 use App\Libraries\Resource;
@@ -19,6 +22,7 @@ use App\Models\CashFlowActivityModel;
 use App\Models\CurrencyModel;
 use App\Models\FrozenAccountModel;
 use App\Models\FrozenPeriodModel;
+use App\Models\ItemCalculationModel;
 use App\Models\ModifierModel;
 use App\Models\RealAdjustedSummaryCalculationModel;
 use App\Models\RealFlowCalculationModel;
@@ -173,7 +177,8 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
-            $real_flows
+            $real_flows,
+            $item_calculations
         ] = static::calculateValidCalculations($context, $main_document, true);
 
         if (count($frozen_accounts) > 0) {
@@ -187,6 +192,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                 ->insertBatch($real_adjusted_summaries);
             model(RealUnadjustedSummaryCalculationModel::class)
                 ->insertBatch($real_unadjusted_summaries);
+
+            if (count($item_calculations) > 0) {
+                model(ItemCalculationModel::class)->insertBatch($item_calculations);
+            }
         }
 
         return $created_document;
