@@ -327,14 +327,28 @@ class FrozenPeriodController extends BaseOwnedResourceController
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
-            $real_flows
+            $real_flows,
+            $item_calculations
         ] = static::calculateValidCalculations($context, $main_document, $must_be_strict);
 
         $account_cache = AccountCache::make($context);
-        $accounts = array_filter(array_map(
-            fn ($frozen_info) => $account_cache->getLoadedResource($frozen_info->account_id),
+        $linked_accounts = array_map(
+            fn ($frozen_info) => $frozen_info->account_id,
             $frozen_accounts
-        ), fn ($account) => !is_null($account));
+        );
+        $accounts = $account_cache->getLoadedResources($linked_accounts);
+
+        $item_configuration_cache = ItemConfigurationCache::make($context);
+        $item_configuration_cache->loadResources($linked_accounts);
+        $item_configurations = $item_configuration_cache->getLoadedResources($linked_accounts);
+
+        $item_detail_cache = ItemDetailCache::make($context);
+        $linked_item_details = array_map(
+            fn ($item_configuration) => $item_configuration->item_detail_id,
+            $item_configurations
+        );
+        $item_detail_cache->loadResources($linked_item_details);
+        $item_details = $item_detail_cache->getLoadedResources($linked_item_details);
 
         $currency_cache = CurrencyCache::make($context);
         $linked_currencies = array_values(array_unique(
@@ -355,18 +369,26 @@ class FrozenPeriodController extends BaseOwnedResourceController
         ));
         $derivator = $exchange_rate_cache->buildDerivator($last_known_time);
 
-        [
-            $precision_formats
-        ] = CurrencyModel::selectAncestorsWithResolvedResources($currencies);
+        $precision_format_cache = PrecisionFormatCache::make($context);
+        $linked_precision_formats = array_values(array_unique(
+            array_column(array_merge($currencies, $item_details), "precision_format_id")
+        ));
+        $precision_format_cache->loadResources($linked_precision_formats);
+        $precision_formats = $precision_format_cache->getLoadedResources(
+            $linked_precision_formats
+        );
 
         return [
             $precision_formats,
             $currencies,
+            $item_details,
             $accounts,
+            $item_configurations,
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
             $real_flows,
+            $item_calculations,
             $derivator
         ];
     }
@@ -389,11 +411,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     [
                         $precision_formats,
                         $currencies,
+                        $item_details,
                         $accounts,
+                        $item_configurations,
                         $frozen_accounts,
                         $real_unadjusted_summaries,
                         $real_adjusted_summaries,
                         $real_flows,
+                        $item_calculations,
                         $derivator
                     ] = static::generateFullValidCalculations(
                         $context,
@@ -431,7 +456,10 @@ class FrozenPeriodController extends BaseOwnedResourceController
                         "real_unadjusted_summary_calculations" => $real_unadjusted_summaries,
                         "real_adjusted_summary_calculations" => $real_adjusted_summaries,
                         "real_flow_calculations" => $real_flows,
+                        "item_calculations" => $item_calculations,
+                        "item_configurations" => $item_configurations,
                         "accounts" => $accounts,
+                        "item_details" => $item_details,
                         "currencies" => $currencies,
                         "cash_flow_activities" => $cash_flow_activities,
                         "precision_formats" => $precision_formats
@@ -460,11 +488,14 @@ class FrozenPeriodController extends BaseOwnedResourceController
                     [
                         $precision_formats,
                         $currencies,
+                        $item_details,
                         $accounts,
+                        $item_configurations,
                         $frozen_accounts,
                         $real_unadjusted_summaries,
                         $real_adjusted_summaries,
                         $real_flows,
+                        $item_calculations,
                         $derivator
                     ] = static::generateFullValidCalculations(
                         $context,
