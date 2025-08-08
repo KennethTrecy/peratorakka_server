@@ -8,14 +8,17 @@ use App\Entities\FrozenPeriod;
 use App\Entities\RealAdjustedSummaryCalculation;
 use App\Entities\RealFlowCalculation;
 use App\Entities\RealUnadjustedSummaryCalculation;
+use App\Entities\ItemCalculation;
 use App\Libraries\Context;
 use App\Libraries\Context\AccountCache;
+use App\Libraries\Context\ItemConfigurationCache;
 use App\Libraries\Context\ModifierAtomActivityCache;
 use App\Libraries\Context\ModifierAtomCache;
 use App\Libraries\Context\ModifierCache;
 use App\Libraries\Resource;
 use App\Models\FrozenAccountModel;
 use App\Models\RealAdjustedSummaryCalculationModel;
+use Brick\Math\BigRational;
 use CodeIgniter\I18n\Time;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
@@ -116,7 +119,8 @@ class FrozenPeriodModel extends BaseResourceModel
         ] = static::minMaxTransactedTimes($financial_entries);
 
         [
-            $previous_keyed_real_raw_adjusted_summaries
+            $previous_keyed_real_raw_adjusted_summaries,
+            $previous_keyed_raw_item_calculations
         ] = static::loadPreviousSummaryCalculations($context, $earliest_transacted_time);
 
         $known_linked_accounts = array_unique([
@@ -132,25 +136,29 @@ class FrozenPeriodModel extends BaseResourceModel
         [
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
-            $keyed_real_raw_flows
+            $keyed_real_raw_flows,
+            $keyed_raw_item_calculations
         ] = static::initiateRawCalculations(
             $context,
             $associated_accounts,
             $associated_cash_flow_activities,
             $associated_account_hashes,
-            $previous_keyed_real_raw_adjusted_summaries
+            $previous_keyed_real_raw_adjusted_summaries,
+            $previous_keyed_raw_item_calculations
         );
 
         [
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
-            $keyed_real_raw_flows
+            $keyed_real_raw_flows,
+            $keyed_raw_item_calculations
         ] = static::consolidateRawCalculations(
             $context,
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows,
-            $associated_accounts,
+            $keyed_raw_item_calculations,
+            $associated_account_hashes,
             $associated_cash_flow_activities,
             $financial_entries,
             $financial_entry_atoms
@@ -160,19 +168,22 @@ class FrozenPeriodModel extends BaseResourceModel
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
-            $real_flows
+            $real_flows,
+            $item_calculations
         ] = static::makeResources(
             $associated_account_hashes,
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
-            $keyed_real_raw_flows
+            $keyed_real_raw_flows,
+            $keyed_raw_item_calculations
         );
 
         return [
             array_values($frozen_accounts),
             array_values($real_unadjusted_summaries),
             array_values($real_adjusted_summaries),
-            array_values($real_flows)
+            array_values($real_flows),
+            array_values($item_calculations)
         ];
     }
 
@@ -216,11 +227,36 @@ class FrozenPeriodModel extends BaseResourceModel
             ]
         ]);
 
+        $item_detail_parents = null;
+        foreach ($accounts as $index => $account) {
+            if (count($dependencies["account_combinations"][$index]) === 3) {
+                [
+                    $precision_formats,
+                    $currencies,
+                    $parent_account,
+                    $item_detail_parents,
+                    $item_configuration
+                ] = ItemConfigurationModel::createTestResource($user->id, [
+                    "item_detail_parent" => $item_detail_parents,
+                    "ancestor_accounts" => [
+                        $precision_formats,
+                        $currencies,
+                        [ $account ]
+                    ],
+                    "expected_valuation_methods" => [
+                        $dependencies["account_combinations"][$index][2]
+                    ]
+                ]);
+            }
+        }
         $raw_modifier_atom_infos = array_map(fn ($combination) => [
             "modifier_id" => $modifiers[$combination[0]]->id,
-            "account_id" => $accounts[$combination[1]]->id,
+            "account_id" => $accounts[
+                $combination[1]
+            ]->id,
             "kind" => $combination[2]
         ], $dependencies["modifier_atom_combinations"]);
+
         [ $modifier_atoms ] = ModifierAtomModel::createTestResources($user->id, 1, [
             "ancestor_data" => [
                 [],
@@ -388,6 +424,7 @@ class FrozenPeriodModel extends BaseResourceModel
         $associated_accounts = $modifier_atom_cache->extractAssociatedAccountIDs();
         $linked_accounts = array_unique(array_values($associated_accounts));
         AccountCache::make($context)->loadResources($linked_accounts);
+        ItemConfigurationCache::make($context)->loadResourcesFromParentIDs($linked_accounts);
 
         $linked_modifier_atoms = array_keys($associated_accounts);
         $modifier_atom_activity_cache = ModifierAtomActivityCache::make($context);
@@ -470,6 +507,7 @@ class FrozenPeriodModel extends BaseResourceModel
         $previous_frozen_period = FrozenPeriodModel::findLatestPeriod($earliest_transacted_time);
 
         $keyed_real_raw_adjusted_summaries = [];
+        $keyed_raw_item_calculations = [];
 
         if ($previous_frozen_period) {
             $previous_frozen_accounts = model(FrozenAccountModel::class, false)
@@ -498,10 +536,35 @@ class FrozenPeriodModel extends BaseResourceModel
 
             $linked_accounts = array_keys($keyed_real_raw_adjusted_summaries);
             AccountCache::make($context)->loadResources($linked_accounts);
+            ItemConfigurationCache::make($context)->loadResourcesFromParentIDs($linked_accounts);
+
+            $previous_item_calculations = model(
+                ItemCalculationModel::class,
+                false
+            )->whereIn("frozen_account_hash", $frozen_account_hashes)->findAll();
+
+            foreach ($previous_item_calculations as $item_calculation) {
+                $frozen_account_hash = $item_calculation->frozen_account_hash;
+                $account_id = $keyed_frozen_accounts[$frozen_account_hash]->account_id;
+                if (!isset($keyed_raw_item_calculations[$account_id])) {
+                    $keyed_raw_item_calculations[$account_id] = [];
+                }
+
+                array_push(
+                    $keyed_raw_item_calculations[$account_id],
+                    [
+                        "financial_entry_id" => $item_calculation->financial_entry_id,
+                        "unit_price" => $item_calculation->unit_price,
+                        "remaining_quantity" => $item_calculation->remaining_quantity
+                    ]
+                );
+            }
+
         }
 
         return [
-            $keyed_real_raw_adjusted_summaries
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_raw_item_calculations
         ];
     }
 
@@ -510,12 +573,14 @@ class FrozenPeriodModel extends BaseResourceModel
         array $associated_accounts,
         array $associated_cash_flow_activities,
         array $associated_account_hashes,
-        array $previous_keyed_real_raw_adjusted_summaries
+        array $previous_keyed_real_raw_adjusted_summaries,
+        array $previous_keyed_raw_item_calculations
     ): array {
         $account_cache = AccountCache::make($context);
         $keyed_real_raw_unadjusted_summaries = [];
         $keyed_real_raw_adjusted_summaries = [];
         $keyed_real_raw_flows = [];
+        $keyed_raw_item_calculations = [];
 
         foreach ($associated_accounts as $modifier_atom_id => $account_id) {
             $account_hash = $associated_account_hashes[$account_id]["hash"];
@@ -561,10 +626,27 @@ class FrozenPeriodModel extends BaseResourceModel
             }
         }
 
+        foreach ($previous_keyed_raw_item_calculations as $account_id => $raw_item_calculations) {
+            if (!isset($keyed_raw_item_calculations[$account_id])) {
+                $account_hash = $associated_account_hashes[$account_id]["hash"];
+                $keyed_raw_item_calculation = [];
+                foreach ($raw_item_calculations as $raw_item_calculation) {
+                    array_push($keyed_raw_item_calculation, [
+                        "frozen_account_hash" => $account_hash,
+                        "financial_entry_id" => $raw_item_calculation["financial_entry_id"],
+                        "unit_price" => $raw_item_calculation["unit_price"],
+                        "remaining_quantity" => $raw_item_calculation["remaining_quantity"]
+                    ]);
+                }
+                $keyed_raw_item_calculations[$account_id] = $keyed_raw_item_calculation;
+            }
+        }
+
         return [
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
-            $keyed_real_raw_flows
+            $keyed_real_raw_flows,
+            $keyed_raw_item_calculations
         ];
     }
 
@@ -573,7 +655,8 @@ class FrozenPeriodModel extends BaseResourceModel
         array $keyed_real_raw_unadjusted_summaries,
         array $keyed_real_raw_adjusted_summaries,
         array $keyed_real_raw_flows,
-        array $associated_accounts,
+        array $keyed_raw_item_calculations,
+        array $associated_account_hashes,
         array $associated_cash_flow_activities,
         array $financial_entries,
         array $financial_entry_atoms
@@ -581,8 +664,9 @@ class FrozenPeriodModel extends BaseResourceModel
         $account_cache = AccountCache::make($context);
         $modifier_cache = ModifierCache::make($context);
         $modifier_atom_cache = ModifierAtomCache::make($context);
+        $item_configuration_cache = ItemConfigurationCache::make($context);
         $keyed_financial_entries = Resource::key($financial_entries, fn ($entry) => $entry->id);
-        $unresolved_financial_entry_atoms = [];
+        $new_unresolved_item_calculations = [];
 
         foreach ($financial_entry_atoms as $financial_entry_atom) {
             $numerical_value = $financial_entry_atom->numerical_value;
@@ -596,114 +680,387 @@ class FrozenPeriodModel extends BaseResourceModel
             $modifier_atom_id = $financial_entry_atom->modifier_atom_id;
             $account_id = $modifier_atom_cache->determineModifierAtomAccountID($modifier_atom_id);
 
-            if ($financial_entry_atom->kind === TOTAL_FINANCIAL_ENTRY_ATOM_KIND) {
-                if (isset($unresolved_financial_entry_atoms[$financial_entry_atom_key])) {
-                    unset($unresolved_financial_entry_atoms[$financial_entry_atom_key]);
-                } else {
-                    $account_kind = $account_cache->determineAccountKind($account_id);
-                    if ($account_kind === ITEMIZED_ASSET_ACCOUNT_KIND) {
-                        $unresolved_financial_entry_atoms[$financial_entry_atom_key]
-                            = $financial_entry_atom;
-                        continue;
-                    }
-                }
-            } else {
-                // Assumes that current financial entry atom represent the partial value of itemized
-                // asset.
-                if (isset($unresolved_financial_entry_atoms[$financial_entry_atom_key])) {
-                    $previous_financial_entry_atom = $unresolved_financial_entry_atoms[
-                        $financial_entry_atom_key
+            $modifier_action = $modifier_cache->determineModifierAction($modifier_id);
+            $modifier_atom_kind = $modifier_atom_cache->determineModifierAtomKind(
+                $modifier_atom_id
+            );
+            $is_debited_normally = $account_cache->isDebitedNormally($account_id);
+            $is_normally_temporary = $account_cache->isNormallyTemporary($account_id);
+            $is_itemized_normally = $account_cache->isItemizedNormally($account_id);
+
+            $financial_entry_atom_kind = $financial_entry_atom->kind;
+
+            if ($is_itemized_normally) {
+                if (isset($new_unresolved_item_calculations[$financial_entry_atom_key])) {
+                    $entry_atoms = [
+                        $new_unresolved_item_calculations[$financial_entry_atom_key],
+                        $financial_entry_atom
                     ];
-                    unset($unresolved_financial_entry_atoms[$financial_entry_atom_key]);
+                    unset($new_unresolved_item_calculations[$financial_entry_atom_key]);
 
-                    if ($previous_financial_entry_atom->kind === TOTAL_FINANCIAL_ENTRY_ATOM_KIND) {
-                        continue;
+                    $price_atom = array_values(array_filter(
+                        $entry_atoms,
+                        fn ($atom) => $atom->kind === PRICE_FINANCIAL_ENTRY_ATOM_KIND
+                    ))[0] ?? null;
+
+                    $quantity_atom = array_values(array_filter(
+                        $entry_atoms,
+                        fn ($atom) => $atom->kind === QUANTITY_FINANCIAL_ENTRY_ATOM_KIND
+                    ))[0] ?? null;
+
+                    $total_atom = array_values(array_filter(
+                        $entry_atoms,
+                        fn ($atom) => $atom->kind === TOTAL_FINANCIAL_ENTRY_ATOM_KIND
+                    ))[0] ?? null;
+
+                    $is_quantified_total_pair = $quantity_atom !== null && $total_atom !== null;
+                    $is_priced_quantity_pair = $price_atom !== null && $quantity_atom !== null;
+                    $is_priced_total_pair = $price_atom !== null && $total_atom !== null;
+
+                    $hash = $associated_account_hashes[$account_id]["hash"];
+                    $partial_item_calculation = [
+                        "unit_price" => $is_quantified_total_pair
+                            ? $total_atom->numerical_value->dividedBy(
+                                $quantity_atom->numerical_value
+                            )
+                            : (
+                                $price_atom === null
+                                    ? "0"
+                                    : $price_atom->numerical_value
+                            ),
+                        "remaining_quantity" => $is_priced_total_pair
+                            ? $total_atom->numerical_value->dividedBy(
+                                $price_atom->numerical_value
+                            )
+                            : (
+                                $quantity_atom === null
+                                    ? "0"
+                                    : $quantity_atom->numerical_value
+                            )
+                    ];
+
+                    if (
+                        $is_debited_normally
+                        && $modifier_atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
+                    ) {
+                        $new_item_calculation = array_merge([
+                            "frozen_account_hash" => $hash,
+                            "financial_entry_id" => $financial_entry_id
+                        ], $partial_item_calculation);
+
+                        if (!isset($keyed_raw_item_calculations[$account_id])) {
+                            $keyed_raw_item_calculations[$account_id] = [];
+                        }
+
+                        array_push(
+                            $keyed_raw_item_calculations[$account_id],
+                            $new_item_calculation
+                        );
+
+                        $numerical_value = $new_item_calculation["remaining_quantity"]
+                            ->multipliedBy($new_item_calculation["unit_price"]);
+                    } else if (
+                        $is_debited_normally
+                        && $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
+                    ) {
+                        $method = $item_configuration_cache->determineValuationMethodFromParent(
+                            $account_id
+                        );
+
+                        switch ($method) {
+                            case WEIGHTED_AVERAGE_VALUATION_METHOD:
+                                $item_calculations = $keyed_raw_item_calculations[$account_id];
+                                $return_subtotal = RationalNumber::zero();
+                                $cost_subtotal = RationalNumber::zero();
+                                [
+                                    "unit_price" => $sale_price,
+                                    "remaining_quantity" => $sold_quantity
+                                ] = $partial_item_calculation;
+                                $gross_total_price = array_reduce(
+                                    $item_calculations,
+                                    fn ($carry, $item_calculation) => $carry->plus(
+                                        $item_calculation["unit_price"]->multipliedBy(
+                                            $item_calculation["remaining_quantity"]
+                                        )
+                                    ),
+                                    RationalNumber::zero()
+                                );
+                                $gross_total_quantity = array_reduce(
+                                    $item_calculations,
+                                    fn ($carry, $item_calculation) => $carry->plus(
+                                        $item_calculation["remaining_quantity"]
+                                    ),
+                                    RationalNumber::zero()
+                                );
+                                $average_price = $gross_total_price->isZero()
+                                    ? RationalNumber::zero() : $gross_total_price->dividedBy(
+                                        $gross_total_quantity
+                                    );
+
+                                if ($gross_total_quantity->isLessThan($sold_quantity)) {
+                                    // TODO: Throw appropriate error. It may happen due to incorrect
+                                    // TODO: acceptance of financial entry atoms.
+                                }
+
+                                $consumption_factor = $sold_quantity->dividedBy(
+                                    $gross_total_quantity
+                                );
+                                $new_item_calculations = [];
+
+                                foreach ($item_calculations as $item_calculation) {
+                                    [
+                                        "frozen_account_hash" => $hash,
+                                        "financial_entry_id" => $financial_entry_id,
+                                        "unit_price" => $cost_price,
+                                        "remaining_quantity" => $remaining_quantity
+                                    ] = $item_calculation;
+
+                                    $consumed_quantity = $consumption_factor->multipliedBy(
+                                        $remaining_quantity
+                                    );
+
+                                    $cost = $average_price->multipliedBy(
+                                        $consumed_quantity
+                                    );
+
+                                    $sale = $sale_price->multipliedBy(
+                                        $consumed_quantity
+                                    );
+
+                                    $cost_subtotal = $cost_subtotal->plus($cost);
+
+                                    $revenue = $sale->minus($cost);
+                                    $return_subtotal = $return_subtotal->plus($revenue);
+
+                                    $new_quantity = $remaining_quantity
+                                        ->minus($consumed_quantity);
+
+                                    if (!$new_quantity->isZero()) {
+                                        array_push($new_item_calculations, [
+                                            "frozen_account_hash" => $hash,
+                                            "financial_entry_id" => $financial_entry_id,
+                                            "unit_price" => $cost_price,
+                                            "remaining_quantity" => $new_quantity
+                                        ]);
+                                    }
+                                }
+
+                                $keyed_raw_item_calculations[$account_id] = $new_item_calculations;
+
+                                $numerical_value = $cost_subtotal;
+                                $modifier_atoms = $modifier_atom_cache
+                                    ->getLoadedResourcesFromParentIDs([ $modifier_id ]);
+
+                                $target_modifier_atom = array_values(array_filter(
+                                    $modifier_atoms,
+                                    fn ($atom) => $atom->kind === REAL_EMERGENT_MODIFIER_ATOM_KIND
+                                ))[0] ?? null;
+
+                                if ($target_modifier_atom === null) {
+                                    // TODO: Throw appropriate error. It may happen due to incorrect
+                                    // TODO: acceptance of modifier atoms.
+                                }
+
+                                [
+                                    $keyed_real_raw_unadjusted_summaries,
+                                    $keyed_real_raw_adjusted_summaries,
+                                    $keyed_real_raw_flows
+                                ] = static::applyNumericalValue(
+                                    $context,
+                                    $keyed_real_raw_unadjusted_summaries,
+                                    $keyed_real_raw_adjusted_summaries,
+                                    $keyed_real_raw_flows,
+                                    $associated_cash_flow_activities,
+                                    $target_modifier_atom->account_id,
+                                    $modifier_action,
+                                    $target_modifier_atom->id,
+                                    $return_subtotal
+                                );
+
+                                break;
+                        }
                     }
+                } else if (
+                    $modifier_atom_kind === REAL_DEBITEM_MODIFIER_ATOM_KIND
+                    || $modifier_atom_kind === REAL_CREDITEM_MODIFIER_ATOM_KIND
+                ) {
+                    if (
+                        $is_debited_normally
+                        && $modifier_atom_kind === REAL_DEBITEM_MODIFIER_ATOM_KIND
+                    ) {
+                        $new_item_calculation = [
+                            "frozen_account_hash" => $hash,
+                            "financial_entry_id" => $financial_entry_id,
+                            "unit_price" => RationalNumber::zero(),
+                            "remaining_quantity" => $financial_entry_atom->numerical_value
+                        ];
 
-                    $numerical_value = $numerical_value->multipliedBy(
-                        $previous_financial_entry_atom->numerical_value
-                    );
+                        if (!isset($keyed_raw_item_calculations[$account_id])) {
+                            $keyed_raw_item_calculations[$account_id] = [];
+                        }
+
+                        array_push(
+                            $keyed_raw_item_calculations[$account_id],
+                            $new_item_calculation
+                        );
+                    } else if (
+                        $is_debited_normally
+                        && $modifier_atom_kind === REAL_CREDITEM_MODIFIER_ATOM_KIND
+                    ) {
+                        $new_item_calculation = [
+                            "frozen_account_hash" => $hash,
+                            "financial_entry_id" => $financial_entry_id,
+                            "unit_price" => RationalNumber::zero(),
+                            "remaining_quantity" => $financial_entry_atom
+                                ->numerical_value
+                                ->negated()
+                        ];
+
+                        if (!isset($keyed_raw_item_calculations[$account_id])) {
+                            $keyed_raw_item_calculations[$account_id] = [];
+                        }
+
+                        array_push(
+                            $keyed_raw_item_calculations[$account_id],
+                            $new_item_calculation
+                        );
+                    }
                 } else {
-                    $unresolved_financial_entry_atoms[$financial_entry_atom_key]
+                    $new_unresolved_item_calculations[$financial_entry_atom_key]
                         = $financial_entry_atom;
                     continue;
                 }
             }
 
-            $atom_kind = $modifier_atom_cache->determineModifierAtomKind($modifier_atom_id);
-            $is_debited_normally = $account_cache->isDebitedNormally($account_id);
-            $is_normally_temporary = $account_cache->isNormallyTemporary($account_id);
-            $adjusted_value = (
-                $is_debited_normally === (
-                    $atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
-                    || $atom_kind === IMAGINARY_DEBIT_MODIFIER_ATOM_KIND
-                )
-            ) || (
-                !$is_debited_normally && (
-                    $atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
-                    || $atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
-                )
-            ) ? $numerical_value : $numerical_value->negated();
+            [
+                $keyed_real_raw_unadjusted_summaries,
+                $keyed_real_raw_adjusted_summaries,
+                $keyed_real_raw_flows
+            ] = static::applyNumericalValue(
+                $context,
+                $keyed_real_raw_unadjusted_summaries,
+                $keyed_real_raw_adjusted_summaries,
+                $keyed_real_raw_flows,
+                $associated_cash_flow_activities,
+                $account_id,
+                $modifier_action,
+                $modifier_atom_id,
+                $numerical_value
+            );
+        }
 
-            $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
-                = $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
-                    ->plus($adjusted_value);
+        return [
+            $keyed_real_raw_unadjusted_summaries,
+            $keyed_real_raw_adjusted_summaries,
+            $keyed_real_raw_flows,
+            $keyed_raw_item_calculations
+        ];
+    }
+    private static function applyNumericalValue(
+        Context $context,
+        array $keyed_real_raw_unadjusted_summaries,
+        array $keyed_real_raw_adjusted_summaries,
+        array $keyed_real_raw_flows,
+        array $associated_cash_flow_activities,
+        int $account_id,
+        string $modifier_action,
+        int $modifier_atom_id,
+        BigRational $numerical_value
+    ): array {
+        if (
+            $modifier_action === CONDENSE_MODIFIER_ACTION
+            || $modifier_action === DILUTE_MODIFIER_ACTION
+        ) {
+            return [
+                $keyed_real_raw_unadjusted_summaries,
+                $keyed_real_raw_adjusted_summaries,
+                $keyed_real_raw_flows
+            ];
+        }
 
-            if ($modifier_cache->determineModifierAction($modifier_id) !== CLOSE_MODIFIER_ACTION) {
-                switch ($atom_kind) {
-                    case REAL_DEBIT_MODIFIER_ATOM_KIND: {
-                        $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
-                            = $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
-                                ->plus($numerical_value);
+        $account_cache = AccountCache::make($context);
+        $modifier_atom_cache = ModifierAtomCache::make($context);
 
-                        if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
-                            $cash_flow_activity_id = $associated_cash_flow_activities[
-                                $modifier_atom_id
-                            ];
-                            $new_net_amount = $keyed_real_raw_flows[
-                                $cash_flow_activity_id
-                            ][$account_id]["net_amount"];
+        $is_positive_numerical_value = $numerical_value->getSign() === 1;
+        $is_debited_normally = $account_cache->isDebitedNormally($account_id);
+        $modifier_atom_kind = $modifier_atom_cache->determineModifierAtomKind(
+            $modifier_atom_id
+        );
+        $modifier_atom_kind = $modifier_atom_kind === REAL_EMERGENT_MODIFIER_ATOM_KIND
+            ? (
+                (
+                    ($is_debited_normally && $is_positive_numerical_value)
+                    || (!$is_debited_normally && !$is_positive_numerical_value)
+                ) ? REAL_DEBIT_MODIFIER_ATOM_KIND : REAL_CREDIT_MODIFIER_ATOM_KIND
+            ): $modifier_atom_kind;
 
-                            $new_net_amount = $new_net_amount->minus($numerical_value);
+        $adjusted_value = (
+            $is_debited_normally === (
+                $modifier_atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
+                || $modifier_atom_kind === IMAGINARY_DEBIT_MODIFIER_ATOM_KIND
+            )
+        ) || (
+            !$is_debited_normally && (
+                $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
+                || $modifier_atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
+            )
+        ) ? $numerical_value : $numerical_value->negated();
 
-                            $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
-                                = $new_net_amount;
-                        }
-                        break;
+        $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
+            = $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
+                ->plus($adjusted_value);
+
+        if ($modifier_action !== CLOSE_MODIFIER_ACTION) {
+            switch ($modifier_atom_kind) {
+                case REAL_DEBIT_MODIFIER_ATOM_KIND: {
+                    $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
+                        = $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
+                            ->plus($numerical_value);
+
+                    if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                        $cash_flow_activity_id = $associated_cash_flow_activities[
+                            $modifier_atom_id
+                        ];
+                        $new_net_amount = $keyed_real_raw_flows[
+                            $cash_flow_activity_id
+                        ][$account_id]["net_amount"];
+
+                        $new_net_amount = $new_net_amount->minus($numerical_value);
+
+                        $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                            = $new_net_amount;
                     }
-                    case REAL_CREDIT_MODIFIER_ATOM_KIND: {
-                        $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
-                            = $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
-                                ->plus($numerical_value);
+                    break;
+                }
+                case REAL_CREDIT_MODIFIER_ATOM_KIND: {
+                    $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
+                        = $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
+                            ->plus($numerical_value);
 
-                        if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
-                            $cash_flow_activity_id = $associated_cash_flow_activities[
-                                $modifier_atom_id
-                            ];
-                            $new_net_amount = $keyed_real_raw_flows[
-                                $cash_flow_activity_id
-                            ][$account_id]["net_amount"];
+                    if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
+                        $cash_flow_activity_id = $associated_cash_flow_activities[
+                            $modifier_atom_id
+                        ];
+                        $new_net_amount = $keyed_real_raw_flows[
+                            $cash_flow_activity_id
+                        ][$account_id]["net_amount"];
 
-                            $new_net_amount = $new_net_amount->plus($numerical_value);
+                        $new_net_amount = $new_net_amount->plus($numerical_value);
 
-                            $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
-                                = $new_net_amount;
-                        }
-                        break;
+                        $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
+                            = $new_net_amount;
                     }
-                        // TODO: Implement calculation for imaginary values.
-                    case IMAGINARY_DEBIT_MODIFIER_ATOM_KIND: {
-                        break;
-                    }
-                    case IMAGINARY_CREDIT_MODIFIER_ATOM_KIND: {
-                        break;
-                    }
-                    case ITEM_COUNT_MODIFIER_ATOM_KIND: {
-                        break;
-                    }
-                    case PRICE_MODIFIER_ATOM_KIND: {
-                        break;
-                    }
+                    break;
+                }
+                // TODO: Implement calculation for imaginary values.
+                case IMAGINARY_DEBIT_MODIFIER_ATOM_KIND: {
+                    break;
+                }
+                case IMAGINARY_CREDIT_MODIFIER_ATOM_KIND: {
+                    break;
+                }
+                case PRICE_MODIFIER_ATOM_KIND: {
+                    break;
                 }
             }
         }
@@ -719,7 +1076,8 @@ class FrozenPeriodModel extends BaseResourceModel
         array $associated_accounts,
         array $keyed_real_raw_unadjusted_summaries,
         array $keyed_real_raw_adjusted_summaries,
-        array $keyed_real_raw_flows
+        array $keyed_real_raw_flows,
+        array $keyed_raw_item_calculations
     ): array {
         $frozen_accounts = array_values(array_map(
             fn ($raw_associated_account) => (new FrozenAccount())->fill($raw_associated_account),
@@ -780,6 +1138,24 @@ class FrozenPeriodModel extends BaseResourceModel
             }
         }
 
+
+        $item_calculations = [];
+        foreach ($keyed_raw_item_calculations as $account_id => $item_calculations_per_account) {
+            foreach ($item_calculations_per_account as $item_calculation) {
+                if (!$item_calculation["remaining_quantity"]->isZero()) {
+                    $raw_calculation = (new ItemCalculation())->fill([
+                        "frozen_account_hash" => $item_calculation["frozen_account_hash"],
+                        "financial_entry_id" => $item_calculation["financial_entry_id"],
+                        "unit_price" => $item_calculation["unit_price"]->simplified(),
+                        "remaining_quantity" => $item_calculation["remaining_quantity"]
+                            ->simplified()
+                    ]);
+
+                    array_push($item_calculations, $raw_calculation);
+                }
+            }
+        }
+
         // Ensure that frozen accounts are used at least once.
         $keyed_frozen_accounts = Resource::key(
             $frozen_accounts,
@@ -808,13 +1184,21 @@ class FrozenPeriodModel extends BaseResourceModel
                 = $keyed_frozen_accounts[$frozen_account_hash];
         }
 
+        foreach ($item_calculations as $item_calculation) {
+            $frozen_account_hash = $item_calculation->frozen_account_hash;
+
+            $used_frozen_accounts[$frozen_account_hash]
+                = $keyed_frozen_accounts[$frozen_account_hash];
+        }
+
         $frozen_accounts = array_values($used_frozen_accounts);
 
         return [
             $frozen_accounts,
             $real_unadjusted_summaries,
             $real_adjusted_summaries,
-            $real_flows
+            $real_flows,
+            $item_calculations
         ];
     }
 }
