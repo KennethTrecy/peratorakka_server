@@ -447,6 +447,207 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
         $this->seeNumRecords(1, "modifier_atom_activities", []);
     }
 
+    public function testPricedQuantityBidCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
+            "modifier_options" => [ "expected_actions" => [ BID_MODIFIER_ACTION ] ]
+        ]);
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities
+        ] = ModifierAtomActivityModel::createTestResource($authenticated_info->getUser()->id, [
+            "combinations" => [
+                [
+                    BID_MODIFIER_ACTION,
+                    [
+                        REAL_DEBIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND
+                    ],
+                    [
+                        ITEMIZED_ASSET_ACCOUNT_KIND,
+                        LIQUID_ASSET_ACCOUNT_KIND
+                    ],
+                    [
+                        0,
+                        null
+                    ]
+                ]
+            ],
+            "modifier_atom_options" => [
+                "parent_modifiers" => $modifiers
+            ]
+        ]);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => array_merge(
+                    $details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => [
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "10"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "5"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "50"
+                                ]
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "financial_entry" => $details->toArray(),
+            "financial_entry_atoms" => [
+                [
+                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "10"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "5"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "50"
+                ]
+            ]
+        ]);
+        $this->seeNumRecords(1, "financial_entries_v2", []);
+        $this->seeNumRecords(1, "modifiers_v2", []);
+        $this->seeNumRecords(2, "modifier_atoms", []);
+        $this->seeNumRecords(3, "financial_entry_atoms", []);
+        $this->seeNumRecords(1, "modifier_atom_activities", []);
+    }
+
+    public function testPricedQuantityAskCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $modifiers,
+            $details
+        ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
+            "modifier_options" => [ "expected_actions" => [ ASK_MODIFIER_ACTION ] ]
+        ]);
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities
+        ] = ModifierAtomActivityModel::createTestResource($authenticated_info->getUser()->id, [
+            "combinations" => [
+                [
+                    ASK_MODIFIER_ACTION,
+                    [
+                        REAL_DEBIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND
+                    ],
+                    [
+                        LIQUID_ASSET_ACCOUNT_KIND,
+                        ITEMIZED_ASSET_ACCOUNT_KIND,
+                        NOMINAL_RETURN_ACCOUNT_KIND
+                    ],
+                    [
+                        null,
+                        0,
+                        0
+                    ]
+                ]
+            ],
+            "modifier_atom_options" => [
+                "parent_modifiers" => $modifiers
+            ]
+        ]);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => array_merge(
+                    $details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => [
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "10"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "5"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "2"
+                                ]
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "financial_entry" => $details->toArray(),
+            "financial_entry_atoms" => [
+                [
+                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "10"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "5"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "2"
+                ]
+            ]
+        ]);
+        $this->seeNumRecords(1, "financial_entries_v2", []);
+        $this->seeNumRecords(1, "modifiers_v2", []);
+        $this->seeNumRecords(3, "modifier_atoms", []);
+        $this->seeNumRecords(3, "financial_entry_atoms", []);
+        $this->seeNumRecords(2, "modifier_atom_activities", []);
+    }
+
     // TODO: Make test to confirm error of updating entry within frozen period
 
     public function testInvalidUpdate()
