@@ -6,6 +6,7 @@ use App\Contracts\OwnedResource;
 use App\Models\AccountModel;
 use App\Models\CurrencyModel;
 use App\Models\ItemConfigurationModel;
+use App\Models\PrecisionFormatModel;
 use App\Entities\ItemConfiguration;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
@@ -123,13 +124,54 @@ class AccountController extends BaseOwnedResourceController
         $must_include_precision_format = $must_include_all
             || in_array("precision_formats", $relationships);
         $must_include_currency = $must_include_all || in_array("currencies", $relationships);
-        if ($must_include_precision_format || $must_include_currency) {
-            [
-                $currencies,
-                $precision_formats
-            ] = AccountModel::selectAncestorsWithResolvedResources($main_documents);
-            $enriched_document["precision_formats"] = $precision_formats;
+        $must_include_item_configuration = $must_include_all || in_array(
+            "item_configurations",
+            $relationships
+        );
+
+        $linked_accounts = array_unique(array_column($main_documents, "id"));
+        $has_accounts = !empty($linked_accounts);
+
+        $currencies = [];
+        if ($has_accounts && ($must_include_precision_format || $must_include_currency)) {
+            $currencies = model(CurrencyModel::class, false)->whereIn(
+                "id", array_unique(array_column($main_documents, "currency_id"))
+            )->findAll();
+        }
+
+        if ($must_include_currency) {
             $enriched_document["currencies"] = $currencies;
+        }
+
+        $item_configurations = [];
+        if ($has_accounts && $must_include_item_configuration) {
+            $item_configurations = model(ItemConfigurationModel::class, false)->whereIn(
+                "account_id", $linked_accounts
+            )->findAll();
+        }
+
+        if ($must_include_item_configuration) {
+            $enriched_document["item_configurations"] = $item_configurations;
+        }
+
+        $precision_formats = [];
+        if ($has_accounts && $must_include_precision_format && (
+            count($currencies) > 0 || count($item_configurations) > 0
+        )) {
+            $linked_precision_formats = array_unique(array_column(
+                array_merge($currencies, $item_configurations),
+                "precision_format_id"
+            ));
+
+            if (count($linked_precision_formats) > 0) {
+                $precision_formats = model(PrecisionFormatModel::class, false)->whereIn(
+                    "id", $linked_precision_formats
+                )->findAll();
+            }
+        }
+
+        if ($must_include_precision_format) {
+            $enriched_document["precision_formats"] = $precision_formats;
         }
 
         return $enriched_document;
