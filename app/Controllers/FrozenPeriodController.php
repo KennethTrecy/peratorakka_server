@@ -96,53 +96,116 @@ class FrozenPeriodController extends BaseOwnedResourceController
             ->findAll();
         $enriched_document["real_flow_calculations"] = $real_flows;
 
+        $item_calculations = model(ItemCalculationModel::class)
+            ->whereIn("frozen_account_hash", $frozen_account_hashes)
+            ->findAll();
+        $enriched_document["item_calculations"] = $item_calculations;
+
         $context = Context::make();
-        $account_cache = AccountCache::make($context);
-        $linked_accounts = array_unique(
-            FrozenAccountModel::extractLinkedAccounts($frozen_accounts)
+
+        $must_include_all = in_array("*", $relationships);
+        $must_include_precision_format = $must_include_all
+            || in_array("precision_formats", $relationships);
+        $must_include_currency = $must_include_all || in_array("currencies", $relationships);
+        $must_include_item_configuration = $must_include_all || in_array(
+            "item_configurations",
+            $relationships
         );
-        $account_cache->loadResources($linked_accounts);
-        $accounts = array_map(
-            fn ($account_id) => $account_cache->getLoadedResource($account_id),
-            $linked_accounts
+        $must_include_item_detail = $must_include_all || in_array("item_details", $relationships);
+        $must_include_account = $must_include_all || in_array("accounts", $relationships);
+        $must_include_cash_flow_activity = $must_include_all || in_array(
+            "cash_flow_activities",
+            $relationships
         );
-        if (in_array("*", $relationships) || in_array("accounts", $relationships)) {
+
+        $accounts = [];
+        if (
+            $must_include_account
+            || $must_include_item_configuration
+            || $must_include_item_detail
+            || $must_include_currency
+            || $must_include_precision_format
+        ) {
+            $account_cache = AccountCache::make($context);
+            $linked_accounts = array_unique(
+                FrozenAccountModel::extractLinkedAccounts($frozen_accounts)
+            );
+            $account_cache->loadResources($linked_accounts);
+            $accounts = array_map(
+                fn ($account_id) => $account_cache->getLoadedResource($account_id),
+                $linked_accounts
+            );
+        }
+
+        if ($must_include_account) {
             $enriched_document["accounts"] = $accounts;
         }
 
-        $currency_cache = CurrencyCache::make($context);
-        $linked_currencies = array_values(array_unique(
-            AccountModel::extractLinkedCurrencies($accounts)
-        ));
-        $currency_cache->loadResources($linked_currencies);
-        $currencies = array_map(
-            fn ($currency_id) => $currency_cache->getLoadedResource($currency_id),
-            $linked_currencies
-        );
-        if (in_array("*", $relationships) || in_array("currencies", $relationships)) {
+        $item_configurations = [];
+        if (
+            $must_include_item_configuration
+            || $must_include_item_detail
+            || $must_include_precision_format
+        ) {
+            $item_configuration_cache = ItemConfigurationCache::make($context);
+            $linked_accounts = array_values(array_unique(array_column($accounts, "id")));
+            $item_configuration_cache->loadResourcesFromParentIDs($linked_accounts);
+            $item_configurations = $item_configuration_cache->getLoadedResources(
+                $linked_accounts
+            );
+        }
+
+        if ($must_include_item_configuration) {
+            $enriched_document["item_configurations"] = $item_configurations;
+        }
+
+        $item_details = [];
+        if ($must_include_item_detail || $must_include_precision_format) {
+            $item_detail_cache = ItemDetailCache::make($context);
+            $linked_item_details = array_values(array_unique(
+                array_column($item_configurations, "item_detail_id")
+            ));
+            $item_detail_cache->loadResources($linked_item_details);
+            $item_details = $item_detail_cache->getLoadedResources($linked_item_details);
+        }
+
+        if ($must_include_item_detail) {
+            $enriched_document["item_details"] = $item_details;
+        }
+
+        $currencies = [];
+        if ($must_include_currency || $must_include_precision_format) {
+            $currency_cache = CurrencyCache::make($context);
+            $linked_currencies = array_values(array_unique(
+                AccountModel::extractLinkedCurrencies($accounts)
+            ));
+            $currency_cache->loadResources($linked_currencies);
+            $currencies = $currency_cache->getLoadedResources($linked_currencies);
+        }
+
+        if ($must_include_currency) {
             $enriched_document["currencies"] = $currencies;
         }
 
-        if (in_array("*", $relationships) || in_array("precision_formats", $relationships)) {
-            [
-                $precision_formats
-            ] = CurrencyModel::selectAncestorsWithResolvedResources($currencies);
-
-            $enriched_document["precision_formats"] = $precision_formats;
+        if ($must_include_precision_format) {
+            $precision_format_cache = PrecisionFormatCache::make($context);
+            $linked_precision_formats = array_values(array_unique(
+                array_column(array_merge($currencies, $item_details), "precision_format_id")
+            ));
+            $precision_format_cache->loadResources($linked_precision_formats);
+            $enriched_document["precision_formats"] = $precision_format_cache->getLoadedResources(
+                $linked_precision_formats
+            );
         }
 
-        if (in_array("*", $relationships) || in_array("cash_flow_activities", $relationships)) {
+        if ($must_include_cash_flow_activity) {
             $cash_flow_activity_cache = CashFlowActivityCache::make($context);
             $linked_cash_flow_activities = array_values(array_unique(
                 RealFlowCalculationModel::extractLinkedCashFlowActivities($real_flows)
             ));
             $cash_flow_activity_cache->loadResources($linked_cash_flow_activities);
-            $enriched_document["cash_flow_activities"] = array_map(
-                fn ($cash_flow_activity_id) => $cash_flow_activity_cache->getLoadedResource(
-                    $cash_flow_activity_id
-                ),
-                $linked_cash_flow_activities
-            );
+            $enriched_document["cash_flow_activities"] = $cash_flow_activity_cache
+                ->getLoadedResources($linked_cash_flow_activities);
         }
 
         $raw_exchange_rates = [];
