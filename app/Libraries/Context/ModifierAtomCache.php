@@ -70,4 +70,12 @@ class ModifierAtomCache extends ResourceCache
             })
         );
     }
+
+    public function getLoadedResourcesFromParentIDs(array $target_parent_IDs): array
+    {
+        return array_filter(
+            $this->resources,
+            fn ($resource) => in_array($resource->modifier_id, $target_parent_IDs)
+        );
+    }
 }
