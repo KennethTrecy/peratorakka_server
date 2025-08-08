@@ -121,13 +121,28 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
                 return true;
             }
 
-                // Make sure there is always an input to the accounts.
-                // TODO: Create finer validation for the following once available.
-            case TRANSFORM_MODIFIER_ACTION:
-            case THROW_MODIFIER_ACTION:
-            case CATCH_MODIFIER_ACTION:
             case CONDENSE_MODIFIER_ACTION:
             case DILUTE_MODIFIER_ACTION: {
+                foreach ($this->input as $input_element) {
+                    $numerical_value = RationalNumber::get($input_element["numerical_value"]);
+                    if (
+                        $numerical_value->isZero()
+                        || $input_element["kind"] !== QUANTITY_FINANCIAL_ENTRY_ATOM_KIND
+                    ) {
+                        return false;
+                    }
+                }
+
+                $premade_financial_entry_atoms = $this->makeFinancialEntryAtoms($this->input);
+                $memoizer->write("#$modifier_id", $premade_financial_entry_atoms);
+                return true;
+            }
+
+            // Make sure there is always an input to the accounts.
+            // TODO: Create finer validation for the following once available.
+            case TRANSFORM_MODIFIER_ACTION:
+            case THROW_MODIFIER_ACTION:
+            case CATCH_MODIFIER_ACTION: {
                 foreach ($this->input as $input_element) {
                     $numerical_value = RationalNumber::get($input_element["numerical_value"]);
                     if ($numerical_value->isZero()) {
@@ -277,16 +292,8 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
                 case REAL_CREDIT_MODIFIER_ATOM_KIND:
                     $real_credit_total = $real_credit_total->plus($numerical_value);
                     break;
-                case REAL_EMERGENT_MODIFIER_ATOM_KIND:
-                    // TODO: To finish this problem, there must be a way to keep track of item
-                    // TODO: calculations.
-                    $real_credit_total = $real_credit_total->plus($numerical_value);
-                    break;
             }
         }
-
-        $imaginary_debit_total = RationalNumber::zero();
-        $imaginary_credit_total = RationalNumber::zero();
 
         if (count($unresolved_itemized_entry_atoms) > 0) {
             return false;
