@@ -54,6 +54,6 @@ class Resource
 
     public static function retainExistingElements(array $resources): array
     {
-        return array_filter($resources, fn ($resource) => $resource !== null);
+        return array_values(array_filter($resources, fn ($resource) => $resource !== null));
     }
 }
