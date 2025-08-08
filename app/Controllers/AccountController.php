@@ -144,11 +144,14 @@ class AccountController extends BaseOwnedResourceController
         if (isset($input["@relationship"]["item_configuration"])) {
             $item_configuration_model = model(ItemConfigurationModel::class, false);
             $raw_item_configuration = $input["@relationship"]["item_configuration"];
+
+            if (isset($main_document["@relationship"])) unset($main_document["@relationship"]);
+
             $item_configuration_entity = new ItemConfiguration();
             $item_configuration_entity->fill([
                 "account_id" => $main_document_id,
                 "item_detail_id" => $raw_item_configuration["item_detail_id"],
-                "valuation_method" => $raw_item_configuration["valuation_method"],
+                "valuation_method" => $raw_item_configuration["valuation_method"]
             ]);
             $item_configuration_model->insert($item_configuration_entity);
             $item_configuration_entity->id = $item_configuration_model->getInsertID();
