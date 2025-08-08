@@ -26,6 +26,7 @@ enum ContextKeys: string
     case EXCHANGE_RATE_CACHE = "exchange_rate_cache";
     case CASH_FLOW_ACTIVITY_CACHE = "cash_flow_activity_cache";
     case ITEM_DETAIL_CACHE = "item_detail_cache";
+    case ITEM_CONFIGURATION_CACHE = "item_configuration_cache";
 
     case CURRENT_STACK_COUNT_STATUS = "current_stack_count_status";
     case MAX_STACK_COUNT_STATUS = "max_stack_count_status";
