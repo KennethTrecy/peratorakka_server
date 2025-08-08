@@ -159,6 +159,18 @@ class AccountController extends BaseOwnedResourceController
         return $created_document;
     }
 
+    protected static function processUpdatedDocument(int $id, array $input): void
+    {
+        $item_configuration_model = model(ItemConfigurationModel::class, false);
+        if (isset($input["@relationship"]["item_configuration"])) {
+            $data = $input["@relationship"]["item_configuration"];
+            $data["account_id"] = $id;
+            $item_configuration = new ItemConfiguration();
+            $item_configuration->fill($data);
+            $item_configuration_model->update($item_configuration->account_id, $item_configuration);
+        }
+    }
+
     private static function makeValidation(): Validation
     {
         $validation = single_service("validation");
