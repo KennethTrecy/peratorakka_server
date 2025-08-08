@@ -310,11 +310,16 @@ define("MODIFIER_KINDS", [
  | - UNKNOWN_MODIFIER_ATOM_KIND. A modifier atom with this kind is not supported by the system at
  |   the current version. This case may happen when the system downgraded.
  | - REAL_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would be
- |   debited on calculations.
+ |   debited on item and value calculations.
  | - REAL_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would
- |   be credited on calculations.
+ |   be credited on item and value calculations.
  | - REAL_EMERGENT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
- |   would be debited or credited only when calculation happens depending on the modifier action.
+ |   would be debited or credited only when item and value calculation happens depending on the
+ |   modifier action.
+ | - REAL_DEBITEM_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be debited on item calculations only.
+ | - REAL_CREDITEM_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be credited on item calculations only.
  | - IMAGINARY_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
  |   would be debited on calculations and reduces any paper calculations.
  | - IMAGINARY_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
@@ -326,7 +331,9 @@ define("MODIFIER_KINDS", [
 define("UNKNOWN_MODIFIER_ATOM_KIND", "unknown");
 define("REAL_DEBIT_MODIFIER_ATOM_KIND", "real_debit");
 define("REAL_CREDIT_MODIFIER_ATOM_KIND", "real_credit");
-define("REAL_EMERGENT_MODIFIER_ATOM_KIND", "real_potential");
+define("REAL_EMERGENT_MODIFIER_ATOM_KIND", "real_emergent");
+define("REAL_DEBITEM_MODIFIER_ATOM_KIND", "real_debitem");
+define("REAL_CREDITEM_MODIFIER_ATOM_KIND", "real_creditem");
 define("IMAGINARY_DEBIT_MODIFIER_ATOM_KIND", "imaginary_debit");
 define("IMAGINARY_CREDIT_MODIFIER_ATOM_KIND", "imaginary_credit");
 define("PRICE_MODIFIER_ATOM_KIND", "price");
@@ -334,7 +341,9 @@ define("PRICE_MODIFIER_ATOM_KIND", "price");
 define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
     REAL_DEBIT_MODIFIER_ATOM_KIND,
     REAL_CREDIT_MODIFIER_ATOM_KIND,
-    REAL_EMERGENT_MODIFIER_ATOM_KIND
+    REAL_EMERGENT_MODIFIER_ATOM_KIND,
+    REAL_DEBITEM_MODIFIER_ATOM_KIND,
+    REAL_CREDITEM_MODIFIER_ATOM_KIND
     // Below were uncommented in v0.6.0 but not in v0.6.1. It is safe to remove since parent
     // requirements needed to use them is not yet available.
 
