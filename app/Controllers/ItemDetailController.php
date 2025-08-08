@@ -65,7 +65,7 @@ class ItemDetailController extends BaseOwnedResourceController
             "required",
             "min_length[2]",
             "max_length[255]",
-            "alpha_numeric",
+            "alpha_numeric_punct",
             "is_unique_compositely[".implode(",", [
                 implode("|", [
                     static::getModelName().":"."name",
