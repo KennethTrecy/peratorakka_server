@@ -11,7 +11,7 @@ class ItemCalculation extends BaseResourceEntity
     protected $casts = [
         "frozen_account_hash" => "string",
         "financial_entry_id" => "integer",
-        "unit_price" => "rational_number",
+        "remaining_cost" => "rational_number",
         "remaining_quantity" => "rational_number"
     ];
 

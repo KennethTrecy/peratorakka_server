@@ -21,7 +21,7 @@ class CreateItemCalculations extends Migration
                 "type" => "BIGINT",
                 "unsigned" => true
             ],
-            "unit_price" => [
+            "remaining_cost" => [
                 "type" => "TEXT"
             ],
             "remaining_quantity" => [

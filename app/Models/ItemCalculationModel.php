@@ -13,7 +13,7 @@ class ItemCalculationModel extends BaseResourceModel
     protected $allowedFields = [
         "frozen_account_hash",
         "financial_entry_id",
-        "unit_price",
+        "remaining_cost",
         "remaining_quantity"
     ];
     protected $useTimestamps = false;
