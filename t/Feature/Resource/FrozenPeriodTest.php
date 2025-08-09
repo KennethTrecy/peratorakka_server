@@ -3109,7 +3109,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "15",
                     "remaining_quantity" => "5"
                 ]
             ],
@@ -3309,7 +3309,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "15",
                     "remaining_quantity" => "5"
                 ]
             ],
@@ -3508,7 +3508,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "15",
                     "remaining_quantity" => "5"
                 ]
             ],
@@ -3737,7 +3737,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "15",
                     "remaining_quantity" => "5"
                 ]
             ],
@@ -3974,14 +3974,14 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "27",
                     "remaining_quantity" => "9"
                 ],
                 [
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "0",
+                    "remaining_cost" => "0",
                     "remaining_quantity" => "36"
                 ]
             ],
@@ -4218,14 +4218,14 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3/4",
+                    "remaining_cost" => "15",
                     "remaining_quantity" => "20"
                 ],
                 [
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "0",
+                    "remaining_cost" => "0",
                     "remaining_quantity" => "-15"
                 ]
             ],
@@ -4470,21 +4470,21 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3/8",
+                    "remaining_cost" => "27",
                     "remaining_quantity" => "72"
                 ],
                 [
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "0",
+                    "remaining_cost" => "0",
                     "remaining_quantity" => "81"
                 ],
                 [
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "0",
+                    "remaining_cost" => "0",
                     "remaining_quantity" => "-108"
                 ]
             ],
@@ -4723,7 +4723,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "15",
                     "remaining_quantity" => "5"
                 ]
             ],
@@ -4970,14 +4970,14 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "3",
+                    "remaining_cost" => "27",
                     "remaining_quantity" => "9"
                 ],
                 [
                     "frozen_account_hash" => $frozen_account_hashes[
                         $itemized_asset_account->id
                     ]->hash,
-                    "unit_price" => "1",
+                    "remaining_cost" => "36",
                     "remaining_quantity" => "36"
                 ]
             ],
@@ -5167,7 +5167,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
         $this->seeNumRecords(1, "item_calculations", []);
         $this->seeInDatabase("item_calculations", [
             "frozen_account_hash" => $frozen_account_hashes[$itemized_asset_account->id]->hash,
-            "unit_price" => "3",
+            "remaining_cost" => "15",
             "remaining_quantity" => "5"
         ]);
     }
