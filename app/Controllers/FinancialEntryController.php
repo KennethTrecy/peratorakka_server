@@ -86,6 +86,11 @@ class FinancialEntryController extends BaseOwnedResourceController
         return $validation;
     }
 
+    protected static function mustTransactForCreation(): bool
+    {
+        return true;
+    }
+
     protected static function enrichResponseDocument(
         array $initial_document,
         array $relationships
@@ -133,6 +138,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         $main_document = $created_document[static::getIndividualName()];
         $main_document_id = $main_document["id"];
         $modifier_id = $main_document["modifier_id"];
+        unset($created_document["financial_entry"]["@relationship"]);
 
         $atom_model = model(FinancialEntryAtomModel::class, false);
 
@@ -147,9 +153,7 @@ class FinancialEntryController extends BaseOwnedResourceController
             return $atom;
         }, $financial_entry_atoms);
 
-        $created_document["financial_entry_atoms"] = model(FinancialEntryAtomModel::class, false)
-            ->where("financial_entry_id", $main_document_id)
-            ->findAll();
+        $created_document["financial_entry_atoms"] = $financial_entry_atoms;
 
         return $created_document;
     }
