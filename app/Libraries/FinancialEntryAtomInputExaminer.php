@@ -126,7 +126,7 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
                 foreach ($this->input as $input_element) {
                     $numerical_value = RationalNumber::get($input_element["numerical_value"]);
                     if (
-                        $numerical_value->isZero()
+                        $numerical_value->isLessThanOrEqualTo(0)
                         || $input_element["kind"] !== QUANTITY_FINANCIAL_ENTRY_ATOM_KIND
                     ) {
                         return false;
