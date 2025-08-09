@@ -71,7 +71,8 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
                 $is_correct = count($this->input) === 2;
 
                 if ($is_correct) {
-                    $memoizer->write("#$modifier_id", []);
+                    $premade_financial_entry_atoms = $this->makeFinancialEntryAtoms($this->input);
+                    $memoizer->write("#$modifier_id", $premade_financial_entry_atoms);
                 }
 
                 return $is_correct;
