@@ -52,9 +52,9 @@ class FinancialEntryModel extends BaseResourceModel
                     model(FinancialEntryAtomModel::class, false)
                         ->builder()
                         ->select("financial_entry_id")
-                        ->where(
+                        ->whereIn(
                             "modifier_atom_id",
-                            model(ModifierModel::class, false)
+                            model(ModifierAtomModel::class, false)
                                 ->builder()
                                 ->select("id")
                                 ->where(
@@ -67,7 +67,22 @@ class FinancialEntryModel extends BaseResourceModel
 
         if (!is_null($filter_modifier_id)) {
             $query_builder = $query_builder
-                ->where("modifier_id", $filter_modifier_id);
+                ->whereIn(
+                    "id",
+                    model(FinancialEntryAtomModel::class, false)
+                        ->builder()
+                        ->select("financial_entry_id")
+                        ->whereIn(
+                            "modifier_atom_id",
+                            model(ModifierAtomModel::class, false)
+                                ->builder()
+                                ->select("id")
+                                ->where(
+                                    "modifier_id",
+                                    $filter_modifier_id
+                                )
+                        )
+                );
         }
 
         if (!is_null($begin_date)) {
