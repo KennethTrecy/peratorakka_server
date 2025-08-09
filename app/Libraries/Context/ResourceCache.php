@@ -24,6 +24,22 @@ abstract class ResourceCache extends SingletonCache
         return $this->resources[$id];
     }
 
+    public function getLoadedResources($IDs): array
+    {
+        $scoped_model = static::getModel();
+        $primary_key = $scoped_model->primaryKey;
+        $unique_IDs = array_unique($IDs);
+        $loaded_resources = [];
+
+        foreach ($unique_IDs as $ID) {
+            if (isset($this->resources[$ID])) {
+                array_push($loaded_resources, $this->resources[$ID]);
+            }
+        }
+
+        return $loaded_resources;
+    }
+
     public function loadResources(array $target_resource_IDs): void
     {
         $current_user = $this->context->user();

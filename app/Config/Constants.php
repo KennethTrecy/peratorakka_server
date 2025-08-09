@@ -160,7 +160,7 @@ define("ACCEPTABLE_ACCOUNT_KINDS", [
     GENERAL_TEMPORARY_ACCOUNT_KIND,
     DIRECT_COST_ACCOUNT_KIND,
     NOMINAL_RETURN_ACCOUNT_KIND,
-    // ITEMIZED_ASSET_ACCOUNT_KIND
+    ITEMIZED_ASSET_ACCOUNT_KIND
 ]);
 
 define("ACCOUNT_KINDS", [
@@ -174,7 +174,7 @@ define("NORMAL_DEBIT_ACCOUNT_KINDS", [
     LIQUID_ASSET_ACCOUNT_KIND,
     DEPRECIATIVE_ASSET_ACCOUNT_KIND,
     DIRECT_COST_ACCOUNT_KIND,
-    // ITEMIZED_ASSET_ACCOUNT_KIND
+    ITEMIZED_ASSET_ACCOUNT_KIND
 ]);
 define("TEMPORARY_ACCOUNT_KINDS", [
     GENERAL_EXPENSE_ACCOUNT_KIND,
@@ -182,6 +182,41 @@ define("TEMPORARY_ACCOUNT_KINDS", [
     GENERAL_TEMPORARY_ACCOUNT_KIND,
     DIRECT_COST_ACCOUNT_KIND,
     NOMINAL_RETURN_ACCOUNT_KIND
+]);
+
+/*
+ | --------------------------------------------------------------------------
+ | Financial Entry Atom Kinds
+ | --------------------------------------------------------------------------
+ |
+ | There are different kinds of financial entry atom that the system can handle.
+ | - UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind is not supported by
+ |   the system at the current version. This case may happen when the system downgraded.
+ | - QUANTITY_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the
+ |   numerical value is a quantity for itemized accounts. Other accounts should not have this kind.
+ |   This is optional if price and total were already associated to an itemized account.
+ | - PRICE_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
+ |   value is a price for itemized accounts. Other accounts should not have this kind.
+ |   This is optional if quantity and total were already associated to an itemized account.
+ | - TOTAL_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
+ |   value is a total value. For itemized accounts, this quantity multiplied by price. For others
+ |   without quantities, this is the net total for a specific period or ent This is optional if
+ |   quantity and price were already associated to an itemized account.
+ */
+define("UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND", "unknown");
+define("QUANTITY_FINANCIAL_ENTRY_ATOM_KIND", "quantity");
+define("PRICE_FINANCIAL_ENTRY_ATOM_KIND", "price");
+define("TOTAL_FINANCIAL_ENTRY_ATOM_KIND", "total");
+
+define("ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS", [
+    TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+    QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+    PRICE_FINANCIAL_ENTRY_ATOM_KIND
+]);
+
+define("FINANCIAL_ENTRY_ATOM_KINDS", [
+    UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND,
+    ...ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS
 ]);
 
 /*
@@ -221,14 +256,14 @@ define("ACCEPTABLE_MODIFIER_ACTIONS", [
     RECORD_MODIFIER_ACTION,
     CLOSE_MODIFIER_ACTION,
     EXCHANGE_MODIFIER_ACTION,
-    // BID_MODIFIER_ACTION,
-    // ASK_MODIFIER_ACTION,
+    BID_MODIFIER_ACTION,
+    ASK_MODIFIER_ACTION,
+    DILUTE_MODIFIER_ACTION,
+    CONDENSE_MODIFIER_ACTION
     // REPRICE_MODIFIER_ACTION,
     // TRANSFORM_MODIFIER_ACTION,
     // THROW_MODIFIER_ACTION,
     // CATCH_MODIFIER_ACTION,
-    // CONDENSE_MODIFIER_ACTION,
-    // DILUTE_MODIFIER_ACTION
 ]);
 
 define("MODIFIER_ACTIONS", [
@@ -275,9 +310,16 @@ define("MODIFIER_KINDS", [
  | - UNKNOWN_MODIFIER_ATOM_KIND. A modifier atom with this kind is not supported by the system at
  |   the current version. This case may happen when the system downgraded.
  | - REAL_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would be
- |   debited on calculations and reduces any paper calculations.
+ |   debited on item and value calculations.
  | - REAL_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account would
- |   be credited on calculations and reduces any paper calculations.
+ |   be credited on item and value calculations.
+ | - REAL_EMERGENT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be debited or credited only when item and value calculation happens depending on the
+ |   modifier action.
+ | - REAL_DEBITEM_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be debited on item calculations only.
+ | - REAL_CREDITEM_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
+ |   would be credited on item calculations only.
  | - IMAGINARY_DEBIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
  |   would be debited on calculations and reduces any paper calculations.
  | - IMAGINARY_CREDIT_MODIFIER_ATOM_KIND. A modifier atom with this kind indicates linked account
@@ -289,6 +331,9 @@ define("MODIFIER_KINDS", [
 define("UNKNOWN_MODIFIER_ATOM_KIND", "unknown");
 define("REAL_DEBIT_MODIFIER_ATOM_KIND", "real_debit");
 define("REAL_CREDIT_MODIFIER_ATOM_KIND", "real_credit");
+define("REAL_EMERGENT_MODIFIER_ATOM_KIND", "real_emergent");
+define("REAL_DEBITEM_MODIFIER_ATOM_KIND", "real_debitem");
+define("REAL_CREDITEM_MODIFIER_ATOM_KIND", "real_creditem");
 define("IMAGINARY_DEBIT_MODIFIER_ATOM_KIND", "imaginary_debit");
 define("IMAGINARY_CREDIT_MODIFIER_ATOM_KIND", "imaginary_credit");
 define("PRICE_MODIFIER_ATOM_KIND", "price");
@@ -296,9 +341,15 @@ define("PRICE_MODIFIER_ATOM_KIND", "price");
 define("ACCEPTABLE_MODIFIER_ATOM_KINDS", [
     REAL_DEBIT_MODIFIER_ATOM_KIND,
     REAL_CREDIT_MODIFIER_ATOM_KIND,
-    IMAGINARY_DEBIT_MODIFIER_ATOM_KIND,
-    IMAGINARY_CREDIT_MODIFIER_ATOM_KIND,
-    PRICE_MODIFIER_ATOM_KIND
+    REAL_EMERGENT_MODIFIER_ATOM_KIND,
+    REAL_DEBITEM_MODIFIER_ATOM_KIND,
+    REAL_CREDITEM_MODIFIER_ATOM_KIND
+    // Below were uncommented in v0.6.0 but not in v0.6.1. It is safe to remove since parent
+    // requirements needed to use them is not yet available.
+
+    // IMAGINARY_DEBIT_MODIFIER_ATOM_KIND,
+    // IMAGINARY_CREDIT_MODIFIER_ATOM_KIND,
+    // PRICE_MODIFIER_ATOM_KIND
 ]);
 
 define("MODIFIER_ATOM_KINDS", [
@@ -308,37 +359,33 @@ define("MODIFIER_ATOM_KINDS", [
 
 /*
  | --------------------------------------------------------------------------
- | Financial Entry Atom Kinds
+ | Valuation methods
  | --------------------------------------------------------------------------
  |
- | There are different financial entry atom kinds that the system can handle.
- | - UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind is not supported by
- |   the system at the current version. This case may happen when the system downgraded.
- | - QUANTITY_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the
- |   numerical value is a quantity for itemized accounts. Other accounts should not have this kind.
- |   This is optional if price and total were already associated to an itemized account.
- | - PRICE_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
- |   value is a price for itemized accounts. Other accounts should not have this kind.
- |   This is optional if quantity and total were already associated to an itemized account.
- | - TOTAL_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
- |   value is a total value. For itemized accounts, this quantity multiplied by price. For others
- |   without quantities, this is the net total for a specific period or ent This is optional if
- |   quantity and price were already associated to an itemized account.
+ | There are different valuation methods that the current or future system can handle.
+ | - UNKNOWN_VALUATION_METHOD. An item configuration with this method is not supported by the
+ |   system at the current version. This case may happen when the system downgraded.
+ | - WEIGHTED_AVERAGE_VALUATION_METHOD. An item configuration with this method indicates the costs
+ |   of items of an account are averaged to get their price.
+ | - FIFO_VALUATION_METHOD. An item configuration with this method indicates the costs of items of
+ |   an account are determined by the price of earlier batches.
+ | - LIFO_VALUATION_METHOD.  An item configuration with this method indicates the costs of items of
+ |   an account are determined by the price of later batches.
  */
-define("UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND", "unknown");
-define("QUANTITY_FINANCIAL_ENTRY_ATOM_KIND", "quantity");
-define("PRICE_FINANCIAL_ENTRY_ATOM_KIND", "price");
-define("TOTAL_FINANCIAL_ENTRY_ATOM_KIND", "total");
+define("UNKNOWN_VALUATION_METHOD", "unknown");
+define("WEIGHTED_AVERAGE_VALUATION_METHOD", "weighted_average");
+define("FIFO_VALUATION_METHOD", "fifo");
+define("LIFO_VALUATION_METHOD", "lifo");
 
-define("ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS", [
-    TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
-    QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
-    PRICE_FINANCIAL_ENTRY_ATOM_KIND
+define("ACCEPTABLE_VALUATION_METHODS", [
+    WEIGHTED_AVERAGE_VALUATION_METHOD,
+    // FIFO_VALUATION_METHOD,
+    // LIFO_VALUATION_METHOD
 ]);
 
-define("FINANCIAL_ENTRY_ATOM_KINDS", [
-    UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND,
-    ...ACCEPTABLE_FINANCIAL_ENTRY_ATOM_KINDS
+define("VALUATION_METHODS", [
+    UNKNOWN_VALUATION_METHOD,
+    ...ACCEPTABLE_VALUATION_METHODS
 ]);
 
 /*

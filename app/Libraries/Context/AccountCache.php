@@ -65,4 +65,15 @@ class AccountCache extends ResourceCache
 
         return in_array($kind, TEMPORARY_ACCOUNT_KINDS);
     }
+
+    public function isItemizedNormally(int $account_id): bool
+    {
+        if (!isset($this->resources[$account_id])) {
+            return null;
+        }
+
+        $kind = $this->resources[$account_id]->kind;
+
+        return $kind === ITEMIZED_ASSET_ACCOUNT_KIND;
+    }
 }

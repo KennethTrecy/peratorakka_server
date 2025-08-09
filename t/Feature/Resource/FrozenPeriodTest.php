@@ -116,6 +116,8 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
                 "relationship" => [
                     "accounts",
                     "cash_flow_activities",
+                    "item_details",
+                    "item_configurations",
                     "currencies",
                     "frozen_accounts",
                     "frozen_period",
@@ -176,7 +178,10 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
             "real_unadjusted_summary_calculations" => json_decode(json_encode(
                 $real_unadjusted_summaries
             )),
-            "real_flow_calculations" => json_decode(json_encode($real_flows))
+            "real_flow_calculations" => json_decode(json_encode($real_flows)),
+            "item_calculations" => [],
+            "item_configurations" => [],
+            "item_details" => []
         ]);
     }
 
@@ -270,7 +275,7 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
             "frozen_period" => $details->toArray()
         ]);
         $this->seeNumRecords(1, "frozen_periods", []);
-        $this->seeNumRecords(3, "frozen_Accounts", []);
+        $this->seeNumRecords(3, "frozen_accounts", []);
         $this->seeNumRecords(3, "real_unadjusted_summary_calculations", []);
         $this->seeNumRecords(2, "real_adjusted_summary_calculations", []);
         $this->seeNumRecords(2, "real_flow_calculations", []);
@@ -2917,6 +2922,2254 @@ class FrozenPeriodTest extends AuthenticatedContextualHTTPTestCase
         $this->seeNumRecords(5, "real_unadjusted_summary_calculations", []);
         $this->seeNumRecords(4, "real_adjusted_summary_calculations", []);
         $this->seeNumRecords(3, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithPQBid()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, PRICE_FINANCIAL_ENTRY_ATOM_KIND, "3" ],
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 3, "15" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "0"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1500",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1500"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1485",
+                            "real_liquid_amount_difference" => "1485",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1485"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1500",
+                    "credit_amount" => "15"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "15",
+                    "credit_amount" => "0"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1485"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "15"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-15"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "15",
+                    "remaining_quantity" => "5"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithPTBid()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, PRICE_FINANCIAL_ENTRY_ATOM_KIND, "3" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "15" ],
+                                [ 3, "15" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "0"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1500",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1500"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1485",
+                            "real_liquid_amount_difference" => "1485",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1485"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1500",
+                    "credit_amount" => "15"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "15",
+                    "credit_amount" => "0"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1485"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "15"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-15"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "15",
+                    "remaining_quantity" => "5"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithQTBid()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "15" ],
+                                [ 3, "15" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "0"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1500",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1500"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1485",
+                            "real_liquid_amount_difference" => "1485",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1485"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1500",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1500",
+                    "credit_amount" => "15"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "15",
+                    "credit_amount" => "0"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1485"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "15"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-15"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "15",
+                    "remaining_quantity" => "5"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithQTBidAndPartialQTAsk()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "10" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1535",
+                            "credit_total" => "1535"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "35"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1535",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1535"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1520",
+                            "real_liquid_amount_difference" => "1520",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1520"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1535",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1550",
+                    "credit_amount" => "30"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "30",
+                    "credit_amount" => "15"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "35"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1520"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "15"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-15"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "net_amount" => "35"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "15",
+                    "remaining_quantity" => "5"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithQTBidAndPartialQTAskAndDilute()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "10" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 7, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "40" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION,
+                    DILUTE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ],
+                    [ 3, 2, REAL_DEBITEM_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1547",
+                            "credit_total" => "1547"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "47"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1547",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1547"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1520",
+                            "real_liquid_amount_difference" => "1520",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1520"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1547",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1550",
+                    "credit_amount" => "30"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "30",
+                    "credit_amount" => "3"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "47"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1520"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "27"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-27"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "net_amount" => "47"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "27",
+                    "remaining_quantity" => "9"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "0",
+                    "remaining_quantity" => "36"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithQTBidAndPartialQTAskAndCondense()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "40" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 7, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION,
+                    CONDENSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ],
+                    [ 3, 2, REAL_CREDITEM_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1535",
+                            "credit_total" => "1535"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "35"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1535",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1535"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1520",
+                            "real_liquid_amount_difference" => "1520",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1520"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1535",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1550",
+                    "credit_amount" => "30"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "30",
+                    "credit_amount" => "15"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "35"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1520"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "15"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-15"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "net_amount" => "35"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "15",
+                    "remaining_quantity" => "20"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "0",
+                    "remaining_quantity" => "-15"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstPartialCheckWithQTBidAndPartialQTAskAndDiluteAndCondense()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "80" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 7, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "90" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 4,
+                            "atoms" => [
+                                [ 8, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "120" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION,
+                    DILUTE_MODIFIER_ACTION,
+                    CONDENSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ],
+                    [ 3, 2, REAL_DEBITEM_MODIFIER_ATOM_KIND ],
+                    [ 4, 2, REAL_CREDITEM_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1547",
+                            "credit_total" => "1547"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "47"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1547",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1547"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1520",
+                            "real_liquid_amount_difference" => "1520",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1520"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1547",
+                            "credit_total" => "1500"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1550",
+                    "credit_amount" => "30"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "30",
+                    "credit_amount" => "3"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "47"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1520"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "27"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-27"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "net_amount" => "47"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "27",
+                    "remaining_quantity" => "72"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "0",
+                    "remaining_quantity" => "81"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "0",
+                    "remaining_quantity" => "-108"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstCompleteCheckWithQTBidAndPartialQTAsk()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "10" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 7, "35" ],
+                                [ 8, "35" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1535",
+                            "credit_total" => "1535"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "35"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1535",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1535"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1520",
+                            "real_liquid_amount_difference" => "1520",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1520"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1535",
+                            "credit_total" => "1535"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1550",
+                    "credit_amount" => "30"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "30",
+                    "credit_amount" => "15"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "35"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1535"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1520"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "15"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-15"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "net_amount" => "35"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "15",
+                    "remaining_quantity" => "5"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testValidFirstCompleteCheckWithQTMultipleBidAndSinglePartialAsk()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "10" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "40" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "40" ],
+                                [ 3, "40" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 7, "43" ],
+                                [ 8, "43" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods/dry_run", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "statements" => [
+                    [
+                        "currency_id" => $currency->id,
+                        "unadjusted_trial_balance" => [
+                            "debit_total" => "1543",
+                            "credit_total" => "1543"
+                        ],
+                        "income_statement" => [
+                            "net_total" => "43"
+                        ],
+                        "balance_sheet" => [
+                            "total_assets" => "1543",
+                            "total_liabilities" => "0",
+                            "total_equities" => "1543"
+                        ],
+                        "cash_flow_statement" => [
+                            "opened_real_liquid_amount" => "0",
+                            "closed_real_liquid_amount" => "1480",
+                            "real_liquid_amount_difference" => "1480",
+                            "subtotals" => [
+                                [
+                                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                                    "subtotal" => "1480"
+                                ]
+                            ]
+                        ],
+                        "adjusted_trial_balance" => [
+                            "debit_total" => "1543",
+                            "credit_total" => "1543"
+                        ]
+                    ]
+                ]
+            ],
+            "frozen_period" => $details,
+            "frozen_accounts" => json_decode(json_encode($frozen_accounts), true),
+            "real_unadjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "1500"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "1550",
+                    "credit_amount" => "70"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "debit_amount" => "70",
+                    "credit_amount" => "7"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "debit_amount" => "0",
+                    "credit_amount" => "43"
+                ]
+            ],
+            "real_adjusted_summary_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1543"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $liquid_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "1480"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "opened_amount" => "0",
+                    "closed_amount" => "63"
+                ]
+            ],
+            "real_flow_calculations" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+                    "net_amount" => "1500"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "net_amount" => "-63"
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id,
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $nominal_return_account->id
+                    ]->hash,
+                    "net_amount" => "43"
+                ]
+            ],
+            "item_calculations" => [
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "27",
+                    "remaining_quantity" => "9"
+                ],
+                [
+                    "frozen_account_hash" => $frozen_account_hashes[
+                        $itemized_asset_account->id
+                    ]->hash,
+                    "remaining_cost" => "36",
+                    "remaining_quantity" => "36"
+                ]
+            ],
+            "accounts" => json_decode(json_encode($accounts), true),
+            "currencies" => json_decode(json_encode($currencies), true),
+            "precision_formats" => json_decode(json_encode($precision_formats), true),
+            "cash_flow_activities" => json_decode(json_encode($cash_flow_activities), true)
+        ]);
+        $this->seeNumRecords(0, "frozen_periods", []);
+        $this->seeNumRecords(0, "real_unadjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_adjusted_summary_calculations", []);
+        $this->seeNumRecords(0, "real_flow_calculations", []);
+    }
+
+    public function testFirstCreateWithQTBidAndPartialQTAsk()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $cash_flow_activities,
+            $currencies,
+            $accounts,
+            $frozen_periods,
+            $frozen_accounts,
+            $real_adjusted_summaries,
+            $real_unadjusted_summaries,
+            $real_flows
+        ] = FrozenPeriodModel::createTestPeriods(
+            $authenticated_info->getUser(),
+            [
+                [
+                    "started_at" => Time::now()->subDays(1),
+                    "entries" => [
+                        [
+                            "modifier_index" => 0,
+                            "atoms" => [
+                                [ 0, "1500" ],
+                                [ 1, "1500" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 1,
+                            "atoms" => [
+                                [ 2, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "10" ],
+                                [ 2, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "30" ],
+                                [ 3, "30" ]
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 2,
+                            "atoms" => [
+                                [ 4, "50" ],
+                                [ 5, QUANTITY_FINANCIAL_ENTRY_ATOM_KIND, "5" ],
+                                [ 5, TOTAL_FINANCIAL_ENTRY_ATOM_KIND, "50" ],
+                            ]
+                        ],
+                        [
+                            "modifier_index" => 3,
+                            "atoms" => [
+                                [ 7, "35" ],
+                                [ 8, "35" ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            [
+                "currency_count" => 1,
+                "cash_flow_activity_count" => 1,
+                "expected_modifier_actions" => [
+                    RECORD_MODIFIER_ACTION,
+                    BID_MODIFIER_ACTION,
+                    ASK_MODIFIER_ACTION,
+                    CLOSE_MODIFIER_ACTION
+                ],
+                "account_combinations" => [
+                    [ 0, EQUITY_ACCOUNT_KIND ],
+                    [ 0, LIQUID_ASSET_ACCOUNT_KIND ],
+                    [ 0, ITEMIZED_ASSET_ACCOUNT_KIND, WEIGHTED_AVERAGE_VALUATION_METHOD ],
+                    [ 0, NOMINAL_RETURN_ACCOUNT_KIND ]
+                ],
+                "modifier_atom_combinations" => [
+                    [ 0, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 0, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 2, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 1, 1, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 1, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 2, REAL_CREDIT_MODIFIER_ATOM_KIND ],
+                    [ 2, 3, REAL_EMERGENT_MODIFIER_ATOM_KIND ],
+                    [ 3, 3, REAL_DEBIT_MODIFIER_ATOM_KIND ],
+                    [ 3, 0, REAL_CREDIT_MODIFIER_ATOM_KIND ]
+                ],
+                "modifier_atom_activity_combinations" => [
+                    [ 1, 0 ],
+                    [ 2, 0 ],
+                    [ 5, 0 ],
+                    [ 6, 0 ]
+                ]
+            ]
+        );
+        [
+            $equity_account,
+            $liquid_asset_account,
+            $itemized_asset_account,
+            $nominal_return_account
+        ] = $accounts;
+        $frozen_account_hashes = Resource::key(
+            $frozen_accounts,
+            fn ($info) => $info->account_id
+        );
+        $cash_flow_activity = $cash_flow_activities[0];
+        $currency = $currencies[0];
+        $details = [
+            "started_at" => $frozen_periods[0]->started_at->toDateTimeString(),
+            "finished_at" => Time::now()->toDateTimeString()
+        ];
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/frozen_periods", [
+                "frozen_period" => $details
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "frozen_period" => $details
+        ]);
+        $this->seeNumRecords(1, "frozen_periods", []);
+        $this->seeNumRecords(4, "frozen_accounts", []);
+        $this->seeNumRecords(4, "real_unadjusted_summary_calculations", []);
+        $this->seeInDatabase("real_unadjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+            "debit_amount" => "0",
+            "credit_amount" => "1500"
+        ]);
+        $this->seeInDatabase("real_unadjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$liquid_asset_account->id]->hash,
+            "debit_amount" => "1550",
+            "credit_amount" => "30"
+        ]);
+        $this->seeInDatabase("real_unadjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$itemized_asset_account->id]->hash,
+            "debit_amount" => "30",
+            "credit_amount" => "15"
+        ]);
+        $this->seeInDatabase("real_unadjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$nominal_return_account->id]->hash,
+            "debit_amount" => "0",
+            "credit_amount" => "35"
+        ]);
+        $this->seeNumRecords(3, "real_adjusted_summary_calculations", []);
+        $this->seeInDatabase("real_adjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+            "opened_amount" => "0",
+            "closed_amount" => "1535"
+        ]);
+        $this->seeInDatabase("real_adjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[
+                $liquid_asset_account->id
+            ]->hash,
+            "opened_amount" => "0",
+            "closed_amount" => "1520"
+        ]);
+        $this->seeInDatabase("real_adjusted_summary_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$itemized_asset_account->id]->hash,
+            "opened_amount" => "0",
+            "closed_amount" => "15"
+        ]);
+        $this->seeNumRecords(3, "real_flow_calculations", []);
+        $this->seeInDatabase("real_flow_calculations", [
+            "cash_flow_activity_id" => $cash_flow_activity->id,
+            "frozen_account_hash" => $frozen_account_hashes[$equity_account->id]->hash,
+            "net_amount" => "1500"
+        ]);
+        $this->seeInDatabase("real_flow_calculations", [
+            "cash_flow_activity_id" => $cash_flow_activity->id,
+            "frozen_account_hash" => $frozen_account_hashes[$itemized_asset_account->id]->hash,
+            "net_amount" => "-15"
+        ]);
+        $this->seeInDatabase("real_flow_calculations", [
+            "cash_flow_activity_id" => $cash_flow_activity->id,
+            "frozen_account_hash" => $frozen_account_hashes[$nominal_return_account->id]->hash,
+            "net_amount" => "35"
+        ]);
+        $this->seeNumRecords(1, "item_calculations", []);
+        $this->seeInDatabase("item_calculations", [
+            "frozen_account_hash" => $frozen_account_hashes[$itemized_asset_account->id]->hash,
+            "remaining_cost" => "15",
+            "remaining_quantity" => "5"
+        ]);
     }
 
     public function testInvalidUpdate()

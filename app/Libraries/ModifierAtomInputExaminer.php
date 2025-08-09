@@ -64,6 +64,7 @@ class ModifierAtomInputExaminer extends InputExaminer
                         (
                             $modifier_atom_kind === REAL_DEBIT_MODIFIER_ATOM_KIND
                             || $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
+                            || $modifier_atom_kind === REAL_EMERGENT_MODIFIER_ATOM_KIND
                         ) && (
                             (
                                 $account_kind !== LIQUID_ASSET_ACCOUNT_KIND
@@ -79,6 +80,12 @@ class ModifierAtomInputExaminer extends InputExaminer
                             || $modifier_atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
                         ) && $account_kind !== LIQUID_ASSET_ACCOUNT_KIND
                         && isset($atom["cash_flow_activity_id"])
+                    ) || (
+                        (
+                            $modifier_atom_kind === REAL_DEBITEM_MODIFIER_ATOM_KIND
+                            || $modifier_atom_kind === REAL_CREDITEM_MODIFIER_ATOM_KIND
+                        ) && $account_kind === ITEMIZED_ASSET_ACCOUNT_KIND
+                        && !isset($atom["cash_flow_activity_id"])
                     )
                 )
             );
@@ -116,17 +123,33 @@ class ModifierAtomInputExaminer extends InputExaminer
         }
 
         foreach ($allowed_account_kinds_per_atom_kind as $atom_kind => $account_condition_sets) {
-            foreach ($account_condition_sets as $account_condition_set) {
+            $account_tallies = isset($account_tally[$atom_kind])
+                ? $account_tally[$atom_kind]
+                : [];
+            $tallied_account_kinds = array_keys($account_tallies);
+            $maximum_condition_index = count($account_condition_sets) - 1;
+
+            foreach ($account_condition_sets as $condition_index => $account_condition_set) {
                 $condition = $account_condition_set[0];
                 $involved_account_kinds = array_slice(array_keys($account_condition_set), 1);
 
-                $tallied_account_kinds = isset($account_tally[$atom_kind])
-                    ? $account_tally[$atom_kind]
-                    : [];
+                $prohibited_account_kinds = array_diff(
+                    $tallied_account_kinds,
+                    $involved_account_kinds
+                );
+
+                if (count($prohibited_account_kinds) > 0) {
+                    if ($condition_index === $maximum_condition_index) {
+                        return false;
+                    }
+                }
+
+                $tallied_account_kinds = $prohibited_account_kinds;
+
                 foreach ($involved_account_kinds as $involved_account_kind) {
-                    if (isset($tallied_account_kinds[$involved_account_kind])) {
+                    if (isset($account_tallies[$involved_account_kind])) {
                         $quantifier = $account_condition_set[$involved_account_kind];
-                        $tally = $tallied_account_kinds[$involved_account_kind];
+                        $tally = $account_tallies[$involved_account_kind];
                         if ($quantifier[0] <= $tally && $tally <= $quantifier[1]) {
                             continue;
                         } else {
@@ -267,7 +290,8 @@ class ModifierAtomInputExaminer extends InputExaminer
                     [
                         "any",
                         EQUITY_ACCOUNT_KIND => $zero_or_many_count,
-                        DIRECT_COST_ACCOUNT_KIND => $zero_or_many_count
+                        DIRECT_COST_ACCOUNT_KIND => $zero_or_many_count,
+                        GENERAL_EXPENSE_ACCOUNT_KIND => $zero_or_many_count
                     ],
                     [
                         "any",
@@ -279,13 +303,17 @@ class ModifierAtomInputExaminer extends InputExaminer
                 REAL_CREDIT_MODIFIER_ATOM_KIND => [
                     [
                         "all",
-                        ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count,
-                        NOMINAL_RETURN_ACCOUNT_KIND => $one_count_only
+                        ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ],
                     [
                         "any",
-                        GENERAL_EXPENSE_ACCOUNT_KIND => $zero_or_many_count,
                         EQUITY_ACCOUNT_KIND => $zero_or_many_count
+                    ]
+                ],
+                REAL_EMERGENT_MODIFIER_ATOM_KIND => [
+                    [
+                        "all",
+                        NOMINAL_RETURN_ACCOUNT_KIND => $one_count_only
                     ]
                 ]
             ],
@@ -333,18 +361,18 @@ class ModifierAtomInputExaminer extends InputExaminer
                     ]
                 ]
             ],
-            CONDENSE_MODIFIER_ACTION => [
-                REAL_DEBIT_MODIFIER_ATOM_KIND => [
+            DILUTE_MODIFIER_ACTION => [
+                REAL_DEBITEM_MODIFIER_ATOM_KIND => [
                     [
-                        "any",
+                        "all",
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ]
             ],
-            DILUTE_MODIFIER_ACTION => [
-                REAL_CREDIT_MODIFIER_ATOM_KIND => [
+            CONDENSE_MODIFIER_ACTION => [
+                REAL_CREDITEM_MODIFIER_ATOM_KIND => [
                     [
-                        "any",
+                        "all",
                         ITEMIZED_ASSET_ACCOUNT_KIND => $one_or_many_count
                     ]
                 ]

@@ -370,6 +370,128 @@ class ModifierTest extends AuthenticatedContextualHTTPTestCase
         $this->seeNumRecords(1, "modifier_atom_activities", []);
     }
 
+    public function testSimpleBidCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $currencies,
+            [ $itemized_account, $general_asset_account ]
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ ITEMIZED_ASSET_ACCOUNT_KIND, GENERAL_ASSET_ACCOUNT_KIND ]
+        ]);
+
+        [
+            $cash_flow_activity
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        [
+            $details
+        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, [
+            "expected_actions" => [ BID_MODIFIER_ACTION ]
+        ]);
+
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/modifiers", [
+                "modifier" => array_merge(
+                    $details->toArray(),
+                    [
+                        "@relationship" => [
+                            "modifier_atoms" => [
+                                [
+                                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $itemized_account->id,
+                                    "cash_flow_activity_id" => $cash_flow_activity->id
+                                ],
+                                [
+                                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $general_asset_account->id,
+                                    "cash_flow_activity_id" => $cash_flow_activity->id
+                                ]
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "modifier" => $details->toArray(),
+            "modifier_atoms" => [
+                [
+                    "account_id" => $itemized_account->id,
+                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND
+                ],
+                [
+                    "account_id" => $general_asset_account->id,
+                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND
+                ]
+            ],
+            "modifier_atom_activities" => [
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id
+                ],
+                [
+                    "cash_flow_activity_id" => $cash_flow_activity->id
+                ]
+            ]
+        ]);
+        $this->seeNumRecords(1, "modifiers_v2", []);
+        $this->seeNumRecords(2, "modifier_atoms", []);
+        $this->seeNumRecords(2, "modifier_atom_activities", []);
+    }
+
+    public function testInvalidBidCreate()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $precision_formats,
+            $currencies,
+            [ $itemized_account, $liability_account ]
+        ] = AccountModel::createTestResource($authenticated_info->getUser()->id, [
+            "expected_kinds" => [ ITEMIZED_ASSET_ACCOUNT_KIND, LIABILITY_ACCOUNT_KIND ]
+        ]);
+
+        [
+            $cash_flow_activity
+        ] = CashFlowActivityModel::createTestResource($authenticated_info->getUser()->id, []);
+        [
+            $details
+        ] = ModifierModel::makeTestResource($authenticated_info->getUser()->id, [
+            "expected_actions" => [ BID_MODIFIER_ACTION ]
+        ]);
+
+        $this->expectException(InvalidRequest::class);
+        $this->expectExceptionCode(400);
+        $result = $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/modifiers", [
+                "modifier" => array_merge(
+                    $details->toArray(),
+                    [
+                        "@relationship" => [
+                            "modifier_atoms" => [
+                                [
+                                    "kind" => REAL_DEBIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $itemized_account->id,
+                                    "cash_flow_activity_id" => $cash_flow_activity->id
+                                ],
+                                [
+                                    "kind" => REAL_CREDIT_MODIFIER_ATOM_KIND,
+                                    "account_id" => $liability_account->id,
+                                    "cash_flow_activity_id" => $cash_flow_activity->id
+                                ]
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+    }
+
     public function testPartiallyUnownedCreate()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
