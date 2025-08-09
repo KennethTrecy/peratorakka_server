@@ -554,7 +554,7 @@ class FrozenPeriodModel extends BaseResourceModel
                     $keyed_raw_item_calculations[$account_id],
                     [
                         "financial_entry_id" => $item_calculation->financial_entry_id,
-                        "unit_price" => $item_calculation->unit_price,
+                        "remaining_cost" => $item_calculation->remaining_cost,
                         "remaining_quantity" => $item_calculation->remaining_quantity
                     ]
                 );
@@ -634,7 +634,7 @@ class FrozenPeriodModel extends BaseResourceModel
                     array_push($keyed_raw_item_calculation, [
                         "frozen_account_hash" => $account_hash,
                         "financial_entry_id" => $raw_item_calculation["financial_entry_id"],
-                        "unit_price" => $raw_item_calculation["unit_price"],
+                        "remaining_cost" => $raw_item_calculation["remaining_cost"],
                         "remaining_quantity" => $raw_item_calculation["remaining_quantity"]
                     ]);
                 }
@@ -719,14 +719,14 @@ class FrozenPeriodModel extends BaseResourceModel
 
                     $hash = $associated_account_hashes[$account_id]["hash"];
                     $partial_item_calculation = [
-                        "unit_price" => $is_quantified_total_pair
-                            ? $total_atom->numerical_value->dividedBy(
+                        "remaining_cost" => $is_priced_quantity_pair
+                            ? $price_atom->numerical_value->multipliedBy(
                                 $quantity_atom->numerical_value
                             )
                             : (
-                                $price_atom === null
+                                $total_atom === null
                                     ? "0"
-                                    : $price_atom->numerical_value
+                                    : $total_atom->numerical_value
                             ),
                         "remaining_quantity" => $is_priced_total_pair
                             ? $total_atom->numerical_value->dividedBy(
@@ -757,8 +757,7 @@ class FrozenPeriodModel extends BaseResourceModel
                             $new_item_calculation
                         );
 
-                        $numerical_value = $new_item_calculation["remaining_quantity"]
-                            ->multipliedBy($new_item_calculation["unit_price"]);
+                        $numerical_value = $new_item_calculation["remaining_cost"];
                     } else if (
                         $is_debited_normally
                         && $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
@@ -773,15 +772,14 @@ class FrozenPeriodModel extends BaseResourceModel
                                 $return_subtotal = RationalNumber::zero();
                                 $cost_subtotal = RationalNumber::zero();
                                 [
-                                    "unit_price" => $sale_price,
+                                    "remaining_cost" => $sale_total,
                                     "remaining_quantity" => $sold_quantity
                                 ] = $partial_item_calculation;
+                                $sale_price = $sale_total->dividedBy($sold_quantity);
                                 $gross_total_price = array_reduce(
                                     $item_calculations,
                                     fn ($carry, $item_calculation) => $carry->plus(
-                                        $item_calculation["unit_price"]->multipliedBy(
-                                            $item_calculation["remaining_quantity"]
-                                        )
+                                        $item_calculation["remaining_cost"]
                                     ),
                                     RationalNumber::zero()
                                 );
@@ -792,10 +790,6 @@ class FrozenPeriodModel extends BaseResourceModel
                                     ),
                                     RationalNumber::zero()
                                 );
-                                $average_price = $gross_total_price->isZero()
-                                    ? RationalNumber::zero() : $gross_total_price->dividedBy(
-                                        $gross_total_quantity
-                                    );
 
                                 if ($gross_total_quantity->isLessThan($sold_quantity)) {
                                     // TODO: Throw appropriate error. It may happen due to incorrect
@@ -811,7 +805,7 @@ class FrozenPeriodModel extends BaseResourceModel
                                     [
                                         "frozen_account_hash" => $hash,
                                         "financial_entry_id" => $financial_entry_id,
-                                        "unit_price" => $cost_price,
+                                        "remaining_cost" => $remaining_cost,
                                         "remaining_quantity" => $remaining_quantity
                                     ] = $item_calculation;
 
@@ -819,27 +813,28 @@ class FrozenPeriodModel extends BaseResourceModel
                                         $remaining_quantity
                                     );
 
-                                    $cost = $average_price->multipliedBy(
+                                    $consumed_cost = $consumption_factor->multipliedBy(
+                                        $remaining_cost
+                                    );
+
+                                    $consumed_sale = $sale_price->multipliedBy(
                                         $consumed_quantity
                                     );
 
-                                    $sale = $sale_price->multipliedBy(
-                                        $consumed_quantity
-                                    );
+                                    $cost_subtotal = $cost_subtotal->plus($consumed_cost);
 
-                                    $cost_subtotal = $cost_subtotal->plus($cost);
-
-                                    $revenue = $sale->minus($cost);
+                                    $revenue = $consumed_sale->minus($consumed_cost);
                                     $return_subtotal = $return_subtotal->plus($revenue);
 
                                     $new_quantity = $remaining_quantity
                                         ->minus($consumed_quantity);
+                                    $new_cost = $remaining_cost->minus($consumed_cost);
 
                                     if (!$new_quantity->isZero()) {
                                         array_push($new_item_calculations, [
                                             "frozen_account_hash" => $hash,
                                             "financial_entry_id" => $financial_entry_id,
-                                            "unit_price" => $cost_price,
+                                            "remaining_cost" => $new_cost,
                                             "remaining_quantity" => $new_quantity
                                         ]);
                                     }
@@ -891,7 +886,7 @@ class FrozenPeriodModel extends BaseResourceModel
                         $new_item_calculation = [
                             "frozen_account_hash" => $hash,
                             "financial_entry_id" => $financial_entry_id,
-                            "unit_price" => RationalNumber::zero(),
+                            "remaining_cost" => RationalNumber::zero(),
                             "remaining_quantity" => $financial_entry_atom->numerical_value
                         ];
 
@@ -910,7 +905,7 @@ class FrozenPeriodModel extends BaseResourceModel
                         $new_item_calculation = [
                             "frozen_account_hash" => $hash,
                             "financial_entry_id" => $financial_entry_id,
-                            "unit_price" => RationalNumber::zero(),
+                            "remaining_cost" => RationalNumber::zero(),
                             "remaining_quantity" => $financial_entry_atom
                                 ->numerical_value
                                 ->negated()
@@ -1146,7 +1141,7 @@ class FrozenPeriodModel extends BaseResourceModel
                     $raw_calculation = (new ItemCalculation())->fill([
                         "frozen_account_hash" => $item_calculation["frozen_account_hash"],
                         "financial_entry_id" => $item_calculation["financial_entry_id"],
-                        "unit_price" => $item_calculation["unit_price"]->simplified(),
+                        "remaining_cost" => $item_calculation["remaining_cost"]->simplified(),
                         "remaining_quantity" => $item_calculation["remaining_quantity"]
                             ->simplified()
                     ]);
