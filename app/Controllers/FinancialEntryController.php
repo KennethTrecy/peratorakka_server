@@ -10,7 +10,10 @@ use App\Libraries\Context\Memoizer;
 use App\Libraries\Resource;
 use App\Models\FinancialEntryAtomModel;
 use App\Models\FinancialEntryModel;
+use App\Models\FrozenPeriodModel;
 use App\Models\ModifierModel;
+use App\Models\ModifierAtomModel;
+use App\Models\ModifierAtomActivityModel;
 use CodeIgniter\Shield\Entities\User;
 use CodeIgniter\Validation\Validation;
 
@@ -109,6 +112,10 @@ class FinancialEntryController extends BaseOwnedResourceController
             "cash_flow_activities",
             $relationships
         );
+        $must_include_modifier = $must_include_all || in_array(
+            "modifiers",
+            $relationships
+        );
         $must_include_modifier_atom = $must_include_all || in_array(
             "modifier_atoms",
             $relationships
@@ -122,12 +129,118 @@ class FinancialEntryController extends BaseOwnedResourceController
             $relationships
         );
 
+        $modifiers = [];
+        if (
+            $must_include_modifier
+            || $must_include_modifier_atom
+            || $must_include_modifier_atom_activity
+            || $must_include_financial_entry_atom
+        ) {
+            $modifiers = model(ModifierModel::class, false)
+                ->whereIn("id", array_column($main_documents, "modifier_id"))
+                ->findAll();
+        }
+
+        if ($must_include_modifier) {
+            $enriched_document["modifiers"] = $modifiers;
+        }
+
+        $modifier_atoms = [];
+        if (
+            $must_include_modifier_atom
+            || $must_include_modifier_atom_activity
+            || $must_include_financial_entry_atom
+        ) {
+            $modifier_atoms = model(ModifierAtomModel::class, false)
+                ->whereIn("modifier_id", array_column($modifiers, "id"))
+                ->findAll();
+        }
+
+        if ($must_include_modifier_atom) {
+            $enriched_document["modifier_atoms"] = $modifier_atoms;
+        }
+
+        if ($must_include_modifier_atom_activity) {
+            $modifier_atom_activities = model(ModifierAtomActivityModel::class, false)
+                ->whereIn("modifier_atom_id", array_column($modifier_atoms, "id"))
+                ->findAll();
+            $enriched_document["modifier_atom_activities"] = $modifier_atom_activities;
+        }
+
         if ($must_include_financial_entry_atom) {
-            $enriched_document["financial_entry_atoms"] = model(
-                FinancialEntryAtomModel::class,
-                false
-            )->whereIn("financial_entry_id", array_column($main_documents, "id"))
-            ->findAll();
+            $financial_entry_atoms = model(FinancialEntryAtomModel::class, false)
+                ->whereIn("financial_entry_id", array_column($main_documents, "id"))
+                ->findAll();
+
+            $ask_modifiers = array_filter($modifiers, function ($modifier) {
+                return $modifier->action === ASK_MODIFIER_ACTION;
+            });
+            if (count($ask_modifiers) > 0) {
+                $ask_modifier_IDs = array_column($ask_modifiers, "id");
+
+                [
+                    // Used to determine earliest known unfrozen date
+                    $earliest_transacted_time,
+                    // Used to determine latest known unfrozen date
+                    $latest_transacted_time
+                ] = FrozenPeriodModel::minMaxTransactedTimes($main_documents);
+
+                $latest_frozen_period = FrozenPeriodModel::findLatestPeriod(
+                    $latest_transacted_time
+                );
+
+                $derived_earliest_unfrozen_date = $earliest_transacted_time;
+                if ($latest_frozen_period !== null) {
+                    $derived_earliest_unfrozen_date = $latest_frozen_period->finished_at;
+                }
+                $derived_earliest_unfrozen_date = $derived_earliest_unfrozen_date->addDays(1);
+
+                $base_financial_entries = [];
+                if ($derived_earliest_unfrozen_date->isBefore($earliest_transacted_time)) {
+                    $financial_entries = $financial_entry_model
+                        ->limitSearchToUser($financial_entry_model, $user)
+                        ->where(
+                            "transacted_at >=",
+                            $derived_earliest_unfrozen_date->toDateTimeString()
+                        )
+                        ->where("transacted_at <", $earliest_transacted_time->toDateTimeString())
+                        ->findAll();
+                }
+
+                $user = auth()->user();
+                $context = Context::make();
+                [
+                    $frozen_accounts,
+                    $real_unadjusted_summary_calculations,
+                    $real_adjusted_summary_calculations,
+                    $real_flow_calculations,
+                    $item_calculations,
+                    [ $emergent_financial_entry_atoms, $keyed_customized_financial_entry_atoms ]
+                ] = FrozenPeriodModel::makeRawCalculationsFromFinancialEntries($user, $context, [
+                    ...$base_financial_entries,
+                    ...$main_documents
+                ]);
+
+                $financial_entry_atoms = Resource::key(
+                    $financial_entry_atoms,
+                    fn ($atom) => $atom->id
+                );
+                foreach ($keyed_customized_financial_entry_atoms as $atom_id => $atom_value) {
+                    if (isset($financial_entry_atoms[$atom_id])) {
+                        $meta_key = "@meta";
+                        $financial_entry_atoms[$atom_id]->$meta_key = [
+                            "displayed_numerical_value" => $atom_value->simplified()
+                        ];
+                    }
+                }
+
+                $financial_entry_atoms = array_values(array_merge(
+                    $financial_entry_atoms,
+                    $emergent_financial_entry_atoms
+                ));
+            }
+
+            $enriched_document["financial_entry_atoms"] = $financial_entry_atoms;
         }
 
         return $enriched_document;
