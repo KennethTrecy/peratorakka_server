@@ -313,10 +313,6 @@ class DatabaseRules
         $column = $parameters[2];
         $entity = $model->findFrozen($id);
 
-        log_message(
-            "info",
-            var_export($entity, true)
-        );
         return $entity === null || $entity->$column === $value;
     }
 }
