@@ -113,9 +113,9 @@ abstract class BaseOwnedResourceController extends BaseController
 
         $scoped_model = static::getModel();
         $relationship = $this->identifyRequiredRelationship();
-        $filter = $request->getVar("filter") ?? [];
-        $sort = $request->getVar("sort") ?? [];
-        $page = $request->getVar("page") ?? [];
+        $filter = (array) ($request->getVar("filter") ?? []);
+        $sort = (array) ($request->getVar("sort") ?? []);
+        $page = (array) ($request->getVar("page") ?? []);
         $offset = $page["offset"] ?? 0;
         $limit = min($page["limit"] ?? 100, 100);
 
