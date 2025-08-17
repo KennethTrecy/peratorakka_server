@@ -29,12 +29,14 @@ class PeriodicTimeGroup extends GranularTimeGroup
 
     public function startedAt(): Time
     {
-        return $this->frozen_period->started_at;
+        return $this->frozen_period->started_at->setTimezone(DATE_TIME_ZONE)
+            ->setHour(0)->setMinute(0)->setSecond(0);
     }
 
     public function finishedAt(): Time
     {
-        return $this->frozen_period->finished_at;
+        return $this->frozen_period->finished_at->setTimezone(DATE_TIME_ZONE)
+            ->setHour(23)->setMinute(59)->setSecond(59);
     }
 
     public function lastFrozenAt(): ?Time

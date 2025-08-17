@@ -46,12 +46,14 @@ class UnfrozenTimeGroup extends GranularTimeGroup
 
     public function startedAt(): Time
     {
-        return $this->inclusive_start_date;
+        return $this->inclusive_start_date->setTimezone(DATE_TIME_ZONE)
+            ->setHour(0)->setMinute(0)->setSecond(0);
     }
 
     public function finishedAt(): Time
     {
-        return $this->inclusive_finish_date;
+        return $this->inclusive_finish_date->setTimezone(DATE_TIME_ZONE)
+            ->setHour(23)->setMinute(59)->setSecond(59);
     }
 
     public function lastFrozenAt(): ?Time
