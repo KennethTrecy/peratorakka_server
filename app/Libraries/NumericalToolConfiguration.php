@@ -123,7 +123,14 @@ class NumericalToolConfiguration
             $results = array_merge($results, $source->calculate($context));
         }
 
-        $results = array_filter($results, fn ($result) => count($result->stars) > 0);
+        $results = array_filter($results, fn ($result) => count($result->stars) > 0 && array_reduce(
+            $result->stars,
+            fn (
+                $has_nonzero_number,
+                $star
+            ) => $has_nonzero_number || !$star->numerical_value->isZero(),
+            false
+        ));
         $results = array_map(function ($result) {
             return $result->toArray();
         }, $results);
