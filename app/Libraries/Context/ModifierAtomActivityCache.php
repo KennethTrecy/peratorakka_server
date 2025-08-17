@@ -46,6 +46,7 @@ class ModifierAtomActivityCache extends ResourceCache
         }
 
         $scoped_model = static::getModel();
+        $primary_key = $scoped_model->primaryKey;
         $scoped_model = $scoped_model->limitSearchToUser($scoped_model, $current_user);
         $new_resources = $scoped_model
             ->whereIn("modifier_atom_id", array_unique($missing_parent_IDs))
@@ -53,8 +54,8 @@ class ModifierAtomActivityCache extends ResourceCache
 
         $this->resources = array_replace(
             $this->resources,
-            Resource::key($new_resources, function ($resource) {
-                return $resource->modifier_atom_id;
+            Resource::key($new_resources, function ($resource) use ($primary_key) {
+                return $resource->$primary_key;
             })
         );
     }
