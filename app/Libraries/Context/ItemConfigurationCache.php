@@ -45,6 +45,7 @@ class ItemConfigurationCache extends ResourceCache
         }
 
         $scoped_model = static::getModel();
+        $primary_key = $scoped_model->primaryKey;
         $scoped_model = $scoped_model->limitSearchToUser($scoped_model, $current_user);
         $new_resources = $scoped_model
             ->whereIn("account_id", $missing_parent_IDs)
@@ -52,8 +53,8 @@ class ItemConfigurationCache extends ResourceCache
 
         $this->resources = array_replace(
             $this->resources,
-            Resource::key($new_resources, function ($resource) {
-                return $resource->id;
+            Resource::key($new_resources, function ($resource) use ($primary_key) {
+                return $resource->$primary_key;
             })
         );
     }
