@@ -811,8 +811,6 @@ class TimeGroupManager
                     ->simplified();
 
             $incomplete_frozen_group->addRealUnadjustedSummaryCalculation($summary_calculation);
-            $this->loaded_real_unadjusted_summary_calculations[$frozen_account_hash]
-                = $account_id;
         }
 
         foreach ($periodic_real_adjusted_summaries as $summary_calculation) {
@@ -836,8 +834,6 @@ class TimeGroupManager
                     ->simplified();
 
             $incomplete_frozen_group->addRealAdjustedSummaryCalculation($summary_calculation);
-            $this->loaded_real_adjusted_summary_calculations[$frozen_account_hash]
-                = $account_id;
         }
 
         foreach ($periodic_real_flows as $flow_calculation) {
@@ -857,7 +853,6 @@ class TimeGroupManager
                     ->simplified();
 
             $incomplete_frozen_group->addRealFlowCalculation($flow_calculation);
-            $this->loaded_real_flow_calculations[] = $account_id;
         }
 
         $this->has_loaded_for_unfrozen_time_group = true;
