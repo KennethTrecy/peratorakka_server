@@ -89,9 +89,16 @@ class FrozenPeriodModel extends BaseResourceModel
             ->limitSearchToUser($financial_entry_model, $user)
             ->where("transacted_at >=", $started_at)
             ->where("transacted_at <=", $finished_at)
-            ->withDeleted()
             ->findAll();
 
+        return static::makeRawCalculationsFromFinancialEntries($user, $context, $financial_entries);
+    }
+
+    public static function makeRawCalculationsFromFinancialEntries(
+        User $user,
+        Context $context,
+        array $financial_entries
+    ): array {
         // Happens for new users
         if (count($financial_entries) === 0) {
             return [
@@ -114,7 +121,7 @@ class FrozenPeriodModel extends BaseResourceModel
         [
             // Used to determine previous period
             $earliest_transacted_time,
-            // Use to determine the exchange rate to use
+            // Used to determine the exchange rate to use
             $latest_entry_transacted_time
         ] = static::minMaxTransactedTimes($financial_entries);
 
@@ -128,8 +135,8 @@ class FrozenPeriodModel extends BaseResourceModel
             ...array_keys($previous_keyed_real_raw_adjusted_summaries)
         ]);
         $associated_account_hashes = static::generateAccountHashes(
-            $started_at,
-            $finished_at,
+            $earliest_transacted_time,
+            $latest_entry_transacted_time,
             $known_linked_accounts
         );
 
@@ -151,7 +158,9 @@ class FrozenPeriodModel extends BaseResourceModel
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows,
-            $keyed_raw_item_calculations
+            $keyed_raw_item_calculations,
+            $emergent_financial_entry_atoms,
+            $keyed_customized_financial_entry_atoms
         ] = static::consolidateRawCalculations(
             $context,
             $keyed_real_raw_unadjusted_summaries,
@@ -183,7 +192,11 @@ class FrozenPeriodModel extends BaseResourceModel
             array_values($real_unadjusted_summaries),
             array_values($real_adjusted_summaries),
             array_values($real_flows),
-            array_values($item_calculations)
+            array_values($item_calculations),
+            [
+                array_values($emergent_financial_entry_atoms),
+                $keyed_customized_financial_entry_atoms
+            ]
         ];
     }
 
@@ -476,7 +489,7 @@ class FrozenPeriodModel extends BaseResourceModel
         return $account_hashes;
     }
 
-    private static function minMaxTransactedTimes(array $financial_entries): array
+    public static function minMaxTransactedTimes(array $financial_entries): array
     {
         $earliest_transacted_time = null;
         $latest_transacted_time = null;
@@ -667,6 +680,8 @@ class FrozenPeriodModel extends BaseResourceModel
         $item_configuration_cache = ItemConfigurationCache::make($context);
         $keyed_financial_entries = Resource::key($financial_entries, fn ($entry) => $entry->id);
         $new_unresolved_item_calculations = [];
+        $emergent_financial_entry_atoms = [];
+        $keyed_customized_financial_entry_atoms = [];
 
         foreach ($financial_entry_atoms as $financial_entry_atom) {
             $numerical_value = $financial_entry_atom->numerical_value;
@@ -856,6 +871,23 @@ class FrozenPeriodModel extends BaseResourceModel
                                     // TODO: acceptance of modifier atoms.
                                 }
 
+                                array_push($emergent_financial_entry_atoms, [
+                                    "financial_entry_id" => $financial_entry_id,
+                                    "modifier_atom_id" => $target_modifier_atom->id,
+                                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => $return_subtotal
+                                ]);
+
+                                if ($is_quantified_total_pair || $is_priced_total_pair) {
+                                    $keyed_customized_financial_entry_atoms[$total_atom->id]
+                                        = $cost_subtotal;
+                                } else if ($is_priced_quantity_pair) {
+                                    $keyed_customized_financial_entry_atoms[$price_atom->id]
+                                        = $cost_subtotal->dividedBy(
+                                            $quantity_atom->numerical_value
+                                        );
+                                }
+
                                 [
                                     $keyed_real_raw_unadjusted_summaries,
                                     $keyed_real_raw_adjusted_summaries,
@@ -948,7 +980,9 @@ class FrozenPeriodModel extends BaseResourceModel
             $keyed_real_raw_unadjusted_summaries,
             $keyed_real_raw_adjusted_summaries,
             $keyed_real_raw_flows,
-            $keyed_raw_item_calculations
+            $keyed_raw_item_calculations,
+            $emergent_financial_entry_atoms,
+            $keyed_customized_financial_entry_atoms
         ];
     }
     private static function applyNumericalValue(
