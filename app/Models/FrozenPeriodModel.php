@@ -819,7 +819,7 @@ class FrozenPeriodModel extends BaseResourceModel
                                 foreach ($item_calculations as $item_calculation) {
                                     [
                                         "frozen_account_hash" => $hash,
-                                        "financial_entry_id" => $financial_entry_id,
+                                        "financial_entry_id" => $base_financial_entry_id,
                                         "remaining_cost" => $remaining_cost,
                                         "remaining_quantity" => $remaining_quantity
                                     ] = $item_calculation;
@@ -848,7 +848,7 @@ class FrozenPeriodModel extends BaseResourceModel
                                     if (!$new_quantity->isZero()) {
                                         array_push($new_item_calculations, [
                                             "frozen_account_hash" => $hash,
-                                            "financial_entry_id" => $financial_entry_id,
+                                            "financial_entry_id" => $base_financial_entry_id,
                                             "remaining_cost" => $new_cost,
                                             "remaining_quantity" => $new_quantity
                                         ]);
@@ -872,6 +872,7 @@ class FrozenPeriodModel extends BaseResourceModel
                                 }
 
                                 array_push($emergent_financial_entry_atoms, [
+                                    "id" => intval($target_modifier_atom->id.$financial_entry_id),
                                     "financial_entry_id" => $financial_entry_id,
                                     "modifier_atom_id" => $target_modifier_atom->id,
                                     "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
