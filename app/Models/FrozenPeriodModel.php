@@ -876,7 +876,7 @@ class FrozenPeriodModel extends BaseResourceModel
                                     "financial_entry_id" => $financial_entry_id,
                                     "modifier_atom_id" => $target_modifier_atom->id,
                                     "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
-                                    "numerical_value" => $return_subtotal
+                                    "numerical_value" => $return_subtotal->simplified()
                                 ]);
 
                                 if ($is_quantified_total_pair || $is_priced_total_pair) {
