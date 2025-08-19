@@ -195,6 +195,7 @@ class FinancialEntryController extends BaseOwnedResourceController
                 }
                 $derived_earliest_unfrozen_date = $derived_earliest_unfrozen_date->addDays(1);
 
+                $user = auth()->user();
                 $base_financial_entries = [];
                 if ($derived_earliest_unfrozen_date->isBefore($earliest_transacted_time)) {
                     $financial_entry_model = model(FinancialEntryModel::class, false);
@@ -208,7 +209,6 @@ class FinancialEntryController extends BaseOwnedResourceController
                         ->findAll();
                 }
 
-                $user = auth()->user();
                 $context = Context::make();
                 [
                     $frozen_accounts,
