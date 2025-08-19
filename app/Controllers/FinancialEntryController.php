@@ -199,7 +199,7 @@ class FinancialEntryController extends BaseOwnedResourceController
                 $base_financial_entries = [];
                 if ($derived_earliest_unfrozen_date->isBefore($earliest_transacted_time)) {
                     $financial_entry_model = model(FinancialEntryModel::class, false);
-                    $financial_entries = $financial_entry_model
+                    $base_financial_entries = $financial_entry_model
                         ->limitSearchToUser($financial_entry_model, $user)
                         ->where(
                             "transacted_at >=",
