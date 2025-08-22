@@ -199,9 +199,8 @@ define("TEMPORARY_ACCOUNT_KINDS", [
  |   value is a price for itemized accounts. Other accounts should not have this kind.
  |   This is optional if quantity and total were already associated to an itemized account.
  | - TOTAL_FINANCIAL_ENTRY_ATOM_KIND. A financial entry atom with this kind indicates the numerical
- |   value is a total value. For itemized accounts, this quantity multiplied by price. For others
- |   without quantities, this is the net total for a specific period or ent This is optional if
- |   quantity and price were already associated to an itemized account.
+ |   value is a total value. For itemized accounts, this is quantity multiplied by price. For others
+ |   without quantities, this is the net total for the specific financial entry.
  */
 define("UNKNOWN_FINANCIAL_ENTRY_ATOM_KIND", "unknown");
 define("QUANTITY_FINANCIAL_ENTRY_ATOM_KIND", "quantity");
