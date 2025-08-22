@@ -316,7 +316,7 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
         ]);
     }
 
-    public function testQueriedIndexWithAsks()
+    public function testQueriedIndexWithProfitAsks()
     {
         $authenticated_info = $this->makeAuthenticatedInfo();
 
@@ -499,6 +499,204 @@ class FinancialEntryTest extends AuthenticatedContextualHTTPTestCase
                     "@meta" => [
                         "displayed_numerical_value" => "5"
                     ]
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[4]->id,
+                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "15"
+                ]
+            ]
+        ]);
+    }
+
+    public function testQueriedIndexWithLossAsks()
+    {
+        $authenticated_info = $this->makeAuthenticatedInfo();
+
+        [
+            $modifiers,
+            [ $bid_details, $ask_details ]
+        ] = FinancialEntryModel::makeTestResource($authenticated_info->getUser()->id, [
+            "modifier_options" => [ "expected_actions" => [
+                BID_MODIFIER_ACTION,
+                ASK_MODIFIER_ACTION
+            ] ]
+        ]);
+        [
+            $precision_formats,
+            $currencies,
+            $accounts,
+            $modifiers,
+            $modifier_atoms,
+            $cash_flow_activities,
+            $modifier_atom_activities
+        ] = ModifierAtomActivityModel::createTestResource($authenticated_info->getUser()->id, [
+            "combinations" => [
+                [
+                    BID_MODIFIER_ACTION,
+                    [
+                        REAL_DEBIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND
+                    ],
+                    [
+                        ITEMIZED_ASSET_ACCOUNT_KIND,
+                        LIQUID_ASSET_ACCOUNT_KIND
+                    ],
+                    [
+                        0,
+                        null
+                    ]
+                ],
+                [
+                    ASK_MODIFIER_ACTION,
+                    [
+                        REAL_DEBIT_MODIFIER_ATOM_KIND,
+                        REAL_CREDIT_MODIFIER_ATOM_KIND,
+                        REAL_EMERGENT_MODIFIER_ATOM_KIND
+                    ],
+                    [
+                        LIQUID_ASSET_ACCOUNT_KIND,
+                        ITEMIZED_ASSET_ACCOUNT_KIND,
+                        NOMINAL_RETURN_ACCOUNT_KIND
+                    ],
+                    [
+                        null,
+                        0,
+                        0
+                    ]
+                ]
+            ],
+            "modifier_atom_options" => [
+                "parent_modifiers" => $modifiers
+            ]
+        ]);
+        ItemConfigurationModel::createTestResource($authenticated_info->getUser()->id, [
+            "ancestor_accounts" => [
+                $precision_formats,
+                $currencies,
+                [ $accounts[0] ]
+            ]
+        ]);
+
+        Context::clear();
+        FinancialEntryAtomInputExaminer::clear();
+        $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => array_merge(
+                    $bid_details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => [
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "5"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "10"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "50"
+                                ]
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+
+        Context::clear();
+        FinancialEntryAtomInputExaminer::clear();
+        $authenticated_info
+            ->getRequest()
+            ->withBodyFormat("json")
+            ->post("/api/v2/financial_entries", [
+                "financial_entry" => array_merge(
+                    $ask_details->toArray(),
+                    [
+                        "@relationship" => [
+                            "financial_entry_atoms" => [
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[2]->id,
+                                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "20"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[3]->id,
+                                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "5"
+                                ],
+                                [
+                                    "modifier_atom_id" => $modifier_atoms[3]->id,
+                                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => "4"
+                                ]
+                            ]
+                        ]
+                    ]
+                )
+            ]);
+
+        Context::clear();
+        FinancialEntryAtomInputExaminer::clear();
+        $result = $authenticated_info->getRequest()->get("/api/v2/financial_entries", [
+            "page" => [
+                "limit" => 10,
+                "must_be_enriched" => true
+            ],
+            "relationship" => implode(",", [
+                "financial_entry_atoms"
+            ])
+        ]);
+
+        $result->assertOk();
+        $result->assertJSONFragment([
+            "@meta" => [
+                "overall_filtered_count" => 2
+            ],
+            "financial_entry_atoms" => [
+                [
+                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "5"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[0]->id,
+                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "10"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[1]->id,
+                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "50"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[2]->id,
+                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "20"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[3]->id,
+                    "kind" => QUANTITY_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "5"
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[3]->id,
+                    "kind" => PRICE_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "4",
+                    "@meta" => [
+                        "displayed_numerical_value" => "5"
+                    ]
+                ],
+                [
+                    "modifier_atom_id" => $modifier_atoms[4]->id,
+                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                    "numerical_value" => "-5"
                 ]
             ]
         ]);
