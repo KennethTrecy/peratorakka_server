@@ -872,7 +872,6 @@ class FrozenPeriodModel extends BaseResourceModel
                                 }
 
                                 array_push($emergent_financial_entry_atoms, [
-                                    "id" => intval($target_modifier_atom->id.$financial_entry_id),
                                     "financial_entry_id" => $financial_entry_id,
                                     "modifier_atom_id" => $target_modifier_atom->id,
                                     "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
