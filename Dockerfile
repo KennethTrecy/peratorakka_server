@@ -5,7 +5,7 @@
 # - `initial_influence`. https://dev.to/veevidify/docker-compose-up-your-entire-laravel-apache-mysql-development-environment-45ea
 # - `libonig-dev`. https://www.limstash.com/en/articles/202002/1539
 
-FROM php:8.2-apache AS base
+FROM php:8.2-cli AS base
 
 # 1. Install necessary packages.
 RUN apt-get update && apt-get install -y \
@@ -18,19 +18,10 @@ RUN apt-get update && apt-get install -y \
 	unzip \
 	zip
 
-# 2. Apache configs + document root.
-# RUN echo 'Header set Access-Control-Allow-Origin "*"' >> /etc/apache2/apache2.conf
-
-RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# 3. mod_rewrite for URL rewrite and mod_headers for .htaccess extra headers like Access-Control-Allow-Origin-
-RUN a2enmod rewrite headers
-
-# 4. Copy base PHP config from development.
+# 2. Copy base PHP config from development.
 RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 
-# 5. Add PHP extensions.
+# 3. Add PHP extensions.
 RUN docker-php-ext-install bcmath
 
 RUN sudo apt-get update
@@ -151,16 +142,15 @@ COPY . /var/www/html/
 RUN sudo chmod -R a+rw /var/www/html
 
 # 3. Install dependencies
-RUN /usr/bin/composer install
+RUN cd /var/www/html/ && /usr/bin/composer install
 
 # 4. Reconfigure permissions for new directories after installation
 RUN sudo chmod -R a+rw /var/www/html/vendor
 
 # 5. Migrate all tables
-RUN /usr/bin/composer run seed:initial
+RUN cd /var/www/html/ && /usr/bin/composer run seed:initial
 
 # 6. Start HTTP service to apply changes
-RUN service apache2 stop
-CMD [ "php", "spark", "serve", "--host", "0.0.0.0", "--port", "80" ]
+CMD [ "cd", "/var/www/html/", "&&", "php", "spark", "serve", "--host", "0.0.0.0", "--port", "80" ]
 
 EXPOSE 80
