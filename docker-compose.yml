@@ -1,32 +1,45 @@
-version: "3"
-
 name: peratorakka_server
 services:
+  postgres:
+    container_name: peratorakka_database
+    image: postgres
+    # ports:
+    #   - "6500:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: peratorakka
+    volumes:
+      - ./stage_database:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - peratorakka_server_network
+
   http_server:
     build:
       context: "."
       target: production
-    image: peratorakka/http_server
-    # depends_on:
-    #   - relational_database_server
+    depends_on:
+      - postgres
     container_name: peratorakka_http_server
-    # networks:
-    #   - peratorakka_server_network
+    networks:
+      - peratorakka_server_network
+    # volumes:
+    #   - "/e/website/peratorakka/server:/var/www/html:Z"
 
-  # relational_database_server:
-  #   image: postgres
-  #   container_name: relational_database_server
-  #   ports:
-  #     - ${RELATIONAL_DATABASE_PORT}:5432
-  #   restart: always
-  #   environment:
-  #     POSTGRES_DB: ${RELATIONAL_DATABASE_NAME}
-  #     POSTGRES_USER: ${RELATIONAL_DATABASE_USERNAME}
-  #     POSTGRES_PASSWORD: ${RELATIONAL_DATABASE_PASSWORD}
-  #   networks:
-  #     - peratorakka_server_network
-  #   volumes:
-  #     - ./stage_database:/var/lib/postgresql/data
+  pgadmin:
+    container_name: peratorakka_postgres_admin
+    image: dpage/pgadmin4
+    depends_on:
+      - postgres
+    ports:
+      - "5051:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    restart: unless-stopped
+    networks:
+      - peratorakka_server_network
 
-# networks:
-#   peratorakka_server_network:
+networks:
+  peratorakka_server_network:
