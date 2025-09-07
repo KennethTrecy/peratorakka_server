@@ -69,14 +69,19 @@ class FinancialEntryAtomInputExaminer extends InputExaminer
 
             case CLOSE_MODIFIER_ACTION: {
                 $is_correct = count($this->input) === 2;
-                $is_balanced = $is_correct && $this->checkBalance($premade_financial_entry_atoms);
 
-                if ($is_balanced) {
+                if ($is_correct) {
                     $premade_financial_entry_atoms = $this->makeFinancialEntryAtoms($this->input);
-                    $memoizer->write("#$modifier_id", $premade_financial_entry_atoms);
+                    $is_balanced = $this->checkBalance($premade_financial_entry_atoms);
+
+                    if ($is_balanced) {
+                        $memoizer->write("#$modifier_id", $premade_financial_entry_atoms);
+                    }
+
+                    return $is_balanced;
                 }
 
-                return $is_balanced;
+                return $is_correct;
             }
 
             case EXCHANGE_MODIFIER_ACTION: {
