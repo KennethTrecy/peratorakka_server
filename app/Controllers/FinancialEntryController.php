@@ -147,12 +147,15 @@ class FinancialEntryController extends BaseOwnedResourceController
 
         $modifier_atoms = [];
         if (
-            $must_include_modifier_atom
-            || $must_include_modifier_atom_activity
-            || $must_include_financial_entry_atom
+            (
+                $must_include_modifier_atom
+                || $must_include_modifier_atom_activity
+                || $must_include_financial_entry_atom
+            ) && count($modifiers) > 0
         ) {
             $modifier_atoms = model(ModifierAtomModel::class, false)
                 ->whereIn("modifier_id", array_column($modifiers, "id"))
+                ->withDeleted()
                 ->findAll();
         }
 
@@ -163,6 +166,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         if ($must_include_modifier_atom_activity) {
             $modifier_atom_activities = model(ModifierAtomActivityModel::class, false)
                 ->whereIn("modifier_atom_id", array_column($modifier_atoms, "id"))
+                ->withDeleted()
                 ->findAll();
             $enriched_document["modifier_atom_activities"] = $modifier_atom_activities;
         }
@@ -170,6 +174,7 @@ class FinancialEntryController extends BaseOwnedResourceController
         if ($must_include_financial_entry_atom) {
             $financial_entry_atoms = model(FinancialEntryAtomModel::class, false)
                 ->whereIn("financial_entry_id", array_column($main_documents, "id"))
+                ->withDeleted()
                 ->findAll();
 
             $ask_modifiers = array_filter($modifiers, function ($modifier) {
@@ -206,6 +211,7 @@ class FinancialEntryController extends BaseOwnedResourceController
                             $derived_earliest_unfrozen_date->toDateTimeString()
                         )
                         ->where("transacted_at <", $earliest_transacted_time->toDateTimeString())
+                        ->withDeleted()
                         ->findAll();
                 }
 
