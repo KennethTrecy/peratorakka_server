@@ -69,7 +69,7 @@ class NumericalToolConfiguration
 
                 if ($parsed_sources[0]->outputFormatCode() !== $output_format_code) {
                     throw new NumericalToolConfigurationException(
-                        "Source #".($i + 1) + " has different output format."
+                        "Source #".(intval($i) + 1). " has different output format."
                         ." Every source must have same output format."
                     );
                 }
