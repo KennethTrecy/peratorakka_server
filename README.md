@@ -75,9 +75,7 @@ are not yet clear and may vary depending on machine and admin's preferences.
    specifically the `baseURL` and any database settings. Note that `.env` is
    for the server *inside* the container while `.env.container` is for the
    container itself.
-3. Use `host.docker.internal` for hostname to connect the database server and
-   HTTP server correctly.
-4. Run `docker compose --env-file .env.container up --detach`.
+3. Run `docker compose --env-file .env.container up --detach`.
 4. Run `docker compose --env-file .env.container up --detach --build` if you
    want to rebuild the HTTP server after receiving updates by using `git pull
    origin master`.
