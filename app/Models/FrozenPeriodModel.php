@@ -1033,7 +1033,7 @@ class FrozenPeriodModel extends BaseResourceModel
                 $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
                 || $modifier_atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
             )
-        ) ? $numerical_value : $numerical_value->negated();
+        ) ? $numerical_value->abs() : $numerical_value->abs()->negated();
 
         $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
             = $keyed_real_raw_adjusted_summaries[$account_id]["closed_amount"]
@@ -1044,7 +1044,7 @@ class FrozenPeriodModel extends BaseResourceModel
                 case REAL_DEBIT_MODIFIER_ATOM_KIND: {
                     $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
                         = $keyed_real_raw_unadjusted_summaries[$account_id]["debit_amount"]
-                            ->plus($numerical_value);
+                            ->plus($numerical_value->abs());
 
                     if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
                         $cash_flow_activity_id = $associated_cash_flow_activities[
@@ -1054,7 +1054,7 @@ class FrozenPeriodModel extends BaseResourceModel
                             $cash_flow_activity_id
                         ][$account_id]["net_amount"];
 
-                        $new_net_amount = $new_net_amount->minus($numerical_value);
+                        $new_net_amount = $new_net_amount->minus($numerical_value->abs());
 
                         $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
                             = $new_net_amount;
@@ -1064,7 +1064,7 @@ class FrozenPeriodModel extends BaseResourceModel
                 case REAL_CREDIT_MODIFIER_ATOM_KIND: {
                     $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
                         = $keyed_real_raw_unadjusted_summaries[$account_id]["credit_amount"]
-                            ->plus($numerical_value);
+                            ->plus($numerical_value->abs());
 
                     if (isset($associated_cash_flow_activities[$modifier_atom_id])) {
                         $cash_flow_activity_id = $associated_cash_flow_activities[
@@ -1074,7 +1074,7 @@ class FrozenPeriodModel extends BaseResourceModel
                             $cash_flow_activity_id
                         ][$account_id]["net_amount"];
 
-                        $new_net_amount = $new_net_amount->plus($numerical_value);
+                        $new_net_amount = $new_net_amount->plus($numerical_value->abs());
 
                         $keyed_real_raw_flows[$cash_flow_activity_id][$account_id]["net_amount"]
                             = $new_net_amount;
