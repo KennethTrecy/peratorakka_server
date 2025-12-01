@@ -1029,7 +1029,7 @@ class FrozenPeriodModel extends BaseResourceModel
                 || $modifier_atom_kind === IMAGINARY_DEBIT_MODIFIER_ATOM_KIND
             )
         ) || (
-            !$is_debited_normally && (
+            !$is_debited_normally === (
                 $modifier_atom_kind === REAL_CREDIT_MODIFIER_ATOM_KIND
                 || $modifier_atom_kind === IMAGINARY_CREDIT_MODIFIER_ATOM_KIND
             )
