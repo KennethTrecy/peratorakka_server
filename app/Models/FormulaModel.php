@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Entities\Deprecated\Formula;
+use App\Entities\Formula;
 use CodeIgniter\Shield\Entities\User;
 use Faker\Generator;
 
