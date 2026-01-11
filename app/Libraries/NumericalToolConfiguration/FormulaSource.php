@@ -4,7 +4,7 @@ namespace App\Libraries\NumericalToolConfiguration;
 
 use App\Casts\RationalNumber;
 use App\Contracts\NumericalToolSource;
-use App\Entities\Deprecated\Formula;
+use App\Entities\Formula;
 use App\Exceptions\NumericalToolConfigurationException;
 use App\Libraries\Constellation;
 use App\Libraries\Constellation\AcceptableConstellationKind;
