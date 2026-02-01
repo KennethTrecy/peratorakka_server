@@ -6,7 +6,7 @@ use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\RawSql;
 use Config\Database;
 
-class DropFinancialEntries extends Migration
+class DropFinancialEntryTable extends Migration
 {
     public function up()
     {
