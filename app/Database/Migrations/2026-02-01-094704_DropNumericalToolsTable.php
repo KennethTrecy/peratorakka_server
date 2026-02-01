@@ -6,7 +6,7 @@ use CodeIgniter\Database\Migration;
 use CodeIgniter\Database\RawSql;
 use Config\Database;
 
-class DropNumericalToolTable extends Migration
+class DropNumericalToolsTable extends Migration
 {
     public function up()
     {
