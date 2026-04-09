@@ -132,6 +132,7 @@ class NumericalToolController extends BaseOwnedResourceController
         $is_success = !is_null($data);
 
         if ($is_success) {
+            ini_set("max_execution_time", 1920);
             [
                 $time_tags,
                 $constellations
