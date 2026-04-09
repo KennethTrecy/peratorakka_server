@@ -252,7 +252,8 @@ class ModifierAtomInputExaminer extends InputExaminer
                         EQUITY_ACCOUNT_KIND => $one_count_only,
                         GENERAL_EXPENSE_ACCOUNT_KIND => $one_count_only,
                         GENERAL_TEMPORARY_ACCOUNT_KIND => $one_count_only,
-                        DIRECT_COST_ACCOUNT_KIND => $one_count_only
+                        DIRECT_COST_ACCOUNT_KIND => $one_count_only,
+                        NOMINAL_RETURN_ACCOUNT_KIND => $one_count_only
                     ]
                 ]
             ],
