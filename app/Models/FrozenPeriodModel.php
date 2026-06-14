@@ -813,9 +813,11 @@ class FrozenPeriodModel extends BaseResourceModel
                                     // TODO: acceptance of financial entry atoms.
                                 }
 
-                                $consumption_factor = $sold_quantity->dividedBy(
-                                    $gross_total_quantity
-                                );
+                                $consumption_factor = $gross_total_quantity->isZero()
+                                    ? RationalNumber::zero()
+                                    : $sold_quantity->dividedBy(
+                                        $gross_total_quantity
+                                    );
                                 $new_item_calculations = [];
 
                                 foreach ($item_calculations as $item_calculation) {
@@ -905,8 +907,7 @@ class FrozenPeriodModel extends BaseResourceModel
                                     $target_modifier_atom->id,
                                     $return_subtotal
                                 );
-
-                                break;
+                            } break;
                         }
                     }
                 } else if (
