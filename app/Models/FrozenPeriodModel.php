@@ -782,8 +782,10 @@ class FrozenPeriodModel extends BaseResourceModel
                         );
 
                         switch ($method) {
-                            case WEIGHTED_AVERAGE_VALUATION_METHOD:
-                                $item_calculations = $keyed_raw_item_calculations[$account_id];
+                            case WEIGHTED_AVERAGE_VALUATION_METHOD: {
+                                $item_calculations = $keyed_raw_item_calculations[$account_id] ?? [
+
+                                ];
                                 $return_subtotal = RationalNumber::zero();
                                 $cost_subtotal = RationalNumber::zero();
                                 [
