@@ -29,6 +29,8 @@ trait RegisterValues
         $this->addValue("CYCLE_DAY_COUNT", "evaluateCycleDayCount");
         $this->addValue("CYCLE_DAY_PRECOUNT_PER_YEAR", "evaluateCycleDayPrecountPerYear");
         $this->addValue("CYCLE_DAY_POSTCOUNT_PER_YEAR", "evaluateCycleDayPostcountPerYear");
+        $this->addValue("CURRENT_YEAR", "evaluateCurrentYear");
+        $this->addValue("CURRENT_MONTH", "evaluateCurrentMonth");
         $this->addValue("COLLECTION\[\d+\]", "evaluateCollection");
         $this->addValue("FORMULA\[\d+\]", "evaluateFormula");
         $this->addValue("CASH_FLOW_ACTIVITY\[\d+\]", "evaluateCashFlowActivity");
@@ -178,6 +180,44 @@ trait RegisterValues
         );
 
         return json_encode($day_counts);
+    }
+
+    private function evaluateCurrentYear(array $values, Context $context, Token $token): string
+    {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $subcycle_ranges = $time_group_manager->subcycleRanges();
+        $indexes = array_map(
+            function ($ranges) {
+                return array_map(
+                    function ($range) {
+                        return $range[0]->year;
+                    },
+                    $ranges
+                );
+            },
+            $subcycle_ranges
+        );
+
+        return json_encode($indexes);
+    }
+
+    private function evaluateCurrentMonth(array $values, Context $context, Token $token): string
+    {
+        $time_group_manager = $context->getVariable(ContextKeys::TIME_GROUP_MANAGER);
+        $subcycle_ranges = $time_group_manager->subcycleRanges();
+        $indexes = array_map(
+            function ($ranges) {
+                return array_map(
+                    function ($range) {
+                        return $range[0]->month;
+                    },
+                    $ranges
+                );
+            },
+            $subcycle_ranges
+        );
+
+        return json_encode($indexes);
     }
 
     private function addValue(string $name, string $function_name)
