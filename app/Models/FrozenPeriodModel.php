@@ -908,6 +908,121 @@ class FrozenPeriodModel extends BaseResourceModel
                                     $return_subtotal
                                 );
                             } break;
+                            case FIFO_VALUATION_METHOD: {
+                                $item_calculations = $keyed_raw_item_calculations[$account_id] ?? [
+
+                                ];
+                                $return_subtotal = RationalNumber::zero();
+                                $cost_subtotal = RationalNumber::zero();
+                                [
+                                    "remaining_cost" => $sale_total,
+                                    "remaining_quantity" => $sold_quantity
+                                ] = $partial_item_calculation;
+                                $sale_price = $sale_total->dividedBy($sold_quantity);
+                                $gross_total_quantity = array_reduce(
+                                    $item_calculations,
+                                    fn ($carry, $item_calculation) => $carry->plus(
+                                        $item_calculation["remaining_quantity"]
+                                    ),
+                                    RationalNumber::zero()
+                                );
+
+                                if ($gross_total_quantity->isLessThan($sold_quantity)) {
+                                    // TODO: Throw appropriate error. It may happen due to incorrect
+                                    // TODO: acceptance of financial entry atoms.
+                                }
+
+                                $new_item_calculations = [];
+
+                                foreach ($item_calculations as $item_calculation) {
+                                    [
+                                        "frozen_account_hash" => $hash,
+                                        "financial_entry_id" => $base_financial_entry_id,
+                                        "remaining_cost" => $remaining_cost,
+                                        "remaining_quantity" => $remaining_quantity
+                                    ] = $item_calculation;
+
+                                    $consumed_quantity = $remaining_quantity->isLessThanOrEqualTo(
+                                        $sold_quantity
+                                    ) ? $remaining_quantity : $sold_quantity;
+                                    $sold_quantity = $sold_quantity->minus($consumed_quantity);
+
+                                    $consumed_cost = $consumed_quantity->multipliedBy(
+                                        $remaining_cost->dividedBy($remaining_quantity)
+                                    );
+
+                                    $consumed_sale = $sale_price->multipliedBy(
+                                        $consumed_quantity
+                                    );
+
+                                    $cost_subtotal = $cost_subtotal->plus($consumed_cost);
+
+                                    $revenue = $consumed_sale->minus($consumed_cost);
+                                    $return_subtotal = $return_subtotal->plus($revenue);
+
+                                    $new_quantity = $remaining_quantity
+                                        ->minus($consumed_quantity);
+                                    $new_cost = $remaining_cost->minus($consumed_cost);
+
+                                    if (!$new_quantity->isZero()) {
+                                        array_push($new_item_calculations, [
+                                            "frozen_account_hash" => $hash,
+                                            "financial_entry_id" => $base_financial_entry_id,
+                                            "remaining_cost" => $new_cost,
+                                            "remaining_quantity" => $new_quantity
+                                        ]);
+                                    }
+                                }
+
+                                $keyed_raw_item_calculations[$account_id] = $new_item_calculations;
+
+                                $numerical_value = $cost_subtotal;
+                                $modifier_atoms = $modifier_atom_cache
+                                    ->getLoadedResourcesFromParentIDs([ $modifier_id ]);
+
+                                $target_modifier_atom = array_values(array_filter(
+                                    $modifier_atoms,
+                                    fn ($atom) => $atom->kind === REAL_EMERGENT_MODIFIER_ATOM_KIND
+                                ))[0] ?? null;
+
+                                if ($target_modifier_atom === null) {
+                                    // TODO: Throw appropriate error. It may happen due to incorrect
+                                    // TODO: acceptance of modifier atoms.
+                                }
+
+                                array_push($emergent_financial_entry_atoms, [
+                                    "financial_entry_id" => $financial_entry_id,
+                                    "modifier_atom_id" => $target_modifier_atom->id,
+                                    "kind" => TOTAL_FINANCIAL_ENTRY_ATOM_KIND,
+                                    "numerical_value" => $return_subtotal->simplified()
+                                ]);
+
+                                if ($is_quantified_total_pair || $is_priced_total_pair) {
+                                    $keyed_customized_financial_entry_atoms[$total_atom->id]
+                                        = $cost_subtotal;
+                                } else if ($is_priced_quantity_pair) {
+                                    $keyed_customized_financial_entry_atoms[$price_atom->id]
+                                        = $cost_subtotal->dividedBy(
+                                            $quantity_atom->numerical_value
+                                        );
+                                }
+
+                                [
+                                    $keyed_real_raw_unadjusted_summaries,
+                                    $keyed_real_raw_adjusted_summaries,
+                                    $keyed_real_raw_flows
+                                ] = static::applyNumericalValue(
+                                    $context,
+                                    $keyed_real_raw_unadjusted_summaries,
+                                    $keyed_real_raw_adjusted_summaries,
+                                    $keyed_real_raw_flows,
+                                    $associated_cash_flow_activities,
+                                    $target_modifier_atom->account_id,
+                                    $modifier_action,
+                                    $target_modifier_atom->id,
+                                    $return_subtotal
+                                );
+                            } break;
                         }
                     }
                 } else if (
