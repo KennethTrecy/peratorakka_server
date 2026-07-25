@@ -35,11 +35,11 @@ trait RegisterValues
         $this->addValue("FORMULA\[\d+\]", "evaluateFormula");
         $this->addValue("CASH_FLOW_ACTIVITY\[\d+\]", "evaluateCashFlowActivity");
         $this->addValue("ACCOUNT\[\d+\]", "evaluateAccount");
-        $this->addValue("(EXPENSE|INCOME)_ACCOUNTS", "evaluateDeprecatedAccountKind");
-        $this->addValue(
-            "(".join("|", ACCEPTABLE_ACCOUNT_KINDS).")_ACCOUNTS",
-            "evaluateAccountKind"
-        );
+        $this->addValue("EXPENSE_ACCOUNTS", "evaluateDeprecatedAccountKind");
+        $this->addValue("INCOME_ACCOUNTS", "evaluateDeprecatedAccountKind");
+        foreach (ACCEPTABLE_ACCOUNT_KINDS as $kind) {
+            $this->addValue($kind."_ACCOUNTS", "evaluateAccountKind");
+        }
     }
 
     private function evaluateCollection(array $values, Context $context, Token $token): string

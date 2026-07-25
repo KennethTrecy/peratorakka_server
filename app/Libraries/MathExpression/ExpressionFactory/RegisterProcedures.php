@@ -26,16 +26,13 @@ trait RegisterProcedures
 {
     public function addProcedures()
     {
-        $this->addProcedure(
-            "SHIFT_CYCLE",
-            3,
-            "processShiftCycle"
-        );
-        $this->addProcedure(
-            "TOTAL_(OPENED|UNADJUSTED|CLOSED)_(DEBIT|CREDIT)_AMOUNT",
-            1,
-            "processTotalAmount"
-        );
+        $this->addProcedure("SHIFT_CYCLE", 3, "processShiftCycle");
+        $this->addProcedure("TOTAL_OPENED_DEBIT_AMOUNT", 1, "processTotalAmount");
+        $this->addProcedure("TOTAL_OPENED_CREDIT_AMOUNT", 1, "processTotalAmount");
+        $this->addProcedure("TOTAL_UNADJUSTED_DEBIT_AMOUNT", 1, "processTotalAmount");
+        $this->addProcedure("TOTAL_UNADJUSTED_CREDIT_AMOUNT", 1, "processTotalAmount");
+        $this->addProcedure("TOTAL_CLOSED_DEBIT_AMOUNT", 1, "processTotalAmount");
+        $this->addProcedure("TOTAL_CLOSED_CREDIT_AMOUNT", 1, "processTotalAmount");
         $this->addProcedure("TOTAL_NET_CASH_FLOW_AMOUNT", 2, "processTotalNetCashFlowAmount");
         $this->addProcedure("SOLVE", 2, "processSolve");
         $this->addProcedure("SELECT_CYCLE_VALUE", 2, "processSelectCycleValue");
