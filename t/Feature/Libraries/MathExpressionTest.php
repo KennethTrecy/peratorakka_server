@@ -3,7 +3,7 @@
 namespace Tests\Feature\Libraries;
 
 use App\Casts\RationalNumber;
-use App\Exceptions\ExpressionException;
+use Xylemical\Expressions\LexerException;
 use App\Libraries\Context;
 use App\Libraries\Context\AccountCache;
 use App\Libraries\Context\ContextKeys;
@@ -1080,7 +1080,7 @@ class MathExpressionTest extends AuthenticatedContextualHTTPTestCase
         $account_cache->loadResources(array_map(fn ($account) => $account->id, $accounts));
         $math_expression = new MathExpression($time_group_manager);
 
-        $this->expectException(ExpressionException::class);
+        $this->expectException(LexerException::class);
         $formula = "TOTAL_CLOSED_CREDIT_AMOUNT(#123)";
         $totals = $math_expression->evaluate($formula);
     }
