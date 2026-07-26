@@ -151,6 +151,7 @@ RUN sudo chmod -R a+rw /var/www/html/vendor
 RUN cd /var/www/html/ && /usr/bin/composer run seed:initial
 
 # 6. Start HTTP service to apply changes
-CMD [ "cd", "/var/www/html/", "&&", "php", "spark", "serve", "--host", "0.0.0.0", "--port", "80" ]
+RUN cd /var/www/html/
+CMD [ "php", "spark", "serve", "--host", "0.0.0.0", "--port", "80" ]
 
 EXPOSE 80
