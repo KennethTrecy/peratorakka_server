@@ -31,6 +31,7 @@ class LoginController extends BaseLoginController
         $session->remove(setting("Auth.sessionConfig")["field"]);
 
         $_POST = array_merge($_POST, $this->request->getJSON(true));
+        $this->request->setGlobal("post", $_POST);
         Services::resetSingle("request");
 
         // Uncomment if the rebuilding request from new instance is preferred.
